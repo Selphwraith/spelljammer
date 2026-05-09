@@ -2018,12 +2018,16 @@ function loadShipImages() {
   Object.entries(SHIP_IMAGE_DATA).forEach(([key, path]) => {
     if(_SHIP_IMG[key] || _SHIP_IMG_FAILED.has(key)) return;
     const img = new Image();
-    img.onload  = () => { _SHIP_IMG[key] = img; };
+    img.onload  = () => {
+      _SHIP_IMG[key] = img;
+      // Redraw the menu ship once the pinnace image is ready
+      if(key === 'pinnace') drawMenuShip();
+    };
     img.onerror = () => {
       // Retry once after 2s in case assets weren't ready
       setTimeout(() => {
         const retry = new Image();
-        retry.onload  = () => { _SHIP_IMG[key] = retry; };
+        retry.onload  = () => { _SHIP_IMG[key] = retry; if(key==='pinnace') drawMenuShip(); };
         retry.onerror = () => { _SHIP_IMG_FAILED.add(key); };
         retry.src = path;
       }, 2000);
