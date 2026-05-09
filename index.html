@@ -5534,12 +5534,13 @@ function showMainMenu() {
   drawMenuShip();
   setTag('Main Menu');
   if (_gameActive) _stopLoop();
-  playTitle();
+  if(_splashDismissed) playTitle();
 }
 
 function hideMainMenu() {
   const el = document.getElementById('main-menu');
   if (el) el.classList.add('hidden');
+  stopTitle();
 }
 
 function menuNewGame() {
@@ -6901,30 +6902,29 @@ function drawCinCanvas(idx){
 }
 
 // wait for DOMContentLoaded before touching those elements.
-function dismissSplash(){
+let _splashDismissed = false;
+function dismissSplash(e){
+  if(e) e.preventDefault();
+  if(_splashDismissed) return;
+  _splashDismissed = true;
   const sp = document.getElementById('splash-screen');
   if(!sp) return;
-  playTitle(); // First user gesture — audio unlocked
+  playTitle();
   sp.classList.add('fade-out');
-  setTimeout(()=>{ sp.style.display='none'; }, 850);
+  setTimeout(()=>{
+    sp.style.display = 'none';
+    document.getElementById('main-menu').classList.remove('hidden');
+  }, 820);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   drawMenuShip();
   showMainMenu();
-  // Hide main menu until splash is dismissed
   document.getElementById('main-menu').classList.add('hidden');
-  // Restore it after splash fades
-  const sp = document.getElementById('splash-screen');
-  if(sp){
-    sp.addEventListener('click', ()=>{
-      setTimeout(()=>{ document.getElementById('main-menu').classList.remove('hidden'); }, 400);
-    }, {once:true});
-  }
 });
 </script>
 <!-- ═══ SPLASH SCREEN ═══ -->
-<div id="splash-screen" onclick="dismissSplash()">
+<div id="splash-screen" onclick="dismissSplash(event)" ontouchstart="dismissSplash(event)">
   <div id="splash-bg"></div>
   <div id="splash-vignette"></div>
   <div id="splash-content">
