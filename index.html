@@ -3138,7 +3138,7 @@ function travelTick(){
     return;
   }
   // ── Roaming faction encounter (separate from combat roll) ──
-  if(!G.tvl._roamChecked && G.tvl.prog > 15 && G.tvl.prog < 85 && Math.random() < 0.09){
+  if(!G.tvl._roamChecked && G.tvl.prog > 20 && G.tvl.prog < 80 && Math.random() < 0.03){
     G.tvl._roamChecked = true;
     const sphereId = G.tvl.to || G.tvl.from;
     const factionId = SPHERE_FACTION[sphereId] || SPHERE_FACTION[G.tvl.from];
@@ -5098,7 +5098,14 @@ const ROAM_HAIL = {
              'The scar-places remember what passes near them. You have been near interesting things lately.',
              'The Far Realm presses. We feel it. You have felt it too. There is understanding between those who have touched the edges.'],
 };
-const ROAM_TRADE_GAIN = { ien:50, merchant:70, scro:40, vodoni:45, farealm:55 };
+// Per-faction roaming shop stock (3-4 items each, limited supply)
+const ROAM_SHOP = {
+  ien:      [ {id:'crewmead',qty:2}, {id:'repkit',qty:1}, {id:'psicry',qty:1}, {id:'arccore',qty:1} ],
+  merchant: [ {id:'cargobale',qty:3}, {id:'crewmead',qty:2}, {id:'repkit',qty:2}, {id:'starcoin',qty:2} ],
+  scro:     [ {id:'scrtrophy',qty:1}, {id:'crewmead',qty:2}, {id:'repkit',qty:1}, {id:'arccore',qty:1} ],
+  vodoni:   [ {id:'vodeml',qty:1}, {id:'repkit',qty:2}, {id:'crewmead',qty:1}, {id:'arccore',qty:1} ],
+  farealm:  [ {id:'voidxtal',qty:1}, {id:'psicry',qty:2}, {id:'crewmead',qty:1}, {id:'arccore',qty:1} ],
+};
 
 let _roamFactionId = null;
 let _roamPhase = 'choice'; // 'choice' | 'result'
@@ -5134,14 +5141,47 @@ function roamAttack(){
 }
 function roamTrade(){
   const fac = FACTIONS[_roamFactionId];
-  const gain = ROAM_TRADE_GAIN[_roamFactionId] + Math.floor(Math.random()*30);
-  G.ship.gold += gain; updateUI();
-  applyRep(_roamFactionId, 8);
-  document.getElementById('roam-result').style.display='block';
-  document.getElementById('roam-result').textContent = `Trade concluded. Gained ${gain} gold. The ${fac.short} captain nods with approval.`;
-  document.getElementById('roam-result').style.color='#ffcc66';
+  const stock = (ROAM_SHOP[_roamFactionId]||[]).map(s=>({...s})); // fresh copy per encounter
+  // Build a small shop inside the result area
+  const resEl = document.getElementById('roam-result');
+  resEl.style.display = 'block';
+  resEl.style.color = '#bbaadd';
+  let html2 = `<div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:#886644;margin-bottom:8px;">— ${fac.short.toUpperCase()} FIELD GOODS —</div>`;
+  stock.forEach((s,i)=>{
+    const itm = ITEMS[s.id]; if(!itm) return;
+    const price = Math.round((itm.val||20)*1.4); // 40% markup over base val
+    const canAfford = G.ship.gold >= price;
+    html2 += `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #22113322;">
+      <span style="font-size:14px;">${itm.ico}</span>
+      <span style="flex:1;font-size:11px;color:${canAfford?'#ccaadd':'#554455'};">${itm.n}</span>
+      <span style="font-size:10px;color:#886633;">⚜ ${price}</span>
+      <button onclick="roamBuyItem('${s.id}',${price},${i})" ${canAfford?'':'disabled'}
+        style="font-size:9px;padding:3px 8px;background:${canAfford?'rgba(30,15,5,0.9)':'rgba(10,5,10,0.5)'};
+        border:1px solid ${canAfford?'#aa882255':'#33223344'};color:${canAfford?'#ffcc66':'#443333'};
+        font-family:'Cinzel',serif;border-radius:3px;cursor:${canAfford?'pointer':'default'};">Buy</button>
+    </div>`;
+  });
+  html2 += `<div style="font-size:10px;color:#443344;margin-top:6px;">Gold: ⚜ <span id="roam-gold-display">${G.ship.gold}</span></div>`;
+  resEl.innerHTML = html2;
   document.getElementById('roam-continue-btn').style.display='block';
-  addLog(`Trade with ${fac.n}: +${gain} gold.`,'gd');
+  document.getElementById('roam-continue-btn').textContent = 'Done Trading →';
+  applyRep(_roamFactionId, 5);
+  addLog(`Trading with ${fac.n} field merchant.`,'');
+  snd('port_dock', 0.6);
+}
+function roamBuyItem(itemId, price, stockIdx){
+  if(G.ship.gold < price) return;
+  const itm = ITEMS[itemId]; if(!itm) return;
+  G.ship.gold -= price;
+  G.ship.inv.push({...itm, uid:'roam_'+Date.now()});
+  updateUI();
+  // Update gold display
+  const gd = document.getElementById('roam-gold-display');
+  if(gd) gd.textContent = G.ship.gold;
+  // Disable that buy button
+  const btns = document.getElementById('roam-result').querySelectorAll('button');
+  if(btns[stockIdx]) btns[stockIdx].disabled = true;
+  addLog(`Purchased ${itm.n} for ${price} gold.`,'gd');
   snd('purchase', 0.7);
 }
 function roamHail(){
@@ -5150,21 +5190,46 @@ function roamHail(){
   const line = lines[Math.floor(Math.random()*lines.length)];
   applyRep(_roamFactionId, 5);
   document.getElementById('roam-body').textContent = line;
-  document.getElementById('roam-result').style.display='block';
-  document.getElementById('roam-result').textContent = `Diplomatic contact made. The ${fac.short} vessel stands down.`;
-  document.getElementById('roam-result').style.color='#88aaff';
+  const resEl = document.getElementById('roam-result');
+  resEl.style.display='block';
+  resEl.style.color='#88aaff';
   document.getElementById('roam-continue-btn').style.display='block';
   addLog(`Hailed ${fac.n} vessel. Reputation improved slightly.`,'');
   snd('port_dock', 0.5);
-  // Small chance of quest offer via hail
+  // Check for available quest — offer it directly here
   const availQ = G.quests.find(q=>q.faction===_roamFactionId&&q.state==='inactive');
-  if(availQ && Math.random()<0.4){
-    setTimeout(()=>{
-      document.getElementById('roam-result').textContent += `
-
-"${fac.short} Command has a task that needs a reliable captain. Stop at ${availQ.pickup} if you're interested."`;
-    },400);
+  if(availQ){
+    const pickupSphere = G.spheres.find(s=>s.id===availQ.pickup);
+    const turninSphere = G.spheres.find(s=>s.id===availQ.turnin);
+    resEl.innerHTML = `<div style="margin-bottom:6px;color:#88aaff;">Diplomatic contact made. The ${fac.short} vessel stands down.</div>
+      <div style="border-top:1px solid #22334455;padding-top:8px;margin-top:4px;">
+        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:#886644;margin-bottom:6px;">— MISSION AVAILABLE —</div>
+        <div style="font-size:12px;color:#ccaadd;margin-bottom:4px;"><b>${availQ.title}</b></div>
+        <div style="font-size:11px;color:#998899;margin-bottom:8px;line-height:1.5;">${availQ.desc}</div>
+        <div style="font-size:10px;color:#665577;">Pickup: ${pickupSphere?.n||availQ.pickup} → Deliver to: ${turninSphere?.n||availQ.turnin}</div>
+        <div style="font-size:10px;color:#886633;margin-top:2px;">Reward: ⚜ ${availQ.reward} gold</div>
+        <button onclick="roamAcceptQuest('${availQ.id}')"
+          style="margin-top:10px;width:100%;padding:8px;background:rgba(5,20,50,0.9);border:1px solid #2255aa55;
+          color:#88aaff;font-family:'Cinzel',serif;font-size:11px;cursor:pointer;border-radius:4px;">
+          📋 Accept Mission</button>
+      </div>`;
+  } else {
+    resEl.textContent = `Diplomatic contact made. The ${fac.short} vessel stands down.`;
   }
+}
+function roamAcceptQuest(questId){
+  const q = G.quests.find(q=>q.id===questId);
+  if(!q||q.state!=='inactive') return;
+  q.state='active';
+  G.ship.inv.push({...q.cargo, uid:'q_'+q.id+'_'+Date.now()});
+  applyRep(q.faction, 5);
+  const turninSphere = G.spheres.find(s=>s.id===q.turnin);
+  document.getElementById('roam-result').innerHTML =
+    `<div style="color:#44ff88;">✅ Mission accepted: <b>${q.title}</b><br>
+    <span style="font-size:10px;color:#667755;">Deliver to ${turninSphere?.n||q.turnin} for ⚜ ${q.reward} gold.</span></div>`;
+  addLog(`📋 MISSION ACCEPTED: ${q.title} — deliver to ${turninSphere?.n||q.turnin}.`,'imp');
+  updateUI();
+  snd('fragment_collect', 0.7);
 }
 function roamContinue(){
   document.getElementById('ov-roam').style.display='none';
@@ -5571,7 +5636,7 @@ function showMainMenu() {
 function hideMainMenu() {
   const el = document.getElementById('main-menu');
   if (el) el.classList.add('hidden');
-  stopTitle();
+  // Don't stop title here — cinematic keeps it playing; stopTitle fires in skipCinematic
 }
 
 function menuNewGame() {
@@ -6766,8 +6831,8 @@ function showCinematic(){
 function skipCinematic(){
   if(_cinAnimId){ cancelAnimationFrame(_cinAnimId); _cinAnimId=null; }
   document.getElementById('cin-ovl').style.display='none';
-  stopTitle();
   _gameActive = true;
+  stopTitle();   // stop just before game audio takes over
   initGame();
 }
 function nextCinSlide(){
