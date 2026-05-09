@@ -2037,50 +2037,17 @@ function loadShipImages() {
 }
 function drawShipImg(key, ctx, cx, cy, w, h, flip, fallbackFn) {
   const img = _SHIP_IMG[key];
-  const scale = SHIP_IMG_SCALE[key] || 1.0;
-  const sw = w * scale, sh = h * scale;
   if (img) {
     ctx.save();
     ctx.translate(cx, cy);
     if (flip) ctx.scale(-1, 1);
-    ctx.drawImage(img, -sw/2, -sh/2, sw, sh);
+    ctx.drawImage(img, -w/2, -h/2, w, h);
     ctx.restore();
   } else {
     if(!_SHIP_IMG_FAILED.has(key) && SHIP_IMAGE_DATA[key]) loadShipImages();
     fallbackFn();
   }
 }
-
-// Per-ship render scale multipliers — 1.0 = base size passed by the caller.
-// Tune these freely as artwork comes in; bigger enemies/bosses should feel bigger.
-const SHIP_IMG_SCALE = {
-  // ── Player vessels (escalate with class) ─────────────
-  'pinnace':      1.50,
-  'squid':        1.70,
-  'hammer':       1.85,
-  'manow':        2.10,
-  // ── Pirate raiders (T1 → T3) ─────────────────────────
-  'corsair':      1.35,
-  'plunderer':    1.55,
-  'blackfleet':   1.80,
-  // ── Fragment guardians ───────────────────────────────
-  'nautiloid':    1.65,
-  'githyanki':    1.65,
-  'beholder':     1.80,
-  'leviathan':    2.25,
-  // ── Far Realm enemies ────────────────────────────────
-  'vodoniPatrol': 1.65,
-  'scroBattle':   1.70,
-  'thrikreen':    1.55,
-  'frStalker':    1.65,
-  'frHorde':      1.95,
-  // ── World bosses (all large) ─────────────────────────
-  'elder':        2.40,
-  'wb_grex':      2.00,
-  'wb_admiral':   1.85,
-  'wb_clutch':    2.15,
-  'wb_murmur':    2.30,
-};
 
 // Preload — silently skip any file the browser can't load
 function loadSounds() {
@@ -2437,7 +2404,7 @@ function renderLoop(ts=0) {
     cx.save();
     cx.translate(sx, sy);
     cx.rotate(travelAngle + rock);
-    drawShipImg(G.ship.type,cx,0,bob,14,8,false,()=>{
+    drawShipImg(G.ship.type,cx,0,bob,40,24,false,()=>{
       if(G.ship.type==='pinnace')drawPinnace(cx,0,bob,18,false,t);
       else if(G.ship.type==='squid')drawSquid(cx,0,bob,18,false,t);
       else if(G.ship.type==='manow')drawManow(cx,0,bob,20,false,t);
@@ -2452,7 +2419,7 @@ function renderLoop(ts=0) {
     if(G.ship.atWp){
       const rx=G.ship.atWp.x*W+28, ry=G.ship.atWp.y*H+8;
       cx.save(); cx.translate(rx,ry); cx.rotate(idleRock);
-      drawShipImg(G.ship.type,cx,0,idleBob,14,8,false,()=>{
+      drawShipImg(G.ship.type,cx,0,idleBob,40,24,false,()=>{
         if(G.ship.type==='pinnace')drawPinnace(cx,0,idleBob,16,false,t);
         else if(G.ship.type==='squid')drawSquid(cx,0,idleBob,16,false,t);
         else if(G.ship.type==='manow')drawManow(cx,0,idleBob,18,false,t);
@@ -2463,7 +2430,7 @@ function renderLoop(ts=0) {
       const fs=G.ship.atFragSite;
       const rx=fs.x*W+28, ry=fs.y*H-24;
       cx.save(); cx.translate(rx,ry); cx.rotate(idleRock);
-      drawShipImg(G.ship.type,cx,0,idleBob,14,8,false,()=>{
+      drawShipImg(G.ship.type,cx,0,idleBob,40,24,false,()=>{
         if(G.ship.type==='pinnace')drawPinnace(cx,0,idleBob,16,false,t);
         else if(G.ship.type==='squid')drawSquid(cx,0,idleBob,16,false,t);
         else if(G.ship.type==='manow')drawManow(cx,0,idleBob,18,false,t);
@@ -2476,7 +2443,7 @@ function renderLoop(ts=0) {
         const p=sPos(cur);
         const rx=p.x+34, ry=p.y+8;
         cx.save(); cx.translate(rx,ry); cx.rotate(idleRock);
-        drawShipImg(G.ship.type,cx,0,idleBob,14,8,false,()=>{
+        drawShipImg(G.ship.type,cx,0,idleBob,40,24,false,()=>{
           if(G.ship.type==='pinnace')drawPinnace(cx,0,idleBob,16,false,t);
           else if(G.ship.type==='squid')drawSquid(cx,0,idleBob,16,false,t);
           else if(G.ship.type==='manow')drawManow(cx,0,idleBob,18,false,t);
@@ -4044,7 +4011,7 @@ function updateCbtUI(){
 function drawCbtShips(key){
   const pc=document.getElementById('cv-player').getContext('2d');
   pc.clearRect(0,0,120,80);
-  drawShipImg(G.ship.type,pc,60,44,25,15,false,()=>{
+  drawShipImg(G.ship.type,pc,60,44,90,55,false,()=>{
     if(G.ship.type==='pinnace')drawPinnace(pc,60,44,28,false);
     else if(G.ship.type==='squid')drawSquid(pc,60,44,28,false);
     else if(G.ship.type==='manow')drawManow(pc,60,44,28,false);
@@ -4052,7 +4019,7 @@ function drawCbtShips(key){
   });
   const ec=document.getElementById('cv-enemy').getContext('2d');
   ec.clearRect(0,0,120,80);
-  const _eF=(k,flip,fn)=>drawShipImg(k,ec,60,44,25,15,flip,fn);
+  const _eF=(k,flip,fn)=>drawShipImg(k,ec,60,44,90,55,flip,fn);
   if(key==='fg_realm')       _eF('squid',true,     ()=>drawSquid(ec,60,44,28,true));
   else if(key==='fg_grey')   _eF('hammer',true,    ()=>drawHammer(ec,60,44,28,true));
   else if(key==='fg_krynn')  _eF('githyanki',false,()=>drawGithyanki(ec,60,44,28));
@@ -4967,7 +4934,7 @@ function showLootOverlay(key, gold, items){
   const lc=document.getElementById('loot-canvas').getContext('2d');
   lc.clearRect(0,0,180,110);
   lc.fillStyle='rgba(5,0,15,0.5)'; lc.fillRect(0,0,180,110);
-  const _lF=(k,flip,fn)=>drawShipImg(k,lc,90,55,38,23,flip,fn);
+  const _lF=(k,flip,fn)=>drawShipImg(k,lc,90,55,140,85,flip,fn);
   if(key==='corsair')       _lF('corsair',true,      ()=>drawCorsairSloop(lc,90,55,32,true));
   else if(key==='plunderer') _lF('plunderer',true,   ()=>drawPlundererBrig(lc,90,55,32,true));
   else if(key==='blackfleet')_lF('blackfleet',true,  ()=>drawBlackFleetReaver(lc,90,55,32,true));
@@ -5169,7 +5136,7 @@ function buildShipOverlay(){
   sc.fillStyle='rgba(5,0,15,0.6)'; sc.fillRect(0,0,200,130);
   // Starfield
   for(let i=0;i<40;i++){ sc.fillStyle=`rgba(255,255,255,${Math.random()*0.4+0.1})`; sc.beginPath(); sc.arc(Math.random()*200,Math.random()*130,Math.random()*1.2+0.3,0,Math.PI*2); sc.fill(); }
-  drawShipImg(s.type,sc,100,65,43,25,false,()=>{
+  drawShipImg(s.type,sc,100,65,160,95,false,()=>{
     if(s.type==='pinnace')drawPinnace(sc,100,65,44,false);
     else if(s.type==='squid')drawSquid(sc,100,65,44,false);
     else if(s.type==='hammer')drawHammer(sc,100,65,44,false);
@@ -6170,7 +6137,7 @@ function drawMenuShip() {
     g.addColorStop(0,c+a+')'); g.addColorStop(1,c+'0)');
     ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
   });
-  drawShipImg('pinnace',ctx,120,70,50,29,false,()=>drawPinnace(ctx,120,70,40,false,0));
+  drawShipImg('pinnace',ctx,120,70,180,105,false,()=>drawPinnace(ctx,120,70,40,false,0));
 }
 
 // ── SAVE / LOAD ─────────────────────────────────────────
