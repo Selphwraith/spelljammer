@@ -2359,6 +2359,9 @@ function renderLoop(ts=0) {
       // Yellow ❗ — faction delivery quest: carrying cargo, this is the turnin sphere
       const hasFactionTurnin = G.quests &&
         G.quests.some(q=>q.turnin===sph.id && q.state==='active' && G.ship.inv.some(i=>i.id===q.cargo.id));
+      // Amber ❗ — quest accepted, need to visit pickup sphere to collect cargo
+      const hasPickup = G.quests &&
+        G.quests.some(q=>q.pickup===sph.id && q.state==='accepted');
       // Orange ❗ — local quest: objective complete, return here to claim reward
       const hasLocalTurnin = G.localQuests && LOCAL_QUEST_DATA[sph.id] &&
         LOCAL_QUEST_DATA[sph.id].npcs.some(npc=>
@@ -2366,22 +2369,27 @@ function renderLoop(ts=0) {
             G.localQuests[q.id]==='active' && q.check && q.check(G)
           )
         );
-      if(hasFactionTurnin || hasLocalTurnin){
+      if(hasFactionTurnin || hasLocalTurnin || hasPickup){
         const bp=sPos(sph), bR=(sph.id===G.ship.loc?22:17);
         const pulse=0.85+0.15*Math.sin(t*3.5); // gentle pulse
         cx.save();
         cx.font=`bold ${Math.round(13*pulse)}px Arial`;
         cx.textAlign='center'; cx.textBaseline='middle';
         if(hasFactionTurnin && hasLocalTurnin){
-          // Both — stack them
           cx.shadowColor='#ffdd00'; cx.shadowBlur=8;
           cx.fillStyle='#ffdd00'; cx.fillText('❗',bp.x+bR*0.7,bp.y-bR*0.9);
           cx.shadowColor='#ff8800'; cx.shadowBlur=8;
           cx.fillStyle='#ff8800'; cx.fillText('❗',bp.x+bR*1.2,bp.y-bR*0.9);
         } else if(hasFactionTurnin){
+          // Yellow — deliver here
           cx.shadowColor='#ffdd00'; cx.shadowBlur=8;
           cx.fillStyle='#ffdd00'; cx.fillText('❗',bp.x+bR*0.7,bp.y-bR*0.9);
+        } else if(hasPickup){
+          // Amber — collect cargo here first
+          cx.shadowColor='#ffaa00'; cx.shadowBlur=8;
+          cx.fillStyle='#ffaa00'; cx.fillText('❗',bp.x+bR*0.7,bp.y-bR*0.9);
         } else {
+          // Orange — local quest complete
           cx.shadowColor='#ff8800'; cx.shadowBlur=8;
           cx.fillStyle='#ff8800'; cx.fillText('❗',bp.x+bR*0.7,bp.y-bR*0.9);
         }
@@ -3254,6 +3262,8 @@ function enterPort(sph){
   }
   document.getElementById('tab-cargo').classList.remove('act');
   buildShop(); addLog(`Docked at ${sph.n}.`,'gd');
+  // Quest pickup — show collect button if this sphere has accepted-state cargo waiting
+  checkQuestPickup(sph.id);
   // Update the "Talk to Locals" button based on whether rumors have been heard
   const rumorBtn = document.getElementById('pt-rumor-btn');
   if (rumorBtn) {
@@ -5223,14 +5233,17 @@ function roamHail(){
 function roamAcceptQuest(questId){
   const q = G.quests.find(q=>q.id===questId);
   if(!q||q.state!=='inactive') return;
-  q.state='active';
-  G.ship.inv.push({...q.cargo, uid:'q_'+q.id+'_'+Date.now()});
+  q.state='accepted'; // must visit pickup sphere before cargo is granted
   applyRep(q.faction, 5);
+  const pickupSphere = G.spheres.find(s=>s.id===q.pickup);
   const turninSphere = G.spheres.find(s=>s.id===q.turnin);
   document.getElementById('roam-result').innerHTML =
-    `<div style="color:#44ff88;">✅ Mission accepted: <b>${q.title}</b><br>
-    <span style="font-size:10px;color:#667755;">Deliver to ${turninSphere?.n||q.turnin} for ⚜ ${q.reward} gold.</span></div>`;
-  addLog(`📋 MISSION ACCEPTED: ${q.title} — deliver to ${turninSphere?.n||q.turnin}.`,'imp');
+    `<div style="color:#ffcc44;">📋 Mission accepted: <b>${q.title}</b><br>
+    <span style="font-size:11px;color:#aa8833;line-height:1.6;">
+      First, dock at <b>${pickupSphere?.n||q.pickup}</b> to collect the cargo.<br>
+      Then deliver it to <b>${turninSphere?.n||q.turnin}</b> for ⚜ ${q.reward} gold.
+    </span></div>`;
+  addLog(`📋 MISSION: ${q.title} — collect cargo at ${pickupSphere?.n||q.pickup}, then deliver to ${turninSphere?.n||q.turnin}.`,'imp');
   updateUI();
   snd('fragment_collect', 0.7);
 }
@@ -5259,18 +5272,49 @@ function dmOfferQuest(){
   if(!_dmSphere) return;
   const q = G.quests.find(q=>q.pickup===_dmSphere&&q.state==='inactive');
   if(!q) return;
-  q.state='active';
-  // Add cargo item to inventory
-  G.ship.inv.push({...q.cargo, uid: 'q_'+q.id+'_'+Date.now()});
+  q.state='accepted'; // still need to pick up cargo — dockmaster gives you the order, port gives you the goods
   applyRep(q.faction, 5);
-  document.getElementById('dm-quest-btn').style.display='none';
-  document.getElementById('dm-quest-btn').textContent='✅ Mission Active';
-  document.getElementById('dm-quest-btn').style.display='inline-block';
-  document.getElementById('dm-quest-btn').style.color='#44ff88';
-  document.getElementById('dm-quest-btn').onclick=null;
-  addLog(`📋 MISSION ACCEPTED: ${q.title} — Deliver to ${G.spheres.find(s=>s.id===q.turnin)?.n||q.turnin}.`,'imp');
+  const btn = document.getElementById('dm-quest-btn');
+  btn.textContent='📦 Collect Cargo at Dock';
+  btn.style.color='#ffcc44';
+  btn.onclick = ()=>dmCollectQuestCargo(q.id);
+  addLog(`📋 MISSION: ${q.title} — collect cargo here at ${G.spheres.find(s=>s.id===_dmSphere)?.n}, then deliver to ${G.spheres.find(s=>s.id===q.turnin)?.n||q.turnin}.`,'imp');
   updateUI();
 }
+function dmCollectQuestCargo(questId){
+  const q = G.quests.find(q=>q.id===questId);
+  if(!q||q.state!=='accepted') return;
+  q.state='active';
+  G.ship.inv.push({...q.cargo, uid:'q_'+q.id+'_'+Date.now()});
+  const btn = document.getElementById('dm-quest-btn');
+  btn.textContent='✅ Cargo Collected';
+  btn.style.color='#44ff88';
+  btn.onclick=null;
+  addLog(`📦 Cargo collected: ${q.cargo.n}. Deliver to ${G.spheres.find(s=>s.id===q.turnin)?.n||q.turnin}.`,'gd');
+  snd('loot_open', 0.7);
+  updateUI();
+}
+function checkQuestPickup(sphereId){
+  // Find any quest in 'accepted' state where this is the pickup sphere
+  const waiting = G.quests.filter(q=>q.pickup===sphereId&&q.state==='accepted');
+  if(!waiting.length) return;
+  waiting.forEach(q=>{
+    // Show a port notification with collect button
+    setTimeout(()=>{
+      showMsg(`📦 Cargo Ready: ${q.title}`,
+        `${FACTIONS[q.faction]?.n||'Your contact'} has left a cargo package at this dock for you.\n\n"${q.cargo.n}"\n\n${q.cargo.desc}\n\nCollect it now and deliver it to ${G.spheres.find(s=>s.id===q.turnin)?.n||q.turnin} for ⚜ ${q.reward} gold.`,
+        '📦 Take Cargo',
+        ()=>{
+          q.state='active';
+          G.ship.inv.push({...q.cargo, uid:'q_'+q.id+'_'+Date.now()});
+          addLog(`📦 Cargo collected: ${q.cargo.n}. Deliver to ${G.spheres.find(s=>s.id===q.turnin)?.n||q.turnin}.`,'gd');
+          snd('loot_open', 0.7);
+          updateUI();
+        });
+    }, 600);
+  });
+}
+
 function checkQuestTurnin(sphereId){
   const active = G.quests.filter(q=>q.turnin===sphereId&&q.state==='active');
   active.forEach(q=>{
