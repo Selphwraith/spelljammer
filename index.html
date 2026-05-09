@@ -1935,13 +1935,16 @@ function toggleMute() {
   const btn = document.getElementById('mute-btn');
   if (_muted) {
     _stopLoop();
+    stopTitle();
     if (btn) btn.textContent = '🔇 Muted';
   } else {
     if (btn) btn.textContent = '🔊 Sound';
-    // Restart whatever ambient should be playing for the current phase
-    if(!_gameActive || (G && G.phase === 'menu')){
+    // Restart whatever should be playing
+    const onMenu = !_gameActive || (G && G.phase === 'menu') || document.getElementById('main-menu') && !document.getElementById('main-menu').classList.contains('hidden');
+    const onCin  = document.getElementById('cin-ovl') && document.getElementById('cin-ovl').style.display !== 'none';
+    if(onMenu || onCin){
       playTitle();
-    } else {
+    } else if(_gameActive && G && G.phase){
       const scene = G.phase === 'combat' ? 'combat' : G.phase === 'port' ? 'port' : 'map';
       setAmbient(scene);
     }
