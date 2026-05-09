@@ -4872,9 +4872,10 @@ The Far Realm still whispers at the edges of reality. Perhaps one day a new thre
   ), 800);
 }
 function restart(){
-  ['ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-dockmaster','ov-localquest','ov-faction-rep','scr-defeat','scr-win','tvlbar','msgbox'].forEach(id=>{
+  ['ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-dockmaster','ov-localquest','scr-defeat','scr-win','tvlbar','msgbox'].forEach(id=>{
     const el=document.getElementById(id); if(el)el.classList.remove('on','active');
   });
+  const _fr=document.getElementById('ov-faction-rep'); if(_fr) _fr.style.display='none';
   document.getElementById('clog').innerHTML='';
   if(G.tvl&&G.tvl.timer)clearInterval(G.tvl.timer);
   if(G.animId)cancelAnimationFrame(G.animId);
@@ -5335,23 +5336,31 @@ function checkQuestTurnin(sphereId){
 
 // ── FACTION REP UI ────────────────────────────────────────
 function showFactionRep(){
-  const lines = Object.entries(FACTIONS).map(([k,f])=>{
+  const el = document.getElementById('ov-faction-rep');
+  if(!el) return;
+  const frows = Object.entries(FACTIONS).map(([k,f])=>{
     const rep = G.rep?.[k]??f.start;
-    return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #11002222;">
-      <div style="width:8px;height:8px;border-radius:50%;background:${f.col};flex-shrink:0;"></div>
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #11002233;">
+      <div style="width:9px;height:9px;border-radius:50%;background:${f.col};flex-shrink:0;"></div>
       <div style="flex:1;font-size:12px;color:#bbaadd;">${f.n}</div>
       <div style="font-size:11px;color:${repCol(rep)};font-family:'Cinzel',serif;">${repLabel(rep)}</div>
-      <div style="font-size:10px;color:#556677;width:32px;text-align:right;">${rep>0?'+':''}${rep}</div>
+      <div style="font-size:10px;color:#556677;width:34px;text-align:right;">${rep>0?'+':''}${rep}</div>
     </div>`;
   }).join('');
-  const qlines = G.quests.map(q=>{
-    const col = q.state==='complete'?'#44ff88':q.state==='active'?'#ffcc44':'#443355';
-    const status = q.state==='complete'?'✅ Complete':q.state==='active'?`📋 Active → ${G.spheres.find(s=>s.id===q.turnin)?.n||q.turnin}`:'— Inactive';
-    return `<div style="padding:5px 0;border-bottom:1px solid #11002222;"><div style="font-size:11px;color:${col};">${status}: ${q.title}</div></div>`;
+  const qrows = G.quests.map(q=>{
+    const col = q.state==='complete'?'#44ff88':q.state==='active'?'#ffcc44':q.state==='accepted'?'#ff9933':'#443355';
+    const status = q.state==='complete'?'\u2705 Complete'
+      :q.state==='active'?'\ud83d\udccb Deliver \u2192 '+(G.spheres.find(s=>s.id===q.turnin)?.n||q.turnin)
+      :q.state==='accepted'?'\ud83d\udce6 Collect at '+(G.spheres.find(s=>s.id===q.pickup)?.n||q.pickup)
+      :'\u2014 Inactive';
+    return `<div style="padding:5px 0;border-bottom:1px solid #11002233;">
+      <div style="font-size:10px;color:${col};margin-bottom:2px;">${status}</div>
+      <div style="font-size:11px;color:#998899;">${q.title}</div>
+    </div>`;
   }).join('');
-  showMsg('📊 Faction Standing & Missions',
-    `<div style="font-family:monospace;">${lines}<br><div style="font-size:10px;color:#443366;letter-spacing:2px;margin:8px 0 4px;">MISSIONS</div>${qlines}</div>`,
-    'Close', null);
+  document.getElementById('fr-factions').innerHTML = frows;
+  document.getElementById('fr-quests').innerHTML = qrows || '<div style="font-size:11px;color:#443355;">No missions on record.</div>';
+  el.style.display = 'flex';
 }
 
 function closeDockmaster() {
@@ -5689,9 +5698,10 @@ function hideMainMenu(keepTitle) {
 function menuNewGame() {
   hideMainMenu(true); // keep title playing through cinematic
   // Full teardown so combat/port/loot overlays don't linger from an in-progress game
-  ['ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-dockmaster','ov-localquest','ov-faction-rep','scr-defeat','scr-win','tvlbar','msgbox'].forEach(id=>{
+  ['ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-dockmaster','ov-localquest','scr-defeat','scr-win','tvlbar','msgbox'].forEach(id=>{
     const el=document.getElementById(id); if(el)el.classList.remove('on','active');
   });
+  const _fr=document.getElementById('ov-faction-rep'); if(_fr) _fr.style.display='none';
   document.getElementById('clog').innerHTML='';
   if(G&&G.tvl&&G.tvl.timer) clearInterval(G.tvl.timer);
   if(G&&G.animId) cancelAnimationFrame(G.animId);
@@ -7192,13 +7202,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 <!-- ═══ FACTION REP OVERLAY ═══ -->
-<div id="ov-faction-rep" class="ovlay" style="z-index:5500;display:none;">
+<div id="ov-faction-rep" class="ovlay" style="z-index:5500;">
   <div style="background:rgba(4,0,14,0.98);border:1px solid #44118877;border-radius:8px;padding:20px 22px;max-width:420px;width:94%;max-height:80vh;overflow-y:auto;box-shadow:0 0 50px #22006633;margin:auto;">
     <div style="font-family:'Cinzel',serif;font-size:12px;letter-spacing:3px;color:#7755aa;margin-bottom:14px;border-bottom:1px solid #33115533;padding-bottom:8px;">📊 FACTION STANDING</div>
     <div id="fr-factions" style="margin-bottom:14px;"></div>
     <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:#443366;margin:12px 0 6px;">MISSIONS</div>
     <div id="fr-quests"></div>
-    <button onclick="document.getElementById('ov-faction-rep').classList.remove('on')" class="btn" style="margin-top:16px;width:100%;font-size:11px;padding:8px;">✕ Close</button>
+    <button onclick="document.getElementById('ov-faction-rep').style.display='none'" class="btn" style="margin-top:16px;width:100%;font-size:11px;padding:8px;">✕ Close</button>
   </div>
 </div>
 
