@@ -2013,11 +2013,21 @@ const SHIP_IMAGE_DATA = {
   'wb_murmur':    'images/ship_wb_murmur.png',
 };
 const _SHIP_IMG = {};
+const _SHIP_IMG_FAILED = new Set();
 function loadShipImages() {
   Object.entries(SHIP_IMAGE_DATA).forEach(([key, path]) => {
+    if(_SHIP_IMG[key] || _SHIP_IMG_FAILED.has(key)) return;
     const img = new Image();
     img.onload  = () => { _SHIP_IMG[key] = img; };
-    img.onerror = () => {};
+    img.onerror = () => {
+      // Retry once after 2s in case assets weren't ready
+      setTimeout(() => {
+        const retry = new Image();
+        retry.onload  = () => { _SHIP_IMG[key] = retry; };
+        retry.onerror = () => { _SHIP_IMG_FAILED.add(key); };
+        retry.src = path;
+      }, 2000);
+    };
     img.src = path;
   });
 }
@@ -7271,8 +7281,24 @@ function runDebugCmd(){
     case 'kill':
       if(G.phase==='combat'&&G.cbt.enemy){ G.cbt.enemy.hp=0; dbOut('✓ Enemy slain','#00ff88'); }
       else dbOut('⚠ Not in combat','#ff8844'); break;
+    case 'imgcheck': {
+      // Report which ship images loaded successfully vs failed
+      const loaded = Object.keys(_SHIP_IMG);
+      const all = Object.keys(SHIP_IMAGE_DATA);
+      const missing = all.filter(k => !_SHIP_IMG[k]);
+      dbOut(`Images loaded (${loaded.length}/${all.length}): ${loaded.join(', ') || 'none'}`, '#44ff88');
+      if(missing.length) dbOut(`MISSING: ${missing.map(k=>k+' → '+SHIP_IMAGE_DATA[k]).join(' | ')}`, '#ff4444');
+      else dbOut('All images loaded successfully.','#44ff88');
+      break;
+    }
+    case 'imgreload':
+      // Force reload all ship images (clears cache and retries)
+      Object.keys(_SHIP_IMG).forEach(k=>delete _SHIP_IMG[k]);
+      _SHIP_IMG_FAILED.clear();
+      loadShipImages();
+      dbOut('Reloading all ship images…','#88aaff'); break;
     case 'help':
-      dbOut('Commands: cheat · unlock · god · instakill · heal · gold · frags · kill','#88aacc'); break;
+      dbOut('Commands: cheat · unlock · god · instakill · heal · gold · frags · kill · imgcheck · imgreload · wbunlock · wbkill','#88aacc'); break;
     default:
       dbOut(`Unknown command: "${cmd}" — try "help"`, '#ff6644');
   }
