@@ -1000,6 +1000,17 @@ body {
     </div>
     <button class="btn gd" onclick="restart()" style="display:none;"></button>
   </div>
+
+  <div class="endscr" id="scr-farwin">
+    <div class="etitle v" style="background:linear-gradient(135deg,#cc44ff,#ff00aa,#440088);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⬡ The Hunger Retreats ⬡</div>
+    <div class="etext" style="color:#cc88ff;">Shothothug is gone. The Baresun scar seals behind it — truly seals, for the first time. The Far Realm is quieter. The phlogiston between the spheres feels lighter, as if a weight it did not know it carried has been removed.</div>
+    <div class="etext" style="font-size:14px;color:#9955cc;max-width:480px;">You have done what no captain in recorded history has done. You crossed the Breach, mapped the unknown spheres, dismantled four Elder Evil extensions, and drove back the Manifest Hunger itself. The Far Realm will remember this. It will be back, eventually. But not today.</div>
+    <div class="etext" style="font-size:13px;color:#7744aa;max-width:400px;font-style:italic;">— Entry sealed in the IEN Void Codex as "The Shothothug Expedition." Captain's name redacted at their request. Threat level: Resolved. —</div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;">
+      <button class="btn" onclick="restart()" style="border-color:#88006688;color:#cc44ff;">⬡ End the Expedition</button>
+      <button class="btn" onclick="continueSailing()" style="border-color:#4488ff55;color:#88ccff;">⭐ Keep Sailing</button>
+    </div>
+  </div>
 </div>
 
 <!-- LOG -->
@@ -1224,30 +1235,106 @@ const LOOT = {
   wb_admiral:  [{id:'phaseplat',c:1.0},{id:'vodeml',c:0.90},{id:'vodncore',c:0.70},{id:'starcoin',c:0.80},{id:'antimag',c:0.45},{id:'repkit',c:0.50}],
   wb_clutch:   [{id:'clutchsig',c:1.0},{id:'tkfang',c:0.90},{id:'astsil',c:0.75},{id:'starcoin',c:0.80},{id:'crewmead',c:0.60},{id:'levblood',c:0.35}],
   wb_murmur:   [{id:'murecho',c:1.0},{id:'voidxtal',c:0.90},{id:'psiamp',c:0.75},{id:'antimag',c:0.60},{id:'arccore',c:0.65},{id:'psicry',c:0.70}],
+  // ── True Final Boss ────────────────────────────────────────────────────
+  shothothug:  [{id:'murecho',c:1.0},{id:'voidxtal',c:1.0},{id:'psiamp',c:1.0},{id:'antimag',c:1.0},{id:'arccore',c:1.0},{id:'psicry',c:1.0},{id:'starcoin',c:1.0},{id:'astsil',c:1.0}],
 };
 
-// ── WORLD BOSSES (named — gate specific lanes, one defeat per run) ──
+// ── WORLD BOSSES (Far Realm Elder Evils — patrol triangles, visible on map) ──
+// Each boss patrols a triangle of 3 spheres. Patrol lanes are hidden until the
+// boss is discovered (dockmaster intel). Bosses are NOT random encounters —
+// they move visibly on the map and the player must intercept them.
 const WORLD_BOSSES = {
-  wb_grex: { name:"Warlord Bruthas Grex", sub:'Scro Warchosen — Chitin Road',     hp:290, maxHp:290, g:[140,220],
-    atk:[{n:'War Cannon Barrage',d:[4,8],txt:"Grex's gunnery crews fire with savage, practiced brutality — four simultaneous salvoes!"},{n:'Warboss Boarding Rush',d:[3,8],txt:'Scro veterans rappel across on boarding hooks — hull breach and crew casualties!',crew:2}],
-    sp:{n:'Iron Will',c:0.28,txt:"Grex shakes off your hit and returns fire immediately — double damage, no dodge possible!",fx:'summon',d:[3,8]}, col:'#775500', diff:4,
-    intro:"A massive Scro battle cruiser drops from void-shadow, broadcasting Warlord Grex's personal battle-standard. He has been waiting for a worthy opponent on this lane.",
-    defeat:"Warlord Grex's ship breaks apart across the void. His battle-standard tumbles through the phlogiston. The Chitin Road is clear." },
-  wb_admiral: { name:'The Hollow Admiral',  sub:'Phase-Shifted — Veil Shard Lane',  hp:260, maxHp:260, g:[120,190],
-    atk:[{n:'Phase Cannon Shot',d:[3,8],txt:'A cannon that fires partly through the Far Realm — your hull plating offers no protection!'},{n:'Reality Anchor',d:[2,8],txt:'The admiral locks your position in place with a tether of Far Realm energy — you cannot dodge!'}],
-    sp:{n:'Phase Step Counter',c:0.25,txt:'The admiral half-phases — your shot passes through, and he fires back from inside your hull!',fx:'phase'}, col:'#005566', diff:4,
-    intro:"A Vodoni warship materialises across the lane — or half of one. The other half is somewhere else entirely. The Hollow Admiral was pulled through the Baresun scar a decade ago. He came back changed.",
-    defeat:"The phase-field collapses. The Hollow Admiral's ship falls back into full reality, and then falls apart. Whatever kept him coherent was running out anyway." },
-  wb_clutch: { name:'Clutch-Mother Skrathis', sub:'Thri-Kreen Elder — Amber Road',  hp:320, maxHp:320, g:[160,250],
-    atk:[{n:'Fang-Bolt Swarm',d:[3,6],txt:'Six launchers fire simultaneously — crystalline bolts tear your hull from every angle!'},{n:'Egg-Burst Volley',d:[2,8],txt:'Pressurised egg chambers detonate — shrapnel and bio-acid everywhere!'}],
-    sp:{n:'Chitinous Regeneration',c:0.25,txt:'Skrathis rotates intact hull sections forward — she restores 30 HP and keeps coming.',fx:'heal'}, col:'#116622', diff:4,
-    intro:"The oldest thri-kreen clutch-mother in Squrm has held this lane for eighty years. She tests everything that crosses it. You are the first in six years she considers worth fighting personally.",
-    defeat:"Clutch-Mother Skrathis goes silent. The Amber Road is open. You get the feeling the other thri-kreen are watching to see what you do next." },
-  wb_murmur: { name:'The Murmur',            sub:'Far Realm Consciousness — Scar Run', hp:350, maxHp:350, g:[180,280],
-    atk:[{n:'Reality Unwrite',d:[4,8],txt:'The Murmur simply erases a portion of your hull from having existed — the gap is cold and geometrically wrong.'},{n:'Madness Wave',d:[2,8],txt:'Your crew stops following orders. Three stop existing in the usual sense.',crew:3}],
-    sp:{n:'Phase Rift',c:0.30,txt:'The Murmur shifts between moments — your attack hits something that has not happened yet, and passes through.',fx:'phase'}, col:'#003322', diff:5,
-    intro:"Something has been on this lane for a long time. Not traveling it. Living on it. It has been waiting for something intelligent enough to notice it. It has noticed you back.",
-    defeat:"The Murmur contracts, shrinks, and then is not here anymore. The Scar Run feels quieter than a lane this dangerous should feel. You have the sense of something vast retreating to reconsider." },
+  // Triangle: ragestar ↔ vodoni ↔ dukagsh
+  wb_grex: {
+    name:'Vrath-Kaag', sub:'The Unraveler — Far Realm Elder Evil',
+    hp:300, maxHp:300, g:[150,230],
+    atk:[
+      {n:'Unraveling Touch',  d:[4,8], txt:'Vrath-Kaag reaches across the void and simply unthreads a section of your hull — matter dissolving back into unreality!'},
+      {n:'Void Compression',  d:[3,8], txt:'Space folds tight around your ship — hull buckles inward from all directions simultaneously!', crew:2}
+    ],
+    sp:{n:'Entropic Inversion',c:0.28,txt:'Vrath-Kaag inverts the damage — your attack heals it instead, then it fires back with doubled force!',fx:'summon',d:[3,8]},
+    col:'#993300', diff:4,
+    patrol:['ragestar','vodoni','dukagsh'],   // triangle
+    patrolLanes:['ragestar->vodoni','vodoni->dukagsh','dukagsh->ragestar'], // hidden until discovered
+    discoveredBy:'vodoni',  // docking at this sphere and getting intel reveals the boss
+    drawFn:'drawWarlordGrex',
+    intro:"A mass of writhing geometry slides out of the phlogiston ahead — Vrath-Kaag, the Unraveler. It has been dissolving ships in these lanes for longer than the Vodoni Empire has existed. It has noticed you.",
+    defeat:"Vrath-Kaag collapses inward, folding through dimensions it forced open. The phlogiston settles. The lanes between Ragestar, Vodoni, and Dukagsh are clear of its presence — for now.",
+    lore:'An Elder Evil that predates the current sphere arrangement. It does not conquer — it unravels. Settlements, fleets, and memories dissolve in its wake, leaving geometrically incorrect silence.'
+  },
+  // Triangle: baresun ↔ thedas ↔ nehwon  (new lane: baresun↔nehwon)
+  wb_admiral: {
+    name:'The Hollow Admiral', sub:'Phase-Consumed — Far Realm Remnant',
+    hp:270, maxHp:270, g:[130,200],
+    atk:[
+      {n:'Phase Cannon Shot',  d:[3,8], txt:'A cannon that fires partly through the Far Realm — your hull plating offers no protection!'},
+      {n:'Reality Anchor',     d:[2,8], txt:'The admiral locks your position in place with a tether of Far Realm energy — you cannot dodge!'}
+    ],
+    sp:{n:'Phase Step Counter',c:0.25,txt:'The admiral half-phases — your shot passes through, and he fires back from inside your hull!',fx:'phase'},
+    col:'#005566', diff:4,
+    patrol:['baresun','thedas','nehwon'],
+    patrolLanes:['baresun->thedas','thedas->nehwon','nehwon->baresun'],  // nehwon->baresun is new
+    discoveredBy:'baresun',
+    drawFn:'drawHollowAdmiral',
+    intro:"A Vodoni warship materialises across the lane — or half of one. The other half is somewhere else entirely. The Hollow Admiral was pulled through the Baresun scar a decade ago. He came back as something the Far Realm uses as a vessel.",
+    defeat:"The phase-field collapses. The Hollow Admiral's ship falls back into full reality, then falls apart. Whatever Far Realm intelligence was piloting the wreck disperses into static.",
+    lore:'Once a Vodoni Fleet Admiral. Pulled through the Baresun scar during a patrol. The Far Realm did not kill him — it hollowed him out and kept the uniform. Something wears him now.'
+  },
+  // Triangle: squrm ↔ solaris ↔ donig  (new lane: solaris↔donig)
+  wb_clutch: {
+    name:'Chorggrak', sub:'The Brood-That-Devours — Far Realm Elder Evil',
+    hp:340, maxHp:340, g:[170,260],
+    atk:[
+      {n:'Fang-Bolt Swarm',   d:[3,6], txt:'Thousands of bio-organic projectiles launched from every surface simultaneously — a living storm of teeth!'},
+      {n:'Absorption Pulse',  d:[2,8], txt:'Chorggrak pulls matter toward itself — crew are dragged from their stations, hull plates ripped free!', crew:2}
+    ],
+    sp:{n:'Brood Split',c:0.25,txt:"Chorggrak divides — one fragment absorbs your hit while the other fires. Hull and crew both take damage.",fx:'heal'},
+    col:'#0a3310', diff:4,
+    patrol:['squrm','solaris','donig'],
+    patrolLanes:['squrm->solaris','solaris->donig','donig->squrm'],  // solaris->donig is new
+    discoveredBy:'squrm',
+    drawFn:'drawClutchMother',
+    intro:"The stars ahead are blocked. Not by a ship — by something that has been eating ships. Chorggrak, the Brood-That-Devours, has been circling these three spheres for centuries. It is not hunting. It is grazing.",
+    defeat:"Chorggrak breaks apart — not dying exactly, more like disagreeing with its own existence violently enough to stop. The void is quiet. Something that was always hungry is no longer hungry.",
+    lore:'An Elder Evil that exists to consume and replicate. It does not communicate. It does not negotiate. The Far Realm sent it here the way a body sends white blood cells — as a response to something it perceived as a threat.'
+  },
+  // Triangle: theweird ↔ baresun ↔ ragestar
+  wb_murmur: {
+    name:'The Murmur', sub:'Far Realm Consciousness — Scar Triangle',
+    hp:360, maxHp:360, g:[190,290],
+    atk:[
+      {n:'Reality Unwrite',   d:[4,8], txt:'The Murmur simply erases a portion of your hull from having existed — the gap is cold and geometrically wrong.'},
+      {n:'Madness Wave',      d:[2,8], txt:'Your crew stops following orders. Three stop existing in the usual sense.', crew:3}
+    ],
+    sp:{n:'Phase Rift',c:0.30,txt:'The Murmur shifts between moments — your attack hits something that has not happened yet, and passes through.',fx:'phase'},
+    col:'#003322', diff:5,
+    patrol:['theweird','baresun','ragestar'],
+    patrolLanes:['theweird->baresun','baresun->ragestar','ragestar->theweird'],
+    discoveredBy:'theweird',
+    drawFn:'drawTheMurmur',
+    intro:"Something has been on this lane for a long time. Not traveling it. Living on it. The Murmur has been circling these three spheres since before the spheres had names. It has been waiting for something intelligent enough to notice it. It has noticed you back.",
+    defeat:"The Murmur contracts, shrinks, and then is not here anymore. The triangle of lanes feels quieter than it should. You have the sense of something vast retreating — not in defeat, but to reconsider what you represent.",
+    lore:'Not a creature. Not a ship. A consciousness the Far Realm grew in the space between these three spheres over millennia. It murmurs constantly — a frequency that rewrites the memories of anyone who listens too long.'
+  },
+};
+
+// ── TRUE FINAL BOSS — Shothothug, the Manifest Hunger ─────
+// Unlocked when: all 4 world bosses defeated + 6+ breach dockmasters visited.
+// Spawns at Baresun (the scar epicenter).
+const FINAL_BOSS = {
+  id: 'shothothug',
+  name: 'Shothothug', sub: 'The Manifest Hunger — Elder Evil Incarnate',
+  hp: 520, maxHp: 520, g: [400, 600],
+  atk:[
+    {n:'Hunger Incarnate',    d:[5,10], txt:'Shothothug opens a wound in reality beside your hull — matter, light, and time drain into it simultaneously!'},
+    {n:'Consuming Thought',   d:[3,10], txt:'Your crew forgets what they are doing mid-action. Two stop existing entirely. Your navigation crystal cracks.', crew:2},
+    {n:'Sphere Unmaking',     d:[4,8],  txt:'Shothothug reaches through the Baresun scar and compresses space — your hull screams under the pressure!'}
+  ],
+  sp:{n:'True Hunger',c:0.32,txt:'Shothothug simply consumes your attack — absorbs it entirely, heals 40 HP, and responds with the energy turned back on you.',fx:'heal'},
+  col:'#220033', diff:5,
+  intro:"The Baresun scar tears open. Not like before — completely. What comes through is not a ship and not a creature. Shothothug, the Manifest Hunger, has been pressing against the scar from the other side for centuries. The four things you destroyed were its fingers, testing the barrier. Now the hand comes through.",
+  defeat:"Shothothug recoils. For the first time in its existence something has pushed back hard enough that it notices the pain. It withdraws through the Baresun scar, which seals behind it — truly seals, this time, the geometry locking into place like a healed wound. The Far Realm is quieter.\n\nFor now.",
+  lore:'The entity behind the breach. All Far Realm incursion in this region — the Hollow Admiral, Chorggrak, Vrath-Kaag, the Murmur — were extensions of Shothothug probing the barrier. It is not malicious. It is simply hungry, and the Phlogiston looks like food.'
 };
 
 // ── FACTIONS ──────────────────────────────────────────────
@@ -1773,6 +1860,18 @@ const LANES_DIR = {
   'nehwon->thedas':   { d:2, label:'The Pilgrim Way',        lore:'A quiet lane between two spheres that each have their own ancient mythologies. Both cultures have a word for this route.',      pool:['corsair','plunderer'],                rate:0.018, warzone:false, flow:0, flowName:null },
   'thedas->nehwon':   { d:2, label:'The Pilgrim Way',        lore:'Inbound to Nehwon — the sense of narrative weight increases as you approach. Even the phlogiston looks more... intentional.',  pool:['corsair','plunderer'],                rate:0.018, warzone:false, flow:0, flowName:null },
 
+  // ── NEW PATROL LANES (hidden until world boss discovered) ─────────────
+  // Hollow Admiral triangle: baresun↔nehwon
+  'baresun->nehwon':  { d:4, label:'The Wound Road',         lore:'An uncharted lane through twisted space. Navigation charts show nothing here — something has been actively preventing survey vessels from mapping it.',
+                        pool:['frStalker','frHorde','nautiloid'], rate:0.048, warzone:false, flow:0, flowName:null, patrolBoss:'wb_admiral' },
+  'nehwon->baresun':  { d:4, label:'The Wound Road',         lore:'Inbound from Nehwon toward Baresun — the geometry gets stranger the closer you get. The Harbormistress warned you about this lane.',
+                        pool:['frStalker','frHorde'],             rate:0.045, warzone:false, flow:0, flowName:null, patrolBoss:'wb_admiral' },
+  // Chorggrak triangle: solaris↔donig
+  'solaris->donig':   { d:4, label:'The Consumption Corridor', lore:'A lane that appears on no known chart. Ships that entered it before the boss was identified simply never arrived at their destinations.',
+                        pool:['thrikreen','frHorde','frStalker'], rate:0.050, warzone:true,  flow:0, flowName:null, patrolBoss:'wb_clutch' },
+  'donig->solaris':   { d:4, label:'The Consumption Corridor', lore:'The Donig portmaster looked at your chart and went pale when you showed her this lane. "We do not go that way," she said, and would not explain further.',
+                        pool:['thrikreen','frHorde'],             rate:0.047, warzone:true,  flow:0, flowName:null, patrolBoss:'wb_clutch' },
+
   // HERO ↔ ELDER   (Danger 5 — no flow)
   'hero->elder':   { d:5, label:"Void's Edge",                         lore:'Elder corruption seeps along this approach. The Phlogiston itself seems to recoil from Elder Space.',       pool:['leviathan','beholder'],                              rate:0.050, warzone:false, flow:0,  flowName:null },
   'elder->hero':   { d:5, label:"Void's Edge",                         lore:'The Elder corruption follows your wake. Leviathans shadow the ship the entire route.',                      pool:['leviathan','beholder'],                              rate:0.048, warzone:false, flow:0,  flowName:null },
@@ -1795,6 +1894,9 @@ function isConnected(fromId, toId) {
       const sa=G.spheres.find(s=>s.id===a), sb=G.spheres.find(s=>s.id===b);
       if(sa&&sa.breach || sb&&sb.breach) return false;
     }
+    // Block patrol lanes until their world boss is discovered
+    const lane = LANES_DIR[a+'->'+b] || LANES_DIR[b+'->'+a];
+    if(lane && lane.patrolBoss && !(G.wbDiscovered && G.wbDiscovered.has(lane.patrolBoss))) return false;
     return true;
   });
 }
@@ -1818,6 +1920,9 @@ const MAP_CONNECTIONS = [
   ['baresun','thedas'],
   ['squrm','nehwon'],
   ['nehwon','thedas'],
+  // ── New patrol lanes (hidden until world boss discovered) ──
+  ['baresun','nehwon'],   // Hollow Admiral triangle
+  ['solaris','donig'],    // Chorggrak triangle
 ];
 
 // ── WAYPOINTS (repositioned to match expanded map) ───────
@@ -1871,72 +1976,6 @@ const SOUND_DATA = {
 
 // SOUND_FILES kept for reference but audio now loads from SOUND_DATA
 const SOUND_FILES = {};
-
-// ╔══════════════════════════════════════════════════════╗
-// ║  SHIP IMAGES                                         ║
-// ╚══════════════════════════════════════════════════════╝
-// Images load from images/ folder (PNG with transparent background).
-// Any missing file silently falls back to the procedural canvas drawing.
-const SHIP_IMAGE_DATA = {
-  // ── Player vessels ─────────────────────────────────────
-  'pinnace':    'images/ship_pinnace.png',
-  'squid':      'images/ship_squid.png',
-  'hammer':     'images/ship_hammer.png',
-  'manow':      'images/ship_manow.png',
-  // ── Pirate raiders ─────────────────────────────────────
-  'corsair':    'images/ship_corsair.png',
-  'plunderer':  'images/ship_plunderer.png',
-  'blackfleet': 'images/ship_blackfleet.png',
-  // ── Fragment guardians ─────────────────────────────────
-  'nautiloid':  'images/ship_nautiloid.png',
-  'githyanki':  'images/ship_githyanki.png',
-  'beholder':   'images/ship_beholder.png',
-  'leviathan':  'images/ship_leviathan.png',
-  // ── Far Realm enemies ──────────────────────────────────
-  'vodoniPatrol': 'images/ship_vodoni.png',
-  'scroBattle':   'images/ship_scro.png',
-  'thrikreen':    'images/ship_thrikreen.png',
-  'frStalker':    'images/ship_frstalker.png',
-  'frHorde':      'images/ship_frhorde.png',
-  // ── World bosses ───────────────────────────────────────
-  'elder':      'images/ship_elder.png',
-  'wb_grex':    'images/ship_wb_grex.png',
-  'wb_admiral': 'images/ship_wb_admiral.png',
-  'wb_clutch':  'images/ship_wb_clutch.png',
-  'wb_murmur':  'images/ship_wb_murmur.png',
-};
-
-const _SHIP_IMG = {}; // preloaded Image elements (key → Image)
-
-// Preload all ship images — silently skip any file that fails to load
-function loadShipImages() {
-  Object.entries(SHIP_IMAGE_DATA).forEach(([key, path]) => {
-    const img = new Image();
-    img.onload  = () => { _SHIP_IMG[key] = img; };
-    img.onerror = () => { /* file not ready yet — fallback canvas art will be used */ };
-    img.src = path;
-  });
-}
-
-// Draw a ship using its image if available, otherwise fall back to canvas art.
-// key        — ship key string (e.g. 'pinnace', 'corsair', 'wb_grex')
-// ctx        — canvas 2d context
-// cx, cy     — centre position
-// w, h       — draw width and height (image is stretched to fit)
-// flip       — mirror horizontally (used for enemy ships)
-// fallbackFn — the procedural draw function to call when no image is ready
-function drawShipImg(key, ctx, cx, cy, w, h, flip, fallbackFn) {
-  const img = _SHIP_IMG[key];
-  if (img) {
-    ctx.save();
-    ctx.translate(cx, cy);
-    if (flip) ctx.scale(-1, 1);
-    ctx.drawImage(img, -w / 2, -h / 2, w, h);
-    ctx.restore();
-  } else {
-    fallbackFn();
-  }
-}
 
 // Preload — silently skip any file the browser can't load
 function loadSounds() {
@@ -2055,6 +2094,11 @@ function initGame() {
     quests: [],           // active quests [{...questData, state:'active'|'complete'}]
     completedQuests: new Set(),
     _roamPending: null,   // roaming encounter waiting to resolve
+    // ── Breach intel & world boss patrol ────────────────
+    breachIntel: new Set(),     // sphere IDs where dockmaster intel has been collected
+    wbDiscovered: new Set(),    // world boss keys that have been discovered (patrol visible)
+    wbPatrol: {},               // key → {fromIdx, toIdx, prog(0-1), dir(1|-1)} per boss
+    shothothuqUnlocked: false,  // true when all 4 WBs defeated + 6 breach intel collected
   };
   // Assign one quest per faction (random pick from pool per faction)
   const byFaction = {};
@@ -2068,7 +2112,6 @@ function initGame() {
   ensureLqState(); updateUI(); updateFragUI();
   renderLoop();
   loadSounds();
-  loadShipImages();
   setTimeout(() => setAmbient('map'), 300); // slight delay lets audio context unlock on user gesture
   addLog('Captain — IEN Scout Comet "Elven Comet" standing by at Refuge Station. Six Astral Chart Fragments. One Elder Brain. Orders received. Click a Crystal Sphere to depart.','imp');
 }
@@ -2184,6 +2227,9 @@ function renderLoop(ts=0) {
     if((sa&&sa.breach||sb&&sb.breach)&&!G.postVictory) return;
     if(!sa||!sb) return;
     if((sa.breach||sb.breach) && !G.postVictory) return; // hide Far Realm lanes pre-victory
+    // Hide patrol lanes until their world boss is discovered
+    const laneCheck = LANES_DIR[a+'->'+b] || LANES_DIR[b+'->'+a];
+    if(laneCheck && laneCheck.patrolBoss && !(G.wbDiscovered && G.wbDiscovered.has(laneCheck.patrolBoss))) return;
     const pa=sPos(sa), pb=sPos(sb);
     // Use direction a→b for this draw call (flow arrow will show canonical direction)
     const lane=getLane(a,b);
@@ -2285,13 +2331,10 @@ function renderLoop(ts=0) {
     cx.save();
     cx.translate(sx, sy);
     cx.rotate(travelAngle + rock);
-    drawShipImg(G.ship.type, cx, 0, bob, 36, 20, false,
-      () => {
-        if(G.ship.type==='pinnace') drawPinnace(cx,0,bob,18,false,t);
-        else if(G.ship.type==='squid') drawSquid(cx,0,bob,18,false,t);
-        else if(G.ship.type==='manow') drawManow(cx,0,bob,20,false,t);
-        else drawHammer(cx,0,bob,18,false,t);
-      });
+    if(G.ship.type==='pinnace') drawPinnace(cx,0,bob,18,false,t);
+    else if(G.ship.type==='squid') drawSquid(cx,0,bob,18,false,t);
+    else if(G.ship.type==='manow') drawManow(cx,0,bob,20,false,t);
+    else drawHammer(cx,0,bob,18,false,t);
     cx.restore();
 
   } else {
@@ -2301,25 +2344,19 @@ function renderLoop(ts=0) {
     if(G.ship.atWp){
       const rx=G.ship.atWp.x*W+28, ry=G.ship.atWp.y*H+8;
       cx.save(); cx.translate(rx,ry); cx.rotate(idleRock); 
-      drawShipImg(G.ship.type, cx, 0, idleBob, 32, 18, false,
-        () => {
-          if(G.ship.type==='pinnace') drawPinnace(cx,0,idleBob,16,false,t);
-          else if(G.ship.type==='squid') drawSquid(cx,0,idleBob,16,false,t);
-          else if(G.ship.type==='manow') drawManow(cx,0,idleBob,18,false,t);
-          else drawHammer(cx,0,idleBob,16,false,t);
-        });
+      if(G.ship.type==='pinnace') drawPinnace(cx,0,idleBob,16,false,t);
+      else if(G.ship.type==='squid') drawSquid(cx,0,idleBob,16,false,t);
+      else if(G.ship.type==='manow') drawManow(cx,0,idleBob,18,false,t);
+      else drawHammer(cx,0,idleBob,16,false,t);
       cx.restore();
     } else if(G.ship.atFragSite){
       const fs=G.ship.atFragSite;
       const rx=fs.x*W+28, ry=fs.y*H-24;
       cx.save(); cx.translate(rx,ry); cx.rotate(idleRock);
-      drawShipImg(G.ship.type, cx, 0, idleBob, 32, 18, false,
-        () => {
-          if(G.ship.type==='pinnace') drawPinnace(cx,0,idleBob,16,false,t);
-          else if(G.ship.type==='squid') drawSquid(cx,0,idleBob,16,false,t);
-          else if(G.ship.type==='manow') drawManow(cx,0,idleBob,18,false,t);
-          else drawHammer(cx,0,idleBob,16,false,t);
-        });
+      if(G.ship.type==='pinnace') drawPinnace(cx,0,idleBob,16,false,t);
+      else if(G.ship.type==='squid') drawSquid(cx,0,idleBob,16,false,t);
+      else if(G.ship.type==='manow') drawManow(cx,0,idleBob,18,false,t);
+      else drawHammer(cx,0,idleBob,16,false,t);
       cx.restore();
     } else {
       const cur=G.spheres.find(s=>s.id===G.ship.loc);
@@ -2327,13 +2364,10 @@ function renderLoop(ts=0) {
         const p=sPos(cur);
         const rx=p.x+34, ry=p.y+8;
         cx.save(); cx.translate(rx,ry); cx.rotate(idleRock);
-        drawShipImg(G.ship.type, cx, 0, idleBob, 32, 18, false,
-          () => {
-            if(G.ship.type==='pinnace') drawPinnace(cx,0,idleBob,16,false,t);
-            else if(G.ship.type==='squid') drawSquid(cx,0,idleBob,16,false,t);
-            else if(G.ship.type==='manow') drawManow(cx,0,idleBob,18,false,t);
-            else drawHammer(cx,0,idleBob,16,false,t);
-          });
+        if(G.ship.type==='pinnace') drawPinnace(cx,0,idleBob,16,false,t);
+        else if(G.ship.type==='squid') drawSquid(cx,0,idleBob,16,false,t);
+        else if(G.ship.type==='manow') drawManow(cx,0,idleBob,18,false,t);
+        else drawHammer(cx,0,idleBob,16,false,t);
         cx.restore();
       }
     }
@@ -2513,6 +2547,51 @@ function renderLoop(ts=0) {
   });
   cx.globalAlpha=1;
 
+  // ── Draw World Boss Patrols ───────────────────────────
+  if(G.wbPatrol && G.postVictory){
+    tickWbPatrols(t);
+    Object.entries(G.wbPatrol).forEach(([wbKey, state])=>{
+      const wb = WORLD_BOSSES[wbKey];
+      if(!wb) return;
+      const spheres = wb.patrol;
+      const fromSph = G.spheres.find(s=>s.id===spheres[state.fromIdx]);
+      const toSph   = G.spheres.find(s=>s.id===spheres[state.toIdx]);
+      if(!fromSph||!toSph) return;
+      const fp = sPos(fromSph), tp = sPos(toSph);
+      const bx = fp.x + (tp.x - fp.x) * state.prog;
+      const by = fp.y + (tp.y - fp.y) * state.prog;
+      const angle = Math.atan2(tp.y - fp.y, tp.x - fp.x);
+      // Warning pulse ring
+      const pulsR = 22 + 6*Math.sin(t*2.5);
+      const pgrd = cx.createRadialGradient(bx,by,0,bx,by,pulsR);
+      pgrd.addColorStop(0,'rgba(255,0,80,0.25)'); pgrd.addColorStop(1,'transparent');
+      cx.fillStyle=pgrd; cx.beginPath(); cx.arc(bx,by,pulsR,0,Math.PI*2); cx.fill();
+      // Boss icon
+      cx.save(); cx.translate(bx, by); cx.rotate(angle);
+      drawTheMurmur(cx, 0, 0, 18); // placeholder — all bosses use Murmur art until sprites done
+      cx.restore();
+      // Boss name label
+      cx.fillStyle='#ff4466'; cx.font='bold 9px "Cinzel",serif'; cx.textAlign='center';
+      cx.fillText(wb.name, bx, by+24);
+      // ⚠ icon above
+      cx.font='11px Arial'; cx.fillText('⚠', bx, by-20);
+    });
+  }
+
+  // ── Shothothug beacon at Baresun (once unlocked) ──────
+  if(G.shothothuqUnlocked && G.postVictory && !(G.worldBossDefeated && G.worldBossDefeated.has('shothothug'))){
+    const baresunSph = G.spheres.find(s=>s.id==='baresun');
+    if(baresunSph){
+      const bp = sPos(baresunSph);
+      const pulseR = 32 + 10*Math.sin(t*3.0);
+      const bg = cx.createRadialGradient(bp.x,bp.y,0,bp.x,bp.y,pulseR);
+      bg.addColorStop(0,'rgba(180,0,255,0.35)'); bg.addColorStop(1,'transparent');
+      cx.fillStyle=bg; cx.beginPath(); cx.arc(bp.x,bp.y,pulseR,0,Math.PI*2); cx.fill();
+      cx.fillStyle='#cc44ff'; cx.font='bold 10px "Cinzel",serif'; cx.textAlign='center';
+      cx.fillText('⬡ THE SCAR OPENS', bp.x, bp.y+38);
+    }
+  }
+
   // ── End view transform ───────────────────────────────
   cx.restore();
 
@@ -2526,14 +2605,33 @@ function drawShipOnMap(ctx,x,y,sz,type,t=0,angle=0,bob=0,rock=0){
   ctx.translate(x, y + bob);
   ctx.rotate(angle + rock);
   ctx.translate(-x, -y - bob);
-  drawShipImg(type, ctx, x, y+bob, sz*2, sz*1.1, false,
-    () => {
-      if(type==='pinnace') drawPinnace(ctx,x,y+bob,sz,false,t);
-      else if(type==='squid') drawSquid(ctx,x,y+bob,sz,false,t);
-      else if(type==='manow') drawManow(ctx,x,y+bob,sz,false,t);
-      else drawHammer(ctx,x,y+bob,sz,false,t);
-    });
+  if(type==='pinnace') drawPinnace(ctx,x,y+bob,sz,false,t);
+  else if(type==='squid') drawSquid(ctx,x,y+bob,sz,false,t);
+  else if(type==='manow') drawManow(ctx,x,y+bob,sz,false,t);
+  else drawHammer(ctx,x,y+bob,sz,false,t);
   ctx.restore();
+}
+
+// ── World Boss Patrol Tick ─────────────────────────────
+// Advances each boss's patrol position on its triangle.
+// Speed is slow enough to be visible — full triangle in ~4 minutes of real time.
+const WB_PATROL_SPEED = 0.00012; // fraction of leg per frame at ~60fps
+let _lastPatrolTs = 0;
+function tickWbPatrols(t) {
+  if(!G.wbPatrol || !G.postVictory) return;
+  // Throttle: only advance once per second of game time
+  if(t - _lastPatrolTs < 0.5) return;
+  _lastPatrolTs = t;
+  Object.entries(G.wbPatrol).forEach(([wbKey, state]) => {
+    const wb = WORLD_BOSSES[wbKey];
+    if(!wb) return;
+    state.prog += WB_PATROL_SPEED * 30; // multiply by throttle interval in frames
+    if(state.prog >= 1) {
+      state.prog = 0;
+      state.fromIdx = state.toIdx;
+      state.toIdx = (state.toIdx + 1) % wb.patrol.length;
+    }
+  });
 }
 
 function drawPinnace(ctx,x,y,sz,flip,t=0){
@@ -3054,6 +3152,29 @@ cv.addEventListener('click',e=>{
 
   if(G.phase!=='map') return;
 
+  // ── World Boss Intercept (click on patrol boss to engage) ──
+  if(G.wbPatrol && G.postVictory){
+    for(const [wbKey, state] of Object.entries(G.wbPatrol)){
+      const wb = WORLD_BOSSES[wbKey];
+      if(!wb) continue;
+      const fromSph = G.spheres.find(s=>s.id===wb.patrol[state.fromIdx]);
+      const toSph   = G.spheres.find(s=>s.id===wb.patrol[state.toIdx]);
+      if(!fromSph||!toSph) continue;
+      const fp = sPos(fromSph), tp = sPos(toSph);
+      const bx = fp.x + (tp.x - fp.x) * state.prog;
+      const by = fp.y + (tp.y - fp.y) * state.prog;
+      if(Math.hypot(mx-bx, my-by) < 28){
+        snd('combat_start', 0.9);
+        showMsg(`⚠ ${wb.name}`,
+          `${wb.intro}\n\nThis entity is patrolling the lanes between ${wb.patrol.join(', ')}. Engaging it here will start combat immediately.`,
+          `⚔ Engage ${wb.name}`,
+          () => startWorldBossCombat(wbKey)
+        );
+        return;
+      }
+    }
+  }
+
   // ── Fragment Sites ───────────────────────────────────────
   for(const fs of FRAGMENT_SITES){
     if(!G.clues||!G.clues.has(fs.sphere)) continue; // hidden
@@ -3210,18 +3331,10 @@ function travelTick(){
   // Lane-based encounter rate — use stored lane data
   const lane = G.tvl.lane || getLane(G.tvl.from, G.tvl.to);
 
-  // ── World boss gate: triggers at 40-60% progress if not yet defeated ──
-  if(lane.worldBoss && !G.tvl._bossChecked){
-    if(!G.worldBossDefeated) G.worldBossDefeated = new Set();
-    if(!G.worldBossDefeated.has(lane.worldBoss) && G.tvl.prog >= 40){
-      G.tvl._bossChecked = true;
-      clearInterval(G.tvl.timer);
-      const boss = WORLD_BOSSES[lane.worldBoss];
-      addLog(`⚠ ${boss.intro}`,'dmg');
-      startWorldBossCombat(lane.worldBoss);
-      return;
-    }
-  }
+  // ── World boss patrol intercept: if the boss is on this exact lane segment ──
+  // (Bosses no longer ambush — they patrol visibly. The player intercepts by
+  //  clicking the boss on the map. This block is intentionally left empty so
+  //  old worldBoss lane keys don't re-trigger the old random-at-40% behaviour.)
 
   const chance = (lane.rate || 0.026) * (1 + G.tvl.dist * 0.8);
   if(Math.random()<chance&&G.tvl.cur>3){
@@ -3322,6 +3435,16 @@ function arrive(id){
 let _portSphere=null;
 function enterPort(sph){
   if(sph.boss)return;
+  // ── Shothothug confrontation at Baresun ───────────────
+  if(sph.id === 'baresun' && G.shothothuqUnlocked && !(G.worldBossDefeated && G.worldBossDefeated.has('shothothug'))){
+    addLog('⬡ The Baresun scar screams. Something vast is coming through.','dmg');
+    showMsg('⬡ THE SCAR OPENS',
+      `${FINAL_BOSS.intro}\n\nThis is what everything was building toward. There is nowhere to run — Shothothug fills all available space.`,
+      '⚔ Face the Manifest Hunger',
+      () => startShothothuqCombat()
+    );
+    return;
+  }
   _portSphere=sph; G.phase='port';
   setAmbient('port');
   snd('port_dock', 0.7);
@@ -3650,12 +3773,12 @@ function showGuardianConfirm(site){
     gc.beginPath(); gc.arc(Math.random()*200,Math.random()*120,Math.random()*1.2+0.3,0,Math.PI*2); gc.fill();
   }
   const key = site.guardianKey;
-  if(key==='fg_realm')       drawShipImg('squid',    gc,100,60,76,44,true,  ()=>drawSquid(gc,100,60,38,true));
-  else if(key==='fg_grey')   drawShipImg('hammer',   gc,100,60,76,44,true,  ()=>drawHammer(gc,100,60,38,true));
-  else if(key==='fg_krynn')  drawShipImg('githyanki',gc,100,60,76,44,false, ()=>drawGithyanki(gc,100,60,38));
-  else if(key==='fg_cluster')drawShipImg('squid',    gc,100,60,76,44,true,  ()=>drawSquid(gc,100,60,38,true));
-  else if(key==='fg_hero')   drawShipImg('beholder', gc,100,60,76,44,false, ()=>drawBeholder(gc,100,60,38));
-  else if(key==='fg_dark')   drawShipImg('leviathan',gc,100,60,76,44,false, ()=>drawLeviathan(gc,100,60,38));
+  if(key==='fg_realm')       drawSquid(gc,100,60,38,true);
+  else if(key==='fg_grey')    drawHammer(gc,100,60,38,true);
+  else if(key==='fg_krynn')   drawGithyanki(gc,100,60,38);
+  else if(key==='fg_cluster') drawSquid(gc,100,60,38,true);
+  else if(key==='fg_hero')    drawBeholder(gc,100,60,38);
+  else if(key==='fg_dark')    drawLeviathan(gc,100,60,38);
   document.getElementById('ov-guardian').classList.add('on');
   setAmbient('combat'); // ominous
 }
@@ -3713,6 +3836,25 @@ function startWorldBossCombat(key){
   cLog(`Choose your action.`,'');
 }
 
+function startShothothuqCombat(){
+  G.phase='combat'; setTag('COMBAT — THE MANIFEST HUNGER');
+  const boss = {...FINAL_BOSS, hp:FINAL_BOSS.maxHp, burnLeft:0, stunsNext:false, _key:'shothothug', _worldBoss:true};
+  G.cbt={ enemy:boss,
+          pStat:'normal', eStat:'normal', pTurn:true, cds:{}, linkedCd:0, volleyCd:0,
+          pendingLootKey:'shothothug', playerStunnedNext:false };
+  G.ship.wpns.forEach((_,i)=>G.cbt.cds[i]=0);
+  document.getElementById('ov-combat').classList.add('on');
+  document.getElementById('ct-title').textContent=`⬡ SHOTHOTHUG — THE MANIFEST HUNGER ⬡`;
+  document.getElementById('ct-pname').textContent=G.ship.name;
+  document.getElementById('ct-ename').textContent=`${FINAL_BOSS.name} · ${FINAL_BOSS.sub}`;
+  updateCbtUI(); drawCbtShips('shothothug'); buildCbtBtns();
+  snd('combat_start', 1.0);
+  setTimeout(()=>setAmbient('combat'), 600);
+  cLog(`⬡ THE BARESUN SCAR TEARS OPEN — ${FINAL_BOSS.name} EMERGES!`,'dmg');
+  cLog(FINAL_BOSS.intro,'dmg');
+  cLog(`This is the end. Choose your action.`,'');
+}
+
 function startCombat(key){
   G.phase='combat'; setTag('COMBAT');
   const t=ENM[key];
@@ -3745,41 +3887,38 @@ function updateCbtUI(){
 function drawCbtShips(key){
   const pc=document.getElementById('cv-player').getContext('2d');
   pc.clearRect(0,0,120,80);
-  drawShipImg(G.ship.type, pc,60,44,56,32,false,
-    ()=>{
-      if(G.ship.type==='pinnace')drawPinnace(pc,60,44,28,false);
-      else if(G.ship.type==='squid')drawSquid(pc,60,44,28,false);
-      else if(G.ship.type==='manow')drawManow(pc,60,44,28,false);
-      else drawHammer(pc,60,44,28,false);
-    });
+  if(G.ship.type==='pinnace')drawPinnace(pc,60,44,28,false);
+  else if(G.ship.type==='squid')drawSquid(pc,60,44,28,false);
+  else if(G.ship.type==='manow')drawManow(pc,60,44,28,false);
+  else drawHammer(pc,60,44,28,false);
   const ec=document.getElementById('cv-enemy').getContext('2d');
   ec.clearRect(0,0,120,80);
   // Fragment guardians use ship silhouettes matching their difficulty
-  if(key==='fg_realm')       drawShipImg('squid',      ec,60,44,56,32,true, ()=>drawSquid(ec,60,44,28,true));
-  else if(key==='fg_grey')   drawShipImg('hammer',     ec,60,44,56,32,true, ()=>drawHammer(ec,60,44,28,true));
-  else if(key==='fg_krynn')  drawShipImg('githyanki',  ec,60,44,56,32,false,()=>drawGithyanki(ec,60,44,28));
-  else if(key==='fg_cluster')drawShipImg('squid',      ec,60,44,56,32,true, ()=>drawSquid(ec,60,44,28,true));
-  else if(key==='fg_hero')   drawShipImg('beholder',   ec,60,44,56,32,false,()=>drawBeholder(ec,60,44,28));
-  else if(key==='fg_dark')   drawShipImg('leviathan',  ec,60,44,56,32,false,()=>drawLeviathan(ec,60,44,28));
-  else if(key==='corsair')   drawShipImg('corsair',    ec,60,44,56,32,true, ()=>drawCorsairSloop(ec,60,44,28,true));
-  else if(key==='plunderer') drawShipImg('plunderer',  ec,60,44,56,32,true, ()=>drawPlundererBrig(ec,60,44,28,true));
-  else if(key==='blackfleet')drawShipImg('blackfleet', ec,60,44,56,32,true, ()=>drawBlackFleetReaver(ec,60,44,28,true));
-  else if(key==='nautiloid') drawShipImg('nautiloid',  ec,60,44,56,32,false,()=>drawNautiloid(ec,60,44,28));
-  else if(key==='elder')     drawShipImg('elder',      ec,60,44,56,32,false,()=>drawElder(ec,60,44,28));
-  else if(key==='beholder')  drawShipImg('beholder',   ec,60,44,56,32,false,()=>drawBeholder(ec,60,44,28));
-  else if(key==='leviathan') drawShipImg('leviathan',  ec,60,44,56,32,false,()=>drawLeviathan(ec,60,44,28));
-  else if(key==='githyanki') drawShipImg('githyanki',  ec,60,44,56,32,false,()=>drawGithyanki(ec,60,44,28));
+  if(key==='fg_realm')      drawSquid(ec,60,44,28,true);
+  else if(key==='fg_grey')   drawHammer(ec,60,44,28,true);
+  else if(key==='fg_krynn')  drawGithyanki(ec,60,44,28);
+  else if(key==='fg_cluster')drawSquid(ec,60,44,28,true);
+  else if(key==='fg_hero')   drawBeholder(ec,60,44,28);
+  else if(key==='fg_dark')   drawLeviathan(ec,60,44,28);
+  else if(key==='corsair')   drawCorsairSloop(ec,60,44,28,true);
+  else if(key==='plunderer') drawPlundererBrig(ec,60,44,28,true);
+  else if(key==='blackfleet')drawBlackFleetReaver(ec,60,44,28,true);
+  else if(key==='nautiloid'||key==='elder') key==='elder'?drawElder(ec,60,44,28):drawNautiloid(ec,60,44,28);
+  else if(key==='beholder')drawBeholder(ec,60,44,28);
+  else if(key==='leviathan')drawLeviathan(ec,60,44,28);
+  else if(key==='githyanki')drawGithyanki(ec,60,44,28);
   // ── Far Realm enemies ─────────────────────────────────
-  else if(key==='vodoniPatrol')drawShipImg('vodoniPatrol',ec,60,44,56,32,false,()=>drawVodoniWarship(ec,60,44,28));
-  else if(key==='scroBattle')  drawShipImg('scroBattle',  ec,60,44,56,32,false,()=>drawScroBattleCruiser(ec,60,44,28));
-  else if(key==='frStalker')   drawShipImg('frStalker',   ec,60,44,56,32,false,()=>drawFarRealmStalker(ec,60,44,28));
-  else if(key==='frHorde')     drawShipImg('frHorde',     ec,60,44,56,32,false,()=>drawFarRealmHorde(ec,60,44,28));
-  else if(key==='thrikreen')   drawShipImg('thrikreen',   ec,60,44,56,32,false,()=>drawThriKreen(ec,60,44,28));
+  else if(key==='vodoniPatrol')drawVodoniWarship(ec,60,44,28);
+  else if(key==='scroBattle')  drawScroBattleCruiser(ec,60,44,28);
+  else if(key==='frStalker')   drawFarRealmStalker(ec,60,44,28);
+  else if(key==='frHorde')     drawFarRealmHorde(ec,60,44,28);
+  else if(key==='thrikreen')   drawThriKreen(ec,60,44,28);
   // ── World bosses ──────────────────────────────────────
-  else if(key==='wb_grex')   drawShipImg('wb_grex',   ec,60,44,56,32,false,()=>drawWarlordGrex(ec,60,44,28));
-  else if(key==='wb_admiral')drawShipImg('wb_admiral',ec,60,44,56,32,false,()=>drawHollowAdmiral(ec,60,44,28));
-  else if(key==='wb_clutch') drawShipImg('wb_clutch', ec,60,44,56,32,false,()=>drawClutchMother(ec,60,44,28));
-  else if(key==='wb_murmur') drawShipImg('wb_murmur', ec,60,44,56,32,false,()=>drawTheMurmur(ec,60,44,28));
+  else if(key==='wb_grex')     drawWarlordGrex(ec,60,44,28);
+  else if(key==='wb_admiral')  drawHollowAdmiral(ec,60,44,28);
+  else if(key==='wb_clutch')   drawClutchMother(ec,60,44,28);
+  else if(key==='wb_murmur')   drawTheMurmur(ec,60,44,28);
+  else if(key==='shothothug')  drawTheMurmur(ec,60,44,28); // reuses Murmur art until custom sprite added
   else drawSquid(ec,60,44,28,true);
 }
 
@@ -4662,7 +4801,7 @@ function genLoot(key){
 
 function showLootOverlay(key, gold, items){
   G._pendingLoot=items; G._pendingGold=gold; G._lootKey=key;
-  const e=ENM[key] || FRAG_GUARDIANS[key] || WORLD_BOSSES[key];
+  const e=ENM[key] || FRAG_GUARDIANS[key] || WORLD_BOSSES[key] || (key==='shothothug' ? FINAL_BOSS : null);
   document.getElementById('loot-subline').textContent=`${e.name} ${e.sub} — Destroyed`;
   document.getElementById('loot-gold').textContent=gold;
 
@@ -4670,23 +4809,24 @@ function showLootOverlay(key, gold, items){
   const lc=document.getElementById('loot-canvas').getContext('2d');
   lc.clearRect(0,0,180,110);
   lc.fillStyle='rgba(5,0,15,0.5)'; lc.fillRect(0,0,180,110);
-  if(key==='corsair')        drawShipImg('corsair',     lc,90,55,64,37,true, ()=>drawCorsairSloop(lc,90,55,32,true));
-  else if(key==='plunderer') drawShipImg('plunderer',   lc,90,55,64,37,true, ()=>drawPlundererBrig(lc,90,55,32,true));
-  else if(key==='blackfleet')drawShipImg('blackfleet',  lc,90,55,64,37,true, ()=>drawBlackFleetReaver(lc,90,55,32,true));
-  else if(key==='nautiloid') drawShipImg('nautiloid',   lc,90,55,64,37,false,()=>drawNautiloid(lc,90,55,32));
-  else if(key==='beholder')  drawShipImg('beholder',    lc,90,55,64,37,false,()=>drawBeholder(lc,90,55,32));
-  else if(key==='leviathan') drawShipImg('leviathan',   lc,90,55,64,37,false,()=>drawLeviathan(lc,90,55,32));
-  else if(key==='githyanki') drawShipImg('githyanki',   lc,90,55,64,37,false,()=>drawGithyanki(lc,90,55,32));
-  else if(key==='elder')     drawShipImg('elder',       lc,90,55,64,37,false,()=>drawElder(lc,90,55,32));
-  else if(key==='vodoniPatrol')drawShipImg('vodoniPatrol',lc,90,55,64,37,false,()=>drawVodoniWarship(lc,90,55,32));
-  else if(key==='scroBattle')  drawShipImg('scroBattle',  lc,90,55,64,37,false,()=>drawScroBattleCruiser(lc,90,55,32));
-  else if(key==='frStalker')   drawShipImg('frStalker',   lc,90,55,64,37,false,()=>drawFarRealmStalker(lc,90,55,32));
-  else if(key==='frHorde')     drawShipImg('frHorde',     lc,90,55,64,37,false,()=>drawFarRealmHorde(lc,90,55,32));
-  else if(key==='thrikreen')   drawShipImg('thrikreen',   lc,90,55,64,37,false,()=>drawThriKreen(lc,90,55,32));
-  else if(key==='wb_grex')   drawShipImg('wb_grex',    lc,90,55,64,37,false,()=>drawWarlordGrex(lc,90,55,32));
-  else if(key==='wb_admiral')drawShipImg('wb_admiral', lc,90,55,64,37,false,()=>drawHollowAdmiral(lc,90,55,32));
-  else if(key==='wb_clutch') drawShipImg('wb_clutch',  lc,90,55,64,37,false,()=>drawClutchMother(lc,90,55,32));
-  else if(key==='wb_murmur') drawShipImg('wb_murmur',  lc,90,55,64,37,false,()=>drawTheMurmur(lc,90,55,32));
+  if(key==='corsair')       drawCorsairSloop(lc,90,55,32,true);
+  else if(key==='plunderer') drawPlundererBrig(lc,90,55,32,true);
+  else if(key==='blackfleet')drawBlackFleetReaver(lc,90,55,32,true);
+  else if(key==='nautiloid') drawNautiloid(lc,90,55,32);
+  else if(key==='beholder')  drawBeholder(lc,90,55,32);
+  else if(key==='leviathan') drawLeviathan(lc,90,55,32);
+  else if(key==='githyanki') drawGithyanki(lc,90,55,32);
+  else if(key==='elder')     drawElder(lc,90,55,32);
+  else if(key==='vodoniPatrol')drawVodoniWarship(lc,90,55,32);
+  else if(key==='scroBattle')  drawScroBattleCruiser(lc,90,55,32);
+  else if(key==='frStalker')   drawFarRealmStalker(lc,90,55,32);
+  else if(key==='frHorde')     drawFarRealmHorde(lc,90,55,32);
+  else if(key==='thrikreen')   drawThriKreen(lc,90,55,32);
+  else if(key==='wb_grex')     drawWarlordGrex(lc,90,55,32);
+  else if(key==='wb_admiral')  drawHollowAdmiral(lc,90,55,32);
+  else if(key==='wb_clutch')   drawClutchMother(lc,90,55,32);
+  else if(key==='wb_murmur')   drawTheMurmur(lc,90,55,32);
+  else if(key==='shothothug')  drawTheMurmur(lc,90,55,32); // reuses Murmur art until custom sprite added
   else drawSquid(lc,90,55,32,true);
   // X over it
   lc.strokeStyle='rgba(255,50,50,0.6)'; lc.lineWidth=4;
@@ -4715,11 +4855,17 @@ function claimLoot(){
   document.getElementById('ov-loot').classList.remove('on');
   updateUI();
   if(G._lootKey==='elder'){ doVictory(); return; }
+  // ── True final boss victory ──────────────────────────
+  if(G._lootKey==='shothothug'){ doFarRealmVictory(); return; }
   if(WORLD_BOSSES[G._lootKey]){
     if(!G.worldBossDefeated) G.worldBossDefeated=new Set();
     G.worldBossDefeated.add(G._lootKey);
     const boss=WORLD_BOSSES[G._lootKey];
     addLog(boss.defeat,'imp');
+    // Stop this boss's patrol
+    if(G.wbPatrol) delete G.wbPatrol[G._lootKey];
+    // Check if all four world bosses are now down
+    checkShothothuqUnlock();
   }
   // Use explicit flag — never rely solely on string pattern
   const isFragFight = G.cbt.fragFight || (G._lootKey && G._lootKey.startsWith('fg_'));
@@ -4864,13 +5010,10 @@ function buildShipOverlay(){
   sc.fillStyle='rgba(5,0,15,0.6)'; sc.fillRect(0,0,200,130);
   // Starfield
   for(let i=0;i<40;i++){ sc.fillStyle=`rgba(255,255,255,${Math.random()*0.4+0.1})`; sc.beginPath(); sc.arc(Math.random()*200,Math.random()*130,Math.random()*1.2+0.3,0,Math.PI*2); sc.fill(); }
-  drawShipImg(s.type, sc,100,65,88,50,false,
-    ()=>{
-      if(s.type==='pinnace')drawPinnace(sc,100,65,44,false);
-      else if(s.type==='squid')drawSquid(sc,100,65,44,false);
-      else if(s.type==='hammer')drawHammer(sc,100,65,44,false);
-      else drawHammer(sc,100,65,50,false);
-    });
+  if(s.type==='pinnace')drawPinnace(sc,100,65,44,false);
+  else if(s.type==='squid')drawSquid(sc,100,65,44,false);
+  else if(s.type==='hammer')drawHammer(sc,100,65,44,false);
+  else drawHammer(sc,100,65,50,false);
 
   const statsDiv=document.getElementById('shp-stats'); statsDiv.innerHTML='';
   const stats=[
@@ -4927,8 +5070,18 @@ function doVictory(){
   document.getElementById('scr-win').classList.add('on');
 }
 
+function doFarRealmVictory(){
+  G.phase='victory';
+  _stopLoop();
+  setTimeout(()=>snd('victory_final', 1.0), 400);
+  setTimeout(()=>snd('victory_final', 0.6), 1800);
+  document.getElementById('ov-loot').classList.remove('on');
+  document.getElementById('scr-farwin').classList.add('on');
+}
+
 function continueSailing(){
   document.getElementById('scr-win').classList.remove('on');
+  document.getElementById('scr-farwin').classList.remove('on');
   G.phase = 'map';
   G.postVictory = true;
   G.spheres.forEach(s => { s.locked = false; });
@@ -4961,7 +5114,7 @@ The Far Realm still whispers at the edges of reality. Perhaps one day a new thre
   ), 800);
 }
 function restart(){
-  ['ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-dockmaster','ov-localquest','scr-defeat','scr-win','tvlbar','msgbox'].forEach(id=>{
+  ['ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-dockmaster','ov-localquest','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox'].forEach(id=>{
     const el=document.getElementById(id); if(el)el.classList.remove('on','active');
   });
   const _fr=document.getElementById('ov-faction-rep'); if(_fr) _fr.style.display='none';
@@ -5134,6 +5287,36 @@ function dmGrantClue() {
     snd('fragment_collect', 0.8);
     addLog(`⚑ INTEL: ${site.clue}`, 'imp');
   }
+
+  // ── Breach intel tracking (Far Realm spheres) ──────────
+  const breachSphere = G.spheres.find(s => s.id === _dmSphere && s.breach);
+  if (breachSphere && !G.breachIntel.has(_dmSphere)) {
+    if(!G.breachIntel) G.breachIntel = new Set();
+    G.breachIntel.add(_dmSphere);
+    addLog(`⬡ BREACH INTEL recorded from ${breachSphere.n}. (${G.breachIntel.size}/10)`, 'imp');
+
+    // Check if this sphere's dockmaster reveals a world boss
+    const wbKey = Object.keys(WORLD_BOSSES).find(k => WORLD_BOSSES[k].discoveredBy === _dmSphere);
+    if (wbKey && !(G.wbDiscovered && G.wbDiscovered.has(wbKey))) {
+      if(!G.wbDiscovered) G.wbDiscovered = new Set();
+      G.wbDiscovered.add(wbKey);
+      const wb = WORLD_BOSSES[wbKey];
+      // Initialise patrol state for this boss
+      if(!G.wbPatrol) G.wbPatrol = {};
+      G.wbPatrol[wbKey] = { fromIdx:0, toIdx:1, prog:0, dir:1 };
+      snd('fragment_collect', 1.0);
+      setTimeout(() => showMsg(
+        `⚠ ${wb.name} DETECTED`,
+        `${wb.lore}\n\nYour instruments are picking up an anomalous signature on the lanes between ${wb.patrol.join(', ')}. The entity is moving. Its patrol triangle is now visible on your chart.\n\nApproach with extreme caution, Captain.`,
+        'Acknowledged', null
+      ), 800);
+      addLog(`⚠ World Boss detected: ${wb.name} — patrol triangle revealed on chart!`, 'dmg');
+    }
+
+    // Check Shothothug unlock
+    checkShothothuqUnlock();
+  }
+
   // Hide clue btn, show quest button if available
   document.getElementById('dm-clue-btn').style.display = 'none';
   document.getElementById('dm-text').textContent = "The coordinates are marked on your Astral Chart, Captain. Fly safe — whatever's out there has been waiting a long time.";
@@ -5141,6 +5324,25 @@ function dmGrantClue() {
   document.getElementById('dm-next-btn').style.display = 'none';
   dmShowQuestBtn(_dmSphere);
   updateUI();
+}
+
+// Check whether Shothothug should be unlocked at Baresun
+function checkShothothuqUnlock() {
+  if(G.shothothuqUnlocked) return;
+  if(!G.worldBossDefeated) return;
+  if(!G.breachIntel) return;
+  const allWbDefeated = ['wb_grex','wb_admiral','wb_clutch','wb_murmur'].every(k => G.worldBossDefeated.has(k));
+  const intelCount = G.breachIntel.size;
+  if(allWbDefeated && intelCount >= 6) {
+    G.shothothuqUnlocked = true;
+    snd('fragment_collect', 1.0);
+    setTimeout(() => showMsg(
+      '⬡ THE BARESUN SCAR TEARS OPEN',
+      `You have dismantled the fingers. Now the hand comes through.\n\nShothothug — the Manifest Hunger, Elder Evil Incarnate — has been pressing against the Baresun scar from the other side for centuries. The four entities you destroyed were extensions of it, probing the barrier. With them gone, the barrier has nothing left to anchor it.\n\nThe Baresun scar is opening. Travel to Baresun to confront what comes through.\n\nThis is what everything was building toward.`,
+      '⬡ Understood', null
+    ), 800);
+    addLog('⬡ SHOTHOTHUG APPROACHES — The Baresun scar is tearing open. Travel to Baresun.', 'imp');
+  }
 }
 
 // ── FACTION HELPERS ──────────────────────────────────────
@@ -5787,7 +5989,7 @@ function hideMainMenu(keepTitle) {
 function menuNewGame() {
   hideMainMenu(true); // keep title playing through cinematic
   // Full teardown so combat/port/loot overlays don't linger from an in-progress game
-  ['ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-dockmaster','ov-localquest','scr-defeat','scr-win','tvlbar','msgbox'].forEach(id=>{
+  ['ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-dockmaster','ov-localquest','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox'].forEach(id=>{
     const el=document.getElementById(id); if(el)el.classList.remove('on','active');
   });
   const _fr=document.getElementById('ov-faction-rep'); if(_fr) _fr.style.display='none';
@@ -5844,7 +6046,7 @@ function drawMenuShip() {
     g.addColorStop(0,c+a+')'); g.addColorStop(1,c+'0)');
     ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
   });
-  drawShipImg('pinnace', ctx,120,70,80,46,false, ()=>drawPinnace(ctx, 120, 70, 40, false, 0));
+  drawPinnace(ctx, 120, 70, 40, false, 0);
 }
 
 // ── SAVE / LOAD ─────────────────────────────────────────
@@ -5886,7 +6088,16 @@ function saveToSlot(slot, notify) {
       loc: G.spheres.find(s => s.id === G.ship.loc)?.n || G.ship.loc,
       data: JSON.stringify({ ship: G.ship, spheres: G.spheres, frags: G.frags,
         clues: [...G.clues], fragsCollected: [...G.fragsCollected],
-        localQuests: G.localQuests || {} })
+        localQuests: G.localQuests || {},
+        rep: G.rep || {}, quests: G.quests || [], completedQuests: [...(G.completedQuests||[])],
+        postVictory: G.postVictory || false, breachEntered: G.breachEntered || false,
+        worldBossDefeated: [...(G.worldBossDefeated||[])],
+        breachIntel: [...(G.breachIntel||[])],
+        wbDiscovered: [...(G.wbDiscovered||[])],
+        wbPatrol: G.wbPatrol || {},
+        shothothuqUnlocked: G.shothothuqUnlocked || false,
+        farPhlo: G.farPhlo || null,
+        _breachArrived: G._breachArrived || {} })
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(saves));
     if (notify) addLog('Game saved to Slot ' + (slot + 1) + '.', 'gd');
@@ -5906,7 +6117,7 @@ function loadFromSlot(slot) {
     if (G.animId) cancelAnimationFrame(G.animId);
     _stopLoop();
     // Clear any lingering overlays or end screens before restoring
-    ['ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-dockmaster','ov-localquest','ov-faction-rep','scr-defeat','scr-win','tvlbar','msgbox'].forEach(id=>{
+    ['ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-dockmaster','ov-localquest','ov-faction-rep','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox'].forEach(id=>{
       const el=document.getElementById(id); if(el)el.classList.remove('on','active');
     });
     // Restore state
@@ -5922,6 +6133,22 @@ function loadFromSlot(slot) {
       invFilter: 'all', selItem: null, portTab: 'supplies',
       _msgCb: null, _pendingLoot: [], _pendingGold: 0,
       stars: [], phlo: [], animId: null,
+      // ── Faction system ───────────────────────────────────
+      rep: state.rep || Object.fromEntries(Object.entries(FACTIONS).map(([k,f])=>[k,f.start])),
+      quests: state.quests || [],
+      completedQuests: new Set(state.completedQuests || []),
+      _roamPending: null,
+      // ── Post-victory / Far Realm breach state ────────────
+      postVictory: state.postVictory || false,
+      breachEntered: state.breachEntered || false,
+      worldBossDefeated: new Set(state.worldBossDefeated || []),
+      breachIntel: new Set(state.breachIntel || []),
+      wbDiscovered: new Set(state.wbDiscovered || []),
+      wbPatrol: state.wbPatrol || {},
+      shothothuqUnlocked: state.shothothuqUnlocked || false,
+      farPhlo: state.farPhlo || null,
+      _breachArrived: state._breachArrived || {},
+      view:{zoom:1,panX:0,panY:0,follow:true,_pan:false,_lastMx:0,_lastMy:0,_didDrag:false},
     };
     // Rebuild background
     for (let i = 0; i < 220; i++) G.stars.push({ x: Math.random(), y: Math.random(), r: Math.random() * 1.8 + 0.3, twk: Math.random() * Math.PI * 2, spd: Math.random() * 0.014 + 0.003, br: Math.random() });
@@ -5933,6 +6160,7 @@ function loadFromSlot(slot) {
     renderLoop();
     loadSounds();
     loadShipImages();
+    ensureLqState();
     setTimeout(() => setAmbient('map'), 200);
     hideLoad(); hideMainMenu();
     addLog(`Voyage restored — ${save.shipName} in ${save.loc}. Welcome back, Captain.`, 'imp');
@@ -6910,6 +7138,9 @@ function runDebugCmd(){
       G._godMode=true; G._instakill=true;
       G.postVictory=true; G.breachEntered=true;
       if(!G.worldBossDefeated) G.worldBossDefeated=new Set();
+      if(!G.breachIntel) G.breachIntel=new Set();
+      if(!G.wbDiscovered) G.wbDiscovered=new Set();
+      if(!G.wbPatrol) G.wbPatrol={};
       G.spheres.forEach(s=>{ s.locked=false; if(s.breach) s.vis=true; });
       if(!G.farPhlo){ const FPC=['rgba(0,200,150,','rgba(150,0,255,','rgba(255,50,0,','rgba(0,255,100,','rgba(200,0,80,','rgba(80,0,200,']; G.farPhlo=[]; for(let i=0;i<50;i++) G.farPhlo.push({x:1.1+Math.random()*1.55,y:Math.random(),vx:(Math.random()-.5)*0.0005,vy:(Math.random()-.5)*0.0005,sz:Math.random()*100+40,col:FPC[i%FPC.length],a:Math.random()*0.09+0.02,da:(Math.random()-.5)*0.0007}); }
       G.ship.hull=G.ship.maxHull; G.ship.gold+=5000; G.frags=6;
@@ -6917,10 +7148,35 @@ function runDebugCmd(){
       dbOut('✓ CHEAT: godmode + instakill + breach unlocked + 5000g + 6 frags','#00ff88'); break;
     case 'unlock':
       G.postVictory=true; G.breachEntered=true;
+      if(!G.breachIntel) G.breachIntel=new Set();
+      if(!G.wbDiscovered) G.wbDiscovered=new Set();
+      if(!G.wbPatrol) G.wbPatrol={};
       G.spheres.forEach(s=>{ s.locked=false; if(s.breach) s.vis=true; });
       if(!G.farPhlo){ const FPC=['rgba(0,200,150,','rgba(150,0,255,','rgba(255,50,0,','rgba(0,255,100,','rgba(200,0,80,','rgba(80,0,200,']; G.farPhlo=[]; for(let i=0;i<50;i++) G.farPhlo.push({x:1.1+Math.random()*1.55,y:Math.random(),vx:(Math.random()-.5)*0.0005,vy:(Math.random()-.5)*0.0005,sz:Math.random()*100+40,col:FPC[i%FPC.length],a:Math.random()*0.09+0.02,da:(Math.random()-.5)*0.0007}); }
       updateUI(); updateFragUI();
       dbOut('✓ Far Realm breach unlocked — all spheres revealed','#00ff88'); break;
+    case 'wbunlock':
+      // Reveal all world bosses on the map (for testing)
+      if(!G.wbDiscovered) G.wbDiscovered=new Set();
+      if(!G.wbPatrol) G.wbPatrol={};
+      if(!G.breachIntel) G.breachIntel=new Set();
+      Object.keys(WORLD_BOSSES).forEach(k=>{
+        G.wbDiscovered.add(k);
+        if(!G.wbPatrol[k]) G.wbPatrol[k]={fromIdx:0,toIdx:1,prog:Math.random(),dir:1};
+        G.WORLD_BOSSES?.[k]?.patrol?.forEach(sid=>G.breachIntel.add(sid));
+        WORLD_BOSSES[k].patrol.forEach(sid=>G.breachIntel.add(sid));
+      });
+      updateUI();
+      dbOut('✓ All world bosses revealed on patrol — type "wbkill" to defeat all','#00ff88'); break;
+    case 'wbkill':
+      // Defeat all world bosses instantly (for testing Shothothug unlock)
+      if(!G.worldBossDefeated) G.worldBossDefeated=new Set();
+      if(!G.breachIntel) G.breachIntel=new Set();
+      Object.keys(WORLD_BOSSES).forEach(k=>{ G.worldBossDefeated.add(k); if(G.wbPatrol) delete G.wbPatrol[k]; });
+      ['ragestar','vodoni','dukagsh','theweird','baresun','squrm','nehwon','thedas','donig','solaris'].forEach(s=>G.breachIntel.add(s));
+      checkShothothuqUnlock();
+      updateUI();
+      dbOut('✓ All world bosses defeated — Shothothug should now unlock','#00ff88'); break;
     case 'god':
       G._godMode=!G._godMode;
       dbOut(`✓ God mode ${G._godMode?'ON':'OFF'}`, G._godMode?'#00ff88':'#ff8844'); break;
@@ -7147,7 +7403,6 @@ function drawCinCanvas(idx){
 // wait for DOMContentLoaded before touching those elements.
 document.addEventListener('DOMContentLoaded', () => {
   loadSounds(); // preload all audio including title.mp3 before game starts
-  loadShipImages(); // preload ship images — missing files fall back to canvas art
   drawMenuShip();
   showMainMenu();
   // Splash dismiss — prompt blink
