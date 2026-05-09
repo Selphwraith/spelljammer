@@ -5528,17 +5528,13 @@ let _gameActive = false; // true once a game is running
 function showMainMenu() {
   const el = document.getElementById('main-menu');
   if (!el) return;
-  if(!_splashDismissed){
-    el.classList.add('hidden');
-  } else {
-    el.classList.remove('hidden');
-    playTitle();
-  }
+  el.classList.remove('hidden');
   const contBtn = document.getElementById('btn-continue');
   if (contBtn) contBtn.disabled = !_gameActive;
   drawMenuShip();
   setTag('Main Menu');
   if (_gameActive) _stopLoop();
+  playTitle();
 }
 
 function hideMainMenu() {
@@ -6906,40 +6902,34 @@ function drawCinCanvas(idx){
 }
 
 // wait for DOMContentLoaded before touching those elements.
-let _splashDismissed = false;
-function dismissSplash(){
-  if(_splashDismissed) return;
-  _splashDismissed = true;
-  const sp = document.getElementById('splash-screen');
-  if(sp){
-    sp.style.pointerEvents = 'none'; // immediately stop blocking clicks
-    sp.style.transition = 'opacity 0.7s';
-    sp.style.opacity = '0';
-    setTimeout(()=>{ sp.style.display='none'; }, 750);
-  }
-  document.getElementById('main-menu').classList.remove('hidden');
-  playTitle();
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   drawMenuShip();
-  showMainMenu(); // sets up menu but splash covers it
-  // Wire splash dismissal via JS (reliable on mobile)
-  const sp = document.getElementById('splash-screen');
-  if(sp){
-    sp.addEventListener('touchend', function(e){ e.preventDefault(); dismissSplash(); }, {passive:false});
-    sp.addEventListener('click',    function(){ dismissSplash(); });
+  showMainMenu();
+  // Splash dismiss — prompt blink
+  const spPrompt = document.getElementById('sp-prompt');
+  if(spPrompt){
+    let _v=true; setInterval(()=>{ _v=!_v; spPrompt.style.opacity=_v?'1':'0.2'; }, 900);
+  }
+  // Wire dismiss
+  const spEl = document.getElementById('sp');
+  function _dismiss(){
+    if(!spEl || spEl.style.display==='none') return;
+    spEl.style.display = 'none';
+    playTitle();
+  }
+  if(spEl){
+    spEl.addEventListener('touchend', function(e){ e.preventDefault(); _dismiss(); }, {passive:false});
+    spEl.addEventListener('click', _dismiss);
   }
 });
 </script>
 <!-- ═══ SPLASH SCREEN ═══ -->
-<div id="splash-screen">
-  <div id="splash-bg"></div>
-  <div id="splash-vignette"></div>
-  <div id="splash-content">
-    <div id="splash-title">SPELLJAMMER</div>
-    <div id="splash-subtitle">Voyage Through the Phlogiston</div>
-    <div id="splash-prompt">✦ Click Anywhere to Begin ✦</div>
+<div id="sp" style="position:fixed;inset:0;z-index:10000;background:#000 url('splash.jpg') center/cover no-repeat;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 25%,rgba(0,0,0,0.78) 100%);"></div>
+  <div style="position:relative;z-index:2;text-align:center;padding:0 24px;pointer-events:none;">
+    <div style="font-family:'Cinzel',serif;font-size:clamp(38px,7vw,88px);color:#eddeff;letter-spacing:.12em;text-shadow:0 0 40px #8844ff,0 0 90px #4422aa;line-height:1.1;">SPELLJAMMER</div>
+    <div style="font-family:'Cinzel',serif;font-size:clamp(11px,1.8vw,20px);color:#9977cc;letter-spacing:.32em;text-transform:uppercase;text-shadow:0 0 20px #6633aa;margin-top:12px;">Voyage Through the Phlogiston</div>
+    <div id="sp-prompt" style="font-family:'Cinzel',serif;font-size:clamp(10px,1.2vw,14px);color:#665588;letter-spacing:.22em;margin-top:36px;">✦ Tap Anywhere to Begin ✦</div>
   </div>
 </div>
 
