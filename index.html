@@ -5528,13 +5528,11 @@ let _gameActive = false; // true once a game is running
 function showMainMenu() {
   const el = document.getElementById('main-menu');
   if (!el) return;
-  // Keep hidden behind splash on first load
-  const splash = document.getElementById('splash-screen');
-  if(splash && splash.style.display !== 'none' && !_splashDismissed){
+  if(!_splashDismissed){
     el.classList.add('hidden');
   } else {
     el.classList.remove('hidden');
-    if(_splashDismissed) playTitle();
+    playTitle();
   }
   const contBtn = document.getElementById('btn-continue');
   if (contBtn) contBtn.disabled = !_gameActive;
