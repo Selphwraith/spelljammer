@@ -6901,11 +6901,39 @@ function drawCinCanvas(idx){
 }
 
 // wait for DOMContentLoaded before touching those elements.
+function dismissSplash(){
+  const sp = document.getElementById('splash-screen');
+  if(!sp) return;
+  playTitle(); // First user gesture — audio unlocked
+  sp.classList.add('fade-out');
+  setTimeout(()=>{ sp.style.display='none'; }, 850);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   drawMenuShip();
   showMainMenu();
+  // Hide main menu until splash is dismissed
+  document.getElementById('main-menu').classList.add('hidden');
+  // Restore it after splash fades
+  const sp = document.getElementById('splash-screen');
+  if(sp){
+    sp.addEventListener('click', ()=>{
+      setTimeout(()=>{ document.getElementById('main-menu').classList.remove('hidden'); }, 400);
+    }, {once:true});
+  }
 });
 </script>
+<!-- ═══ SPLASH SCREEN ═══ -->
+<div id="splash-screen" onclick="dismissSplash()">
+  <div id="splash-bg"></div>
+  <div id="splash-vignette"></div>
+  <div id="splash-content">
+    <div id="splash-title">SPELLJAMMER</div>
+    <div id="splash-subtitle">Voyage Through the Phlogiston</div>
+    <div id="splash-prompt">✦ Click Anywhere to Begin ✦</div>
+  </div>
+</div>
+
 <!-- ═══ MAIN MENU ═══ -->
 <div id="main-menu" class="mm-screen">
   <div class="mm-card">
