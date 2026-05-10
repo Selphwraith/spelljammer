@@ -650,12 +650,12 @@ body {
 }
 .vol-row input[type=range]::-webkit-slider-thumb {
   -webkit-appearance:none; appearance:none;
-  width:12px; height:12px; border-radius:50%;
-  background:#9966dd; border:1px solid #cc99ff; cursor:pointer;
+  width:20px; height:20px; border-radius:50%;
+  background:#9966dd; border:2px solid #cc99ff; cursor:pointer;
 }
 .vol-row input[type=range]::-moz-range-thumb {
-  width:12px; height:12px; border-radius:50%;
-  background:#9966dd; border:1px solid #cc99ff; cursor:pointer;
+  width:20px; height:20px; border-radius:50%;
+  background:#9966dd; border:2px solid #cc99ff; cursor:pointer;
 }
 
 </style>
@@ -668,35 +668,7 @@ body {
   <div style="display:flex;align-items:center;gap:8px;">
     <button onclick="showMainMenu()" style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:1px;padding:4px 10px;border:1px solid #44118866;border-radius:3px;background:rgba(15,3,35,0.8);color:#9977cc;cursor:pointer;">☰ Menu</button>
     <button onclick="autoSave(true)" style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:1px;padding:4px 10px;border:1px solid #44118866;border-radius:3px;background:rgba(15,3,35,0.8);color:#9977cc;cursor:pointer;">💾 Save</button>
-    <button id="mute-btn" onclick="toggleVolPanel()" style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:1px;padding:4px 10px;border:1px solid #44118866;border-radius:3px;background:rgba(15,3,35,0.8);color:#9977cc;cursor:pointer;">🔊 Sound</button>
-    <!-- Volume panel — hidden by default -->
-    <div id="vol-panel" style="display:none;position:absolute;top:38px;right:8px;z-index:999;background:rgba(5,0,18,0.97);border:1px solid #44118888;border-radius:6px;padding:12px 16px;min-width:200px;box-shadow:0 4px 24px rgba(0,0,0,0.8);">
-      <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:2px;color:#7755aa;margin-bottom:10px;text-transform:uppercase;">Audio Settings</div>
-      <div class="vol-row">
-        <span class="vol-lbl">🔊 Master</span>
-        <input type="range" id="vol-master" min="0" max="100" value="80" oninput="applyVolumes()" style="flex:1;">
-        <span class="vol-val" id="vol-master-val">80%</span>
-      </div>
-      <div class="vol-row">
-        <span class="vol-lbl">🎵 Music</span>
-        <input type="range" id="vol-music" min="0" max="100" value="80" oninput="applyVolumes()" style="flex:1;">
-        <span class="vol-val" id="vol-music-val">80%</span>
-      </div>
-      <div class="vol-row">
-        <span class="vol-lbl">💥 SFX</span>
-        <input type="range" id="vol-sfx" min="0" max="100" value="80" oninput="applyVolumes()" style="flex:1;">
-        <span class="vol-val" id="vol-sfx-val">80%</span>
-      </div>
-      <div class="vol-row">
-        <span class="vol-lbl">🗣 Voice</span>
-        <input type="range" id="vol-voice" min="0" max="100" value="80" oninput="applyVolumes()" style="flex:1;">
-        <span class="vol-val" id="vol-voice-val">80%</span>
-      </div>
-      <div style="margin-top:10px;display:flex;gap:8px;">
-        <button onclick="setAllVol(0)" style="flex:1;font-family:'Cinzel',serif;font-size:9px;padding:4px;background:rgba(30,0,0,0.8);border:1px solid #66223388;border-radius:3px;color:#aa6688;cursor:pointer;">🔇 Mute All</button>
-        <button onclick="setAllVol(80)" style="flex:1;font-family:'Cinzel',serif;font-size:9px;padding:4px;background:rgba(0,10,30,0.8);border:1px solid #33449988;border-radius:3px;color:#7799cc;cursor:pointer;">↺ Reset</button>
-      </div>
-    </div>
+    <button id="mute-btn" onclick="toggleVolPanel(event)" style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:1px;padding:4px 10px;border:1px solid #44118866;border-radius:3px;background:rgba(15,3,35,0.8);color:#9977cc;cursor:pointer;">🔊 Sound</button>
     <div id="phase-tag">Navigation</div>
   </div>
 </div>
@@ -2139,7 +2111,8 @@ let _muted = false;
 // base vol by the relevant category scalar before playing.
 const _VOL = { master:0.8, music:0.8, sfx:0.8, voice:0.8 };
 
-function toggleVolPanel() {
+function toggleVolPanel(e) {
+  if (e) e.stopPropagation();
   const p = document.getElementById('vol-panel');
   if (!p) return;
   const open = p.style.display !== 'none';
@@ -2170,11 +2143,9 @@ function applyVolumes() {
       if (val) val.textContent = el.value + '%';
     }
   });
-  // Update currently playing ambient immediately
   if (_loopEl) _loopEl.volume = Math.min(1, _VOL.master * _VOL.music * 0.28);
-  if (_titleEl) _titleEl.volume = Math.min(1, _VOL.master * _VOL.music * 0.5);
+  if (_titleEl) _titleEl.volume = Math.min(1, _VOL.master * _VOL.music * 0.35);
   if (_victoryEl) _victoryEl.volume = Math.min(1, _VOL.master * _VOL.music * 1.0);
-  // Update mute button icon
   const btn = document.getElementById('mute-btn');
   if (btn) btn.textContent = _VOL.master === 0 ? '🔇 Sound' : '🔊 Sound';
 }
@@ -2186,14 +2157,23 @@ function setAllVol(pct) {
   applyVolumes();
 }
 
-// Close vol panel when clicking outside it
+// Close vol panel on click/tap outside it
 document.addEventListener('click', e => {
   const panel = document.getElementById('vol-panel');
   const btn   = document.getElementById('mute-btn');
-  if (panel && panel.style.display !== 'none' && !panel.contains(e.target) && e.target !== btn) {
+  if (panel && panel.style.display !== 'none' &&
+      !panel.contains(e.target) && !btn.contains(e.target)) {
     panel.style.display = 'none';
   }
 });
+document.addEventListener('touchstart', e => {
+  const panel = document.getElementById('vol-panel');
+  const btn   = document.getElementById('mute-btn');
+  if (panel && panel.style.display !== 'none' &&
+      !panel.contains(e.target) && btn && !btn.contains(e.target)) {
+    panel.style.display = 'none';
+  }
+}, { passive: true });
 
 // Keep toggleMute for backwards compatibility (keyboard shortcut M etc)
 function toggleMute() {
@@ -8228,5 +8208,35 @@ document.addEventListener('DOMContentLoaded', () => {
     <button id="cin-next-btn" onclick="nextCinSlide()" style="background:rgba(20,8,50,0.8);border:1px solid #4422aa;color:#aa88ff;font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;padding:6px 20px;cursor:pointer;border-radius:2px;">NEXT ›</button>
   </div>
 </div>
+<!-- ═══ VOLUME PANEL (fixed position, always accessible) ═══ -->
+<div id="vol-panel" style="display:none;position:fixed;top:44px;right:8px;z-index:9998;background:rgba(5,0,18,0.97);border:1px solid #44118888;border-radius:6px;padding:14px 18px;width:240px;box-shadow:0 4px 32px rgba(0,0,0,0.9);" onclick="event.stopPropagation()">
+  <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:2px;color:#7755aa;margin-bottom:12px;text-transform:uppercase;">⚙ Audio Settings</div>
+  <div class="vol-row">
+    <span class="vol-lbl">🔊 Master</span>
+    <input type="range" id="vol-master" min="0" max="100" value="80" oninput="applyVolumes()" style="flex:1;">
+    <span class="vol-val" id="vol-master-val">80%</span>
+  </div>
+  <div class="vol-row">
+    <span class="vol-lbl">🎵 Music</span>
+    <input type="range" id="vol-music" min="0" max="100" value="80" oninput="applyVolumes()" style="flex:1;">
+    <span class="vol-val" id="vol-music-val">80%</span>
+  </div>
+  <div class="vol-row">
+    <span class="vol-lbl">💥 SFX</span>
+    <input type="range" id="vol-sfx" min="0" max="100" value="80" oninput="applyVolumes()" style="flex:1;">
+    <span class="vol-val" id="vol-sfx-val">80%</span>
+  </div>
+  <div class="vol-row">
+    <span class="vol-lbl">🗣 Voice</span>
+    <input type="range" id="vol-voice" min="0" max="100" value="80" oninput="applyVolumes()" style="flex:1;">
+    <span class="vol-val" id="vol-voice-val">80%</span>
+  </div>
+  <div style="margin-top:12px;display:flex;gap:8px;">
+    <button onclick="setAllVol(0)" style="flex:1;font-family:'Cinzel',serif;font-size:10px;padding:7px 4px;background:rgba(30,0,0,0.8);border:1px solid #66223388;border-radius:3px;color:#aa6688;cursor:pointer;">🔇 Mute All</button>
+    <button onclick="setAllVol(80)" style="flex:1;font-family:'Cinzel',serif;font-size:10px;padding:7px 4px;background:rgba(0,10,30,0.8);border:1px solid #33449988;border-radius:3px;color:#7799cc;cursor:pointer;">↺ Reset</button>
+    <button onclick="toggleVolPanel(event)" style="font-family:'Cinzel',serif;font-size:10px;padding:7px 8px;background:rgba(20,5,40,0.8);border:1px solid #44118855;border-radius:3px;color:#554477;cursor:pointer;">✕</button>
+  </div>
+</div>
+
 </body>
 </html>
