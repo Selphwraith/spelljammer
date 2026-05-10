@@ -7286,6 +7286,7 @@ document.getElementById('lq-canvas').addEventListener('click', e => {
     if(hit.shop) {
       showLqShop(hit);
     } else {
+      sndVoice(0.65);
       showLqCard(hit);
     }
   } else {
@@ -7306,7 +7307,6 @@ function showLqCard(npc) {
   document.getElementById('lq-npc-name').textContent = npc.name;
   document.getElementById('lq-npc-role').textContent = npc.role;
   document.getElementById('lq-npc-text').textContent = npc.greet;
-  sndVoice(0.65);
 
   // Find the first non-rewarded quest
   const quest = npc.quests.find(q => (G.localQuests[q.id]||'available') !== 'rewarded');
@@ -7380,7 +7380,6 @@ function lqTurnIn(quest, npc) {
   G.localQuests[quest.id] = 'rewarded';
   quest.rewardFn(G);
   updateUI();
-  sndVoice(0.7);
   showLqCard(npc);
   document.getElementById('lq-log-strip').textContent = '✓ Quest complete: ' + quest.title;
 }
