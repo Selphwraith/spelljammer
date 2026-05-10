@@ -2237,6 +2237,84 @@ function _stopLoop() {
   if (_loopEl) { try { _loopEl.pause(); } catch(_) {} _loopEl = null; }
 }
 
+// ── VOICE CHATTER SYSTEM ──────────────────────────────────────────────────
+// Loads up to 5 voice files via Web Audio API and plays one randomly each
+// time sndVoice() is called, with a slightly randomised playback rate so
+// each line feels different even if the same file comes up twice in a row.
+//
+// File names expected in sounds/:
+//   voice_1.mp3  voice_2.mp3  voice_3.mp3  voice_4.mp3  voice_5.mp3
+//
+// Any missing files are silently skipped — the system works fine with
+// however many you actually have (even just one).
+
+let _voiceCtx = null;         // AudioContext — created on first use (browsers need a gesture first)
+const _voiceBufs = [];        // decoded AudioBuffers, one per loaded file
+const _VOICE_FILES = [
+  'sounds/voice_1.mp3',
+  'sounds/voice_2.mp3',
+  'sounds/voice_3.mp3',
+  'sounds/voice_4.mp3',
+  'sounds/voice_5.mp3',
+];
+const _VOICE_RATE_MIN = 0.82;  // slowest playback rate (lower pitch / slower tempo)
+const _VOICE_RATE_MAX = 1.22;  // fastest playback rate (higher pitch / faster tempo)
+
+function _getVoiceCtx() {
+  if (!_voiceCtx) {
+    try { _voiceCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(_) {}
+  }
+  return _voiceCtx;
+}
+
+function loadVoiceFiles() {
+  const ctx = _getVoiceCtx();
+  if (!ctx) return;
+  _VOICE_FILES.forEach((path, i) => {
+    fetch(path)
+      .then(r => { if (!r.ok) throw new Error('not found'); return r.arrayBuffer(); })
+      .then(buf => ctx.decodeAudioData(buf))
+      .then(decoded => { _voiceBufs[i] = decoded; })
+      .catch(() => {}); // silently skip missing files
+  });
+}
+
+function sndVoice(vol = 0.75) {
+  if (_muted) return;
+  const ctx = _getVoiceCtx();
+  if (!ctx) return;
+  // Resume context if it was suspended (browser autoplay policy)
+  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+  // Collect buffers that actually loaded
+  const available = _voiceBufs.filter(Boolean);
+  if (!available.length) {
+    // No Web Audio buffers yet — fall back to the old _SFX version if present
+    if (_SFX['voice_chatter']) {
+      try {
+        const c = _SFX['voice_chatter'].cloneNode();
+        c.volume = vol;
+        c.play().catch(() => {});
+      } catch(_) {}
+    }
+    return;
+  }
+  // Pick a random buffer
+  const buf = available[Math.floor(Math.random() * available.length)];
+  // Random playback rate in the configured range
+  const rate = _VOICE_RATE_MIN + Math.random() * (_VOICE_RATE_MAX - _VOICE_RATE_MIN);
+  try {
+    const gain = ctx.createGain();
+    gain.gain.value = Math.min(1, Math.max(0, vol));
+    gain.connect(ctx.destination);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.playbackRate.value = rate;
+    src.connect(gain);
+    src.start(0);
+  } catch(_) {}
+}
+
 let _titleEl = null;
 function playTitle(){
   if(_muted || !_SFX['title']) return;
@@ -2337,6 +2415,7 @@ function initGame() {
   renderLoop();
   loadSounds();
   loadShipImages();
+  loadVoiceFiles();
   setTimeout(() => setAmbient('map'), 300); // slight delay lets audio context unlock on user gesture
   addLog('Captain — IEN Scout Comet "Elven Comet" standing by at Refuge Station. Six Astral Chart Fragments. One Elder Brain. Orders received. Click a Crystal Sphere to depart.','imp');
 }
@@ -5669,7 +5748,7 @@ function openDockmaster(sphereId) {
   dmRender();
   document.getElementById('ov-dockmaster').classList.add('on');
   snd('port_dock', 0.5);
-  snd('voice_chatter', 0.7);
+  sndVoice(0.7);
 }
 
 function dmRender() {
@@ -5711,7 +5790,7 @@ function dmAdvance() {
   if (_dmLine < dm.lines.length - 1) {
     _dmLine++;
     dmRender();
-    snd('voice_chatter', 0.7);
+    sndVoice(0.7);
   }
 }
 
@@ -5721,7 +5800,7 @@ function dmGrantClue() {
   if (site && !G.clues.has(_dmSphere)) {
     G.clues.add(_dmSphere);
     snd('fragment_collect', 0.8);
-    snd('voice_chatter', 0.6);
+    sndVoice(0.6);
     addLog(`⚑ INTEL: ${site.clue}`, 'imp');
   }
 
@@ -5868,7 +5947,7 @@ function triggerRoamingEncounter(factionId){
   // Show/hide trade and hail based on rep
   addLog(`📡 ${fac.n} vessel hails your comet on the approach lane.`,'');
   snd('sphere_click', 0.5);
-  snd('voice_chatter', 0.65);
+  sndVoice(0.65);
 }
 function roamAttack(){
   const fac = FACTIONS[_roamFactionId];
@@ -5934,7 +6013,6 @@ function roamHail(){
   const resEl = document.getElementById('roam-result');
   resEl.style.display='block';
   resEl.style.color='#88aaff';
-  snd('voice_chatter', 0.75);
   document.getElementById('roam-continue-btn').style.display='block';
   addLog(`Hailed ${fac.n} vessel. Reputation improved slightly.`,'');
   snd('port_dock', 0.5);
@@ -5975,7 +6053,6 @@ function roamAcceptQuest(questId){
   addLog(`📋 MISSION: ${q.title} — collect cargo at ${pickupSphere?.n||q.pickup}, then deliver to ${turninSphere?.n||q.turnin}.`,'imp');
   updateUI();
   snd('fragment_collect', 0.7);
-  snd('voice_chatter', 0.6);
 }
 function roamContinue(){
   document.getElementById('ov-roam').style.display='none';
@@ -7230,7 +7307,7 @@ function showLqCard(npc) {
   document.getElementById('lq-npc-name').textContent = npc.name;
   document.getElementById('lq-npc-role').textContent = npc.role;
   document.getElementById('lq-npc-text').textContent = npc.greet;
-  snd('voice_chatter', 0.65);
+  sndVoice(0.65);
 
   // Find the first non-rewarded quest
   const quest = npc.quests.find(q => (G.localQuests[q.id]||'available') !== 'rewarded');
@@ -7296,7 +7373,6 @@ function lqAccept(quest, npc) {
   G.localQuests[quest.id] = 'active';
   if(quest.trigger) quest.trigger(G);
   addLog('Quest accepted: ' + quest.title + '. ' + quest.task, 'imp');
-  snd('voice_chatter', 0.65);
   showLqCard(npc);
   document.getElementById('lq-log-strip').textContent = '⚔ Quest active: ' + quest.title;
 }
@@ -7305,7 +7381,7 @@ function lqTurnIn(quest, npc) {
   G.localQuests[quest.id] = 'rewarded';
   quest.rewardFn(G);
   updateUI();
-  snd('voice_chatter', 0.7);
+  sndVoice(0.7);
   showLqCard(npc);
   document.getElementById('lq-log-strip').textContent = '✓ Quest complete: ' + quest.title;
 }
@@ -7837,7 +7913,8 @@ function drawCinCanvas(idx){
 // wait for DOMContentLoaded before touching those elements.
 document.addEventListener('DOMContentLoaded', () => {
   loadSounds();
-  loadShipImages(); // preload all audio including title.mp3 before game starts
+  loadShipImages();
+  loadVoiceFiles(); // preload all audio including title.mp3 before game starts
   drawMenuShip();
   showMainMenu();
   // Splash dismiss — prompt blink
