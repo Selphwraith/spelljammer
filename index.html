@@ -5209,7 +5209,7 @@ function doDefeat(){
 function doVictory(){
   G.phase='victory';
   _stopLoop();
-  setTimeout(()=>snd('victory_final', 1.0), 400);
+  setTimeout(()=>_playVictoryMusic(), 400);
   document.getElementById('ov-loot').classList.remove('on');
   document.getElementById('scr-win').classList.add('on');
 }
@@ -5217,15 +5217,29 @@ function doVictory(){
 function doFarRealmVictory(){
   G.phase='victory';
   _stopLoop();
-  setTimeout(()=>snd('victory_final', 1.0), 400);
-  setTimeout(()=>snd('victory_final', 0.6), 1800);
+  setTimeout(()=>_playVictoryMusic(), 400);
   document.getElementById('ov-loot').classList.remove('on');
   document.getElementById('scr-farwin').classList.add('on');
+}
+
+let _victoryEl = null;
+function _playVictoryMusic(){
+  if(_muted || !_SFX['victory_final']) return;
+  try {
+    _victoryEl = _SFX['victory_final'].cloneNode();
+    _victoryEl.loop = true;
+    _victoryEl.volume = 1.0;
+    _victoryEl.play().catch(()=>{});
+  } catch(_) {}
+}
+function _stopVictoryMusic(){
+  if(_victoryEl){ try{ _victoryEl.pause(); _victoryEl.currentTime=0; }catch(_){} _victoryEl=null; }
 }
 
 function continueSailing(){
   document.getElementById('scr-win').classList.remove('on');
   document.getElementById('scr-farwin').classList.remove('on');
+  _stopVictoryMusic();
   G.phase = 'map';
   G.postVictory = true;
   G.spheres.forEach(s => { s.locked = false; });
