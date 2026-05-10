@@ -673,6 +673,8 @@ body {
     <span class="mhud-lbl">FRAGS</span>
   </div>
   <button id="btn-stats-drawer" onclick="toggleStatsDrawer()">⊞ Stats</button>
+  <!-- Hidden 5-tap debug trigger — tap FRAGS label 5 times quickly -->
+  <span id="debug-tap-zone" style="position:absolute;left:0;top:0;width:60px;height:100%;opacity:0;cursor:default;" ontouchstart="_dbTap()"></span>
 </div>
 
 <!-- STATS DRAWER (mobile) -->
@@ -7329,6 +7331,18 @@ window.addEventListener('keydown', e=>{
   }
 });
 
+// ── Mobile 5-tap debug trigger ────────────────────────
+let _dbTapCount=0, _dbTapTimer=null;
+function _dbTap(){
+  _dbTapCount++;
+  clearTimeout(_dbTapTimer);
+  _dbTapTimer = setTimeout(()=>{ _dbTapCount=0; }, 1200);
+  if(_dbTapCount >= 5){
+    _dbTapCount=0;
+    toggleDebugCon();
+  }
+}
+
 // ── OPENING CINEMATIC ─────────────────────────────────────
 const CIN_SLIDES = [
   { chapter:'1492 Dale Reckoning · Realmspace',
@@ -7701,17 +7715,29 @@ document.addEventListener('DOMContentLoaded', () => {
 </div>
 
 <!-- ═══ DEBUG CONSOLE ═══ -->
-<div id="debug-con" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:rgba(0,0,0,0.92);border-top:1px solid #00ff88;padding:8px 12px;font-family:'Courier New',monospace;">
-  <div style="color:#00ff88;font-size:10px;letter-spacing:2px;margin-bottom:4px;">▶ IEN DEBUG CONSOLE — TYPE COMMAND</div>
+<div id="debug-con" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:rgba(0,0,0,0.95);border-top:1px solid #00ff88;padding:10px 12px;font-family:'Courier New',monospace;">
+  <div style="color:#00ff88;font-size:10px;letter-spacing:2px;margin-bottom:6px;">▶ IEN DEBUG CONSOLE — TYPE COMMAND</div>
   <div style="display:flex;gap:8px;align-items:center;">
     <span style="color:#00ff88;font-size:12px;">$</span>
-    <input id="debug-input" type="text" placeholder="cheat | unlock | god | instakill | heal | gold | frags | kill"
-      style="flex:1;background:transparent;border:none;border-bottom:1px solid #00ff8855;color:#88ffcc;font-family:'Courier New',monospace;font-size:12px;outline:none;padding:2px 4px;"
+    <input id="debug-input" type="text"
+      placeholder="cheat | unlock | heal | gold | imgcheck…"
+      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+      style="flex:1;background:transparent;border:none;border-bottom:1px solid #00ff8855;color:#88ffcc;font-family:'Courier New',monospace;font-size:14px;outline:none;padding:4px 4px;"
       onkeydown="if(event.key==='Enter')runDebugCmd();if(event.key==='Escape')toggleDebugCon();" />
-    <button onclick="runDebugCmd()" style="background:#002a18;border:1px solid #00ff8855;color:#00ff88;font-family:'Courier New',monospace;font-size:11px;padding:3px 10px;cursor:pointer;border-radius:2px;">RUN</button>
-    <button onclick="toggleDebugCon()" style="background:transparent;border:none;color:#556655;font-size:14px;cursor:pointer;">✕</button>
+    <button onclick="runDebugCmd()" style="background:#002a18;border:1px solid #00ff8855;color:#00ff88;font-family:'Courier New',monospace;font-size:13px;padding:6px 14px;cursor:pointer;border-radius:2px;">RUN</button>
+    <button onclick="toggleDebugCon()" style="background:transparent;border:none;color:#556655;font-size:18px;cursor:pointer;padding:4px 8px;">✕</button>
   </div>
-  <div id="debug-out" style="color:#558866;font-size:10px;margin-top:4px;min-height:14px;"></div>
+  <div id="debug-out" style="color:#558866;font-size:11px;margin-top:6px;min-height:16px;"></div>
+  <!-- Quick-tap common commands on mobile -->
+  <div id="debug-quickbtns" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+    <button onclick="document.getElementById('debug-input').value='heal';runDebugCmd();"    style="background:#001a0e;border:1px solid #00ff8833;color:#44cc88;font-size:10px;padding:4px 8px;cursor:pointer;border-radius:2px;">heal</button>
+    <button onclick="document.getElementById('debug-input').value='gold';runDebugCmd();"    style="background:#1a1400;border:1px solid #ffcc0033;color:#ccaa44;font-size:10px;padding:4px 8px;cursor:pointer;border-radius:2px;">gold</button>
+    <button onclick="document.getElementById('debug-input').value='frags';runDebugCmd();"   style="background:#1a0a00;border:1px solid #ff880033;color:#cc8844;font-size:10px;padding:4px 8px;cursor:pointer;border-radius:2px;">frags</button>
+    <button onclick="document.getElementById('debug-input').value='kill';runDebugCmd();"    style="background:#1a0000;border:1px solid #ff444433;color:#cc4444;font-size:10px;padding:4px 8px;cursor:pointer;border-radius:2px;">kill</button>
+    <button onclick="document.getElementById('debug-input').value='imgcheck';runDebugCmd();" style="background:#0a001a;border:1px solid #8844ff33;color:#8866cc;font-size:10px;padding:4px 8px;cursor:pointer;border-radius:2px;">imgcheck</button>
+    <button onclick="document.getElementById('debug-input').value='wbunlock';runDebugCmd();" style="background:#0a001a;border:1px solid #ff004433;color:#cc4488;font-size:10px;padding:4px 8px;cursor:pointer;border-radius:2px;">wbunlock</button>
+    <button onclick="document.getElementById('debug-input').value='cheat';runDebugCmd();"   style="background:#1a001a;border:1px solid #ff00ff33;color:#cc44cc;font-size:10px;padding:4px 8px;cursor:pointer;border-radius:2px;">cheat</button>
+  </div>
 </div>
 
 <!-- ═══ OPENING CINEMATIC ═══ -->
