@@ -184,6 +184,58 @@ body {
 .wpn-btn-wrap { position:relative; display:inline-block; }
 .cd-pip { position:absolute; top:-4px; right:-4px; background:#ff7744; color:#fff; font-size:9px; border-radius:50%; width:14px; height:14px; display:flex; align-items:center; justify-content:center; font-family:'Cinzel',serif; font-weight:700; }
 
+/* ── COMBAT WEAPON PANELS ── */
+.cbt-panels { display:flex; gap:10px; width:100%; max-width:660px; margin-top:2px; }
+.cbt-wpn-panel { flex:1; background:rgba(8,2,22,0.92); border:1px solid #33005566; border-radius:5px; padding:7px; min-width:0; max-height:200px; overflow-y:auto; }
+.cbt-panel-title { font-family:'Cinzel',serif; font-size:9px; letter-spacing:2px; color:#6644aa; text-transform:uppercase; margin-bottom:5px; padding-bottom:3px; border-bottom:1px solid #22003333; }
+.cbt-panel-title.enemy-title { color:#aa3333; }
+
+/* Player weapon cards in combat */
+.cbt-wpn-card { position:relative; background:rgba(15,4,38,0.9); border:1px solid #44117755; border-radius:4px; padding:6px 8px; margin-bottom:4px; cursor:pointer; transition:all 0.18s; user-select:none; }
+.cbt-wpn-card:last-child { margin-bottom:0; }
+.cbt-wpn-card.ready { border-color:#33aa6688; }
+.cbt-wpn-card.ready:hover { border-color:#44ee88; background:rgba(20,60,40,0.9); transform:translateX(2px); }
+.cbt-wpn-card.on-cooldown { opacity:0.55; cursor:not-allowed; border-color:#44220033; }
+.cbt-wpn-card.targeting-select { border-color:#ffcc00; box-shadow:0 0 10px #ffcc0055; animation:pulse-gold 1.1s ease-in-out infinite; cursor:pointer; }
+.cbt-wpn-card-name { font-family:'Cinzel',serif; font-size:10px; color:#cc99ff; }
+.cbt-wpn-card-name.ready-name { color:#88ffbb; }
+.cbt-wpn-card-info { font-size:9px; color:#554477; margin-top:1px; }
+.cbt-wpn-cd-bar { height:3px; background:#12002a; border-radius:2px; margin-top:4px; overflow:hidden; }
+.cbt-wpn-cd-fill { height:100%; background:linear-gradient(90deg,#88aaff,#4466ff); transition:width 0.4s; }
+.cbt-cd-pip { position:absolute; top:-4px; right:-4px; background:#ff7744; color:#fff; font-size:8px; border-radius:50%; width:13px; height:13px; display:flex; align-items:center; justify-content:center; font-family:'Cinzel',serif; font-weight:700; }
+
+/* Enemy weapon cards */
+.cbt-ewpn-card { position:relative; background:rgba(28,4,8,0.9); border:1px solid #55111133; border-radius:4px; padding:6px 8px; margin-bottom:4px; transition:all 0.18s; }
+.cbt-ewpn-card:last-child { margin-bottom:0; }
+.cbt-ewpn-card.e-active { border-color:#aa222266; box-shadow:0 0 6px #aa222233; }
+.cbt-ewpn-card.e-special { border-color:#ff440066; box-shadow:0 0 8px #ff440044; }
+.cbt-ewpn-card.e-disabled { opacity:0.4; border-color:#22002233; }
+.cbt-ewpn-card.e-disabled .cbt-ewpn-name { text-decoration:line-through; color:#443333; }
+.cbt-ewpn-card.e-targetable { border-color:#ffaa00; box-shadow:0 0 12px #ffaa0066; animation:pulse-target 0.9s ease-in-out infinite; cursor:pointer; }
+.cbt-ewpn-card.e-targetable:hover { background:rgba(60,30,0,0.95); transform:scale(1.03); }
+.cbt-ewpn-name { font-family:'Cinzel',serif; font-size:10px; color:#ff8888; }
+.cbt-ewpn-info { font-size:9px; color:#553333; margin-top:1px; }
+.cbt-ewpn-threat { font-size:9px; color:#ff6644; margin-top:2px; }
+.cbt-ewpn-disabled-bar { font-size:8px; color:#886644; font-family:'Cinzel',serif; margin-top:3px; letter-spacing:1px; }
+.cbt-ecd-pip { position:absolute; top:-4px; right:-4px; background:#cc4400; color:#fff; font-size:8px; border-radius:50%; width:13px; height:13px; display:flex; align-items:center; justify-content:center; font-family:'Cinzel',serif; font-weight:700; }
+
+/* Combat ability row */
+.cbt-ability-row { display:flex; gap:5px; flex-wrap:wrap; justify-content:center; width:100%; max-width:660px; margin-top:4px; }
+.cbt-ability-row .btn { font-size:11px; padding:6px 10px; }
+
+@keyframes pulse-gold {
+  0%,100% { box-shadow:0 0 6px #ffcc0044; border-color:#ffcc0088; }
+  50%      { box-shadow:0 0 16px #ffcc00aa; border-color:#ffcc00; }
+}
+@keyframes pulse-target {
+  0%,100% { box-shadow:0 0 8px #ffaa0055; border-color:#ffaa0088; }
+  50%      { box-shadow:0 0 18px #ffaa00bb; border-color:#ffaa00; }
+}
+@keyframes flash-disable {
+  0%   { background:rgba(255,100,0,0.5); }
+  100% { background:rgba(28,4,8,0.9); }
+}
+
 /* ── PORT OVERLAY ── */
 .ptop { font-family:'Cinzel',serif; font-size:18px; color:#44ffbb; letter-spacing:2px; }
 .pdesc { color:#7766aa; font-size:13px; font-style:italic; max-width:540px; text-align:center; }
@@ -474,6 +526,32 @@ body {
   .cacts .btn { width: 100%; font-size: 12px; padding: 10px 12px; text-align: left; }
   .wpn-btn-wrap { width: 100%; display: block; }
   .wpn-btn-wrap .btn { width: 100%; }
+  .cbt-panels { flex-direction: column; gap: 6px; }
+  .cbt-ability-row .btn { font-size: 11px; padding: 8px 10px; width: 100%; }
+
+  /* Combat weapon panel sizing for touch */
+  .cbt-wpn-panel { padding: 6px; }
+  .cbt-panel-title { font-size: 8px; margin-bottom: 4px; }
+
+  /* Player weapon cards — finger-friendly tap targets */
+  .cbt-wpn-card { padding: 10px 10px; margin-bottom: 5px; min-height: 44px; display: flex; flex-direction: column; justify-content: center; }
+  .cbt-wpn-card-name { font-size: 11px; }
+  .cbt-wpn-card-info { font-size: 10px; color: #6655aa; }
+  .cbt-wpn-cd-bar { height: 4px; margin-top: 5px; }
+
+  /* Enemy weapon cards — large enough to tap as targets */
+  .cbt-ewpn-card { padding: 10px 10px; margin-bottom: 5px; min-height: 44px; }
+  .cbt-ewpn-name { font-size: 11px; }
+  .cbt-ewpn-info { font-size: 10px; }
+  .cbt-ewpn-threat { font-size: 10px; }
+  .cbt-ewpn-disabled-bar { font-size: 9px; }
+
+  /* Targeting mode — extra glow for mobile visibility */
+  .cbt-ewpn-card.e-targetable { padding: 12px 10px; border-width: 2px; }
+
+  /* Ability row stacks and gets bigger tap area */
+  .cbt-ability-row { gap: 4px; margin-top: 6px; }
+  .cbt-ability-row .btn { padding: 10px 12px; font-size: 12px; text-align: left; }
 
   /* Port: 2-column shop grid */
   .sgrid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
@@ -822,7 +900,21 @@ body {
       </div>
     </div>
     <div class="clog" id="clog"></div>
-    <div class="cacts" id="cacts"></div>
+    <!-- Split weapon panels -->
+    <div class="cbt-panels">
+      <div class="cbt-wpn-panel" id="cbt-player-wpns">
+        <div class="cbt-panel-title">⚔ Your Weapons</div>
+        <!-- populated by buildCbtPanels() -->
+      </div>
+      <div class="cbt-wpn-panel" id="cbt-enemy-wpns">
+        <div class="cbt-panel-title enemy-title">☠ Enemy Systems</div>
+        <!-- populated by buildCbtPanels() -->
+      </div>
+    </div>
+    <!-- Abilities row -->
+    <div class="cbt-ability-row" id="cbt-abilities"></div>
+    <!-- Legacy cacts kept for "enemy acting" message -->
+    <div id="cacts" style="display:none;"></div>
   </div>
 
   <!-- LOOT -->
@@ -1204,50 +1296,107 @@ const ENM = {
   // ── Tier 1 Bandits ────────────────────────────────────
   corsair:   { name:'Void Corsairs',        sub:'Pirate Sloop',          hp:42,  maxHp:42,  g:[9,21],
     atk:[{n:'Rusty Broadside',d:[1,6],txt:'A ragged volley from their battered guns.'},{n:'Grappling Hook',d:[1,4],txt:'Hooks drag across your hull!',crew:1}],
-    sp:{n:'Desperate Boarding',c:0.18,txt:'A mob of corsairs swings across on ropes — one crew is lost!',fx:'crew'},col:'#886633',diff:1 },
+    sp:{n:'Desperate Boarding',c:0.18,txt:'A mob of corsairs swings across on ropes — one crew is lost!',fx:'crew'},col:'#886633',diff:1,
+    wpns:[
+      { n:'Battered Ballista',  ico:'🏹', d:[1,6], cd:0, threat:1, txt:'Worn but reliable — fires every round.' },
+      { n:'Grappling Rig',      ico:'⚓', d:[1,4], cd:0, threat:2, txt:'Drags crew over the void. Hits crew on trigger.', crew:1 }
+    ]},
   // ── Tier 2 Bandits ────────────────────────────────────
   plunderer: { name:'Plunderer Fleet',      sub:'Raider Brigantine',      hp:88,  maxHp:88,  g:[22,46],
     atk:[{n:'Cannon Broadside',d:[2,6],txt:'A coordinated broadside from multiple guns.'},{n:'Saboteur Team',d:[1,8],txt:'Saboteurs disable a system — hull damage and disruption!'}],
-    sp:{n:'Ram and Board',c:0.22,txt:'The brigantine rams your hull and sends a boarding party!',fx:'summon',d:[2,6]},col:'#994422',diff:2 },
+    sp:{n:'Ram and Board',c:0.22,txt:'The brigantine rams your hull and sends a boarding party!',fx:'summon',d:[2,6]},col:'#994422',diff:2,
+    wpns:[
+      { n:'Cannon Battery',     ico:'💥', d:[2,6], cd:1, threat:2, txt:'Coordinated broadside from two gun decks.' },
+      { n:'Saboteur Charges',   ico:'🧨', d:[1,8], cd:2, threat:3, txt:'Explosive charges detonated on your hull. Disables a random player weapon for 1 round.', sabotage:true }
+    ]},
   // ── Tier 3 Bandits ────────────────────────────────────
   blackfleet:{ name:'Black Fleet Reaver',   sub:'Elite Pirate Warship',   hp:148, maxHp:148, g:[49,90],
     atk:[{n:'Heavy Cannon Fire',d:[3,8],txt:'Precisely aimed heavy fire strikes your hull.'},{n:'Corsair Squadron',d:[2,6],txt:'Three escort sloops strafe your flanks simultaneously!'}],
-    sp:{n:'Void Ambush',c:0.25,txt:'The Reaver drops from void-shadow — your targeting is blind this round!',fx:'dodge'},col:'#aa2211',diff:3 },
+    sp:{n:'Void Ambush',c:0.25,txt:'The Reaver drops from void-shadow — your targeting is blind this round!',fx:'dodge'},col:'#aa2211',diff:3,
+    wpns:[
+      { n:'Heavy Siege Cannon',  ico:'🔥', d:[3,8], cd:2, threat:3, txt:'Armour-piercing shot — ignores 2 resistance.' },
+      { n:'Escort Squadron',     ico:'⚔️', d:[2,6], cd:1, threat:2, txt:'Three flanking sloops strafe your hull simultaneously.' }
+    ]},
   // ── Alien Threats ─────────────────────────────────────
   nautiloid:{ name:'Nautiloid',          sub:'Mind Flayer Ship',     hp:85,  maxHp:85,  g:[16,33],
     atk:[{n:'Tentacle Lash',d:[2,6],txt:'Whipping tentacles tear at your hull.'},{n:'Psionic Burst',d:[1,8],txt:'Psychic energy rattles your crew!',crew:1}],
-    sp:{n:'Mind Blast',c:0.20,txt:'The illithids blast your crew — you lose your next action!',fx:'stun'},col:'#9944ff',diff:1 },
+    sp:{n:'Mind Blast',c:0.20,txt:'The illithids blast your crew — you lose your next action!',fx:'stun'},col:'#9944ff',diff:1,
+    wpns:[
+      { n:'Tentacle Array',      ico:'🪝', d:[2,6], cd:0, threat:2, txt:'Writhing hull-rakers — fires every round.' },
+      { n:'Psionic Lancer',      ico:'🧠', d:[2,8], cd:2, threat:4, txt:'Focused psychic beam. Stuns player for 1 round on hit.', psistun:true }
+    ]},
   githyanki:{ name:'Githyanki Warship',  sub:'Silver Sword Class',   hp:135, maxHp:135, g:[30,56],
     atk:[{n:'Silver Sword Broadside',d:[3,8],txt:'A volley of silver-tipped bolts slams your hull.'},{n:'Gish Boarding Party',d:[2,6],txt:'Warriors teleport aboard — hull and crew loss!',crew:2}],
-    sp:{n:'Dimension Step',c:0.25,txt:'The warship blinks away — your shot misses!',fx:'dodge'},col:'#ff8844',diff:2 },
+    sp:{n:'Dimension Step',c:0.25,txt:'The warship blinks away — your shot misses!',fx:'dodge'},col:'#ff8844',diff:2,
+    wpns:[
+      { n:'Silver Sword Battery', ico:'⚔️', d:[3,8], cd:1, threat:3, txt:'Planar-edged bolts — cannot be dodged by Evasive Maneuver.', seeking:true },
+      { n:'Gish Boarding Tubes',  ico:'🌀', d:[2,6], cd:2, threat:4, txt:'Teleport-assault teams. Deals hull damage AND removes 2 crew.', crew:2 }
+    ]},
   neogi:    { name:'Deathspider',        sub:'Neogi Vessel',         hp:70,  maxHp:70,  g:[21,41],
     atk:[{n:'Web Cannon',d:[1,6],txt:'Sticky webs gum your weapons! One disabled.',slow:true},{n:'Umber Hulk Strike',d:[2,8],txt:'An Umber Hulk is hurled at your ship!'}],
-    sp:{n:'Enslave Crew',c:0.20,txt:'Neogi thralls drag two crew overboard into the void!',fx:'crew'},col:'#aa4400',diff:1 },
+    sp:{n:'Enslave Crew',c:0.20,txt:'Neogi thralls drag two crew overboard into the void!',fx:'crew'},col:'#aa4400',diff:1,
+    wpns:[
+      { n:'Web Cannon',          ico:'🕸️', d:[1,6], cd:1, threat:3, txt:'Biotic webbing disables a random player weapon for 2 rounds.', webdisable:true },
+      { n:'Umber Hulk Launcher', ico:'🦀', d:[2,8], cd:2, threat:2, txt:'Biological siege creature hurled at your hull.' }
+    ]},
   beholder: { name:'Beholder Tyrant Ship',sub:'Great Eye Class',     hp:165, maxHp:165, g:[45,82],
     atk:[{n:'Disintegration Ray',d:[4,8],txt:'The Great Eye fires a disintegration beam!'},{n:'Anti-Magic Cone',d:[1,6],txt:'Anti-magic waves crash through your spelljamming helm.',disarm:true}],
-    sp:{n:'Eye Ray Barrage',c:0.28,txt:'A storm of eye rays lashes your hull!',fx:'multi',d:[3,6]},col:'#ff44aa',diff:3 },
+    sp:{n:'Eye Ray Barrage',c:0.28,txt:'A storm of eye rays lashes your hull!',fx:'multi',d:[3,6]},col:'#ff44aa',diff:3,
+    wpns:[
+      { n:'Disintegration Ray',  ico:'👁️', d:[4,8], cd:2, threat:5, txt:'DANGER: Each hit permanently reduces your max hull by 4.', maxhullshred:4 },
+      { n:'Anti-Magic Cone',     ico:'🌀', d:[1,6], cd:1, threat:3, txt:'Suppresses your spelljamming helm — disarms all your weapons for 1 round.', disarmall:true }
+    ]},
   leviathan:{ name:'Astral Leviathan',   sub:'Ancient Void Beast',   hp:235, maxHp:235, g:[60,112],
     atk:[{n:'Tail Slam',d:[5,6],txt:'A tail the size of a galleon slams your vessel!'},{n:'Void Breath',d:[3,8],txt:'Black void energy washes over your hull.'}],
-    sp:{n:'Phase Shift',c:0.33,txt:'The leviathan phases out of reality — your attack passes through!',fx:'phase'},col:'#4466ff',diff:4 },
+    sp:{n:'Phase Shift',c:0.33,txt:'The leviathan phases out of reality — your attack passes through!',fx:'phase'},col:'#4466ff',diff:4,
+    wpns:[
+      { n:'Tail Slam',           ico:'🐉', d:[5,6], cd:1, threat:3, txt:'Crushing physical blow — massive impact.' },
+      { n:'Void Breath Cannon',  ico:'🫧', d:[3,8], cd:2, threat:5, txt:'DANGER: Applies +1 reload round to ALL your weapons for 2 turns.', cooldowncurse:2 }
+    ]},
   // ── Far Realm enemies ────────────────────────────────────
   vodoniPatrol:{ name:'Vodoni Warship',      sub:'Imperial Patrol Vessel',  hp:155, maxHp:155, g:[41,75],
     atk:[{n:'Cannon Broadside',d:[3,8],txt:'Imperial guns fire with terrifying discipline — three simultaneous salvoes!'},{n:'Marine Boarding',d:[2,6],txt:'Vodoni marines rappel across — hull breach and crew loss!',crew:1}],
-    sp:{n:'Iron Discipline',c:0.22,txt:'The Vodoni captain holds fire until point-blank — damage doubled this shot!',fx:'summon',d:[3,6]},col:'#cc2200',diff:3 },
+    sp:{n:'Iron Discipline',c:0.22,txt:'The Vodoni captain holds fire until point-blank — damage doubled this shot!',fx:'summon',d:[3,6]},col:'#cc2200',diff:3,
+    wpns:[
+      { n:'Imperial Broadside Battery', ico:'💥', d:[3,8], cd:1, threat:3, txt:'Disciplined triple-salvo — guaranteed 1 crew hit.', crew:1 },
+      { n:'Marine Boarding Pods',       ico:'🚀', d:[2,6], cd:2, threat:4, txt:'Imperial assault marines breach the hull. 2 crew lost.', crew:2 }
+    ]},
   scroBattle:  { name:'Scro Battle Cruiser', sub:'Warchosen Class',         hp:178, maxHp:178, g:[49,86],
     atk:[{n:'War Cannon Barrage',d:[3,8],txt:'Scro gunnery crews fire with savage precision!'},{n:'Warchief Bellow',d:[2,6],txt:'The warchief leads a boarding rush — your crew falls back!',crew:2}],
-    sp:{n:'Rage Protocol',c:0.25,txt:'The Scro captain triggers battle-rage — their attack speed doubles for one round!',fx:'multi',d:[2,8]},col:'#996600',diff:3 },
+    sp:{n:'Rage Protocol',c:0.25,txt:'The Scro captain triggers battle-rage — their attack speed doubles for one round!',fx:'multi',d:[2,8]},col:'#996600',diff:3,
+    wpns:[
+      { n:'War Cannon Barrage',  ico:'🔥', d:[3,8], cd:1, threat:3, txt:'Savage precision gunnery from battle-hardened crews.' },
+      { n:'Rage Cannon',         ico:'⚡', d:[2,8], cd:1, threat:5, txt:'DANGER: Damage increases by 2 each consecutive round it fires.', ramping:true }
+    ]},
   frStalker:   { name:'Far Realm Stalker',   sub:'Reality-Aberration',      hp:122, maxHp:122, g:[34,66],
     atk:[{n:'Null Touch',d:[2,8],txt:'Reality-null energy corrodes your hull plating!'},{n:'Madness Pulse',d:[1,8],txt:'Your crew staggers — disoriented by something that should not exist.',crew:1}],
-    sp:{n:'Phase Slide',c:0.28,txt:'The Stalker slides between dimensions — your weapons track empty space!',fx:'phase'},col:'#00ddbb',diff:3 },
+    sp:{n:'Phase Slide',c:0.28,txt:'The Stalker slides between dimensions — your weapons track empty space!',fx:'phase'},col:'#00ddbb',diff:3,
+    wpns:[
+      { n:'Null Touch Projector', ico:'🌀', d:[2,8], cd:0, threat:3, txt:'Reality-null energy — fires every round, corrodes hull.' },
+      { n:'Reality Shear',        ico:'⬡', d:[3,8], cd:2, threat:5, txt:'DANGER: Bypasses all damage resistance completely.', pierceres:true }
+    ]},
   frHorde:     { name:'Far Realm Horde',     sub:'Aberration Swarm',        hp:95,  maxHp:95,  g:[26,52],
     atk:[{n:'Swarm Strike',d:[2,6],txt:'Dozens of small aberrations tear at your hull from every angle!'},{n:'Entropy Wave',d:[1,6],txt:'A wave of anti-reality energy washes over your crew.',crew:1}],
-    sp:{n:'Spawn More',c:0.30,txt:'The horde splits — two coordinated swarms strike simultaneously!',fx:'summon',d:[2,6]},col:'#9933cc',diff:2 },
+    sp:{n:'Spawn More',c:0.30,txt:'The horde splits — two coordinated swarms strike simultaneously!',fx:'summon',d:[2,6]},col:'#9933cc',diff:2,
+    wpns:[
+      { n:'Swarm Strike',        ico:'🐛', d:[2,6], cd:0, threat:2, txt:'Relentless — fires every round.' },
+      { n:'Entropy Wave Emitter', ico:'💜', d:[1,6], cd:1, threat:3, txt:'Anti-reality energy. Removes 1 crew on hit.', crew:1 }
+    ]},
   thrikreen:   { name:'Thri-Kreen Hunter',   sub:'Clutch Raider',           hp:108, maxHp:108, g:[30,60],
     atk:[{n:'Fang Bolt Salvo',d:[2,6],txt:'Crystalline fang-bolts tear into your hull from six launchers at once!'},{n:'Claw Boarding',d:[2,6],txt:'Thri-kreen warriors lock onto your hull and begin cutting!',crew:1}],
-    sp:{n:'Chitin Shield',c:0.22,txt:'The vessel rotates its organic chitin plating — your attack deflects!',fx:'dodge'},col:'#22cc44',diff:2 },
+    sp:{n:'Chitin Shield',c:0.22,txt:'The vessel rotates its organic chitin plating — your attack deflects!',fx:'dodge'},col:'#22cc44',diff:2,
+    wpns:[
+      { n:'Fang Bolt Launchers', ico:'🦷', d:[2,6], cd:0, threat:2, txt:'Six crystalline launchers — fires every round.' },
+      { n:'Claw Boarding Clamps', ico:'🦀', d:[2,6], cd:2, threat:4, txt:'Clutch warriors lock on and cut through hull. 1 crew lost.', crew:1 }
+    ]},
   elder:    { name:'Elder Brain Flagship',sub:'Final Boss',           hp:400, maxHp:400, g:[0,0],
     atk:[{n:'Mass Psychic Domination',d:[4,8],txt:'Overwhelming psychic energy slams your crew!',crew:3},{n:'Necrotic Beam Array',d:[5,6],txt:'Multiple necrotic beams lance your hull from every angle!'}],
-    sp:{n:'Summon Nautiloid',c:0.22,txt:'A flanking Nautiloid drops out of wildspace and rams you!',fx:'summon',d:[2,6]},col:'#ff00ee',diff:5 },
+    sp:{n:'Summon Nautiloid',c:0.22,txt:'A flanking Nautiloid drops out of wildspace and rams you!',fx:'summon',d:[2,6]},col:'#ff00ee',diff:5,
+    wpns:[
+      { n:'Necrotic Beam Array',      ico:'💀', d:[5,6], cd:1, threat:4, txt:'Multiple synchronized necrotic beams — devastating fire rate.' },
+      { n:'Mass Psychic Domination',  ico:'🧠', d:[4,8], cd:2, threat:5, txt:'DANGER: Mind control blast. Deals damage AND removes 3 crew.', crew:3 },
+      { n:'Void Singularity Pulse',   ico:'⬛', d:[3,10], cd:3, threat:5, txt:'DANGER: Compressed void energy — ignores resistance and shreds max hull by 8.', maxhullshred:8, pierceres:true }
+    ]},
 };
 
 const ITEMS = {
@@ -1262,9 +1411,23 @@ const ITEMS = {
   spidsweb:  { n:'Deepspace Webbing',      ico:'🕸️', type:'component', val:14,  desc:'Nearly indestructible spider silk spun in the phlogiston void.' },
   bheye:     { n:'Beholder Eye Stalk',     ico:'👁️', type:'component', val:62,  desc:'A severed beholder eye stalk. Still twitches with residual magic.' },
   arccore:   { n:'Spelljamming Core Shard',ico:'⚙️', type:'component', val:72,  desc:'Damaged spelljamming helm core. Worth refurbishing.' },
-  levblood:  { n:'Leviathan Blood Vial',   ico:'🧪', type:'usable',    val:30,  desc:'Use: Restores 30 hull points immediately.', use:'hp30' },
+  levblood:  { n:'Leviathan Blood Vial',   ico:'🧪', type:'usable',    val:30,  desc:'Use: Restores 50 hull points immediately.', use:'hp50' },
   crewmead:  { n:"Crew's Courage Mead",    ico:'🍺', type:'usable',    val:20,  desc:'Use: Restores 3 crew from the reserve.', use:'crew3' },
   psiamp:    { n:'Psionic Amplifier',      ico:'🔮', type:'usable',    val:45,  desc:'Use in combat: Free action — stuns enemy, skipping their next action. You still attack this round.', use:'stun' },
+  // ── Tiered healing — Hull ────────────────────────────────────────────────
+  repkit:    { n:'Emergency Repair Kit',    ico:'🔩', type:'usable',    val:25,  desc:"Use: Restores 20 hull points — a corsair's field patch kit.", use:'hp20' },
+  astralge:  { n:'Astral Forge Elixir',     ico:'⚗️', type:'usable',    val:90,  desc:'Use: Restores 100 hull points and clears all weapon disruptions.', use:'hp100' },
+  // ── Tiered healing — Crew ───────────────────────────────────────────────
+  stimpack:  { n:'Spelljammer Stimpack',    ico:'💉', type:'usable',    val:55,  desc:'Use: Restores 6 crew from reserves immediately.', use:'crew6' },
+  surgerait: { n:'IEN Surge Rations',       ico:'🎖️', type:'usable',    val:110, desc:'Use: Restores 10 crew — IEN emergency combat ration, boosts morale for one round.', use:'crew10' },
+  // ── Combo heal ──────────────────────────────────────────────────────────
+  almend:    { n:"Alchemist's Mend",        ico:'🩹', type:'usable',    val:35,  desc:'Use in combat: Restores 20 hull and 1 crew simultaneously.', use:'hp20crew1' },
+  voidsalve: { n:'Void Salve',              ico:'🫧', type:'usable',    val:50,  desc:'Use: Removes all weapon disruption effects and restores 15 hull.', use:'voidsalve' },
+  // ── Tiered disable — enemy weapons ──────────────────────────────────────
+  phasedis:  { n:'Phase Disruptor',         ico:'🌀', type:'usable',    val:80,  desc:'Use in combat: Enter targeting mode — click an enemy weapon to disable it for 2 rounds.', use:'disable' },
+  nullgren:  { n:'Null Sphere Grenade',     ico:'💥', type:'usable',    val:110, desc:'Use in combat: Free action — stuns enemy next action AND deals 15 damage.', use:'stundmg' },
+  voidjam:   { n:'Void Reality Jammer',     ico:'🔮', type:'usable',    val:160, desc:'Use in combat: Disable an enemy weapon for 4 rounds. Works on bosses.', use:'disable3' },
+  beacon:    { n:'Emergency Beacon',        ico:'🔔', type:'usable',    val:70,  desc:'Use in combat: Guaranteed escape — IEN distress signal. No flee roll needed.', use:'beacon' },
   runeshard: { n:'Rune-Carved Plate',      ico:'🔷', type:'equip',     val:60,  desc:'Install: Permanently adds +20 max hull points.', use:'hull20' },
   antimag:   { n:'Anti-Magic Sphere Shard',ico:'🌀', type:'equip',     val:80,  desc:'Install: Reduces all incoming damage by 3.', use:'resist3' },
   thrallring:{ n:'Thrall Binding Ring',    ico:'💍', type:'equip',     val:85,  desc:'Install: Repurposed for crew morale — adds +3 max crew.', use:'crew3p' },
@@ -1275,7 +1438,6 @@ const ITEMS = {
   plunder:   { n:'Plundered Merchant Gold', ico:'💰', type:'trade',     val:32,  desc:'Stolen coinage and valuables looted from a dozen merchant vessels.' },
   corskit:   { n:'Corsair Weapon Cache',    ico:'⚓', type:'component', val:40,  desc:'A crate of salvaged ballista bolts and powder charges. Sellable to any armorer.' },
   bfmanif:   { n:'Black Fleet Manifest',    ico:'📋', type:'artifact',  val:110, desc:'A coded Black Fleet operations log. The IEN Admiral will pay handsomely for this intelligence.' },
-  repkit:    { n:'Emergency Repair Kit',    ico:'🔩', type:'usable',    val:25,  desc:"Use: Restores 20 hull points — a corsair's field patch kit.", use:'hp20' },
   // ── Far Realm drops ────────────────────────────────────────────────
   vodeml:    { n:'Vodoni Imperial Emblem',   ico:'🔴', type:'artifact',  val:75,  desc:'A Vodoni imperial command seal. IEN intelligence will pay handsomely for proof of Vodoni presence this far out.' },
   scrtrophy: { n:'Scro War Trophy',          ico:'💀', type:'component', val:45,  desc:"A mounted trophy from the Scro's previous victories. Unpleasant but tradeable at any sufficiently amoral port." },
@@ -1291,13 +1453,13 @@ const ITEMS = {
 const LOOT = {
   corsair:   [{id:'plunder',c:0.80},{id:'cargobale',c:0.65},{id:'repkit',c:0.35},{id:'crewmead',c:0.25},{id:'corskit',c:0.40}],
   plunderer: [{id:'plunder',c:0.75},{id:'starcoin',c:0.55},{id:'corskit',c:0.55},{id:'repkit',c:0.28},{id:'cargobale',c:0.70},{id:'crewmead',c:0.20}],
-  blackfleet:[{id:'starcoin',c:0.70},{id:'bfmanif',c:0.45},{id:'arccore',c:0.30},{id:'astsil',c:0.50},{id:'levblood',c:0.22},{id:'psiamp',c:0.18}],
-  nautiloid: [{id:'psicry',c:0.65},{id:'mftent',c:0.50},{id:'cargobale',c:0.75},{id:'psiamp',c:0.22},{id:'voidchart',c:0.10}],
-  githyanki: [{id:'silksw',c:0.55},{id:'astsil',c:0.65},{id:'starcoin',c:0.70},{id:'arccore',c:0.18},{id:'silblade',c:0.08}],
-  neogi:     [{id:'ngvnm',c:0.65},{id:'spidsweb',c:0.75},{id:'thrallring',c:0.12},{id:'cargobale',c:0.80},{id:'crewmead',c:0.30}],
-  beholder:  [{id:'bheye',c:0.55},{id:'antimag',c:0.18},{id:'runeshard',c:0.22},{id:'starcoin',c:0.45},{id:'psiamp',c:0.15}],
-  leviathan: [{id:'levscal',c:0.80},{id:'levblood',c:0.45},{id:'voidchart',c:0.22},{id:'arccore',c:0.25}],
-  elder:     [{id:'ebtiss',c:1.0},{id:'antimag',c:0.55},{id:'voidchart',c:0.60},{id:'arccore',c:0.50},{id:'psiamp',c:0.40},{id:'levblood',c:0.50}],
+  blackfleet:[{id:'starcoin',c:0.70},{id:'bfmanif',c:0.45},{id:'arccore',c:0.30},{id:'astsil',c:0.50},{id:'levblood',c:0.22},{id:'psiamp',c:0.18},{id:'beacon',c:0.12}],
+  nautiloid: [{id:'psicry',c:0.65},{id:'mftent',c:0.50},{id:'cargobale',c:0.75},{id:'psiamp',c:0.22},{id:'voidchart',c:0.10},{id:'almend',c:0.15}],
+  githyanki: [{id:'silksw',c:0.55},{id:'astsil',c:0.65},{id:'starcoin',c:0.70},{id:'arccore',c:0.18},{id:'silblade',c:0.08},{id:'stimpack',c:0.15}],
+  neogi:     [{id:'ngvnm',c:0.65},{id:'spidsweb',c:0.75},{id:'thrallring',c:0.12},{id:'cargobale',c:0.80},{id:'crewmead',c:0.30},{id:'voidsalve',c:0.12}],
+  beholder:  [{id:'bheye',c:0.55},{id:'antimag',c:0.18},{id:'runeshard',c:0.22},{id:'starcoin',c:0.45},{id:'psiamp',c:0.15},{id:'phasedis',c:0.12}],
+  leviathan: [{id:'levscal',c:0.80},{id:'levblood',c:0.45},{id:'voidchart',c:0.22},{id:'arccore',c:0.25},{id:'astralge',c:0.10}],
+  elder:     [{id:'ebtiss',c:1.0},{id:'antimag',c:0.55},{id:'voidchart',c:0.60},{id:'arccore',c:0.50},{id:'psiamp',c:0.40},{id:'levblood',c:0.50},{id:'astralge',c:0.35},{id:'voidjam',c:0.25}],
   // ── Fragment guardian loot (generous — they're bosses) ───
   fg_realm:   [{id:'starcoin',c:0.90},{id:'plunder',c:0.80},{id:'repkit',c:0.60},{id:'crewmead',c:0.50},{id:'bfmanif',c:0.40}],
   fg_grey:    [{id:'starcoin',c:0.90},{id:'arccore',c:0.55},{id:'corskit',c:0.70},{id:'levblood',c:0.40},{id:'runeshard',c:0.30}],
@@ -1335,15 +1497,19 @@ const WORLD_BOSSES = {
     ],
     sp:{n:'Entropic Inversion',c:0.28,txt:'Vrath-Kaag inverts the damage — your attack heals it instead, then it fires back with doubled force!',fx:'summon',d:[3,8]},
     col:'#993300', diff:4,
-    patrol:['ragestar','vodoni','dukagsh'],   // triangle
-    patrolLanes:['ragestar->vodoni','vodoni->dukagsh','dukagsh->ragestar'], // hidden until discovered
-    discoveredBy:'vodoni',  // docking at this sphere and getting intel reveals the boss
+    wpns:[
+      {n:'Entropy Unraveler',  ico:'🌀', d:[4,8], cd:1, threat:5, txt:'Unthreads hull plating back into unreality — ignores resistance.', ignoreResist:true},
+      {n:'Void Compression Rig',ico:'⬛', d:[3,8], cd:2, threat:5, txt:'Space folds inward — hull damage AND 2 crew lost simultaneously.', crew:2},
+      {n:'Geometric Distortion',ico:'🔮', d:[2,6], cd:3, threat:3, txt:'Adds +1 cooldown to all your weapons as spacetime warps around them.', special:'slowAll'}
+    ],
+    patrol:['ragestar','vodoni','dukagsh'],
+    patrolLanes:['ragestar->vodoni','vodoni->dukagsh','dukagsh->ragestar'],
+    discoveredBy:'vodoni',
     drawFn:'drawWarlordGrex',
     intro:"A mass of writhing geometry slides out of the phlogiston ahead — Vrath-Kaag, the Unraveler. It has been dissolving ships in these lanes for longer than the Vodoni Empire has existed. It has noticed you.",
     defeat:"Vrath-Kaag collapses inward, folding through dimensions it forced open. The phlogiston settles. The lanes between Ragestar, Vodoni, and Dukagsh are clear of its presence — for now.",
     lore:'An Elder Evil that predates the current sphere arrangement. It does not conquer — it unravels. Settlements, fleets, and memories dissolve in its wake, leaving geometrically incorrect silence.'
   },
-  // Triangle: baresun ↔ thedas ↔ nehwon  (new lane: baresun↔nehwon)
   wb_admiral: {
     name:'The Hollow Admiral', sub:'Phase-Consumed — Far Realm Remnant',
     hp:270, maxHp:270, g:[130,200],
@@ -1353,15 +1519,19 @@ const WORLD_BOSSES = {
     ],
     sp:{n:'Phase Step Counter',c:0.25,txt:'The admiral half-phases — your shot passes through, and he fires back from inside your hull!',fx:'phase'},
     col:'#005566', diff:4,
+    wpns:[
+      {n:'Phase Cannon',      ico:'👻', d:[3,8], cd:1, threat:5, txt:'Fires through the Far Realm — ignores all resistances and dodge.', ignoreResist:true, seeking:true},
+      {n:'Reality Anchor Tether',ico:'⚓',d:[2,8], cd:2, threat:4, txt:'Locks your position — disables Evasive Maneuver for 2 rounds.', disarmPlayer:true},
+      {n:'Phase Broadside',   ico:'🌊', d:[2,6], cd:3, threat:4, txt:'A full broadside fired from inside your hull — cannot be evaded.', seeking:true}
+    ],
     patrol:['baresun','thedas','nehwon'],
-    patrolLanes:['baresun->thedas','thedas->nehwon','nehwon->baresun'],  // nehwon->baresun is new
+    patrolLanes:['baresun->thedas','thedas->nehwon','nehwon->baresun'],
     discoveredBy:'baresun',
     drawFn:'drawHollowAdmiral',
     intro:"A Vodoni warship materialises across the lane — or half of one. The other half is somewhere else entirely. The Hollow Admiral was pulled through the Baresun scar a decade ago. He came back as something the Far Realm uses as a vessel.",
     defeat:"The phase-field collapses. The Hollow Admiral's ship falls back into full reality, then falls apart. Whatever Far Realm intelligence was piloting the wreck disperses into static.",
     lore:'Once a Vodoni Fleet Admiral. Pulled through the Baresun scar during a patrol. The Far Realm did not kill him — it hollowed him out and kept the uniform. Something wears him now.'
   },
-  // Triangle: squrm ↔ solaris ↔ donig  (new lane: solaris↔donig)
   wb_clutch: {
     name:'Chorggrak', sub:'The Brood-That-Devours — Far Realm Elder Evil',
     hp:340, maxHp:340, g:[170,260],
@@ -1371,15 +1541,19 @@ const WORLD_BOSSES = {
     ],
     sp:{n:'Brood Split',c:0.25,txt:"Chorggrak divides — one fragment absorbs your hit while the other fires. Hull and crew both take damage.",fx:'heal'},
     col:'#0a3310', diff:4,
+    wpns:[
+      {n:'Fang-Bolt Storm',   ico:'🦷', d:[3,6], cd:0, threat:3, txt:'Bio-organic projectiles fire every round — relentless living swarm.'},
+      {n:'Absorption Maw',    ico:'🕳️', d:[2,8], cd:2, threat:5, txt:'Pulls matter toward Chorggrak — 2 crew dragged free and hull plates ripped off.', crew:2},
+      {n:'Brood Swarm Burst', ico:'🐛', d:[2,6], cd:3, threat:4, txt:'Secondary swarm detonates — adds +2 to all your weapon cooldowns.', special:'slowAll'}
+    ],
     patrol:['squrm','solaris','donig'],
-    patrolLanes:['squrm->solaris','solaris->donig','donig->squrm'],  // solaris->donig is new
+    patrolLanes:['squrm->solaris','solaris->donig','donig->squrm'],
     discoveredBy:'squrm',
     drawFn:'drawClutchMother',
     intro:"The stars ahead are blocked. Not by a ship — by something that has been eating ships. Chorggrak, the Brood-That-Devours, has been circling these three spheres for centuries. It is not hunting. It is grazing.",
     defeat:"Chorggrak breaks apart — not dying exactly, more like disagreeing with its own existence violently enough to stop. The void is quiet. Something that was always hungry is no longer hungry.",
     lore:'An Elder Evil that exists to consume and replicate. It does not communicate. It does not negotiate. The Far Realm sent it here the way a body sends white blood cells — as a response to something it perceived as a threat.'
   },
-  // Triangle: theweird ↔ baresun ↔ ragestar
   wb_murmur: {
     name:'The Murmur', sub:'Far Realm Consciousness — Scar Triangle',
     hp:360, maxHp:360, g:[190,290],
@@ -1389,6 +1563,11 @@ const WORLD_BOSSES = {
     ],
     sp:{n:'Phase Rift',c:0.30,txt:'The Murmur shifts between moments — your attack hits something that has not happened yet, and passes through.',fx:'phase'},
     col:'#003322', diff:5,
+    wpns:[
+      {n:'Reality Unwriter',  ico:'🧿', d:[4,8], cd:1, threat:5, txt:'Erases hull from having existed — ignores resistance and corrodes max hull by 6.', special:'corrode', ignoreResist:true},
+      {n:'Madness Wave Emitter',ico:'🌀',d:[2,8], cd:2, threat:5, txt:'Your crew forgets what they are doing — 3 crew lost, all weapon cooldowns +1.', crew:3, special:'slowAll'},
+      {n:'Temporal Distortion',ico:'⌛', d:[1,6], cd:3, threat:3, txt:'Wraps your ship in wrong time — disables your most recently fired weapon for 3 rounds.', disarmPlayer:true}
+    ],
     patrol:['theweird','baresun','ragestar'],
     patrolLanes:['theweird->baresun','baresun->ragestar','ragestar->theweird'],
     discoveredBy:'theweird',
@@ -4267,14 +4446,40 @@ function dismissGuardian(){
   addLog('You withdraw from the site. The guardian watches as you depart.','');
 }
 
+function startCombat(key){
+  G.phase='combat'; setTag('COMBAT');
+  const t=ENM[key];
+  const eWpns = (t.wpns||[]).map(w=>({...w}));
+  const eCds  = eWpns.map(()=>0);
+  const eDisabled = eWpns.map(()=>0);
+  G.cbt={ enemy:{...t,hp:t.maxHp,burnLeft:0,stunsNext:false,_key:key},
+    pStat:'normal', eStat:'normal', pTurn:true, cds:{}, linkedCd:0, volleyCd:0,
+    pendingLootKey:key, playerStunnedNext:false,
+    eWpns, eCds, eDisabled, targeting:false, rageStacks:0
+  };
+  G.ship.wpns.forEach((_,i)=>G.cbt.cds[i]=0);
+  document.getElementById('ov-combat').classList.add('on');
+  document.getElementById('ct-title').textContent=`⚔ ${t.name.toUpperCase()} ⚔`;
+  document.getElementById('ct-pname').textContent=G.ship.name;
+  document.getElementById('ct-ename').textContent=`${t.name} · ${t.sub}`;
+  updateCbtUI(); drawCbtShips(key); buildCbtPanels();
+  snd('combat_start', 0.9);
+  setTimeout(()=>setAmbient('combat'), 600);
+  cLog(`A ${t.name} drops out of the void! Battle stations!`,'dmg');
+  cLog(`Choose your action.`,'');
+}
+
 function startFragmentFight(site){
   G._pendingFragSite = site;
   const guardian = FRAG_GUARDIANS[site.guardianKey];
+  const eWpns = (guardian.wpns||[]).map(w=>({...w}));
   G.phase='combat'; setTag('COMBAT — FRAGMENT GUARDIAN');
   G.cbt={ enemy:{...guardian,hp:guardian.maxHp,burnLeft:0,stunsNext:false},
           pStat:'normal', eStat:'normal', pTurn:true, cds:{}, linkedCd:0, volleyCd:0,
-          pendingLootKey:site.guardianKey,
-          fragFight:true };   // ← explicit flag so claimLoot never misses it
+          pendingLootKey:site.guardianKey, playerStunnedNext:false,
+          eWpns, eCds:eWpns.map(()=>0), eDisabled:eWpns.map(()=>0),
+          targeting:false, rageStacks:0,
+          fragFight:true };
   G.ship.wpns.forEach((_,i)=>G.cbt.cds[i]=0);
   document.getElementById('ov-combat').classList.add('on');
   document.getElementById('ct-title').textContent=`⚔ ${guardian.name.toUpperCase()} ⚔`;
@@ -4289,9 +4494,12 @@ function startFragmentFight(site){
 function startWorldBossCombat(key){
   G.phase='combat'; setTag('COMBAT — WORLD BOSS');
   const boss = WORLD_BOSSES[key];
+  const eWpns = (boss.wpns||[]).map(w=>({...w}));
+  const eCds = eWpns.map(()=>0);
+  const eDisabled = eWpns.map(()=>0);
   G.cbt={ enemy:{...boss,hp:boss.maxHp,burnLeft:0,stunsNext:false,_key:key,_worldBoss:true},
           pStat:'normal', eStat:'normal', pTurn:true, cds:{}, linkedCd:0, volleyCd:0,
-          pendingLootKey:key, playerStunnedNext:false };
+          pendingLootKey:key, playerStunnedNext:false, eWpns, eCds, eDisabled, targeting:false, rageStacks:0 };
   G.ship.wpns.forEach((_,i)=>G.cbt.cds[i]=0);
   document.getElementById('ov-combat').classList.add('on');
   document.getElementById('ct-title').textContent=`⚔ ${boss.name.toUpperCase()} ⚔`;
@@ -4301,15 +4509,23 @@ function startWorldBossCombat(key){
   snd('combat_start', 1.0);
   setTimeout(()=>setAmbient('combat'), 600);
   cLog(`⚠ WORLD BOSS: ${boss.name}!`,'dmg');
+  cLog(boss.intro||'It charges toward you.','dmg');
   cLog(`Choose your action.`,'');
 }
 
 function startShothothuqCombat(){
   G.phase='combat'; setTag('COMBAT — THE MANIFEST HUNGER');
+  const wpns = [
+    {n:'Hunger Incarnate',     ico:'🕳️', d:[5,10], cd:1, threat:5, txt:'Opens a wound in reality — matter, light, and time drain simultaneously. Ignores all resistance.', ignoreResist:true},
+    {n:'Consuming Thought',    ico:'🧠', d:[3,10], cd:2, threat:5, txt:'Your crew forgets what they are doing. Two stop existing entirely.', crew:2},
+    {n:'Sphere Unmaking Pulse',ico:'⬛', d:[4,8],  cd:3, threat:5, txt:'Compressed space corrodes your hull permanently — max hull −8.', special:'corrode'},
+    {n:'True Hunger',          ico:'🌀', d:[2,8],  cd:4, threat:4, txt:'Absorbs your weapons output — adds +2 to ALL weapon cooldowns.', special:'slowAll'}
+  ];
   const boss = {...FINAL_BOSS, hp:FINAL_BOSS.maxHp, burnLeft:0, stunsNext:false, _key:'shothothug', _worldBoss:true};
   G.cbt={ enemy:boss,
           pStat:'normal', eStat:'normal', pTurn:true, cds:{}, linkedCd:0, volleyCd:0,
-          pendingLootKey:'shothothug', playerStunnedNext:false };
+          pendingLootKey:'shothothug', playerStunnedNext:false,
+          eWpns:wpns, eCds:wpns.map(()=>0), eDisabled:wpns.map(()=>0), targeting:false, rageStacks:0 };
   G.ship.wpns.forEach((_,i)=>G.cbt.cds[i]=0);
   document.getElementById('ov-combat').classList.add('on');
   document.getElementById('ct-title').textContent=`⬡ SHOTHOTHUG — THE MANIFEST HUNGER ⬡`;
@@ -4321,22 +4537,6 @@ function startShothothuqCombat(){
   cLog(`⬡ THE BARESUN SCAR TEARS OPEN — ${FINAL_BOSS.name} EMERGES!`,'dmg');
   cLog(FINAL_BOSS.intro,'dmg');
   cLog(`This is the end. Choose your action.`,'');
-}
-
-function startCombat(key){
-  G.phase='combat'; setTag('COMBAT');
-  const t=ENM[key];
-  G.cbt={ enemy:{...t,hp:t.maxHp,burnLeft:0,stunsNext:false,_key:key}, pStat:'normal', eStat:'normal', pTurn:true, cds:{}, linkedCd:0, volleyCd:0, pendingLootKey:key, playerStunnedNext:false };
-  G.ship.wpns.forEach((_,i)=>G.cbt.cds[i]=0); // all weapons ready
-  document.getElementById('ov-combat').classList.add('on');
-  document.getElementById('ct-title').textContent=`⚔ ${t.name.toUpperCase()} ⚔`;
-  document.getElementById('ct-pname').textContent=G.ship.name;
-  document.getElementById('ct-ename').textContent=`${t.name} · ${t.sub}`;
-  updateCbtUI(); drawCbtShips(key); buildCbtBtns();
-  snd('combat_start', 0.9);
-  setTimeout(() => setAmbient('combat'), 600);
-  cLog(`A ${t.name} drops out of the void! Battle stations!`,'dmg');
-  cLog(`Choose your action.`,'');
 }
 
 function updateCbtUI(){
@@ -4673,7 +4873,7 @@ function floatDmg(canvasEl, amount, isHeal=false) {
 function triggerAnim(el, cls) {
   if(!el) return;
   el.classList.remove(cls);
-  void el.offsetWidth; // force reflow to restart animation
+  void el.offsetWidth;
   el.classList.add(cls);
   setTimeout(() => el.classList.remove(cls), 600);
 }
@@ -4681,38 +4881,86 @@ function triggerAnim(el, cls) {
 function pCV() { return document.getElementById('cv-player'); }
 function eCV() { return document.getElementById('cv-enemy'); }
 
-// ── COMBAT BUTTONS ─────────────────────────────────────
-function buildCbtBtns() {
-  const box = document.getElementById('cacts');
-  box.innerHTML = '';
-  // pTurn=false means enemy is processing — never show buttons
+function buildCbtPanels() {
+  const playerPanel = document.getElementById('cbt-player-wpns');
+  const enemyPanel  = document.getElementById('cbt-enemy-wpns');
+  const abilityRow  = document.getElementById('cbt-abilities');
+  if (!playerPanel || !enemyPanel || !abilityRow) return;
+
+  playerPanel.innerHTML = '<div class="cbt-panel-title">⚔ Your Weapons</div>';
+  enemyPanel.innerHTML  = '<div class="cbt-panel-title enemy-title">☠ Enemy Systems</div>';
+  abilityRow.innerHTML  = '';
+
+  const inTargeting = G.cbt.targeting === 'disable';
+
+  // ── PLAYER WEAPONS ──
   if (!G.cbt.pTurn) {
-    box.innerHTML = '<div style="color:#9966dd;font-style:italic;font-size:11px;">Enemy is acting…</div>';
+    playerPanel.innerHTML += '<div style="color:#9966dd;font-style:italic;font-size:10px;padding:4px;">Enemy is acting…</div>';
+  } else {
+    if (G.cbt.pStat === 'stunned') G.cbt.pStat = 'normal';
+    G.ship.wpns.forEach((wk, i) => {
+      const w = WPN[wk];
+      const cd = G.cbt.cds[i] || 0;
+      const ready = cd === 0;
+      const card = document.createElement('div');
+      card.className = 'cbt-wpn-card ' + (ready ? 'ready' : 'on-cooldown') + (inTargeting ? ' targeting-select' : '');
+      const cdFillPct = w.cd > 0 ? Math.max(0, ((w.cd - cd) / w.cd) * 100) : 100;
+      card.innerHTML =
+        '<div class="cbt-wpn-card-name ' + (ready?'ready-name':'') + '">' + (ready?'🔥':'🔄') + ' ' + w.n + '</div>' +
+        '<div class="cbt-wpn-card-info">' + w.d[0] + 'd' + w.d[1] + ' · ' + w.info + '</div>' +
+        (w.cd > 0 ? '<div class="cbt-wpn-cd-bar"><div class="cbt-wpn-cd-fill" style="width:' + cdFillPct + '%"></div></div>' : '') +
+        (cd > 0 ? '<div class="cbt-cd-pip">' + cd + '</div>' : '');
+      if (!inTargeting && ready) card.onclick = () => doAction('wpn', i);
+      else if (!ready) card.title = 'Reloading — ' + cd + ' round' + (cd>1?'s':'') + ' remaining';
+      playerPanel.appendChild(card);
+    });
+  }
+
+  // ── ENEMY WEAPONS ──
+  (G.cbt.eWpns || []).forEach((w, i) => {
+    const disabled = (G.cbt.eDisabled[i] || 0) > 0;
+    const eCd      = G.cbt.eCds[i] || 0;
+    const isSpecial = (w.threat||1) >= 4;
+    const card = document.createElement('div');
+    let cls = 'cbt-ewpn-card';
+    if (disabled)           cls += ' e-disabled';
+    else if (isSpecial)     cls += ' e-special';
+    else                    cls += ' e-active';
+    if (inTargeting && !disabled) cls += ' e-targetable';
+    card.className = cls;
+    const threatDots = Array.from({length:5},(_,di)=>{
+      const filled = di < (w.threat||1);
+      const col = (w.threat||1)>=4?'#ff4444':(w.threat||1)>=3?'#ff8844':'#ffcc44';
+      return `<span style="color:${filled?col:'#332233'};font-size:10px;">◆</span>`;
+    }).join('');
+    card.innerHTML =
+      '<div class="cbt-ewpn-name">' + (w.ico||'⚔') + ' ' + w.n + '</div>' +
+      '<div class="cbt-ewpn-info">' + w.txt + '</div>' +
+      '<div class="cbt-ewpn-threat">Threat: ' + threatDots + '</div>' +
+      (disabled ? '<div class="cbt-ewpn-disabled-bar">⬡ DISABLED — ' + G.cbt.eDisabled[i] + ' turn' + (G.cbt.eDisabled[i]>1?'s':'') + ' remaining</div><div class="cbt-ecd-pip">' + G.cbt.eDisabled[i] + '</div>' : '') +
+      (eCd > 0 && !disabled ? '<div class="cbt-ecd-pip">' + eCd + '</div>' : '');
+    if (inTargeting && !disabled) card.onclick = () => resolveTargeting(i);
+    enemyPanel.appendChild(card);
+  });
+  if (!(G.cbt.eWpns||[]).length) {
+    enemyPanel.innerHTML += '<div style="font-size:10px;color:#553333;font-style:italic;padding:4px;">No weapon data</div>';
+  }
+
+  // ── ABILITY ROW ──
+  if (!G.cbt.pTurn) return;
+
+  if (inTargeting) {
+    const cancel = document.createElement('button'); cancel.className = 'btn dmg';
+    cancel.textContent = '✕ Cancel Targeting';
+    cancel.onclick = () => { G.cbt.targeting = false; buildCbtPanels(); };
+    abilityRow.appendChild(cancel);
     return;
   }
-  // Stun is now handled entirely inside enemyTurn's async chain.
-  // If we ever reach here with pStat=stunned it's a leftover state; clear it.
-  if (G.cbt.pStat === 'stunned') G.cbt.pStat = 'normal'; // legacy safety clear
-
-  G.ship.wpns.forEach((wk, i) => {
-    const w = WPN[wk]; const cd = G.cbt.cds[i] || 0;
-    const wrap = document.createElement('div'); wrap.className = 'wpn-btn-wrap';
-    const btn = document.createElement('button');
-    btn.className = 'btn' + (cd > 0 ? ' disabled' : '');
-    btn.disabled = cd > 0;
-    btn.innerHTML = cd > 0
-      ? `🔄 ${w.n} <em style="color:#664422">(${cd} rd${cd>1?'s':''} reload)</em>`
-      : `🔥 ${w.n} <span style="color:#664400;font-size:10px">(${w.info})</span>`;
-    btn.onclick = () => doAction('wpn', i);
-    if (cd > 0) { const pip = document.createElement('div'); pip.className = 'cd-pip'; pip.textContent = cd; wrap.appendChild(pip); }
-    wrap.appendChild(btn); box.appendChild(wrap);
-  });
 
   const eb = document.createElement('button'); eb.className = 'btn';
-  eb.textContent = '🌀 Evasive Maneuver (50% dodge next hit)';
-  eb.onclick = () => doAction('evade'); box.appendChild(eb);
+  eb.textContent = '🌀 Evasive Maneuver (50% dodge)';
+  eb.onclick = () => doAction('evade'); abilityRow.appendChild(eb);
 
-  // ── Fire Control System — Linked Fire (hidden if Volley Array installed) ──
   if (G.ship.upgrades.includes('firectrl') && !G.ship.upgrades.includes('volley')) {
     const readyCount = G.ship.wpns.filter((_,i) => (G.cbt.cds[i]||0) === 0).length;
     const lOnCd = (G.cbt.linkedCd||0) > 0;
@@ -4720,17 +4968,12 @@ function buildCbtBtns() {
     lb.className = 'btn' + (readyCount < 2 || lOnCd ? ' disabled' : '');
     lb.disabled = readyCount < 2 || lOnCd;
     lb.style.borderColor = lOnCd ? '#886644aa' : '#ffaa2266';
-    lb.style.color = lOnCd ? '#cc9966' : '';
-    lb.innerHTML = lOnCd
-      ? `🎯 Linked Fire <span style="color:#ffbb88;font-size:10px;font-weight:600;">(${G.cbt.linkedCd} rds cooldown)</span>`
-      : readyCount < 2
-        ? `🎯 Linked Fire <span style="color:#553322;font-size:10px">(need 2+ weapons ready)</span>`
-        : `🎯 Linked Fire <span style="color:#664422;font-size:10px">(fire 2 ready weapons at once)</span>`;
-    lb.onclick = () => doAction('linked');
-    box.appendChild(lb);
+    lb.innerHTML = lOnCd ? '🎯 Linked Fire <em style="font-size:10px">(' + G.cbt.linkedCd + ' rds cd)</em>'
+      : readyCount < 2 ? '🎯 Linked Fire <em style="font-size:10px">(need 2+ ready)</em>'
+      : '🎯 Linked Fire <em style="font-size:10px">(fire 2 at once)</em>';
+    lb.onclick = () => doAction('linked'); abilityRow.appendChild(lb);
   }
 
-  // ── Volley Fire Array ───────────────────────────────────
   if (G.ship.upgrades.includes('volley')) {
     const readyWpns = G.ship.wpns.filter((_,i) => (G.cbt.cds[i]||0) === 0).length;
     const vOnCd = (G.cbt.volleyCd||0) > 0;
@@ -4738,34 +4981,58 @@ function buildCbtBtns() {
     vb.className = 'btn' + (readyWpns < 2 || vOnCd ? ' disabled' : '');
     vb.disabled = readyWpns < 2 || vOnCd;
     vb.style.borderColor = vOnCd ? '#446688aa' : '#4488ff66';
-    vb.style.color = vOnCd ? '#88aadd' : '';
-    vb.innerHTML = vOnCd
-      ? `🌊 Volley Fire <span style="color:#99ccff;font-size:10px;font-weight:600;">(${G.cbt.volleyCd} rds cooldown)</span>`
-      : readyWpns < 2
-        ? `🌊 Volley Fire <span style="color:#334455;font-size:10px">(need 2+ weapons ready)</span>`
-        : `🌊 Volley Fire <span style="color:#224466;font-size:10px">(all ${readyWpns} ready weapon${readyWpns!==1?'s':''} at once)</span>`;
-    vb.onclick = () => doAction('volley');
-    box.appendChild(vb);
+    vb.innerHTML = vOnCd ? '🌊 Volley Fire <em style="font-size:10px">(' + G.cbt.volleyCd + ' rds cd)</em>'
+      : readyWpns < 2 ? '🌊 Volley Fire <em style="font-size:10px">(need 2+ ready)</em>'
+      : '🌊 Volley Fire <em style="font-size:10px">(all ' + readyWpns + ' ready)</em>';
+    vb.onclick = () => doAction('volley'); abilityRow.appendChild(vb);
   }
 
   if (G.ship.crew >= 2 && G.ship.hull < G.ship.maxHull) {
     const h = Math.min(25, G.ship.maxHull - G.ship.hull);
     const rb = document.createElement('button'); rb.className = 'btn gd';
-    rb.textContent = `🔧 Emergency Repair (2 crew → +${h} hull)`;
-    rb.onclick = () => doAction('repair'); box.appendChild(rb);
+    rb.textContent = '🔧 Emergency Repair (2 crew → +' + h + ' hull)';
+    rb.onclick = () => doAction('repair'); abilityRow.appendChild(rb);
   }
 
   G.ship.inv.filter(i => i.type === 'usable').forEach(item => {
     const ub = document.createElement('button'); ub.className = 'btn';
-    ub.style.borderColor = '#44aaff66'; ub.style.color = '#88ccff';
-    ub.textContent = `${item.ico} Use: ${item.n}`;
+    const isDisabler = item.use && item.use.startsWith('disable');
+    ub.style.borderColor = isDisabler ? '#ffd70066' : '#44aaff66';
+    ub.style.color = isDisabler ? '#ffd700' : '#88ccff';
+    ub.innerHTML = item.ico + ' <strong>' + item.n + '</strong> <em style="font-size:9px;color:#556688">' + item.desc + '</em>';
     ub.onclick = () => doAction('item', 0, item.uid);
-    box.appendChild(ub);
+    abilityRow.appendChild(ub);
   });
 
   const fb = document.createElement('button'); fb.className = 'btn dmg';
   fb.textContent = '💨 Flee (50% chance)';
-  fb.onclick = () => doAction('flee'); box.appendChild(fb);
+  fb.onclick = () => doAction('flee'); abilityRow.appendChild(fb);
+}
+
+// Legacy alias
+function buildCbtBtns() { buildCbtPanels(); }
+
+// ── RESOLVE TARGETING — called when player clicks an enemy weapon card ──
+async function resolveTargeting(idx) {
+  if (G.cbt.targeting !== 'disable') return;
+  const wpn = G.cbt.eWpns[idx];
+  if (!wpn || (G.cbt.eDisabled[idx]||0) > 0) return;
+  const duration = G.cbt._disableDuration || 2;
+  G.cbt.eDisabled[idx] = duration;
+  G.cbt.targeting = false;
+  if (G.cbt._disableItem) {
+    G.ship.inv = G.ship.inv.filter(i => i.uid !== G.cbt._disableItem.uid);
+    G.cbt._disableItem = null;
+  }
+  G.cbt._disableDuration = 0;
+  snd('stun', 0.9);
+  triggerAnim(eCV(), 'anim-shake');
+  cLog('⬡ ' + wpn.n + ' disabled for ' + duration + ' round' + (duration!==1?'s':'') + '! System goes dark.', 'gd');
+  updateCbtUI();
+  buildCbtPanels();
+  await sleep(600);
+  if (G.phase !== 'combat') return;
+  if (G.cbt.enemy.hp > 0) await enemyTurn();
 }
 
 // ── PLAYER ACTION (async) ─────────────────────────────
@@ -5067,18 +5334,49 @@ async function doAction(type, idx, itemUid) {
     case 'item': {
       const item = G.ship.inv.find(i => i.uid === itemUid);
       if (!item) break;
-      if (item.use === 'hp20' || item.use === 'hp30') {
-        const cap = item.use === 'hp20' ? 20 : 30;
+
+      // ── Disable items — enter targeting mode ──
+      if (item.use === 'disable' || item.use === 'disable2' || item.use === 'disable3') {
+        const dur = item.use === 'disable3' ? 4 : item.use === 'disable2' ? 3 : 2;
+        const hasTargets = (G.cbt.eWpns||[]).some((_,i)=>(G.cbt.eDisabled[i]||0)===0);
+        if (!hasTargets) {
+          cLog(`⬡ All enemy weapons are already disabled!`, 'gd');
+          G.cbt.pTurn = true; buildCbtBtns(); return;
+        }
+        G.cbt.targeting = 'disable';
+        G.cbt._disableDuration = dur;
+        G.cbt._disableItem = item;
+        cLog(`⬡ ${item.n} charged — select an enemy weapon to disable (${dur} rounds)`, 'gd');
+        snd('stun', 0.7);
+        G.cbt.pTurn = true;
+        buildCbtBtns();
+        return;
+      }
+
+      // ── Healing items ──
+      if (item.use === 'hp20' || item.use === 'hp30' || item.use === 'hp50' || item.use === 'hp100') {
+        const cap = item.use === 'hp20' ? 20 : item.use === 'hp30' ? 30 : item.use === 'hp50' ? 50 : 100;
         const gain = Math.min(cap, G.ship.maxHull - G.ship.hull);
         G.ship.hull += gain;
+        // hp100 also clears burn DoT
+        if (item.use === 'hp100' && G.cbt.enemy.burnLeft > 0) { /* burn is on enemy not player, leave it */ }
         snd('heal_item', 0.9);
         triggerAnim(pCV(), 'anim-heal');
         floatDmg(pCV(), gain, true);
         cLog(`🧪 ${item.n}: hull restored +${gain}!`, 'gd');
-      } else if (item.use === 'crew3') {
-        const gain = Math.min(3, G.ship.maxCrew - G.ship.crew);
+      } else if (item.use === 'crew3' || item.use === 'crew6' || item.use === 'crew10') {
+        const cap = item.use === 'crew3' ? 3 : item.use === 'crew6' ? 6 : 10;
+        const gain = Math.min(cap, G.ship.maxCrew - G.ship.crew);
         G.ship.crew += gain;
-        cLog(`🍺 ${item.n}: +${gain} crew recovered!`, 'gd');
+        cLog(`${item.ico} ${item.n}: +${gain} crew recovered!`, 'gd');
+      } else if (item.use === 'hp20crew1') {
+        const hgain = Math.min(20, G.ship.maxHull - G.ship.hull);
+        const cgain = Math.min(1, G.ship.maxCrew - G.ship.crew);
+        G.ship.hull += hgain; G.ship.crew += cgain;
+        snd('heal_item', 0.85);
+        triggerAnim(pCV(), 'anim-heal');
+        floatDmg(pCV(), hgain, true);
+        cLog(`🩹 ${item.n}: +${hgain} hull and +${cgain} crew!`, 'gd');
       } else if (item.use === 'stun') {
         G.cbt.enemy.stunsNext = true;
         snd('stun', 0.85);
@@ -5087,11 +5385,35 @@ async function doAction(type, idx, itemUid) {
         G.ship.inv = G.ship.inv.filter(i => i.uid !== itemUid);
         updateCbtUI();
         await sleep(600);
-        // Free action — return control to player immediately, do NOT hand off to enemyTurn
         G.cbt.pTurn = true;
         buildCbtBtns();
         return;
+      } else if (item.use === 'stundmg') {
+        // Null Sphere Grenade — stun + 15 damage
+        G.cbt.enemy.stunsNext = true;
+        const bonusDmg = 15;
+        G.cbt.enemy.hp = Math.max(0, G.cbt.enemy.hp - bonusDmg);
+        snd('stun', 0.9); snd('enemy_hit', 0.8);
+        triggerAnim(eCV(), 'anim-shake');
+        floatDmg(eCV(), bonusDmg, false);
+        cLog(`💥 ${item.n}: detonates for ${bonusDmg} damage — enemy stunned next action!`, 'gd');
+        G.ship.inv = G.ship.inv.filter(i => i.uid !== itemUid);
+        updateCbtUI();
+        if(G.cbt.enemy.hp <= 0){ cbtWin(); return; }
+        await sleep(700);
+        G.cbt.pTurn = true;
+        buildCbtBtns();
+        return;
+      } else if (item.use === 'beacon') {
+        // Emergency Beacon — guaranteed flee
+        snd('flee_escape', 1.0);
+        cLog(`🔔 ${item.n} detonates — IEN distress signal fires! You break off at full speed!`, 'gd');
+        G.ship.inv = G.ship.inv.filter(i => i.uid !== itemUid);
+        await sleep(900);
+        endCbt(false);
+        return;
       }
+
       G.ship.inv = G.ship.inv.filter(i => i.uid !== itemUid);
       updateCbtUI();
       await sleep(500);
@@ -5120,7 +5442,6 @@ async function doAction(type, idx, itemUid) {
 // ── ENEMY TURN (async) ────────────────────────────────
 async function enemyTurn() {
   if (G.phase !== 'combat') return;
-  // Lock immediately — pTurn must be false for the entire enemy processing window
   G.cbt.pTurn = false;
   const e = G.cbt.enemy;
 
@@ -5142,24 +5463,28 @@ async function enemyTurn() {
     if(e._nullified === 0) cLog(`⬡ ${e.name}'s special ability recovers.`, '');
   }
 
-  // Dodge/Phase expires — enemy status lasts only one player turn
-  if (G.cbt.eStat === 'dodging' || G.cbt.eStat === 'phased') {
-    G.cbt.eStat = 'normal';
-  }
+  // Dodge/Phase expires
+  if (G.cbt.eStat === 'dodging' || G.cbt.eStat === 'phased') G.cbt.eStat = 'normal';
 
-  // Tick weapon cooldowns — standard 1 per turn
-  // (Rapid Reload System reduces base cooldown on install, not tick speed)
+  // Tick player weapon cooldowns
   const cdTick = 1;
   Object.keys(G.cbt.cds).forEach(k => { if (G.cbt.cds[k] > 0) G.cbt.cds[k] = Math.max(0, G.cbt.cds[k] - cdTick); });
   if (G.cbt.linkedCd > 0) G.cbt.linkedCd = Math.max(0, G.cbt.linkedCd - 1);
   if (G.cbt.volleyCd > 0) G.cbt.volleyCd = Math.max(0, G.cbt.volleyCd - 1);
 
-  // Stun check (Psionic Amplifier)
+  // Tick enemy weapon cooldowns and disabled counters
+  G.cbt.eCds = (G.cbt.eCds||[]).map(cd => Math.max(0, cd - 1));
+  G.cbt.eDisabled = (G.cbt.eDisabled||[]).map((d,i) => {
+    if(d > 0){ const next=d-1; if(next===0) cLog(`⬡ ${e.name}'s ${(G.cbt.eWpns[i]||{}).n||'weapon'} comes back online!`,''); return next; }
+    return 0;
+  });
+
+  // Stun check
   if (e.stunsNext) {
     cLog(`⚡ ${e.name} is stunned — loses their action this turn!`, 'gd');
     triggerAnim(eCV(), 'anim-shake');
     e.stunsNext = false;
-    updateCbtUI();
+    updateCbtUI(); buildCbtBtns();
     await sleep(600);
     if(G.phase !== 'combat') return;
     G.cbt.pTurn = true;
@@ -5167,7 +5492,7 @@ async function enemyTurn() {
     return;
   }
 
-  // Special — replaces regular attack entirely
+  // Special — replaces regular attack, checked first (uses old atk[] path for backward compat)
   let usedSpecial = false;
   if (e.sp && Math.random() < e.sp.c && !e._nullified) {
     usedSpecial = true;
@@ -5176,9 +5501,6 @@ async function enemyTurn() {
 
     switch (e.sp.fx) {
       case 'stun':
-        // Stun is now a free action — it sets a flag for the NEXT player turn,
-        // not a turn-skip this round. The special replaces the regular attack (usedSpecial=true)
-        // but the player's NEXT turn is skipped automatically.
         G.cbt.playerStunnedNext = true;
         snd('stun', 0.9);
         cLog(e.sp.txt + ' Your crew will be disoriented next round!', 'dmg');
@@ -5195,50 +5517,33 @@ async function enemyTurn() {
         cLog(e.sp.txt, 'dmg');
         await sleep(400);
         break;
-      case 'crew':
+      case 'crew': {
         G.ship.crew = Math.max(0, G.ship.crew - 2);
         cLog(e.sp.txt, 'dmg');
         triggerAnim(pCV(), 'anim-shake');
         updateCbtUI();
         await sleep(500);
-        if (G.ship.crew <= 0) {
-          cLog(`☠ Your entire crew has been lost! The ship drifts without a helm.`, 'dmg');
-          await sleep(700);
-          doDefeat(); return;
-        }
+        if (G.ship.crew <= 0) { cLog(`☠ Your entire crew has been lost! The ship drifts without a helm.`, 'dmg'); await sleep(700); doDefeat(); return; }
         cLog(`⚠ Crew reduced to ${G.ship.crew}!`, 'dmg');
         break;
+      }
       case 'multi': {
         const d = roll(3, 6), res = G.ship.resist || 0, fin = Math.max(1, d - res);
-        if (G.cbt.pStat === 'evading') {
-          cLog(`${e.sp.txt} — your evasion deflects the barrage!`, 'gd');
-          G.cbt.pStat = 'normal';
-        } else {
-          const hBefore = G.ship.hull;
-          triggerAnim(eCV(), 'anim-flinch-l');
-          await sleep(320);
+        if (G.cbt.pStat === 'evading') { cLog(`${e.sp.txt} — your evasion deflects the barrage!`, 'gd'); G.cbt.pStat = 'normal'; }
+        else {
+          triggerAnim(eCV(), 'anim-flinch-l'); await sleep(320);
           if(!G._godMode) G.ship.hull -= fin;
-          triggerAnim(pCV(), 'anim-shake');
-          snd('ram_hit', 0.9);
-          floatDmg(pCV(), fin, false);
-          cLog(`Eye ray barrage: ${fin} hull damage! (Hull: ${hBefore} → ${Math.max(0,G.ship.hull)})`, 'dmg');
-          G.cbt.pStat = 'normal';
-          updateCbtUI();
-          await sleep(550);
+          triggerAnim(pCV(), 'anim-shake'); snd('ram_hit', 0.9); floatDmg(pCV(), fin, false);
+          cLog(`Eye ray barrage: ${fin} hull damage!`, 'dmg'); G.cbt.pStat = 'normal'; updateCbtUI(); await sleep(550);
           if (G.ship.hull <= 0) { doDefeat(); return; }
         }
         break;
       }
       case 'summon': {
         const d = roll(2, 6), res = G.ship.resist || 0, fin = Math.max(1, d - res);
-        const hBefore = G.ship.hull;
         if(!G._godMode) G.ship.hull -= fin;
-        triggerAnim(pCV(), 'anim-shake');
-        snd('ram_hit', 0.85);
-        floatDmg(pCV(), G._godMode?0:fin, false);
-        cLog(G._godMode?'Flanking ram: GODMODE (0 damage)':`Flanking ram: ${fin} hull damage! (Hull: ${hBefore} → ${Math.max(0,G.ship.hull)})`, 'dmg');
-        updateCbtUI();
-        await sleep(550);
+        triggerAnim(pCV(), 'anim-shake'); snd('ram_hit', 0.85); floatDmg(pCV(), G._godMode?0:fin, false);
+        cLog(G._godMode?'Flanking ram: GODMODE':`Flanking ram: ${fin} hull damage!`, 'dmg'); updateCbtUI(); await sleep(550);
         if (G.ship.hull <= 0) { doDefeat(); return; }
         break;
       }
@@ -5246,57 +5551,118 @@ async function enemyTurn() {
     updateCbtUI();
   }
 
-  // Regular attack — only if no special this turn
+  // ── New weapon-system attack (uses wpns[] if available, else falls back to atk[]) ──
   if (!usedSpecial) {
-    const atk = e.atk[Math.floor(Math.random() * e.atk.length)];
-    const ev = G.cbt.pStat === 'evading';
+    const wpns = G.cbt.eWpns || [];
+    // Pick from weapons that aren't disabled and aren't on cooldown — prefer higher threat
+    const available = wpns.map((w,i)=>({w,i})).filter(({i})=> (G.cbt.eDisabled[i]||0)===0 && (G.cbt.eCds[i]||0)===0);
 
-    triggerAnim(eCV(), 'anim-flinch-l');
-    await sleep(320);
+    if (available.length > 0) {
+      // Weighted selection by threat
+      const totalThreat = available.reduce((s,{w})=>s+(w.threat||1),0);
+      let pick = Math.random()*totalThreat;
+      let chosen = available[available.length-1];
+      for(const entry of available){ pick-=(entry.w.threat||1); if(pick<=0){chosen=entry;break;} }
+      const {w, i} = chosen;
+      const ev = G.cbt.pStat === 'evading';
 
-    if (ev && Math.random() < 0.5) {
-      snd('miss', 0.65);
-      cLog(`${e.name}: ${atk.n} — your evasion saves you!`, 'gd');
-      G.cbt.pStat = 'normal';
-    } else {
-      const raw = roll(atk.d[0], atk.d[1]);
-      const res = G.ship.resist || 0;
-      const dmg = Math.max(1, raw - res);
-      if (ev) G.cbt.pStat = 'normal';
-      const hBefore = G.ship.hull;
-      if(!G._godMode){ G.ship.hull -= dmg; }
+      triggerAnim(eCV(), 'anim-flinch-l');
+      await sleep(320);
 
-      triggerAnim(pCV(), 'anim-shake');
-      snd('player_hit', 0.95);
-      floatDmg(pCV(), G._godMode?0:dmg, false);
-      cLog(G._godMode?`${e.name} — ${atk.n}: GODMODE (0 damage)`:`${e.name} — ${atk.n}: ${dmg} damage! (Hull: ${hBefore} → ${Math.max(0,G.ship.hull)})${res > 0 ? ` [${res} resisted]` : ''} ${atk.txt}`, 'dmg');
+      if(ev && Math.random()<0.5 && !w.seeking){
+        snd('miss', 0.65);
+        cLog(`${e.name}: ${w.n} — your evasion saves you!`, 'gd');
+        G.cbt.pStat = 'normal';
+      } else {
+        const raw = roll(w.d[0], w.d[1]);
+        const res = (w.pierceres || w.ignoreResist) ? 0 : (G.ship.resist||0);
+        let dmg = Math.max(1, raw - res);
+        // Rage stacking for Scro War Cannon
+        if(w.special==='rage'){ G.cbt.rageStacks=(G.cbt.rageStacks||0)+1; dmg+=G.cbt.rageStacks*2; cLog(`🔥 Rage stack ${G.cbt.rageStacks} — +${G.cbt.rageStacks*2} bonus damage!`,'dmg'); }
+        if(ev) G.cbt.pStat='normal';
+        if(!G._godMode) G.ship.hull-=dmg;
+        triggerAnim(pCV(),'anim-shake'); snd('player_hit',0.95); floatDmg(pCV(),G._godMode?0:dmg,false);
+        cLog(G._godMode?`${e.name} — ${w.n}: GODMODE`:`${e.name} — ${w.n}: ${dmg} damage!${res>0?` [${res} resisted]`:''} ${w.txt}`,'dmg');
 
-      if (atk.crew) {
-        G.ship.crew = Math.max(0, G.ship.crew - atk.crew);
-        if (G.ship.crew === 0) {
-          cLog(`☠ Your entire crew has been lost! The ship drifts without a helm.`, 'dmg');
-          updateCbtUI();
-          await sleep(800);
-          doDefeat(); return;
+        // Crew loss
+        if(w.crew){ G.ship.crew=Math.max(0,G.ship.crew-w.crew); if(G.ship.crew<=0){cLog('☠ Entire crew lost!','dmg');updateCbtUI();await sleep(800);doDefeat();return;} cLog(`⚠ ${w.crew} crew lost! (${G.ship.crew} remaining)`,'dmg'); }
+
+        // maxhullshred — permanently reduce player max hull (Beholder Disintegration, Elder Void Pulse)
+        if(w.maxhullshred && !G._godMode){ G.ship.maxHull=Math.max(10,G.ship.maxHull-w.maxhullshred); G.ship.hull=Math.min(G.ship.hull,G.ship.maxHull); cLog(`☠ Hull structure compromised — max hull permanently −${w.maxhullshred}!`,'dmg'); }
+
+        // corrode — weapons with special:'corrode' use maxhullshred if set, else 5
+        if(w.special==='corrode' && !G._godMode){ const shred=w.maxhullshred||5; G.ship.maxHull=Math.max(10,G.ship.maxHull-shred); G.ship.hull=Math.min(G.ship.hull,G.ship.maxHull); cLog(`☠ ${w.n} corrodes your hull — max hull permanently −${shred}!`,'dmg'); }
+
+        // cooldowncurse — add rounds to ALL player weapons (Leviathan Void Breath)
+        if(w.cooldowncurse){ const c=w.cooldowncurse; Object.keys(G.cbt.cds).forEach(k=>{G.cbt.cds[k]=(G.cbt.cds[k]||0)+c;}); cLog(`⚠ Void Breath curse — all your weapons +${c} reload round${c>1?'s':''}!`,'dmg'); }
+
+        // Legacy slowAll
+        if(w.special==='slowAll'){ Object.keys(G.cbt.cds).forEach(k=>{G.cbt.cds[k]=(G.cbt.cds[k]||0)+1;}); cLog(`⚠ Void Breath disrupts your weapon systems — all weapons +1 cooldown!`,'dmg'); }
+
+        // psistun — Psionic Lancer stuns next player turn
+        if(w.psistun){ G.cbt.playerStunnedNext=true; cLog(`⚡ Psionic lance scrambles your helm — crew disoriented next round!`,'dmg'); }
+
+        // Legacy stun special
+        if(w.special==='stun'){ G.cbt.playerStunnedNext=true; cLog(`⚡ Psionic lance scrambles your helm — crew disoriented next round!`,'dmg'); }
+
+        // webdisable — Web Cannon disables a random player weapon for 2 rounds
+        if(w.webdisable && G.ship.wpns.length>0){
+          const rdy=G.ship.wpns.map((_,pi)=>pi).filter(pi=>(G.cbt.cds[pi]||0)===0);
+          const target=rdy.length>0?rdy[Math.floor(Math.random()*rdy.length)]:Math.floor(Math.random()*G.ship.wpns.length);
+          G.cbt.cds[target]=(G.cbt.cds[target]||0)+2;
+          cLog(`🕸️ Web Cannon — ${WPN[G.ship.wpns[target]].n} webbed and disabled for 2 rounds!`,'dmg');
         }
-        cLog(`⚠ ${atk.crew} crew lost to boarding! (${G.ship.crew} remaining)`, 'dmg');
+
+        // sabotage — Saboteur Charges disables a random player weapon for 1 round
+        if(w.sabotage && G.ship.wpns.length>0){
+          const rdy=G.ship.wpns.map((_,pi)=>pi).filter(pi=>(G.cbt.cds[pi]||0)===0);
+          const target=rdy.length>0?rdy[Math.floor(Math.random()*rdy.length)]:Math.floor(Math.random()*G.ship.wpns.length);
+          G.cbt.cds[target]=(G.cbt.cds[target]||0)+1;
+          cLog(`🧨 Saboteur Charges — ${WPN[G.ship.wpns[target]].n} disabled for 1 round!`,'dmg');
+        }
+
+        // disarmall — Anti-Magic Cone disables ALL player weapons for 1 round
+        if(w.disarmall){ Object.keys(G.cbt.cds).forEach(k=>{G.cbt.cds[k]=Math.max(G.cbt.cds[k]||0,1);}); cLog(`🌀 Anti-Magic Cone — all your weapons suppressed for 1 round!`,'dmg'); }
+
+        // Disable a player weapon — legacy disarmPlayer flag
+        if(w.disarmPlayer && G.ship.wpns.length>0){
+          const rdy=G.ship.wpns.map((_,pi)=>pi).filter(pi=>(G.cbt.cds[pi]||0)===0);
+          const target=rdy.length>0?rdy[Math.floor(Math.random()*rdy.length)]:Math.floor(Math.random()*G.ship.wpns.length);
+          G.cbt.cds[target]=(G.cbt.cds[target]||0)+2;
+          cLog(`⚠ ${WPN[G.ship.wpns[target]].n} disabled for 2 rounds!`,'dmg');
+        }
+
+        // ramping — Rage Cannon damage increases each turn
+        if(w.ramping){ G.cbt.rageStacks=(G.cbt.rageStacks||0)+1; const bonus=G.cbt.rageStacks*2; if(!G._godMode){G.ship.hull-=bonus; floatDmg(pCV(),bonus,false);} cLog(`🔥 Rage Canon escalating — stack ${G.cbt.rageStacks}, +${bonus} bonus damage!`,'dmg'); }
+
+        updateCbtUI(); await sleep(550);
+        if(G.ship.hull<=0){doDefeat();return;}
       }
-      updateCbtUI();
-      await sleep(550);
-      if (G.ship.hull <= 0) { doDefeat(); return; }
+      // Set enemy weapon cooldown
+      G.cbt.eCds[i] = w.cd || 0;
+
+    } else {
+      // All weapons on cooldown or disabled — fallback scratch attack
+      const raw=roll(1,4); const res=G.ship.resist||0; const dmg=Math.max(1,raw-res);
+      if(!G._godMode) G.ship.hull-=dmg;
+      triggerAnim(pCV(),'anim-shake'); snd('player_hit',0.7); floatDmg(pCV(),G._godMode?0:dmg,false);
+      cLog(`${e.name} scrambles desperately — glancing blow: ${dmg} damage!`,'dmg');
+      updateCbtUI(); await sleep(500);
+      if(G.ship.hull<=0){doDefeat();return;}
     }
+    // Reset rage if Scro weapon NOT the one that fired (no active rage weapon)
+    if(!available.some(({w})=>w.special==='rage')) G.cbt.rageStacks=0;
   }
 
-  // ── playerStunnedNext: Mind Blast hit last round — skip this player turn
+  // playerStunnedNext — skip next player turn
   if (G.cbt.playerStunnedNext) {
     G.cbt.playerStunnedNext = false;
     G.cbt.pTurn = true;
     document.getElementById('cacts').innerHTML =
-      '<div style="color:#ff7755;font-style:italic;font-size:12px;">⚡ STUNNED — your crew cannot act this round!</div>';
-    updateCbtUI();
+      '<div style="color:#ff7755;font-style:italic;font-size:12px;padding:6px 0;">⚡ STUNNED — your crew cannot act this round!</div>';
+    updateCbtUI(); buildCbtBtns();
     await sleep(1200);
     cLog('Your crew shakes off the neural disruption.', '');
-    // Now hand straight back to enemy for their next full turn
     G.cbt.pTurn = false;
     await enemyTurn();
     return;
@@ -5304,7 +5670,7 @@ async function enemyTurn() {
 
   updateCbtUI();
   await sleep(280);
-  if(G.phase !== 'combat') return; // fight ended (cbtWin/doDefeat) during async chain
+  if(G.phase !== 'combat') return;
   G.cbt.pTurn = true;
   buildCbtBtns();
 }
@@ -5531,20 +5897,77 @@ function useItem(uid, inCombat){
   const item=G.ship.inv.find(i=>i.uid===uid); if(!item||!item.use)return;
   const s=G.ship;
   switch(item.use){
-    case 'hp20':   s.hull=Math.min(s.maxHull,s.hull+20); addLog('Emergency Repair Kit: +20 hull restored.','gd'); break;
-    case 'hp30':   s.hull=Math.min(s.maxHull,s.hull+30); addLog('Leviathan Blood: +30 hull restored.','gd'); break;
-    case 'crew3':  s.crew=Math.min(s.maxCrew,s.crew+3); addLog("Crew Mead: +3 crew restored.",'gd'); break;
-    case 'stun':
+    // ── Hull repair tiers ──
+    case 'hp20':   s.hull=Math.min(s.maxHull,s.hull+20); addLog(`🔩 Emergency Repair Kit: +20 hull restored. (${s.hull}/${s.maxHull})`,'gd'); break;
+    case 'hp30':   s.hull=Math.min(s.maxHull,s.hull+30); addLog(`🧪 Leviathan Blood Vial: +30 hull restored. (${s.hull}/${s.maxHull})`,'gd'); break;
+    case 'hp50':   s.hull=Math.min(s.maxHull,s.hull+50); addLog(`⚗️ Astral Forge Elixir: +50 hull restored. (${s.hull}/${s.maxHull})`,'gd'); break;
+    case 'hp50burn': // Astral Forge Elixir — also clears burn DoT
+      s.hull=Math.min(s.maxHull,s.hull+50);
+      if(G.phase==='combat'&&G.cbt.enemy){ G.cbt.enemy.burnLeft=0; addLog(`⚗️ Astral Forge Elixir: +50 hull + burn cleared! (${s.hull}/${s.maxHull})`,'gd'); }
+      else addLog(`⚗️ Astral Forge Elixir: +50 hull restored. (${s.hull}/${s.maxHull})`,'gd');
+      break;
+    case 'hp20crew1': // Alchemist's Mend — hull + crew combo
+      s.hull=Math.min(s.maxHull,s.hull+20);
+      s.crew=Math.min(s.maxCrew,s.crew+1);
+      addLog(`🩹 Alchemist's Mend: +20 hull and +1 crew restored.`,'gd'); break;
+    // ── Crew restore tiers ──
+    case 'crew3':  s.crew=Math.min(s.maxCrew,s.crew+3); addLog(`🍺 Crew's Courage Mead: +3 crew restored. (${s.crew}/${s.maxCrew})`,'gd'); break;
+    case 'crew6':  s.crew=Math.min(s.maxCrew,s.crew+6); addLog(`💉 Spelljammer Stimpack: +6 crew restored. (${s.crew}/${s.maxCrew})`,'gd'); break;
+    case 'hp100': // Astral Forge Elixir legacy
+      s.hull=Math.min(s.maxHull,s.hull+100);
+      if(G.phase==='combat'&&G.cbt.enemy) G.cbt.enemy.burnLeft=0;
+      addLog(`⚗️ Astral Forge Elixir: +100 hull restored and burn cleared! (${s.hull}/${s.maxHull})`,'gd'); break;
+    case 'crew10': // IEN Surge Rations legacy
+      s.crew=Math.min(s.maxCrew,s.crew+10);
+      if(G.phase==='combat') G.cbt._surgeBoost=true;
+      addLog(`🎖️ IEN Surge Rations: +10 crew restored!`,'gd'); break;
+    // ── Combat utility tiers ──
+    case 'stun':  // Psionic Amplifier — stun only
       if(G.phase!=='combat'&&!inCombat){ showMsg('Combat Only','Psionic Amplifier can only be used during combat.'); return; }
-      G.cbt.enemy.stunsNext=true; addLog('Psionic Amplifier: enemy will be stunned next action!','gd'); break;
-    case 'hull20': s.maxHull+=20; s.hull+=20; addLog('Rune Plate installed: +20 max hull.','gd'); break;
-    case 'resist3': s.resist=(s.resist||0)+3; addLog('Anti-Magic Shard installed: −3 incoming damage.','gd'); break;
-    case 'crew3p': s.maxCrew+=3; s.crew+=3; addLog('Thrall Ring repurposed: +3 max crew.','gd'); break;
-    case 'speed1': s.speed+=1; addLog('Void Chart integrated: +1 speed.','gd'); break;
+      G.cbt.enemy.stunsNext=true; addLog('🔮 Psionic Amplifier: enemy will be stunned their next action!','gd'); break;
+    case 'stundmg': // Null Sphere Grenade — stun + 15 damage
+      if(G.phase!=='combat'&&!inCombat){ showMsg('Combat Only','Null Sphere Grenade can only be used during combat.'); return; }
+      G.cbt.enemy.stunsNext=true;
+      { const nd=15; G.cbt.enemy.hp=Math.max(0,G.cbt.enemy.hp-nd); floatDmg(eCV(),nd,false); triggerAnim(eCV(),'anim-shake'); snd('stun',0.9); }
+      addLog('💥 Null Sphere Grenade: enemy stunned + 15 direct damage!','gd');
+      if(G.phase==='combat'){updateCbtUI(); if(G.cbt.enemy.hp<=0){cbtWin();return;}}
+      break;
+    case 'disable': // Phase Disruptor (T1) — enter targeting mode, 2-turn disable
+      if(G.phase!=='combat'&&!inCombat){ showMsg('Combat Only','Phase Disruptor can only be used during combat.'); return; }
+      if(!(G.cbt.eWpns||[]).length){ showMsg('No Target','This enemy has no targetable weapon systems.'); return; }
+      G.cbt.targeting='disable'; G.cbt._disableDuration=2; G.cbt._disableItem=item;
+      addLog('⬡ Phase Disruptor armed — select an enemy weapon system to disable.','gd');
+      buildCbtPanels(); return; // don't remove item yet — resolveTargeting handles that
+    case 'disable3': // Phase Disruptor Mk.II (T2) — 3-turn disable
+      if(G.phase!=='combat'&&!inCombat){ showMsg('Combat Only','Phase Disruptor Mk.II can only be used during combat.'); return; }
+      if(!(G.cbt.eWpns||[]).length){ showMsg('No Target','This enemy has no targetable weapon systems.'); return; }
+      G.cbt.targeting='disable'; G.cbt._disableDuration=3; G.cbt._disableItem=item;
+      addLog('⬡ Phase Disruptor Mk.II armed — select an enemy weapon system to disable (3 turns).','gd');
+      buildCbtPanels(); return;
+    // ── Void Salve — clears burn DoT + heals 15 ──
+    case 'voidsalve':
+      s.hull=Math.min(s.maxHull,s.hull+15);
+      if(G.phase==='combat'&&G.cbt.enemy) G.cbt.enemy.burnLeft=0;
+      addLog('🫧 Void Salve: burn cleared + 15 hull restored.','gd'); break;
+    // ── Emergency Beacon — 100% flee ──
+    case 'beacon':
+      if(G.phase!=='combat'&&!inCombat){ showMsg('Combat Only','Emergency Beacon can only be used during combat.'); return; }
+      addLog('🔔 Emergency Beacon triggered — emergency extraction confirmed!','gd');
+      s.inv=s.inv.filter(i=>i.uid!==uid);
+      updateUI();
+      setTimeout(()=>endCbt(false),400); return;
+    // ── Equippables ──
+    case 'hull20':  s.maxHull+=20; s.hull+=20; addLog('🔷 Rune-Carved Plate installed: +20 max hull.','gd'); break;
+    case 'hull35':  s.maxHull+=35; s.hull+=35; addLog('🔷 Void-Forged Hull Plate installed: +35 max hull.','gd'); break;
+    case 'resist3': s.resist=(s.resist||0)+3; addLog('🌀 Anti-Magic Shard installed: −3 incoming damage.','gd'); break;
+    case 'resist4': s.resist=(s.resist||0)+4; addLog('🔷 Phase Plating installed: −4 incoming damage.','gd'); break;
+    case 'crew3p':  s.maxCrew+=3; s.crew+=3; addLog('💍 Thrall Ring repurposed: +3 max crew.','gd'); break;
+    case 'crew4p':  s.maxCrew+=4; s.crew+=4; addLog('🪲 Clutch-Mother Sigil installed: +4 max crew.','gd'); break;
+    case 'speed1':  s.speed+=1; addLog('📜 Void Chart integrated: +1 speed.','gd'); break;
   }
   s.inv=s.inv.filter(i=>i.uid!==uid);
   updateUI();
-  if(G.phase==='combat')updateCbtUI();
+  if(G.phase==='combat'){ updateCbtUI(); buildCbtPanels(); }
 }
 
 // ╔══════════════════════════════════════════════════════╗
@@ -8172,15 +8595,22 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
 
       <div class="b-section">
-        <div class="b-head">👁 Combat — Enemy Actions</div>
-        <div class="b-body">Each enemy has <strong>regular attacks</strong> and a <strong>special ability</strong> (replaces the regular attack when triggered).<br><br>
-          <strong>Nautiloids</strong> — Mind Blast stuns you, skipping your next action.<br>
-          <strong>Githyanki Warships</strong> — Dimension Step lets them dodge your next shot; Gish Boarding removes 2 crew.<br>
-          <strong>Neogi Deathspiders</strong> — Web Cannon can disable a weapon; Enslave Crew drains 2 crew.<br>
-          <strong>Beholder Tyrant Ships</strong> — Eye Ray Barrage deals bonus damage.<br>
-          <strong>Astral Leviathans</strong> — Phase Shift causes your next shot to pass through harmlessly.<br>
-          <strong>Elder Brain Flagship</strong> — Summons flanking Nautiloids; Mass Psychic Domination removes 3 crew.
+        <div class="b-head">👁 Combat — Enemy Weapon Systems</div>
+        <div class="b-body">Every enemy now has <strong>named weapon systems</strong> displayed in the right panel during combat. Each weapon shows its threat rating (▮▮▮▮▮) and special properties.<br><br>
+          <strong>High-threat weapons to watch for:</strong><br>
+          <strong>Beholder</strong> — Disintegration Ray permanently reduces your max hull. Silence it fast.<br>
+          <strong>Nautiloid</strong> — Psionic Lancer stuns your entire crew for a round.<br>
+          <strong>Astral Leviathan</strong> — Void Breath Cannon adds reload time to ALL your weapons.<br>
+          <strong>Neogi</strong> — Web Cannon disables a random player weapon for 2 rounds.<br>
+          <strong>Scro</strong> — Rage Cannon escalates damage each round it fires — disable it early.<br>
+          <strong>Far Realm Stalker</strong> — Reality Shear bypasses all your damage resistance.<br>
+          <strong>Elder Brain</strong> — Three devastating weapons including a Void Singularity that shreds max hull permanently.
         </div>
+      </div>
+
+      <div class="b-section">
+        <div class="b-head">⬡ Disabling Enemy Weapons</div>
+        <div class="b-body">Use a <em>Phase Disruptor</em> or <em>Phase Disruptor Mk.II</em> from your cargo to enter targeting mode. Enemy weapon cards will glow gold — tap one to disable it for 2–3 turns. Disabled weapons go dark and cannot fire until they recover. A wise captain silences the most dangerous system first.</div>
       </div>
 
       <div class="b-section">
@@ -8204,7 +8634,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="b-head">📦 Cargo & Items</div>
         <div class="b-body">
           <strong>Trade Goods / Components</strong> — Sell at port for gold.<br>
-          <strong>Usables</strong> — <em>Leviathan Blood Vial</em> (+30 hull in combat), <em>Crew's Courage Mead</em> (+3 crew in combat), <em>Psionic Amplifier</em> (stuns enemy next action).<br>
+          <strong>Hull Repair</strong> — Emergency Repair Kit (+20), Leviathan Blood Vial (+30), Astral Forge Elixir (+100, clears burn).<br>
+          <strong>Crew Restore</strong> — Crew's Courage Mead (+3), Spelljammer Stimpack (+6), IEN Surge Rations (+10).<br>
+          <strong>Combat Utility</strong> — Psionic Amplifier (stun), Null Sphere Grenade (stun + damage), Phase Disruptor (disable enemy weapon 2 turns), Phase Disruptor Mk.II (3 turns), Emergency Beacon (100% flee).<br>
           <strong>Equippables</strong> — Install from your Cargo Manifest for permanent buffs: hull, speed, crew, or damage resistance.<br>
           <strong>Artifacts</strong> — Trophy loot from major kills; high sell value.
         </div>
