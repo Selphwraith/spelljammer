@@ -1302,13 +1302,13 @@ const SIG_ABILITY = {
     shipName: 'Squid Ship',
     ico: '🦑',
     tiers: [
-      { tier:1, n:'Tentacle Grapple',   cost:0,   cdRounds:3,
-        desc:'Free action — binds the enemy in tentacles, reducing their next attack by 50%.',
+      { tier:1, n:'Tentacle Grapple',   cost:0,   cdRounds:5,
+        desc:'Binds the enemy in tentacles — their next 2 attacks deal half damage.',
         upgradeDesc:'Unlock at purchase' },
-      { tier:2, n:'Crushing Grip',      cost:300,  cdRounds:3,
-        desc:'Tentacles crush the hull — 8 direct damage AND next enemy attack reduced by 50%.',
+      { tier:2, n:'Crushing Grip',      cost:300,  cdRounds:5,
+        desc:'Tentacles crush the hull — 8 direct damage AND next 2 enemy attacks reduced by 50%.',
         upgradeDesc:'Tighten the grip — adds hull damage' },
-      { tier:3, n:'Void Stranglehold',  cost:650,  cdRounds:4,
+      { tier:3, n:'Void Stranglehold',  cost:650,  cdRounds:6,
         desc:'Total immobilization — stuns enemy for 1 full turn AND deals 15 damage.',
         upgradeDesc:'Full lock — stun + damage' },
     ]
@@ -1317,13 +1317,13 @@ const SIG_ABILITY = {
     shipName: 'Hammership',
     ico: '🔨',
     tiers: [
-      { tier:1, n:'Siege Ram',          cost:0,   cdRounds:4,
+      { tier:1, n:'Siege Ram',          cost:0,   cdRounds:5,
         desc:'Ram the enemy — 2d10 impact damage. Costs 5 hull to yourself from the impact.',
         upgradeDesc:'Unlock at purchase' },
-      { tier:2, n:'Reinforced Ram',     cost:350,  cdRounds:4,
+      { tier:2, n:'Reinforced Ram',     cost:350,  cdRounds:5,
         desc:'Armored prow — 3d10 damage. Self hull cost reduced to 3.',
         upgradeDesc:'Reinforce the prow — more damage, less self-damage' },
-      { tier:3, n:'Void Crusher',       cost:750,  cdRounds:4,
+      { tier:3, n:'Void Crusher',       cost:750,  cdRounds:6,
         desc:'Catastrophic ram — 4d10 damage AND permanently reduces enemy max hull by 10.',
         upgradeDesc:'Devastate — permanent hull shred' },
     ]
@@ -1332,13 +1332,13 @@ const SIG_ABILITY = {
     shipName: 'Man-o-War',
     ico: '⚓',
     tiers: [
-      { tier:1, n:'Starfire Broadside', cost:0,   cdRounds:4,
+      { tier:1, n:'Starfire Broadside', cost:0,   cdRounds:5,
         desc:'Fire all ready weapons simultaneously this turn with no individual cooldown penalties.',
         upgradeDesc:'Unlock at purchase' },
-      { tier:2, n:'Coordinated Barrage',cost:500,  cdRounds:4,
+      { tier:2, n:'Coordinated Barrage',cost:500,  cdRounds:6,
         desc:'All ready weapons fire simultaneously with +20% damage bonus on each shot.',
         upgradeDesc:'Synchronize gunnery — damage bonus' },
-      { tier:3, n:'Elven Battle Formation', cost:1000, cdRounds:5,
+      { tier:3, n:'Elven Battle Formation', cost:1000, cdRounds:7,
         desc:'Full elven broadside — all weapons fire with +20% bonus AND enemy takes −4 on their next attack.',
         upgradeDesc:'Full formation — suppression added' },
     ]
@@ -5642,13 +5642,13 @@ async function doAction(type, idx, itemUid) {
           triggerAnim(eCV(), 'anim-shake');
           snd('ram_hit', 0.7);
           G.cbt._squidGrip = true; G.cbt._squidGripTurns = 2;
-          cLog(`Crushing Grip — ${dmg} damage + enemy next attack halved!`, 'gd');
+          cLog(`Crushing Grip — ${dmg} damage + enemy attacks halved for 2 turns!`, 'gd');
           if(e.hp <= 0){ G.cbt.sigCd = tData.cdRounds; updateCbtUI(); cbtWin(); return; }
         } else {
           // T1 — halve next attack only
           G.cbt._squidGrip = true; G.cbt._squidGripTurns = 2;
           triggerAnim(eCV(), 'anim-shake');
-          cLog(`Tentacle Grapple — enemy's next attack will deal 50% damage!`, 'gd');
+          cLog(`Tentacle Grapple — enemy attacks halved for 2 turns!`, 'gd');
         }
 
       } else if (G.ship.type === 'hammer') {
@@ -5840,12 +5840,15 @@ async function enemyTurn() {
     }
   }
 
-  // Check squid grip — will halve damage this turn (now lasts 2 turns via _squidGripTurns)
-  if((G.cbt._squidGripTurns||0) > 0){
+  // Check squid grip — read BEFORE ticking so both covered turns apply the halving
+  const squidGripActive = (G.cbt._squidGripTurns||0) > 0;
+  if(squidGripActive){
     G.cbt._squidGripTurns--;
-    if(G.cbt._squidGripTurns === 0) G.cbt._squidGrip = false;
+    if(G.cbt._squidGripTurns === 0){
+      G.cbt._squidGrip = false;
+      cLog(`🦑 Tentacle Grapple grip releases — enemy breaks free!`, '');
+    }
   }
-  const squidGripActive = !!G.cbt._squidGrip;
   // Check man-o-war suppression — enemy attack reduced
   const manowSuppressed = !!G.cbt._manowSuppressed;
   if (manowSuppressed) G.cbt._manowSuppressed = false;
