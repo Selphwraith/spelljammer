@@ -4731,7 +4731,7 @@ async function doAction(type, idx, itemUid) {
           let wpnDmg = 0;
           for(let s=0;s<shots;s++) wpnDmg += roll(w.d[0], w.d[1]);
           lDmg += wpnDmg;
-          G.cbt.cds[i] = w.cd;
+          G.cbt.cds[i] = w.cd > 0 ? Math.max(1, w.cd - (G.ship.cdBonus||0)) : 0;
           if (w.special === 'burn') { e.burnLeft = (e.burnLeft||0)+2; e.burnDmg=5; }
           lParts.push(`${w.n}${shots>1?'×'+shots:''}: ${wpnDmg}`);
         });
@@ -4767,7 +4767,7 @@ async function doAction(type, idx, itemUid) {
           let wpnDmg = 0;
           for(let s=0;s<shots;s++) wpnDmg += roll(w.d[0], w.d[1]);
           vDmg += wpnDmg;
-          G.cbt.cds[i] = w.cd;
+          G.cbt.cds[i] = w.cd > 0 ? Math.max(1, w.cd - (G.ship.cdBonus||0)) : 0;
           if (w.special === 'burn') { e.burnLeft = (e.burnLeft||0)+2; e.burnDmg=5; }
           vParts.push(`${w.n}${shots>1?'×'+shots:''}: ${wpnDmg}`);
         });
