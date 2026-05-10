@@ -2099,6 +2099,7 @@ const SOUND_DATA = {
   'enemy_explode': 'sounds/enemy_explode.mp3',
   'victory_combat': 'sounds/victory_combat.mp3',
   'victory_final': 'sounds/victory_final.mp3',
+  'voice_chatter':   'sounds/voice_chatter.mp3',
   'defeat': 'sounds/defeat.mp3',
   'ballista_fire': 'sounds/ballista_fire.mp3',
   'cannon_fire': 'sounds/cannon_fire.mp3',
@@ -5668,6 +5669,7 @@ function openDockmaster(sphereId) {
   dmRender();
   document.getElementById('ov-dockmaster').classList.add('on');
   snd('port_dock', 0.5);
+  snd('voice_chatter', 0.7);
 }
 
 function dmRender() {
@@ -5709,6 +5711,7 @@ function dmAdvance() {
   if (_dmLine < dm.lines.length - 1) {
     _dmLine++;
     dmRender();
+    snd('voice_chatter', 0.7);
   }
 }
 
@@ -5718,6 +5721,7 @@ function dmGrantClue() {
   if (site && !G.clues.has(_dmSphere)) {
     G.clues.add(_dmSphere);
     snd('fragment_collect', 0.8);
+    snd('voice_chatter', 0.6);
     addLog(`⚑ INTEL: ${site.clue}`, 'imp');
   }
 
@@ -5864,6 +5868,7 @@ function triggerRoamingEncounter(factionId){
   // Show/hide trade and hail based on rep
   addLog(`📡 ${fac.n} vessel hails your comet on the approach lane.`,'');
   snd('sphere_click', 0.5);
+  snd('voice_chatter', 0.65);
 }
 function roamAttack(){
   const fac = FACTIONS[_roamFactionId];
@@ -5929,6 +5934,7 @@ function roamHail(){
   const resEl = document.getElementById('roam-result');
   resEl.style.display='block';
   resEl.style.color='#88aaff';
+  snd('voice_chatter', 0.75);
   document.getElementById('roam-continue-btn').style.display='block';
   addLog(`Hailed ${fac.n} vessel. Reputation improved slightly.`,'');
   snd('port_dock', 0.5);
@@ -5969,6 +5975,7 @@ function roamAcceptQuest(questId){
   addLog(`📋 MISSION: ${q.title} — collect cargo at ${pickupSphere?.n||q.pickup}, then deliver to ${turninSphere?.n||q.turnin}.`,'imp');
   updateUI();
   snd('fragment_collect', 0.7);
+  snd('voice_chatter', 0.6);
 }
 function roamContinue(){
   document.getElementById('ov-roam').style.display='none';
@@ -7223,6 +7230,7 @@ function showLqCard(npc) {
   document.getElementById('lq-npc-name').textContent = npc.name;
   document.getElementById('lq-npc-role').textContent = npc.role;
   document.getElementById('lq-npc-text').textContent = npc.greet;
+  snd('voice_chatter', 0.65);
 
   // Find the first non-rewarded quest
   const quest = npc.quests.find(q => (G.localQuests[q.id]||'available') !== 'rewarded');
@@ -7288,7 +7296,8 @@ function lqAccept(quest, npc) {
   G.localQuests[quest.id] = 'active';
   if(quest.trigger) quest.trigger(G);
   addLog('Quest accepted: ' + quest.title + '. ' + quest.task, 'imp');
-  showLqCard(npc); // refresh card
+  snd('voice_chatter', 0.65);
+  showLqCard(npc);
   document.getElementById('lq-log-strip').textContent = '⚔ Quest active: ' + quest.title;
 }
 
@@ -7296,7 +7305,8 @@ function lqTurnIn(quest, npc) {
   G.localQuests[quest.id] = 'rewarded';
   quest.rewardFn(G);
   updateUI();
-  showLqCard(npc); // refresh card
+  snd('voice_chatter', 0.7);
+  showLqCard(npc);
   document.getElementById('lq-log-strip').textContent = '✓ Quest complete: ' + quest.title;
 }
 
