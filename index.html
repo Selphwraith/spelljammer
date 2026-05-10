@@ -1128,7 +1128,7 @@ const UPGRADE_DATA = {
   engine:     { n:'Speed Engine',            ico:'⚡', desc:'+2 spelljamming speed',                   cost:112,  exclusive:false },
   quarters:   { n:'Crew Quarters',           ico:'🏠', desc:'+8 maximum crew',                         cost:91,  exclusive:false },
   recycler:   { n:'Air Recycler',            ico:'🌀', desc:'Air lasts 2× longer in the void',          cost:126,  exclusive:false },
-  cdreduce:   { n:'Rapid Reload System',     ico:'⚙️', desc:'All weapon cooldowns −1 round (min 0)',    cost:270, exclusive:true  },
+  cdreduce:   { n:'Rapid Reload System', ico:'⚙️', desc:'All current weapons: −1 reload round (min 1). Stacks with future weapons at install.',    cost:270, exclusive:true  },
   chainreact: { n:'Chain Reaction Crystal',  ico:'💥', desc:'30% chance of free bonus shot on any hit', cost:300, exclusive:true  },
   firectrl:   { n:'Fire Control System',     ico:'🎯', desc:'Linked Fire: shoot 2 ready weapons at once',cost:375, exclusive:true  },
   volley:     { n:'Volley Fire Array',       ico:'🌊', desc:'Volley: fire ALL ready weapons simultaneously',cost:420, exclusive:true  },
@@ -3842,7 +3842,14 @@ function buy(item){
       if(item.upg==='plating'){s.maxHull+=50;s.hull+=50;}
       if(item.upg==='engine')s.speed+=2;
       if(item.upg==='quarters'){s.maxCrew+=8;s.crew=s.maxCrew;}
-      snd('ship_upgrade',0.8); addLog(`${item.name} installed!`,'gd'); break;
+      if(item.upg==='cdreduce'){
+        // Store the reload reduction on the ship — applied when building combat cooldowns
+        s.cdBonus = (s.cdBonus||0) + 1;
+        addLog('Rapid Reload System installed — all weapon reload times −1 round.','gd');
+      }
+      snd('ship_upgrade',0.8);
+      if(item.upg!=='cdreduce') addLog(`${item.name} installed!`,'gd');
+      break;
   }
   updateUI(); buildShop(); document.getElementById('pt-gold').textContent=s.gold;
 }
@@ -4537,14 +4544,14 @@ async function doAction(type, idx, itemUid) {
 
       // Null Bolt jam check (20%) — happens before firing
       if(wk === 'nullbolt' && Math.random() < 0.20){
-        G.cbt.cds[idx] = w.cd;
+        G.cbt.cds[idx] = w.cd > 0 ? Math.max(1, w.cd - (G.ship.cdBonus||0)) : 0;
         cLog(`⚠ Null Bolt JAMS — the resonance field collapses before firing! (${w.cd}-round cooldown)`, 'dmg');
         updateCbtUI(); await sleep(500);
         break;
       }
 
       if (isDodged) {
-        G.cbt.cds[idx] = w.cd;
+        G.cbt.cds[idx] = w.cd > 0 ? Math.max(1, w.cd - (G.ship.cdBonus||0)) : 0;
         snd('miss', 0.7);
         cLog(`Your shot misses — the ${e.name} ${G.cbt.eStat === 'phased' ? 'phases through reality' : 'dodges'}! (${w.n} on cooldown)`, 'dmg');
         G.cbt.eStat = 'normal';
@@ -4557,7 +4564,7 @@ async function doAction(type, idx, itemUid) {
         if(wk === 'warpcann' && Math.random() < 0.15){
           const backDmg = roll(w.d[0], w.d[1]);
           G.ship.hull = Math.max(0, G.ship.hull - backDmg);
-          G.cbt.cds[idx] = w.cd;
+          G.cbt.cds[idx] = w.cd > 0 ? Math.max(1, w.cd - (G.ship.cdBonus||0)) : 0;
           snd('enemy_hit', 1.0);
           triggerAnim(pCV(), 'anim-shake');
           floatDmg(pCV(), backDmg, true);
@@ -4579,7 +4586,7 @@ async function doAction(type, idx, itemUid) {
           e.hp -= G._instakill ? e.hp : Math.floor(psiDmg * 0.5); // light hull damage
           // Actually crew damage — represented as extra crew loss
           if(e.crew !== undefined) e.crew = Math.max(0, (e.crew||10) - crewHit);
-          G.cbt.cds[idx] = w.cd;
+          G.cbt.cds[idx] = w.cd > 0 ? Math.max(1, w.cd - (G.ship.cdBonus||0)) : 0;
           // Feedback — player loses 1 crew per shot
           G.ship.crew = Math.max(1, G.ship.crew - 1);
           snd('enemy_hit', 0.9);
@@ -4631,7 +4638,9 @@ async function doAction(type, idx, itemUid) {
           cLog(`⬡ Dissolution Ray corrodes — enemy max hull −5, your max hull −2.`, 'dmg');
         }
         e.hp -= G._instakill ? e.hp : totalDmg;
-        G.cbt.cds[idx] = w.cd;
+        // Apply cooldown — Rapid Reload System reduces by cdBonus (min 1 for weapons that have reload)
+        const _cdBonus = G.ship.cdBonus||0;
+        G.cbt.cds[idx] = w.cd > 0 ? Math.max(1, w.cd - _cdBonus) : 0;
 
         // Phlogiston Torch backfire (15%)
         if(wk === 'phlogtorch' && Math.random() < 0.15){
@@ -4885,8 +4894,9 @@ async function enemyTurn() {
     G.cbt.eStat = 'normal';
   }
 
-  // Tick weapon cooldowns (Rapid Reload System reduces by 2 instead of 1)
-  const cdTick = G.ship.upgrades.includes('cdreduce') ? 2 : 1;
+  // Tick weapon cooldowns — standard 1 per turn
+  // (Rapid Reload System reduces base cooldown on install, not tick speed)
+  const cdTick = 1;
   Object.keys(G.cbt.cds).forEach(k => { if (G.cbt.cds[k] > 0) G.cbt.cds[k] = Math.max(0, G.cbt.cds[k] - cdTick); });
   if (G.cbt.linkedCd > 0) G.cbt.linkedCd = Math.max(0, G.cbt.linkedCd - 1);
   if (G.cbt.volleyCd > 0) G.cbt.volleyCd = Math.max(0, G.cbt.volleyCd - 1);
