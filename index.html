@@ -5799,7 +5799,10 @@ async function enemyTurn() {
     return;
   }
 
-  // ── Enemy heal/buff check — fires independently of sp, uses e.heal data ──
+  // Special — replaces regular attack, checked first (uses old atk[] path for backward compat)
+  let usedSpecial = false;
+
+  // ── Enemy heal/buff check — fires independently of sp ──
   const healDef = (ENM[e._key]||{}).heal;
   if(healDef && !usedSpecial){
     const hpPct = e.hp / e.maxHp;
@@ -5811,30 +5814,24 @@ async function enemyTurn() {
       await sleep(350);
       triggerAnim(eCV(), 'anim-flinch-r');
       snd('repair_hull', 0.8);
-
       if(healDef.fx === 'heal'){
-        // Optional crew cost (Neogi, Thri-kreen)
         if(healDef.crewCost && e.crew !== undefined){
           e.crew = Math.max(0, e.crew - healDef.crewCost);
           cLog(`${healDef.crewCost} crew sacrificed...`,'dmg');
           updateCbtUI(); await sleep(300);
         }
-        // Optional disarm side-effect (Beholder)
         if(healDef.disarmAll){ Object.keys(G.cbt.cds).forEach(k=>{G.cbt.cds[k]=Math.max(G.cbt.cds[k]||0,1);}); cLog(`All your weapons suppressed for 1 round!`,'dmg'); }
         const healed = Math.min(healDef.amt, e.maxHp - e.hp);
         e.hp = Math.min(e.maxHp, e.hp + healDef.amt);
         if(healDef.once) e._healUsed = true;
-        floatDmg(eCV(), healed, true); // green float for heal
+        floatDmg(eCV(), healed, true);
         cLog(`${healDef.txt} (+${healed} HP — now ${e.hp}/${e.maxHp})`, 'dmg');
-
       } else if(healDef.fx === 'buff'){
         if(healDef.buffStat === 'resist'){
-          e._buffResist = healDef.buffAmt;
-          e._buffResistTurns = healDef.buffTurns;
+          e._buffResist = healDef.buffAmt; e._buffResistTurns = healDef.buffTurns;
           cLog(`${healDef.txt} — gains +${healDef.buffAmt} damage resistance for ${healDef.buffTurns} turns!`, 'dmg');
         } else if(healDef.buffStat === 'atk'){
-          e._buffAtk = healDef.buffAmt;
-          e._buffAtkTurns = healDef.buffTurns;
+          e._buffAtk = healDef.buffAmt; e._buffAtkTurns = healDef.buffTurns;
           cLog(`${healDef.txt} — gains +${healDef.buffAmt} damage bonus for ${healDef.buffTurns} turns!`, 'dmg');
         }
       }
@@ -5843,8 +5840,6 @@ async function enemyTurn() {
     }
   }
 
-  // Special — replaces regular attack, checked first (uses old atk[] path for backward compat)
-  let usedSpecial = false;
   // Check squid grip — will halve damage this turn (now lasts 2 turns via _squidGripTurns)
   if((G.cbt._squidGripTurns||0) > 0){
     G.cbt._squidGripTurns--;
