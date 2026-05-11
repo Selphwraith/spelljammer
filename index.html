@@ -474,131 +474,180 @@ body {
 }
 
 @media (max-width: 700px) {
-  /* Restructure grid: header only 1 column, no sidebar */
+  /* ── Layout skeleton ───────────────────────────────────── */
   body {
     grid-template-columns: 1fr;
-    grid-template-rows: 40px 32px 1fr 44px;
+    grid-template-rows: 44px 36px 1fr 48px;
     grid-template-areas: "hdr" "mhud" "main" "log";
     overflow: hidden;
   }
-
-  /* Hide desktop sidebar */
   #sidebar { display: none; }
+  #mobile-hud { display: flex; grid-area: mhud; height: 36px; }
 
-  /* Show mobile HUD strip */
-  #mobile-hud {
-    display: flex;
-    grid-area: mhud;
-    height: 32px;
-  }
-
-  /* Shrink header */
-  #header h1 { font-size: 12px; letter-spacing: 1px; }
+  /* ── Header ────────────────────────────────────────────── */
+  #header h1 { font-size: 13px; letter-spacing: 1px; }
   #header h1 .hdr-long { display: none; }
 
-  /* Overlays go full-screen on mobile */
-  .ovlay { padding: 10px; gap: 7px; }
+  /* ── Mobile HUD text ───────────────────────────────────── */
+  .mhud-val { font-size: 13px; }
+  .mhud-label { font-size: 9px; }
 
-  /* Combat: top-aligned so all buttons are always reachable by scrolling */
+  /* ── Log area ──────────────────────────────────────────── */
+  #logarea { padding: 4px 10px; }
+  .le { font-size: 12px; line-height: 1.5; }
+
+  /* ── Overlays ──────────────────────────────────────────── */
+  .ovlay { padding: 10px 8px; gap: 7px; }
+  .ovl-close-btn { padding: 8px 18px; font-size: 14px; }
+  .ovl-title { font-size: 17px; letter-spacing: 3px; }
+
+  /* ════════════════════════════════════════════════════════
+     COMBAT — the most important layout
+     ════════════════════════════════════════════════════════ */
   #ov-combat {
     justify-content: flex-start;
     align-items: stretch;
-    padding: 8px;
-    gap: 6px;
+    padding: 6px 8px;
+    gap: 5px;
     overflow-y: auto;
   }
-  .ctitle { font-size: 14px; letter-spacing: 2px; text-align: center; }
+
+  /* Combat title */
+  .ctitle { font-size: 15px; letter-spacing: 2px; text-align: center; padding: 2px 0; }
+
+  /* Ship blocks — compact side-by-side, text is readable */
   .cships { flex-direction: row; gap: 6px; align-items: stretch; }
-  .cblock { padding: 7px 5px; }
-  .cblock canvas { width: 70px !important; height: 46px !important; }
-  .cname { font-size: 10px; margin-bottom: 3px; }
-  .cstat { font-size: 10px; }
-  .hpw { height: 7px; }
-  .cvs { font-size: 14px; display: flex; align-items: center; padding: 0 2px; }
-  .clog { height: 52px; font-size: 10px; }
-  .cacts {
-    flex-direction: column;
-    gap: 5px;
-    align-items: stretch;
-    width: 100%;
-    max-width: none;
+  .cblock {
+    padding: 8px 6px;
+    flex: 1;
+    min-width: 0;
   }
-  .cacts .btn { width: 100%; font-size: 12px; padding: 10px 12px; text-align: left; }
-  .wpn-btn-wrap { width: 100%; display: block; }
-  .wpn-btn-wrap .btn { width: 100%; }
-  .cbt-panels { flex-direction: column; gap: 6px; }
-  .cbt-ability-row .btn { font-size: 11px; padding: 8px 10px; width: 100%; }
+  /* Shrink canvas more aggressively to free vertical space */
+  .cblock canvas { width: 60px !important; height: 40px !important; }
+  .cname { font-size: 12px; margin-bottom: 3px; font-weight: 700; }
+  .cstat { font-size: 12px; line-height: 1.6; }
+  .hpw { height: 8px; border-radius: 3px; margin: 3px 0; }
+  .cvs { font-size: 16px; display: flex; align-items: center; padding: 0 3px; }
 
-  /* Combat weapon panel sizing for touch */
-  .cbt-wpn-panel { padding: 6px; }
-  .cbt-panel-title { font-size: 8px; margin-bottom: 4px; }
+  /* Combat log — taller, bigger text, easier to follow */
+  .clog {
+    height: 72px;
+    font-size: 12px;
+    line-height: 1.55;
+    padding: 8px 10px;
+  }
 
-  /* Player weapon cards — finger-friendly tap targets */
-  .cbt-wpn-card { padding: 10px 10px; margin-bottom: 5px; min-height: 44px; display: flex; flex-direction: column; justify-content: center; }
-  .cbt-wpn-card-name { font-size: 11px; }
-  .cbt-wpn-card-info { font-size: 10px; color: #6655aa; }
+  /* ── Weapon panels ─────────────────────────────────────── */
+  .cbt-panels { flex-direction: column; gap: 7px; }
+  .cbt-wpn-panel { padding: 8px; max-height: 220px; }
+  .cbt-panel-title {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+  }
+
+  /* Player weapon cards */
+  .cbt-wpn-card {
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    min-height: 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-radius: 5px;
+  }
+  .cbt-wpn-card-name { font-size: 13px; font-weight: 700; }
+  .cbt-wpn-card-info { font-size: 11px; margin-top: 2px; }
   .cbt-wpn-cd-bar { height: 4px; margin-top: 5px; }
 
-  /* Enemy weapon cards — large enough to tap as targets */
-  .cbt-ewpn-card { padding: 10px 10px; margin-bottom: 5px; min-height: 44px; }
-  .cbt-ewpn-name { font-size: 11px; }
-  .cbt-ewpn-info { font-size: 10px; }
-  .cbt-ewpn-threat { font-size: 10px; }
-  .cbt-ewpn-disabled-bar { font-size: 9px; }
+  /* Enemy weapon cards */
+  .cbt-ewpn-card {
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    min-height: 48px;
+    border-radius: 5px;
+  }
+  .cbt-ewpn-name { font-size: 13px; font-weight: 700; }
+  .cbt-ewpn-info { font-size: 11px; margin-top: 2px; }
+  .cbt-ewpn-threat { font-size: 11px; margin-top: 3px; }
+  .cbt-ewpn-disabled-bar { font-size: 10px; margin-top: 4px; }
 
-  /* Targeting mode — extra glow for mobile visibility */
-  .cbt-ewpn-card.e-targetable { padding: 12px 10px; border-width: 2px; }
+  /* Targeting glow — extra thick border on mobile */
+  .cbt-ewpn-card.e-targetable { padding: 12px; border-width: 2px; }
 
-  /* Ability row stacks and gets bigger tap area */
-  .cbt-ability-row { gap: 4px; margin-top: 6px; }
-  .cbt-ability-row .btn { padding: 10px 12px; font-size: 12px; text-align: left; }
+  /* Ability row */
+  .cbt-ability-row {
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 6px;
+  }
+  .cbt-ability-row .btn {
+    width: 100%;
+    font-size: 13px;
+    padding: 11px 14px;
+    text-align: left;
+    line-height: 1.4;
+  }
 
-  /* Port: 2-column shop grid */
-  .sgrid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
-  .sitem { padding: 7px 5px; }
-  .siname { font-size: 10px; }
+  /* Legacy cacts if still used */
+  .cacts { flex-direction: column; gap: 5px; align-items: stretch; width: 100%; max-width: none; }
+  .cacts .btn { width: 100%; font-size: 13px; padding: 11px 14px; text-align: left; }
+  .wpn-btn-wrap { width: 100%; display: block; }
+  .wpn-btn-wrap .btn { width: 100%; }
 
-  /* Loot grid 2-col */
-  .loot-grid { grid-template-columns: repeat(2, 1fr); }
-  .loot-title { font-size: 20px; }
+  /* ── Port / Shop ───────────────────────────────────────── */
+  .sgrid { grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .sitem { padding: 9px 7px; }
+  .siname { font-size: 12px; }
+  .sidesc { font-size: 11px; }
+  .sicost { font-size: 12px; }
+  .ptab { font-size: 12px; padding: 7px 10px; }
 
-  /* Inventory: stack panel below grid */
+  /* ── Loot grid ─────────────────────────────────────────── */
+  .loot-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .loot-title { font-size: 22px; }
+
+  /* ── Inventory ─────────────────────────────────────────── */
   .inv-body { flex-direction: column; }
   .inv-detail { width: 100%; }
-  .inv-grid { grid-template-columns: repeat(3, 1fr); }
+  .inv-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .inv-iname { font-size: 11px; }
 
-  /* Weapon grid 1-col */
+  /* ── Weapon grid ───────────────────────────────────────── */
   .wpn-grid { grid-template-columns: 1fr; }
 
-  /* Ship overlay body stacks */
+  /* ── Ship overlay ──────────────────────────────────────── */
   .shp-body { flex-direction: column; align-items: center; }
-
-  /* Ship upgrade grid 1-col */
   .ship-upgrade-grid { grid-template-columns: 1fr; }
+  .shp-section { font-size: 11px; }
+  .upg-item { font-size: 12px; }
 
-  /* Main menu card full width */
-  .mm-card { padding: 24px 20px; min-width: 0; width: 92vw; }
-  .mm-title { font-size: 20px; letter-spacing: 3px; }
+  /* ── Briefing / handbook ───────────────────────────────── */
+  .briefing-panel { padding: 16px 14px; }
+  .briefing-title { font-size: 17px; letter-spacing: 2px; }
+  .b-head { font-size: 13px; letter-spacing: 1px; padding: 7px 10px; }
+  .b-body { font-size: 13px; line-height: 1.65; padding: 10px 12px; }
 
-  /* Msgbox full width */
-  #msgbox { width: 92vw; max-width: none; padding: 16px 14px; }
+  /* ── Main menu ─────────────────────────────────────────── */
+  .mm-card { padding: 24px 18px; min-width: 0; width: 94vw; }
+  .mm-title { font-size: 22px; letter-spacing: 3px; }
+  .mm-btn { font-size: 13px; padding: 13px 16px; }
+  .mm-desc { font-size: 11px; }
 
-  /* Log area smaller */
-  #logarea { padding: 3px 8px; }
-  .le { font-size: 10px; }
+  /* ── Msgbox ────────────────────────────────────────────── */
+  #msgbox { width: 92vw; max-width: none; padding: 18px 16px; }
+  #msgbox .msg-title { font-size: 16px; }
+  #msgbox .msg-body { font-size: 13px; line-height: 1.6; }
 
-  /* Travel bar wider on mobile */
-  #tvlbar { min-width: 80vw; bottom: 8px; }
+  /* ── Travel bar ────────────────────────────────────────── */
+  #tvlbar { min-width: 82vw; bottom: 8px; font-size: 13px; }
 
-  /* Tooltip hidden on touch (we use tap instead) */
+  /* ── Misc ──────────────────────────────────────────────── */
   #map-tooltip { display: none !important; }
-
-  /* Bigger close btn hit area */
-  .ovl-close-btn { padding: 7px 16px; font-size: 13px; }
-
-  /* Filter buttons wrap nicer */
-  .fbtn { padding: 5px 9px; }
-
+  .fbtn { padding: 6px 10px; font-size: 12px; }
+  .pdesc { font-size: 13px; }
+  .btn { font-size: 12px; }
   /* Waypoint grid 2-col */
   #wpgrid { grid-template-columns: repeat(2, 1fr) !important; }
 }
