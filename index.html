@@ -170,7 +170,34 @@ body {
 
 /* ── COMBAT OVERLAY ── */
 .ctitle { font-family:'Cinzel',serif; font-size:20px; color:#ff5544; letter-spacing:3px; text-shadow:0 0 16px #ff554466; }
-.cships { display:flex; gap:28px; align-items:center; width:100%; max-width:660px; }
+/* ── COMBAT ARENA — desktop layout (side by side, log below) ── */
+.cbt-arena {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  width: 100%;
+  max-width: 660px;
+  align-items: flex-start;
+}
+.cbt-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+/* VS divider — centred between columns on desktop */
+#cbt-vs {
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  color: #6633aa;
+  padding: 6px 4px;
+  align-self: flex-start;
+  margin-top: 28px;
+}
+
+/* Keep cships alias working for any legacy JS references */
+.cships { display: flex; gap: 28px; align-items: center; width: 100%; max-width: 660px; }
 .cblock { flex:1; background:rgba(15,3,38,0.88); border:1px solid #5522aa; border-radius:5px; padding:11px; text-align:center; }
 .cname { font-family:'Cinzel',serif; font-size:11px; color:#9966dd; margin-bottom:5px; }
 .cstat { font-size:11px; color:#8877aa; margin-top:3px; }
@@ -502,99 +529,131 @@ body {
   .ovl-title { font-size: 17px; letter-spacing: 3px; }
 
   /* ════════════════════════════════════════════════════════
-     COMBAT — the most important layout
+     COMBAT — true left/right split on mobile
+     Left col: your ship + weapons + abilities
+     Right col: enemy ship + enemy systems
+     Bottom: combat log full width
      ════════════════════════════════════════════════════════ */
   #ov-combat {
     justify-content: flex-start;
     align-items: stretch;
-    padding: 6px 8px;
+    padding: 6px 6px 8px;
+    gap: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Title bar */
+  .ctitle {
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-align: center;
+    padding: 4px 0 5px;
+    flex-shrink: 0;
+  }
+
+  /* Arena: two equal columns, no VS divider */
+  .cbt-arena {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+    gap: 5px;
+    flex: 1;
+    min-height: 0;
+  }
+  /* VS divider hidden on mobile — wastes space */
+  #cbt-vs { display: none; }
+
+  /* Each column scrolls independently */
+  .cbt-col {
+    display: flex;
+    flex-direction: column;
     gap: 5px;
     overflow-y: auto;
-  }
-
-  /* Combat title */
-  .ctitle { font-size: 15px; letter-spacing: 2px; text-align: center; padding: 2px 0; }
-
-  /* Ship blocks — compact side-by-side, text is readable */
-  .cships { flex-direction: row; gap: 6px; align-items: stretch; }
-  .cblock {
-    padding: 8px 6px;
-    flex: 1;
     min-width: 0;
   }
-  /* Shrink canvas more aggressively to free vertical space */
-  .cblock canvas { width: 60px !important; height: 40px !important; }
-  .cname { font-size: 12px; margin-bottom: 3px; font-weight: 700; }
-  .cstat { font-size: 12px; line-height: 1.6; }
-  .hpw { height: 8px; border-radius: 3px; margin: 3px 0; }
-  .cvs { font-size: 16px; display: flex; align-items: center; padding: 0 3px; }
 
-  /* Combat log — taller, bigger text, easier to follow */
-  .clog {
-    height: 72px;
-    font-size: 12px;
-    line-height: 1.55;
-    padding: 8px 10px;
+  /* Ship info blocks — compact but readable */
+  .cblock {
+    padding: 8px 6px;
+    background: rgba(8,2,22,0.85);
+    border: 1px solid #33005544;
+    border-radius: 5px;
   }
+  .cblock canvas { width: 52px !important; height: 34px !important; float: right; margin-left: 4px; }
+  .cname { font-size: 12px; font-weight: 700; margin-bottom: 4px; line-height: 1.2; }
+  .cstat { font-size: 11px; line-height: 1.7; }
+  .hpw { height: 7px; border-radius: 3px; margin: 2px 0; }
 
-  /* ── Weapon panels ─────────────────────────────────────── */
-  .cbt-panels { flex-direction: column; gap: 7px; }
-  .cbt-wpn-panel { padding: 8px; max-height: 220px; }
+  /* Weapon panels fill their column */
+  .cbt-wpn-panel {
+    padding: 7px 6px;
+    flex: 1;
+    max-height: none;   /* let the column scroll handle overflow */
+    overflow-y: visible;
+  }
   .cbt-panel-title {
-    font-size: 10px;
-    letter-spacing: 1.5px;
-    margin-bottom: 6px;
-    padding-bottom: 4px;
+    font-size: 9px;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+    padding-bottom: 3px;
   }
 
   /* Player weapon cards */
   .cbt-wpn-card {
-    padding: 10px 12px;
-    margin-bottom: 6px;
-    min-height: 48px;
+    padding: 9px 8px;
+    margin-bottom: 5px;
+    min-height: 46px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     border-radius: 5px;
   }
-  .cbt-wpn-card-name { font-size: 13px; font-weight: 700; }
-  .cbt-wpn-card-info { font-size: 11px; margin-top: 2px; }
-  .cbt-wpn-cd-bar { height: 4px; margin-top: 5px; }
+  .cbt-wpn-card-name { font-size: 12px; font-weight: 700; }
+  .cbt-wpn-card-info { font-size: 10px; margin-top: 2px; }
+  .cbt-wpn-cd-bar { height: 3px; margin-top: 4px; }
 
   /* Enemy weapon cards */
   .cbt-ewpn-card {
-    padding: 10px 12px;
-    margin-bottom: 6px;
-    min-height: 48px;
+    padding: 9px 8px;
+    margin-bottom: 5px;
+    min-height: 46px;
     border-radius: 5px;
   }
-  .cbt-ewpn-name { font-size: 13px; font-weight: 700; }
-  .cbt-ewpn-info { font-size: 11px; margin-top: 2px; }
-  .cbt-ewpn-threat { font-size: 11px; margin-top: 3px; }
-  .cbt-ewpn-disabled-bar { font-size: 10px; margin-top: 4px; }
+  .cbt-ewpn-name { font-size: 12px; font-weight: 700; }
+  .cbt-ewpn-info { font-size: 10px; margin-top: 2px; line-height: 1.4; }
+  .cbt-ewpn-threat { font-size: 10px; margin-top: 3px; }
+  .cbt-ewpn-disabled-bar { font-size: 9px; margin-top: 3px; }
+  .cbt-ewpn-card.e-targetable { padding: 11px 8px; border-width: 2px; }
 
-  /* Targeting glow — extra thick border on mobile */
-  .cbt-ewpn-card.e-targetable { padding: 12px; border-width: 2px; }
-
-  /* Ability row */
+  /* Ability row — INSIDE the left column, stacked vertically */
   .cbt-ability-row {
     flex-direction: column;
-    gap: 5px;
-    margin-top: 6px;
+    gap: 4px;
+    margin-top: 0;
+    width: 100%;
   }
   .cbt-ability-row .btn {
     width: 100%;
-    font-size: 13px;
-    padding: 11px 14px;
+    font-size: 11px;
+    padding: 9px 8px;
     text-align: left;
-    line-height: 1.4;
+    line-height: 1.35;
+    white-space: normal;
   }
 
-  /* Legacy cacts if still used */
-  .cacts { flex-direction: column; gap: 5px; align-items: stretch; width: 100%; max-width: none; }
-  .cacts .btn { width: 100%; font-size: 13px; padding: 11px 14px; text-align: left; }
-  .wpn-btn-wrap { width: 100%; display: block; }
-  .wpn-btn-wrap .btn { width: 100%; }
+  /* Combat log — spans full width at the bottom */
+  .clog {
+    height: 68px;
+    font-size: 11px;
+    line-height: 1.5;
+    padding: 7px 9px;
+    flex-shrink: 0;
+    margin-top: 5px;
+    width: 100%;
+    box-sizing: border-box;
+  }
 
   /* ── Port / Shop ───────────────────────────────────────── */
   .sgrid { grid-template-columns: repeat(2, 1fr); gap: 7px; }
@@ -931,39 +990,49 @@ body {
   <!-- COMBAT -->
   <div class="ovlay" id="ov-combat">
     <div class="ctitle" id="ct-title">⚔ COMBAT ⚔</div>
-    <div class="cships">
-      <div class="cblock">
-        <div class="cname" id="ct-pname">Pinnace</div>
-        <canvas id="cv-player" width="120" height="80"></canvas>
-        <div class="cstat">Hull: <span id="ct-php">65</span>/<span id="ct-pmhp">65</span></div>
-        <div class="hpw"><div class="hpf me" id="ct-pbar" style="width:100%"></div></div>
-        <div class="cstat">Status: <span id="ct-pstat">Ready</span></div>
+
+    <!-- Two-column battle arena — on mobile becomes true left/right split -->
+    <div class="cbt-arena">
+
+      <!-- LEFT COLUMN — player side -->
+      <div class="cbt-col cbt-col-player">
+        <div class="cblock">
+          <div class="cname" id="ct-pname">Pinnace</div>
+          <canvas id="cv-player" width="120" height="80"></canvas>
+          <div class="cstat">Hull: <span id="ct-php">65</span>/<span id="ct-pmhp">65</span></div>
+          <div class="hpw"><div class="hpf me" id="ct-pbar" style="width:100%"></div></div>
+          <div class="cstat">Status: <span id="ct-pstat">Ready</span></div>
+        </div>
+        <div class="cbt-wpn-panel" id="cbt-player-wpns">
+          <div class="cbt-panel-title">⚔ Your Weapons</div>
+        </div>
+        <div class="cbt-ability-row" id="cbt-abilities"></div>
       </div>
-      <div class="cvs">VS</div>
-      <div class="cblock">
-        <div class="cname" id="ct-ename">Nautiloid</div>
-        <canvas id="cv-enemy" width="120" height="80"></canvas>
-        <div class="cstat">Hull: <span id="ct-ehp">80</span>/<span id="ct-emhp">80</span></div>
-        <div class="hpw"><div class="hpf" id="ct-ebar" style="width:100%"></div></div>
-        <div class="cstat">Crew: <span id="ct-ecrew">—</span> <span id="ct-emcrew" style="color:#556677"></span></div>
-        <div class="hpw" id="ct-ecreww" style="display:none"><div class="bf bc" id="ct-ecrewbar" style="width:100%"></div></div>
-        <div class="cstat">Status: <span id="ct-estat">Hostile</span></div>
+
+      <!-- VS divider — hidden on mobile -->
+      <div class="cvs" id="cbt-vs">VS</div>
+
+      <!-- RIGHT COLUMN — enemy side -->
+      <div class="cbt-col cbt-col-enemy">
+        <div class="cblock">
+          <div class="cname" id="ct-ename">Nautiloid</div>
+          <canvas id="cv-enemy" width="120" height="80"></canvas>
+          <div class="cstat">Hull: <span id="ct-ehp">80</span>/<span id="ct-emhp">80</span></div>
+          <div class="hpw"><div class="hpf" id="ct-ebar" style="width:100%"></div></div>
+          <div class="cstat">Crew: <span id="ct-ecrew">—</span> <span id="ct-emcrew" style="color:#556677"></span></div>
+          <div class="hpw" id="ct-ecreww" style="display:none"><div class="bf bc" id="ct-ecrewbar" style="width:100%"></div></div>
+          <div class="cstat">Status: <span id="ct-estat">Hostile</span></div>
+        </div>
+        <div class="cbt-wpn-panel" id="cbt-enemy-wpns">
+          <div class="cbt-panel-title enemy-title">☠ Enemy Systems</div>
+        </div>
       </div>
-    </div>
+
+    </div><!-- .cbt-arena -->
+
+    <!-- Combat log — full width, always at the bottom -->
     <div class="clog" id="clog"></div>
-    <!-- Split weapon panels -->
-    <div class="cbt-panels">
-      <div class="cbt-wpn-panel" id="cbt-player-wpns">
-        <div class="cbt-panel-title">⚔ Your Weapons</div>
-        <!-- populated by buildCbtPanels() -->
-      </div>
-      <div class="cbt-wpn-panel" id="cbt-enemy-wpns">
-        <div class="cbt-panel-title enemy-title">☠ Enemy Systems</div>
-        <!-- populated by buildCbtPanels() -->
-      </div>
-    </div>
-    <!-- Abilities row -->
-    <div class="cbt-ability-row" id="cbt-abilities"></div>
+
     <!-- Legacy cacts kept for "enemy acting" message -->
     <div id="cacts" style="display:none;"></div>
   </div>
