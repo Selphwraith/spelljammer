@@ -872,6 +872,70 @@ body {
 .qlog-entry-prog  { font-size: 0.625em; color:#776644; margin-top:2px; }
 .qlog-empty { font-size: 0.813em; color:#443366; font-style:italic; text-align:center; padding:30px 0; }
 
+/* ── CAPTAIN'S LOG ── */
+#ov-journal {
+  align-items: flex-start; justify-content: flex-start;
+  padding: 20px 24px; gap: 0;
+}
+.jlog-header {
+  font-family:'Cinzel',serif; font-size: 1.125em; color:#d4a96a;
+  letter-spacing:3px; margin-bottom:2px;
+}
+.jlog-sub { font-size: 0.688em; color:#5a3e22; letter-spacing:1px; margin-bottom:14px; font-style:italic; }
+.jlog-body {
+  width:100%; max-width:640px; flex:1; overflow-y:auto;
+  display:flex; flex-direction:column; gap:0;
+}
+.jlog-entry {
+  position: relative;
+  padding: 14px 16px 12px 20px;
+  border-left: 2px solid #3a1a0077;
+  margin-bottom: 0;
+  transition: border-color 0.2s;
+}
+.jlog-entry::before {
+  content: '';
+  position: absolute; left: -5px; top: 18px;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #3a1a00; border: 2px solid #7a4a18;
+}
+.jlog-entry:hover { border-left-color: #d4a96a55; }
+.jlog-entry:hover::before { background: #d4a96a55; border-color: #d4a96a; }
+.jlog-entry.type-imp   { border-left-color: #ffd70044; }
+.jlog-entry.type-imp::before { background: #7a6000; border-color: #ffd700; }
+.jlog-entry.type-gd    { border-left-color: #00ee8844; }
+.jlog-entry.type-gd::before  { background: #005530; border-color: #00ee88; }
+.jlog-entry.type-dmg   { border-left-color: #ff444433; }
+.jlog-entry.type-dmg::before { background: #5a0000; border-color: #ff4444; }
+.jlog-entry.type-boss  { border-left-color: #cc44ff55; }
+.jlog-entry.type-boss::before { background: #330055; border-color: #cc44ff; box-shadow:0 0 6px #cc44ff88; }
+.jlog-entry.type-frag  { border-left-color: #ffd70099; }
+.jlog-entry.type-frag::before { background: #5a4000; border-color: #ffd700; box-shadow:0 0 6px #ffd70077; }
+.jlog-date {
+  font-family:'Cinzel',serif; font-size: 0.563em; color:#5a3e22;
+  letter-spacing:2px; text-transform:uppercase; margin-bottom:5px;
+}
+.jlog-loc {
+  font-size: 0.563em; color:#7a5a38; letter-spacing:1px;
+  margin-bottom:6px; font-style:italic;
+}
+.jlog-text {
+  font-family:'Crimson Text',serif; font-size: 0.938em; color:#c4a870;
+  line-height:1.65; font-style:italic;
+}
+.jlog-empty {
+  font-size: 0.813em; color:#5a3e22; font-style:italic;
+  text-align:center; padding:40px 0;
+}
+.jlog-divider {
+  width:100%; max-width:640px;
+  border:none; border-top:1px solid #3a1a0055;
+  margin: 0;
+}
+/* Newest-first fade-in */
+@keyframes jlogIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
+.jlog-entry.new { animation: jlogIn 0.4s ease-out; }
+
 /* Volume panel */
 .vol-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
 .vol-lbl { font-size: 0.625em; color:#9977cc; width:58px; flex-shrink:0; }
@@ -978,6 +1042,7 @@ body {
       <button class="drawer-ovl-btn" onclick="toggleStatsDrawer();openOverlay('shp')">🚀 Ship</button>
       <button class="drawer-ovl-btn" onclick="toggleStatsDrawer();openOverlay('qlog')" style="color:#ffcc66;">📜 Quests</button>
       <button class="drawer-ovl-btn" id="mobile-lq-btn" onclick="toggleStatsDrawer();openLocalQuest()" style="display:none;color:#44ffcc;">🌌 Local</button>
+      <button class="drawer-ovl-btn" onclick="toggleStatsDrawer();openOverlay('journal')" style="color:#d4a96a;">📖 Log</button>
     </div>
   </div>
 </div>
@@ -1018,6 +1083,7 @@ body {
     <button class="ovl-btn" onclick="openOverlay('shp')">🚀 Ship Details</button>
     <button class="ovl-btn" onclick="openOverlay('qlog')">📜 Quest Log</button>
     <button class="ovl-btn" id="sidebar-lq-btn" onclick="openLocalQuest()" style="display:none;border-color:#44886655;color:#44ffcc;">🌌 Local Quests</button>
+    <button class="ovl-btn" id="sidebar-journal-btn" onclick="openOverlay('journal')" style="border-color:#7a4a1855;color:#d4a96a;">📖 Captain's Log</button>
   </div>
 </div>
 
@@ -1047,6 +1113,14 @@ body {
       <button class="qlog-tab"     id="qlog-tab-all"     onclick="qlogTab('all',this)">All</button>
     </div>
     <div class="qlog-body" id="qlog-body"></div>
+  </div>
+
+  <!-- CAPTAIN'S LOG / JOURNAL -->
+  <div class="ovlay" id="ov-journal">
+    <button class="ovl-close-btn" onclick="closeOverlay('journal')">✕ Close</button>
+    <div class="jlog-header">📖 Captain's Log</div>
+    <div class="jlog-sub">Personal record of the voyage — IEN Scout Comet "Elven Comet"</div>
+    <div class="jlog-body" id="jlog-body"></div>
   </div>
 
   <!-- COMBAT -->
@@ -2942,6 +3016,9 @@ function initGame() {
     wbDiscovered: new Set(),    // world boss keys that have been discovered (patrol visible)
     wbPatrol: {},               // key → {fromIdx, toIdx, prog(0-1), dir(1|-1)} per boss
     shothothuqUnlocked: false,  // true when all 4 WBs defeated + 6 breach intel collected
+    // ── Captain's Log ────────────────────────────────────
+    captainLog: [],    // [{day, loc, text, type}] newest-first
+    travelDays: 0,     // in-game days elapsed (air drain = 1 day)
   };
   // Assign 2-3 quests per faction per run (shuffled), so the player has variety
   const byFaction = {};
@@ -2964,6 +3041,7 @@ function initGame() {
   loadVoiceFiles();
   setTimeout(() => setAmbient('map'), 300); // slight delay lets audio context unlock on user gesture
   addLog('Captain — IEN Scout Comet "Elven Comet" standing by at Refuge Station. Six Astral Chart Fragments. One Elder Brain. Orders received. Click a Crystal Sphere to depart.','imp');
+  addJournalEntry('Departed Refuge Station aboard the Elven Comet. Orders sealed, destination unknown to all but Command. Six Astral Chart Fragments lie scattered across the Phlogiston. The Elder Brain must not be allowed to reassemble them. We sail at first light — if light means anything in the void between spheres.', 'imp');
 }
 
 // ╔══════════════════════════════════════════════════════╗
@@ -4210,6 +4288,7 @@ function travelTick(){
   const airRateTicks = Math.max(1, Math.round(500 / tickMs)); // drain 1 air per 500ms real time
   if(G.tvl.cur % airRateTicks === 0){
     G.ship.air=Math.max(0,G.ship.air-1); updateUI();
+    G.travelDays = (G.travelDays||0) + 1;
     if(G.ship.air<=0){ clearInterval(G.tvl.timer); addLog('Air supply exhausted! Your crew suffocates in the void!','dmg'); doDefeat(); return; }
   }
 
@@ -4306,7 +4385,7 @@ function arrive(id){
     showMsg('Elder Space','The Elder Brain Flagship fills every viewport — a living vessel of pulsing flesh and chitin the size of a small moon. All IEN intelligence pointed here. This is the final battle.','Battle!',()=>startCombat('elder'));
     return;
   }
-  if(!sph.vis){ sph.vis=true; addLog(`Arrived at ${sph.n}.`,''); }
+  if(!sph.vis){ sph.vis=true; addLog(`Arrived at ${sph.n}.`,''); jlogArrival(id); }
   else { addLog(`Arrived at ${sph.n}.`,''); }
   if(sph.breach && !G._breachArrived){
     G._breachArrived = {};
@@ -4679,6 +4758,7 @@ function upgradeShip(typeKey){
   snd('ship_upgrade', 1.0);
   const sigName = SIG_ABILITY[typeKey]?.tiers[0].n || '';
   addLog(`Ship upgraded to ${st.n}! Hull ${G.ship.maxHull}, Crew ${G.ship.maxCrew}, ${st.slots} weapon slots.${sigName ? ` Signature ability: ${sigName}.` : ''}`,'gd');
+  jlogShipUpgrade(`Vessel upgraded to ${st.n}.`);
   updateUI(); buildShop(); document.getElementById('pt-gold').textContent=G.ship.gold;
   document.getElementById('s-name').textContent=st.n;
 }
@@ -6331,6 +6411,7 @@ function cbtWin(){
     if(allSix){ G.spheres.find(s=>s.boss).locked=false; }
     addLog(`❆ ASTRAL CHART FRAGMENT RECOVERED from ${fragSite.n}! (${G.frags}/6)`,'imp');
     if(allSix) addLog('The Astral Chart is complete! Elder Space is now accessible.','imp');
+    jlogFragClaimed(G.frags, 6);
     const congTitle = allSix ? '❆ ASTRAL CHART COMPLETE ❆' : `❆ Fragment ${G.frags}/6 Recovered ❆`;
     const congMsg = allSix
       ? `Fragment ${G.frags} of 6 secured — the Astral Chart is COMPLETE!\n\nElder Space is now unlocked. The Elder Brain awaits.`
@@ -6341,6 +6422,8 @@ function cbtWin(){
   } else {
     setTimeout(()=>snd('victory_combat', 0.85), 600);
     addLog(`${e.name} destroyed!`,'gd');
+    // Only log journal entry for regular combats (not world bosses — those get logged at claimLoot)
+    if(!e._worldBoss) jlogCombatWin(e.name);
     showLootOverlay(lootKey, g, items);
   }
 }
@@ -6430,6 +6513,8 @@ function showLootOverlay(key, gold, items){
 function claimLoot(){
   G._pendingLoot.forEach(item=>G.ship.inv.push(item));
   addLog(`Claimed ${G._pendingLoot.length} items and ${G._pendingGold} gold.`,'gd');
+  // Notable loot journal notes
+  if(G._pendingLoot.some(i=>i.id==='voidwelder'||i.use==='voidwelder')) jlogVoidWelder();
   G._pendingLoot=[]; G._pendingGold=0;
   document.getElementById('ov-loot').classList.remove('on');
   updateUI();
@@ -6441,6 +6526,7 @@ function claimLoot(){
     G.worldBossDefeated.add(G._lootKey);
     const boss=WORLD_BOSSES[G._lootKey];
     addLog(boss.defeat,'imp');
+    jlogWorldBoss(G._lootKey, boss.name);
     // Stop this boss's patrol
     if(G.wbPatrol) delete G.wbPatrol[G._lootKey];
     // Check if all four world bosses are now down
@@ -6473,6 +6559,7 @@ function openOverlay(which){
   if(which==='wpn'){ buildWpnOverlay(); document.getElementById('ov-wpn').classList.add('on'); }
   if(which==='shp'){ buildShipOverlay(); document.getElementById('ov-shp').classList.add('on'); }
   if(which==='qlog'){ buildQuestLog('active'); document.getElementById('ov-qlog').classList.add('on'); }
+  if(which==='journal'){ buildJournal(); document.getElementById('ov-journal').classList.add('on'); }
 }
 function closeOverlay(which){ document.getElementById('ov-'+which).classList.remove('on'); }
 
@@ -6750,6 +6837,7 @@ function doDefeat(){
 function doVictory(){
   G.phase='victory';
   _stopLoop();
+  jlogElderBrain();
   setTimeout(()=>_playVictoryMusic(), 400);
   document.getElementById('ov-loot').classList.remove('on');
   document.getElementById('scr-win').classList.add('on');
@@ -6758,6 +6846,7 @@ function doVictory(){
 function doFarRealmVictory(){
   G.phase='victory';
   _stopLoop();
+  jlogShothothug();
   setTimeout(()=>_playVictoryMusic(), 400);
   document.getElementById('ov-loot').classList.remove('on');
   document.getElementById('scr-farwin').classList.add('on');
@@ -6801,6 +6890,7 @@ function continueSailing(){
   updateUI(); updateFragUI();
   setTag('Free Sail — Post Victory');
   addLog('The Elder Brain is destroyed. The Phlogiston is yours, Captain. Sail wherever you wish.', 'imp');
+  jlogFarBreach();
   setTimeout(() => showMsg(
     '⭐ The Stars Are Yours',
     `Your mission is complete — but the voyage goes on.
@@ -6813,7 +6903,7 @@ The Far Realm still whispers at the edges of reality. Perhaps one day a new thre
   ), 800);
 }
 function restart(){
-  ['ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-dockmaster','ov-localquest','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay'].forEach(id=>{
+  ['ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay'].forEach(id=>{
     const el=document.getElementById(id); if(el)el.classList.remove('on','active');
   });
   const _fr=document.getElementById('ov-faction-rep'); if(_fr) _fr.style.display='none';
@@ -7062,11 +7152,17 @@ function repCol(val){
 }
 function applyRep(factionId, delta){
   if(!G.rep) return;
-  G.rep[factionId] = Math.max(-100, Math.min(100, (G.rep[factionId]||0) + delta));
+  const prev = G.rep[factionId] || 0;
+  G.rep[factionId] = Math.max(-100, Math.min(100, prev + delta));
   const fac = FACTIONS[factionId];
   const val = G.rep[factionId];
   const sign = delta>0?'+':'';
   addLog(`${fac.n} reputation: ${sign}${delta} (${repLabel(val)})`,'');
+  // Journal milestones
+  if(prev < 50 && val >= 50 && factionId === 'ien')   jlogRep('ien_high');
+  if(prev > -50 && val <= -50 && factionId === 'scro')  jlogRep('scro_low');
+  if(prev > -50 && val <= -50 && factionId === 'neogi') jlogRep('neogi_low');
+  if(prev < 25 && val >= 25 && factionId === 'far_realm') jlogRep('far_realm');
 }
 function portFactionDiscount(sphereId){
   // Returns a multiplier: 0.85 (great discount) to 1.20 (surcharge)
@@ -7653,7 +7749,7 @@ function hideMainMenu(keepTitle) {
 function menuNewGame() {
   hideMainMenu(true); // keep title playing through cinematic
   // Full teardown so combat/port/loot overlays don't linger from an in-progress game
-  ['ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-dockmaster','ov-localquest','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay'].forEach(id=>{
+  ['ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay'].forEach(id=>{
     const el=document.getElementById(id); if(el)el.classList.remove('on','active');
   });
   const _fr=document.getElementById('ov-faction-rep'); if(_fr) _fr.style.display='none';
@@ -7788,7 +7884,9 @@ function _buildSaveEntry(slot, name) {
       wbPatrol: G.wbPatrol || {},
       shothothuqUnlocked: G.shothothuqUnlocked || false,
       farPhlo: G.farPhlo || null,
-      _breachArrived: G._breachArrived || {}
+      _breachArrived: G._breachArrived || {},
+      captainLog: G.captainLog || [],
+      travelDays: G.travelDays || 0,
     })
   };
 }
@@ -7806,7 +7904,7 @@ function _applyLoad(save) {
     if (G.tvl && G.tvl.timer) clearInterval(G.tvl.timer);
     if (G.animId) cancelAnimationFrame(G.animId);
     _stopLoop();
-    ['ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-dockmaster','ov-localquest','ov-faction-rep','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay'].forEach(id=>{
+    ['ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','ov-faction-rep','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay'].forEach(id=>{
       const el=document.getElementById(id); if(el)el.classList.remove('on','active');
     });
     G = {
@@ -7833,6 +7931,8 @@ function _applyLoad(save) {
       shothothuqUnlocked: state.shothothuqUnlocked || false,
       farPhlo: state.farPhlo || null,
       _breachArrived: state._breachArrived || {},
+      captainLog: state.captainLog || [],
+      travelDays: state.travelDays || 0,
       view:{zoom:1,panX:0,panY:0,follow:true,_pan:false,_lastMx:0,_lastMy:0,_didDrag:false},
     };
     for (let i = 0; i < 220; i++) G.stars.push({ x:Math.random(),y:Math.random(),r:Math.random()*1.8+0.3,twk:Math.random()*Math.PI*2,spd:Math.random()*0.014+0.003,br:Math.random() });
@@ -8772,6 +8872,176 @@ function updateLqButton() {
     const el = document.getElementById(id);
     if(el) el.style.display = hasQuests ? '' : 'none';
   });
+}
+
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  CAPTAIN'S LOG / JOURNAL                                      ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+// Location display name helper
+function _jlogLocName() {
+  if (!G) return 'the Phlogiston';
+  const locId = G.ship?.loc;
+  if (!locId) return 'the Phlogiston';
+  // Try spheres
+  const sph = G.spheres?.find(s => s.id === locId);
+  if (sph) return sph.n;
+  // Try waypoints
+  if (G.ship?.atWp) return G.ship.atWp.n || 'a waypoint';
+  return 'the Phlogiston';
+}
+
+// Core function: add an entry to the Captain's Log
+// type: 'imp' | 'gd' | 'dmg' | 'boss' | 'frag' | '' (default)
+function addJournalEntry(text, type) {
+  if (!G) return;
+  if (!G.captainLog) G.captainLog = [];
+  const entry = {
+    day:  G.travelDays || 0,
+    loc:  _jlogLocName(),
+    text: text,
+    type: type || '',
+  };
+  // Newest first
+  G.captainLog.unshift(entry);
+  // Keep last 80 entries to avoid bloat
+  if (G.captainLog.length > 80) G.captainLog.length = 80;
+}
+
+// Render the journal overlay
+function buildJournal() {
+  const body = document.getElementById('jlog-body');
+  if (!body) return;
+  body.innerHTML = '';
+
+  if (!G.captainLog || G.captainLog.length === 0) {
+    body.innerHTML = '<div class="jlog-empty">No entries yet, Captain.<br>The voyage has only just begun.</div>';
+    return;
+  }
+
+  G.captainLog.forEach((entry, i) => {
+    const el = document.createElement('div');
+    el.className = `jlog-entry type-${entry.type || 'default'}${i === 0 ? ' new' : ''}`;
+
+    const dayStr = entry.day > 0 ? `Day ${entry.day}` : 'Departure';
+    el.innerHTML = `
+      <div class="jlog-date">${dayStr}</div>
+      <div class="jlog-loc">📍 ${entry.loc}</div>
+      <div class="jlog-text">${entry.text}</div>
+    `;
+    body.appendChild(el);
+
+    // Divider between entries (not after last)
+    if (i < G.captainLog.length - 1) {
+      const hr = document.createElement('hr');
+      hr.className = 'jlog-divider';
+      body.appendChild(hr);
+    }
+  });
+}
+
+// ── Narrative flavor banks ────────────────────────────────────
+
+const _J_ARRIVAL = {
+  realm:    ["Realmspace. The blue-green jewel of Toril hangs in the crystalline dark. The dockmaster hailed us before we had fully decelerated — IEN intelligence runs deep here.","We entered Realmspace on schedule. The sphere is busy with IEN traffic; Refuge is not the only installation in these waters."],
+  grey:     ["Greyspace. The sphere that birthed Oerth — a world of magic and old wars. The locals eye a spelljamming military vessel with practiced suspicion.","Entered Greyspace. The phlogiston here has a faintly copper taste — old-timers say it means a storm is building somewhere in the flow."],
+  krynn:    ["Krynnspace. The silver and red moons are visible even from the sphere's inner surface. There is something mournful about this place — as if it remembers a catastrophe it cannot name.","Arrived at Krynnspace. The sphere wall bears old scorch marks. Whatever battle was fought here, it was enormous, and it was long ago."],
+  cluster:  ["Clusterspace — a sphere filled not with one world but a tumbling collection of small bodies, each with its own gravity and its own dangers.","We reached Clusterspace. Navigation is more art than science here; the dockmaster's charts are hand-drawn and proud of it."],
+  hero:     ["Herospace. Named for the champions said to dwell on its central world — if they still live, they have gone quiet. We saw no other IEN vessels on approach.","Entered Herospace under reduced speed. The locals remember the last war here. They are not unfriendly, exactly, but they watch."],
+  dark:     ["Darkspace. The sphere deserves its name. There is no sun here — only cold, drifting light from bioluminescent phenomena the charts cannot explain.","Arrived at Darkspace. The crew is quiet. Even the phlogiston seems subdued, its colors muted to pale greens and violet. A sphere that has given up on warmth."],
+  default:  ["Another sphere crossed from the manifest. The log grows thicker. The mission grows clearer.","We arrived on schedule. The sphere is what the charts promised — no more, no less, and the Phlogiston gives no opinions."],
+};
+
+const _J_COMBAT_WIN = [
+  "The enemy is debris. We took damage we can repair, and we lost nothing we cannot replace. The crew performed. That is the report.",
+  "Combat concluded. The threat has been neutralized — the formal language of the after-action brief. What it omits: the three seconds after the first hit when I thought we were finished.",
+  "Victory. The word tastes different the further from port you are. Out here it means something simpler: we are still flying.",
+  "The hull took hits. The crew took hits. We are still moving, which is the only outcome that matters to the mission.",
+  "Engagement complete. I am writing this entry with my hands still slightly unsteady. The next one will be easier. They always say that.",
+];
+
+const _J_FRAG = [
+  "The Fragment is secured. One more piece of the Astral Chart that the Elder Brain will never hold.",
+  "Fragment claimed. The guardian is gone. The Chart is one step closer to completion and one step closer to the confrontation I know is waiting at the end of this voyage.",
+  "We have it. The guardian was formidable — more formidable than the briefings suggested. Command's intelligence has gaps. I have noted this.",
+  "The Astral Chart Fragment is aboard. I held it for a moment before locking it in the secure hold. It feels warm, impossibly warm, for an object that has drifted in the void.",
+  "Fragment secured. The crew is tired but they are not complaining. This is what we came for. They know it.",
+];
+
+const _J_ELDER_BRAIN = "The Elder Brain is destroyed. I will write a longer entry when my hands stop shaking and when the sound of the Void Singularity Pulse stops ringing in the crew's ears. For now: it is done. The Astral Chart is safe. We survived.";
+const _J_FAR_BREACH  = "The breach is real. The Elder Brain's destruction did not close it — it widened it. Whatever lies on the other side is patient. It has been waiting a long time. Orders from Command have come through: the investigation continues. We sail further.";
+const _J_WB_KILL = {
+  kra_the_aboleth: "Kra the Aboleth is gone. Ancient, psionic, and utterly certain of its own invulnerability — until it wasn't. The Far Realm loses one of its anchors in our space.",
+  vorzak:          "Vorzak the Lich Lord. Whatever bargain it made with the Far Realm, it has now paid the final installment. The sphere is quieter for it.",
+  ssareth:         "Ssareth the Beholder Hive is destroyed — a dozen eyes extinguished at once. I can still hear the screaming in the combat log. It sounded almost surprised.",
+  the_hungering:   "The Hungering — that formless, reaching thing — has been driven back. It was not truly defeated, I think. Things like that do not die cleanly. But it is gone from our space, and that will have to be enough.",
+};
+const _J_SHOTHOTHUG = "Shothothug. The Manifest Hunger. Gone. I lack the words for it and I have been writing in this log long enough that I trust myself with words. Some things exceed language. The Phlogiston is lighter. The crew knows it even if they cannot say why. We sail home.";
+const _J_UPGRADE = [
+  "New armament installed. The ship is more dangerous than it was this morning. I am not sure if that is reassuring or alarming.",
+  "Hull upgrades complete. The drydock crew worked through the night. I bought them a round at the dockmaster's canteen and said nothing about the bill.",
+  "The ship grows with the mission. Every upgrade is a wager that we will survive long enough to use it.",
+  "Weapon loadout changed. The old configuration felt comfortable. The new one feels correct. There is a difference.",
+];
+const _J_LOOT_VOIDWELDER = "Recovered a Void Welder from the wreckage. The IEN stamp is still legible on the housing — this was ours once. The war scattered equipment across half the Phlogiston. We are still finding it.";
+const _J_REP = {
+  ien_high:   "Word has reached the IEN quartermaster before we did. The reception at port was noticeably warmer. Reputation is a currency with a longer shelf life than gold.",
+  scro_low:   "We have made enemies. The Scro have not forgotten what we did to their patrol — I did not expect them to. The crew has been briefed to stay alert in Scro space.",
+  neogi_low:  "The Neogi blacklist us now. This is the correct outcome. There is no diplomatic solution with a species that treats sapient beings as inventory.",
+  far_realm:  "Something in the Far Realm has noticed us. I am not certain how I know this. I know it.",
+};
+
+// ── Trigger functions called from game events ─────────────────
+
+function jlogArrival(sphereId) {
+  const bank = _J_ARRIVAL[sphereId] || _J_ARRIVAL.default;
+  const txt = bank[Math.floor(Math.random() * bank.length)];
+  addJournalEntry(txt, '');
+}
+
+function jlogCombatWin(enemyName) {
+  const base = _J_COMBAT_WIN[Math.floor(Math.random() * _J_COMBAT_WIN.length)];
+  addJournalEntry(base, 'gd');
+}
+
+function jlogFragClaimed(fragNum, total) {
+  const base = _J_FRAG[Math.floor(Math.random() * _J_FRAG.length)];
+  const suffix = fragNum >= total
+    ? ' The Chart is complete. Elder Space awaits.'
+    : ` ${total - fragNum} remain.`;
+  addJournalEntry(base + suffix, 'frag');
+}
+
+function jlogElderBrain() {
+  addJournalEntry(_J_ELDER_BRAIN, 'boss');
+}
+
+function jlogFarBreach() {
+  addJournalEntry(_J_FAR_BREACH, 'dmg');
+}
+
+function jlogWorldBoss(key, name) {
+  const txt = _J_WB_KILL[key] || `${name} has been destroyed. The Far Realm's reach into our space contracts by one tendril.`;
+  addJournalEntry(txt, 'boss');
+}
+
+function jlogShothothug() {
+  addJournalEntry(_J_SHOTHOTHUG, 'boss');
+}
+
+function jlogShipUpgrade(desc) {
+  const base = _J_UPGRADE[Math.floor(Math.random() * _J_UPGRADE.length)];
+  addJournalEntry(desc ? `${desc} ${base}` : base, 'imp');
+}
+
+function jlogVoidWelder() {
+  addJournalEntry(_J_LOOT_VOIDWELDER, 'gd');
+}
+
+function jlogRep(key) {
+  const txt = _J_REP[key];
+  if (txt) addJournalEntry(txt, key.includes('low') ? 'dmg' : 'imp');
 }
 
 // ╔══════════════════════════════════════════════════════════════╗
