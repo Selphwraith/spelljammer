@@ -1253,14 +1253,14 @@ const UPGRADE_DATA = {
 const SPHERE_SHOPS = {
   // ── Tier 1 ────────────────────────────────────────────────────────────
   refuge:  { label:'IEN Station Armory',         flavor:'Imperial Elven Navy standard issue. One gun and pray.',
-             wpns:[], upgs:['plating','engine','quarters','recycler'] },
+             wpns:[], upgs:['plating','engine','quarters','recycler'], drydock:true },
   realm:   { label:'Realmspace Trading Post',    flavor:"First real market you've seen in weeks. Feels like civilization.",
-             wpns:['hball','lcannon'], upgs:['cdreduce'] },
+             wpns:['hball','lcannon'], upgs:['cdreduce'], drydock:true },
   grey:    { label:"Oerth's Dwarven Forge",      flavor:"Dwarven master-craft. They don't sell junk and they don't haggle.",
              wpns:['rball','gfire'], upgs:['chainreact'] },
   // ── Tier 2 ────────────────────────────────────────────────────────────
   krynn:   { label:'Krynnspace Starport',        flavor:'Dragonlance-era elven precision. The kind of weapons that win wars.',
-             wpns:['starlance','lightning'], upgs:['firectrl'] },
+             wpns:['starlance','lightning'], upgs:['firectrl'], drydock:true },
   cluster: { label:'Clusterspace Freeport',      flavor:"Pirate salvage and no questions asked. Everything works. Mostly.",
              wpns:['fcannon','ram'], upgs:[] },
   hero:    { label:'Herospace Vault',            flavor:'Pre-Sundering artifacts of terrible and wonderful power.',
@@ -1496,6 +1496,8 @@ const ITEMS = {
   antimag:   { n:'Anti-Magic Sphere Shard',ico:'🌀', type:'equip',     val:80,  desc:'Install: Reduces all incoming damage by 3.', use:'resist3' },
   thrallring:{ n:'Thrall Binding Ring',    ico:'💍', type:'equip',     val:85,  desc:'Install: Repurposed for crew morale — adds +3 max crew.', use:'crew3p' },
   voidchart: { n:'Void Navigation Chart',  ico:'📜', type:'equip',     val:100, desc:'Install: Integrates into the helm — adds +1 speed.', use:'speed1' },
+  // ── Hull Structural Repair ───────────────────────────────────────────────
+  voidwelder:{ n:'Void Welder',            ico:'🔩⚡', type:'usable',  val:140, desc:'Use: Restores 20 permanently lost max hull. Rare field kit — use when far from a Drydock.', use:'voidwelder' },
   ebtiss:    { n:'Elder Brain Tissue',     ico:'🧠', type:'artifact',  val:200, desc:'A sample of Elder Brain tissue, pulsing with malevolent intelligence.' },
   silblade:  { n:'Silver Astral Blade Frag',ico:'🗡️',type:'artifact', val:150, desc:'A fragment of a silver astral blade. Said to cut through any defense.' },
   // ── Bandit-specific drops ─────────────────────────────
@@ -1521,9 +1523,9 @@ const LOOT = {
   nautiloid: [{id:'psicry',c:0.65},{id:'mftent',c:0.50},{id:'cargobale',c:0.75},{id:'psiamp',c:0.22},{id:'voidchart',c:0.10},{id:'almend',c:0.15}],
   githyanki: [{id:'silksw',c:0.55},{id:'astsil',c:0.65},{id:'starcoin',c:0.70},{id:'arccore',c:0.18},{id:'silblade',c:0.08},{id:'stimpack',c:0.15}],
   neogi:     [{id:'ngvnm',c:0.65},{id:'spidsweb',c:0.75},{id:'thrallring',c:0.12},{id:'cargobale',c:0.80},{id:'crewmead',c:0.30},{id:'voidsalve',c:0.12}],
-  beholder:  [{id:'bheye',c:0.55},{id:'antimag',c:0.18},{id:'runeshard',c:0.22},{id:'starcoin',c:0.45},{id:'psiamp',c:0.15},{id:'phasedis',c:0.12}],
-  leviathan: [{id:'levscal',c:0.80},{id:'levblood',c:0.45},{id:'voidchart',c:0.22},{id:'arccore',c:0.25},{id:'astralge',c:0.10}],
-  elder:     [{id:'ebtiss',c:1.0},{id:'antimag',c:0.55},{id:'voidchart',c:0.60},{id:'arccore',c:0.50},{id:'psiamp',c:0.40},{id:'levblood',c:0.50},{id:'astralge',c:0.35},{id:'voidjam',c:0.25}],
+  beholder:  [{id:'bheye',c:0.55},{id:'antimag',c:0.18},{id:'runeshard',c:0.22},{id:'starcoin',c:0.45},{id:'psiamp',c:0.15},{id:'phasedis',c:0.12},{id:'voidwelder',c:0.30}],
+  leviathan: [{id:'levscal',c:0.80},{id:'levblood',c:0.45},{id:'voidchart',c:0.22},{id:'arccore',c:0.25},{id:'astralge',c:0.10},{id:'voidwelder',c:0.20}],
+  elder:     [{id:'ebtiss',c:1.0},{id:'antimag',c:0.55},{id:'voidchart',c:0.60},{id:'arccore',c:0.50},{id:'psiamp',c:0.40},{id:'levblood',c:0.50},{id:'astralge',c:0.35},{id:'voidjam',c:0.25},{id:'voidwelder',c:0.50}],
   // ── Fragment guardian loot (generous — they're bosses) ───
   fg_realm:   [{id:'starcoin',c:0.90},{id:'plunder',c:0.80},{id:'repkit',c:0.60},{id:'crewmead',c:0.50},{id:'bfmanif',c:0.40}],
   fg_grey:    [{id:'starcoin',c:0.90},{id:'arccore',c:0.55},{id:'corskit',c:0.70},{id:'levblood',c:0.40},{id:'runeshard',c:0.30}],
@@ -2339,7 +2341,7 @@ const WAYPOINTS = [
   { id:'wp2', n:'Derelict Tradepost',   x:.36, y:.10, ico:'🏚', desc:'A damaged platform. Air tanks, hull scraps, and old crew bunks remain.' },
   { id:'wp3', n:'Rogue Comet Base',     x:.70, y:.08, ico:'☄',  desc:'A waystation drilled into a rogue comet\'s ice body. IEN stocked it for long patrols.' },
   { id:'wp4', n:'Asteroid Refuge',      x:.12, y:.66, ico:'🪨', desc:'A pressurized asteroid cluster with a repair bay and breathable air reserves.' },
-  { id:'wp5', n:'Ghost Ship Meridian',  x:.55, y:.56, ico:'👻', desc:'An abandoned Hammership still drifting. Supplies and cryo-stored crew remain aboard.' },
+  { id:'wp5', n:'Ghost Ship Meridian',  x:.55, y:.56, ico:'👻', desc:'An abandoned Hammership adrift on Phlogiston currents, helm dark, crew missing. Interceptable from any heading — a drifting vessel has no fixed lane.' },
   { id:'wp6', n:'Void Monastery',       x:.88, y:.44, ico:'⛩',  desc:'Neutral monks who aid all travelers regardless of allegiance.' },
   { id:'wp7', n:'IEN Emergency Buoy',   x:.38, y:.84, ico:'🔵', desc:'A cluster of IEN emergency buoys. Air canisters and medical supplies remain.' },
 ];
@@ -4253,6 +4255,13 @@ function shopItems(stock){
   if(s.crew<s.maxCrew) items.push({ico:'👥',name:'Hire Crew',desc:`Refill crew to ${s.maxCrew}`,cost:(s.maxCrew-s.crew)*3,act:'crew'});
   if(s.air<30)         items.push({ico:'💨',name:'Refill Air',desc:'Restore to 30 days',cost:Math.floor((30-s.air)*0.5),act:'air'});
 
+  // ── Void Welder — available at drydock ports to buy ─────
+  if(stock && stock.drydock){
+    items.push({ico:'🔩⚡', name:'Void Welder (Field Kit)',
+      desc:'Use anywhere: Restores 20 permanently lost max hull. Carry into battle against Beholders and Elder Brains.',
+      cost:180, act:'buyitem', itemId:'voidwelder'});
+  }
+
   // ── Standard weapons — only basics available everywhere ───
   // Higher tiers are sphere-exclusive (see SPHERE_SHOPS)
   ['ballista'].forEach(k=>{
@@ -4299,7 +4308,20 @@ function shopItems(stock){
       cost:u.cost, act:'upg', upg:k, exclusive:isExclusive});
   });
 
-  // ── Ship signature ability upgrade — always available once ship is owned ───
+  // ── Structural Drydock — restores permanently lost max hull ─────────────
+  if(stock && stock.drydock){
+    const shipBase = SHIP_TYPES[s.type]?.hull || s.maxHull;
+    const hullCap = shipBase + s.upgrades.filter(u=>u==='plating').length * 50;
+    const lost = hullCap - s.maxHull;
+    if(lost > 0){
+      const drydockCost = lost * 8; // 8 gold per lost max hull point
+      items.push({
+        ico:'⚙️', name:'Structural Drydock', exclusive:true,
+        desc:`Restore ${lost} permanently lost max hull. (${s.maxHull} → ${hullCap}) — structural welding and void-sealing.`,
+        cost: drydockCost, act:'drydock', restore: lost, cap: hullCap
+      });
+    }
+  }
   const sigDef = SIG_ABILITY[s.type];
   if(sigDef && s.sigTier && s.sigTier < 3){
     const nextTier = sigDef.tiers[s.sigTier]; // tiers[0]=T1, tiers[1]=T2, tiers[2]=T3
@@ -4352,6 +4374,22 @@ function buy(item){
         s.hull = Math.min(s.hull, s.maxHull);
         addLog(`⚠ ${newW.n} destabilizes your hull — max hull reduced by ${newW.hullPenalty}.`, 'dmg');
       }
+      break;
+    }
+    case 'buyitem': {
+      const def = ITEMS[item.itemId];
+      if(!def){ addLog('Item not found.','dmg'); break; }
+      const newItem = { ...def, uid: Date.now() + Math.floor(Math.random()*9999), id: item.itemId };
+      s.inv.push(newItem);
+      snd('purchase', 0.8);
+      addLog(`${def.ico} ${def.n} added to cargo hold.`, 'gd');
+      break;
+    }
+    case 'drydock': {
+      s.maxHull = Math.min(item.cap, s.maxHull + item.restore);
+      s.hull = Math.min(s.hull + item.restore, s.maxHull);
+      snd('repair_hull', 1.0);
+      addLog(`⚙️ Structural Drydock: hull integrity fully restored — max hull back to ${s.maxHull}.`, 'gd');
       break;
     }
     case 'sig':
@@ -5964,11 +6002,12 @@ async function enemyTurn() {
         // Crew loss
         if(w.crew){ G.ship.crew=Math.max(0,G.ship.crew-w.crew); if(G.ship.crew<=0){cLog('☠ Entire crew lost!','dmg');updateCbtUI();await sleep(800);doDefeat();return;} cLog(`⚠ ${w.crew} crew lost! (${G.ship.crew} remaining)`,'dmg'); }
 
-        // maxhullshred — permanently reduce player max hull (Beholder Disintegration, Elder Void Pulse)
-        if(w.maxhullshred && !G._godMode){ G.ship.maxHull=Math.max(10,G.ship.maxHull-w.maxhullshred); G.ship.hull=Math.min(G.ship.hull,G.ship.maxHull); cLog(`☠ Hull structure compromised — max hull permanently −${w.maxhullshred}!`,'dmg'); }
+        // maxhullshred — permanently reduces player max hull (Beholder Disintegration, Elder Void Pulse)
+        // Can only be repaired by a Void Welder item or at a Structural Drydock port facility
+        if(w.maxhullshred && !G._godMode){ G.ship.maxHull=Math.max(10,G.ship.maxHull-w.maxhullshred); G.ship.hull=Math.min(G.ship.hull,G.ship.maxHull); cLog(`☠ Hull structure permanently compromised — max hull −${w.maxhullshred}! Seek a Structural Drydock to repair.`,'dmg'); }
 
-        // corrode — weapons with special:'corrode' use maxhullshred if set, else 5
-        if(w.special==='corrode' && !G._godMode){ const shred=w.maxhullshred||5; G.ship.maxHull=Math.max(10,G.ship.maxHull-shred); G.ship.hull=Math.min(G.ship.hull,G.ship.maxHull); cLog(`☠ ${w.n} corrodes your hull — max hull permanently −${shred}!`,'dmg'); }
+        // corrode — weapons with special:'corrode' (same permanent treatment)
+        if(w.special==='corrode' && !G._godMode){ const shred=w.maxhullshred||5; G.ship.maxHull=Math.max(10,G.ship.maxHull-shred); G.ship.hull=Math.min(G.ship.hull,G.ship.maxHull); cLog(`☠ ${w.n} corrodes your hull plating permanently — max hull −${shred}! Seek a Structural Drydock.`,'dmg'); }
 
         // cooldowncurse — add rounds to ALL player weapons (Leviathan Void Breath)
         if(w.cooldowncurse){ const c=w.cooldowncurse; Object.keys(G.cbt.cds).forEach(k=>{G.cbt.cds[k]=(G.cbt.cds[k]||0)+c;}); cLog(`⚠ Void Breath curse — all your weapons +${c} reload round${c>1?'s':''}!`,'dmg'); }
@@ -6333,8 +6372,20 @@ function useItem(uid, inCombat){
       s.inv=s.inv.filter(i=>i.uid!==uid);
       updateUI();
       setTimeout(()=>endCbt(false),400); return;
-    // ── Equippables ──
-    case 'hull20':  s.maxHull+=20; s.hull+=20; addLog('🔷 Rune-Carved Plate installed: +20 max hull.','gd'); break;
+    // ── Void Welder — restore lost max hull ──
+    case 'voidwelder': {
+      const shipBase = SHIP_TYPES[s.type]?.hull || s.maxHull;
+      const cap = shipBase + s.upgrades.filter(u=>u==='plating').length * 50;
+      if(s.maxHull >= cap){
+        showMsg('Hull Intact','Your hull structure is at full integrity — no repairs needed.');
+        s.inv = s.inv.filter(i=>i.uid!==uid); updateUI(); return;
+      }
+      const restored = Math.min(20, cap - s.maxHull);
+      s.maxHull += restored;
+      s.hull = Math.min(s.hull + restored, s.maxHull);
+      addLog(`🔩⚡ Void Welder: hull structure restored +${restored} max hull. (Now ${s.maxHull} max)`, 'gd');
+      break;
+    }  s.maxHull+=20; s.hull+=20; addLog('🔷 Rune-Carved Plate installed: +20 max hull.','gd'); break;
     case 'hull35':  s.maxHull+=35; s.hull+=35; addLog('🔷 Void-Forged Hull Plate installed: +35 max hull.','gd'); break;
     case 'resist3': s.resist=(s.resist||0)+3; addLog('🌀 Anti-Magic Shard installed: −3 incoming damage.','gd'); break;
     case 'resist4': s.resist=(s.resist||0)+4; addLog('🔷 Phase Plating installed: −4 incoming damage.','gd'); break;
@@ -8987,7 +9038,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="b-head">⚓ Your Mission</div>
         <div class="b-body">
           You command a spelljamming vessel for the <strong>Imperial Elven Navy</strong>, launching from <em>Refuge</em> — a hidden IEN base sealed inside an artificial Crystal Sphere. The known spheres are under threat: an <strong>Elder Brain Flagship</strong> drifts through Elder Space, consuming all conscious thought in its path.<br><br>
-          Your orders: travel the Phlogiston, recover all <strong>six Astral Chart Fragments</strong> hidden across six Crystal Spheres, assemble the completed chart, unlock Elder Space, and destroy the Flagship before it reaches the inner spheres. <em>Refuge itself has no Fragment</em> — every other sphere you visit holds one.
+          Your orders: travel the Phlogiston, recover all <strong>six Astral Chart Fragments</strong> hidden across six Crystal Spheres, assemble the completed chart, unlock Elder Space, and destroy the Flagship before it reaches the inner spheres. Each Fragment is guarded — you'll need to find clues at each sphere's port before you can locate and fight for them.
         </div>
       </div>
 
@@ -8999,8 +9050,21 @@ document.addEventListener('DOMContentLoaded', () => {
           <strong>To travel:</strong> tap any sphere to chart a course. Your ship animates across the Phlogiston.<br>
           <strong>To dock:</strong> tap your <em>current sphere</em> (the one you're already at) to enter port.<br>
           <strong>Locked spheres</strong> show a lock icon — some require story progress or Fragments to reach.<br><br>
-          <strong>Air Supply</strong> counts down during travel. If it hits zero your crew suffocates — you lose. Refill air at any port before long journeys. The <em>Air Recycler</em> upgrade doubles how long your air lasts.<br><br>
-          <strong>Fragment Collection:</strong> Arriving at a sphere for the first time automatically secures its Fragment. Your Fragment count (shown top-right) must reach 6 before Elder Space unlocks.
+          <strong>Waypoints</strong> — small icons scattered across the Phlogiston — are supply caches, relay stations, and derelict vessels drifting on void currents. Tap one to intercept it for supplies, air, or crew. They're reachable from any heading since your ship can adjust course mid-void.<br><br>
+          <strong>Air Supply</strong> counts down during travel. If it hits zero your crew suffocates — you lose. Refill air at any port before long journeys. The <em>Air Recycler</em> upgrade doubles how long your air lasts.
+        </div>
+      </div>
+
+      <!-- FRAGMENTS -->
+      <div class="b-section">
+        <div class="b-head">🧩 Astral Chart Fragments</div>
+        <div class="b-body">
+          Fragments are not simply collected by visiting spheres — they must be <strong>hunted down</strong>.<br><br>
+          <strong>Step 1 — Find the Clue.</strong> Each sphere holds an NPC who knows something. Dock at a port and speak to them. They'll describe a hidden location within or near that sphere — a vault, a derelict, a dark mote, a broker's cache — where a Fragment is being guarded.<br><br>
+          <strong>Step 2 — Mark the Location.</strong> Accept the clue to mark the Fragment Site on your chart. The site then appears as a glowing marker you can navigate to directly.<br><br>
+          <strong>Step 3 — Defeat the Guardian.</strong> Each Fragment is protected by a named Guardian — a powerful enemy unique to that sphere. Corsair captains, iron wardens, void prophets, ancient vault-keepers. These are harder than standard encounters. Come prepared.<br><br>
+          <strong>Step 4 — Claim the Fragment.</strong> Defeat the Guardian and the Fragment is yours. Collect all 6 to unlock Elder Space and face the final battle.<br><br>
+          <em>Tip: Guardians are significantly tougher than regular enemies. Stock up on hull repair items, upgrade your weapons, and consider having crew-restore items on hand before engaging one.</em>
         </div>
       </div>
 
@@ -9059,8 +9123,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="b-body">
           Each ship class (except the starting Pinnace) has a <strong>built-in signature ability</strong> that upgrades up to three tiers. Buy upgrades at any port.<br><br>
           <strong>🦑 Squid Ship — Tentacle Grapple:</strong> Binds the enemy, halving their attack damage for 2 full turns. No damage at Tier 1 — pure defense. Tier 2 adds 8 direct damage. Tier 3 stuns the enemy entirely for one turn plus 15 damage. Cooldown: 5–6 rounds.<br><br>
-          <strong>🔨 Hammership — Siege Ram:</strong> Rams the enemy for 2d10–4d10 impact damage — but you take 2–5 hull damage yourself from the collision. High risk, high reward. Tier 3 permanently reduces the enemy's max hull by 10. Cooldown: 5–6 rounds.<br><br>
-          <strong>⚓ Man-o-War — Starfire Broadside:</strong> Fires all ready weapons simultaneously in one devastating salvo — no individual cooldown penalties applied. Tier 2 adds a +20% damage bonus to each shot. Tier 3 also suppresses the enemy's next attack. The capital ship's defining move. Cooldown: 5–7 rounds.
+          <strong>🔨 Hammership — Siege Ram:</strong> Rams the enemy for 2d10–4d10 impact damage — but you take 2–5 hull damage yourself from the collision. High risk, high reward. Tier 3 permanently reduces the enemy's max hull by 10. Cooldown: 5–6 rounds.<br><br>          <strong>⚓ Man-o-War — Starfire Broadside:</strong> Fires all ready weapons simultaneously in one devastating salvo — no individual cooldown penalties applied. Tier 2 adds a +20% damage bonus to each shot. Tier 3 also suppresses the enemy's next attack. The capital ship's defining move. Cooldown: 5–7 rounds.
         </div>
       </div>
 
@@ -9171,6 +9234,20 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="b-body">
           Many ports offer <strong>local quests</strong> — side missions that reward gold, items, or reputation. Check the quest board when docked. Quests typically ask you to defeat a specific enemy, deliver cargo, or visit a nearby sphere.<br><br>
           <strong>Faction Reputation</strong> builds separately with the IEN, Scro, Neogi, and others. Higher rep with a faction unlocks better prices at their ports, exclusive items, and special dialogue. Negative rep means surcharges and potentially hostile encounters.
+        </div>
+      </div>
+
+      <div class="b-section">
+        <div class="b-head">💀 Permanent Hull Damage</div>
+        <div class="b-body">
+          Certain enemy weapons don't just deal damage — they <strong>permanently reduce your maximum hull</strong>. This is not restored by repairs or healing items.<br><br>
+          <strong>Beholder — Disintegration Ray:</strong> −4 max hull per hit.<br>
+          <strong>Elder Brain — Void Singularity Pulse:</strong> −8 max hull per hit.<br>
+          <strong>World Bosses — Sphere Unmaking Pulse:</strong> −8 max hull per hit.<br><br>
+          <strong>Two ways to restore lost max hull:</strong><br>
+          <strong>🔩⚡ Void Welder (field kit)</strong> — A consumable item that restores 20 max hull per use. Found as rare loot from Beholders and the Elder Brain, or purchased at ports with a Structural Drydock. Carry one into any Beholder fight.<br>
+          <strong>⚙️ Structural Drydock (port service)</strong> — Available at <em>Refuge</em>, <em>Realmspace</em>, and <em>Krynnspace</em>. Fully restores all lost max hull for 8 gold per lost point. The only way to fully recover after a brutal fight.<br><br>
+          <em>Tip: if you're below your ship's max hull cap, the Drydock option will appear in the port shop automatically.</em>
         </div>
       </div>
 
