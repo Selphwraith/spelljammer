@@ -297,7 +297,10 @@ body {
 #msgbox { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(4,0,13,0.97); border:1px solid #5522aa; border-radius:6px; padding:20px 26px; text-align:center; display:none; z-index:60; max-width:360px; box-shadow:0 0 36px #6633aa44; }
 #msgbox.on { display:block; }
 #msgtitle { font-family:'Cinzel',serif; font-size: 1.063em; color:#ffd700; margin-bottom:8px; }
-#msgbody { font-size: 0.813em; color:#aa99cc; margin-bottom:12px; line-height:1.6; }
+#msgbody { font-size: 0.813em; color:#aa99cc; margin-bottom:12px; line-height:1.6; white-space:pre-line; }
+#msgbtn, #msgbtn2 { min-height:44px; min-width:120px; font-size:0.875em; padding:10px 16px; }
+#msgbtn2.muted { border-color:#33224455; color:#665577; }
+#msgbtn2.muted:hover { border-color:#6644aa; color:#aa88cc; }
 
 /* ── END SCREENS ── */
 .endscr { position:absolute; top:0; left:0; right:0; bottom:0; display:none; flex-direction:column; align-items:center; justify-content:center; background:rgba(3,0,10,0.97); gap:16px; z-index:80; }
@@ -936,6 +939,69 @@ body {
 @keyframes jlogIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
 .jlog-entry.new { animation: jlogIn 0.4s ease-out; }
 
+/* ── WATCH / FATIGUE SYSTEM ── */
+#watch-hud {
+  position:absolute; top:10px; left:50%; transform:translateX(-50%);
+  background:rgba(4,0,14,0.94); border:1px solid #44118866; border-radius:6px;
+  padding:6px 14px; display:none; flex-direction:column; align-items:center; gap:3px;
+  z-index:20; min-width:210px; pointer-events:none;
+}
+#watch-hud.on { display:flex; }
+.wh-row { display:flex; align-items:center; gap:8px; }
+.wh-label { font-family:'Cinzel',serif; font-size:0.563em; color:#7755aa; letter-spacing:2px; text-transform:uppercase; }
+.wh-val   { font-family:'Cinzel',serif; font-size:0.625em; color:#ccaaff; letter-spacing:1px; }
+.wh-pips  { display:flex; gap:3px; }
+.wh-pip   { width:10px; height:10px; border-radius:50%; border:1px solid #44228844; background:#100025; transition:all 0.3s; }
+.wh-pip.on { background:#9944ff; border-color:#cc88ff; box-shadow:0 0 4px #9944ff; }
+.wh-pip.used { background:#332244; border-color:#553366; }
+#fatigue-badge {
+  font-family:'Cinzel',serif; font-size:0.563em; letter-spacing:1.5px; text-transform:uppercase;
+  padding:2px 8px; border-radius:2px; transition:all 0.4s;
+}
+.fatigue-fresh    { background:#001a0a; color:#44ee88; border:1px solid #22aa5533; }
+.fatigue-tired    { background:#1a1400; color:#ffcc44; border:1px solid #aa880033; }
+.fatigue-fatigued { background:#1a0800; color:#ff8844; border:1px solid #aa440033; }
+.fatigue-exhausted{ background:#1a0000; color:#ff4444; border:1px solid #aa000033; animation:fatpulse 1.6s ease-in-out infinite; }
+@keyframes fatpulse { 0%,100%{opacity:1} 50%{opacity:0.55} }
+
+/* Rest / watch-advance overlay */
+#rest-overlay {
+  position:fixed; top:0; left:0; right:0; bottom:0; z-index:9000;
+  display:none; align-items:center; justify-content:center;
+  background:rgba(2,0,8,0.96);
+}
+#rest-overlay.on { display:flex; }
+.rest-panel {
+  display:flex; flex-direction:column; align-items:center; gap:16px;
+  background:rgba(8,2,22,0.98); border:1px solid #5522aa55;
+  border-radius:8px; padding:32px 44px; max-width:400px; width:90%;
+  box-shadow:0 0 50px #33006633;
+}
+.rest-title { font-family:'Cinzel',serif; font-size:1.125em; color:#ccaaff; letter-spacing:3px; }
+.rest-watch-anim {
+  width:80px; height:80px; border-radius:50%;
+  border:2px solid #5522aa44; position:relative;
+  display:flex; align-items:center; justify-content:center;
+}
+.rest-star { font-size:2em; animation:restSpin 2s linear infinite; }
+@keyframes restSpin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+.rest-desc { font-family:'Crimson Text',serif; font-size:0.938em; color:#9988bb; text-align:center; font-style:italic; }
+.rest-complete { font-family:'Cinzel',serif; font-size:0.75em; color:#44ee88; letter-spacing:2px; opacity:0; transition:opacity 0.5s; }
+.rest-complete.on { opacity:1; }
+
+/* Rest button — appears in sidebar and travel bar */
+#rest-btn {
+  font-family:'Cinzel',serif; font-size:0.625em; letter-spacing:1px;
+  padding:6px 10px; border-radius:3px; cursor:pointer; transition:all 0.2s;
+  text-transform:uppercase; display:none;
+}
+#rest-btn.on { display:block; }
+#rest-btn.fresh    { border:1px solid #44118866; background:rgba(20,5,45,0.8); color:#9977cc; }
+#rest-btn.fresh:hover { border-color:#9966dd; color:#ddbbff; }
+#rest-btn.tired    { border:1px solid #aa880066; background:rgba(30,20,0,0.8); color:#ffcc44; }
+#rest-btn.fatigued { border:1px solid #aa440066; background:rgba(30,10,0,0.8); color:#ff8844; animation:fatpulse 1.6s ease-in-out infinite; }
+#rest-btn.exhausted{ border:1px solid #aa000066; background:rgba(30,0,0,0.8); color:#ff4444; animation:fatpulse 0.8s ease-in-out infinite; }
+
 /* Volume panel */
 .vol-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
 .vol-lbl { font-size: 0.625em; color:#9977cc; width:58px; flex-shrink:0; }
@@ -1084,6 +1150,7 @@ body {
     <button class="ovl-btn" onclick="openOverlay('qlog')">📜 Quest Log</button>
     <button class="ovl-btn" id="sidebar-lq-btn" onclick="openLocalQuest()" style="display:none;border-color:#44886655;color:#44ffcc;">🌌 Local Quests</button>
     <button class="ovl-btn" id="sidebar-journal-btn" onclick="openOverlay('journal')" style="border-color:#7a4a1855;color:#d4a96a;">📖 Captain's Log</button>
+    <button id="rest-btn" class="fresh" onclick="doRest()">🌙 Rest (End Watch)</button>
   </div>
 </div>
 
@@ -1249,6 +1316,7 @@ body {
       <div style="font-size:12px;color:#ffd700;">⚜ Gold: <span id="pt-gold">100</span></div>
       <button id="pt-rumor-btn" class="btn" style="font-size:11px;padding:6px 14px;display:none;">🍺 Talk to Locals</button>
       <button id="pt-lq-btn" class="btn" onclick="departPort();openLocalQuest()" style="font-size:11px;padding:6px 14px;display:none;border-color:#44886655;color:#44ffcc;">🌌 Local Quests</button>
+      <button id="pt-rest-btn" class="btn" onclick="doPortRest()" style="font-size:11px;padding:6px 14px;border-color:#5522aa55;color:#cc99ff;">🌙 Rest at Berth</button>
     </div>
     <div class="port-tabs">
       <button class="ptab act" id="tab-supplies" onclick="portTab('supplies',this)">Supplies &amp; Arms</button>
@@ -1298,6 +1366,21 @@ body {
 
   <!-- TRAVEL BAR -->
   <div id="tvlbar"><div id="tvllabel">Navigating the Phlogiston…</div><div id="tvlw"><div id="tvlf" style="width:0%"></div></div></div>
+
+  <!-- WATCH HUD — shows during travel -->
+  <div id="watch-hud">
+    <div class="wh-row">
+      <span class="wh-label">Day</span>
+      <span class="wh-val" id="wh-day">1</span>
+      <span class="wh-label" style="margin-left:6px;">Watch</span>
+      <div class="wh-pips" id="wh-pips"></div>
+    </div>
+    <div class="wh-row">
+      <span class="wh-label">Move</span>
+      <span class="wh-val" id="wh-move">—</span>
+      <span id="fatigue-badge" class="fatigue-fresh">Fresh</span>
+    </div>
+  </div>
 
   <!-- LANE / WAYPOINT HOVER TOOLTIP -->
   <div id="map-tooltip" style="display:none;position:absolute;pointer-events:none;z-index:30;background:rgba(5,0,15,0.95);border:1px solid #44118866;border-radius:4px;padding:9px 13px;max-width:260px;">
@@ -1361,7 +1444,7 @@ body {
   </div>
 
   <!-- MSG -->
-  <div id="msgbox"><div id="msgtitle"></div><div id="msgbody"></div><button class="btn" id="msgbtn" onclick="dismissMsg()">Continue</button></div>
+  <div id="msgbox"><div id="msgtitle"></div><div id="msgbody"></div><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;"><button class="btn" id="msgbtn" onclick="dismissMsg()">Continue</button><button class="btn" id="msgbtn2" onclick="dismissMsg2()" style="display:none;border-color:#33664455;color:#44bb88;"></button></div></div>
 
   <!-- END SCREENS -->
   <div class="endscr" id="scr-defeat">
@@ -1389,6 +1472,18 @@ body {
       <button class="btn" onclick="restart()" style="border-color:#88006688;color:#cc44ff;">⬡ End the Expedition</button>
       <button class="btn" onclick="continueSailing()" style="border-color:#4488ff55;color:#88ccff;">⭐ Keep Sailing</button>
     </div>
+  </div>
+</div>
+
+<!-- REST / WATCH ADVANCE OVERLAY -->
+<div id="rest-overlay">
+  <div class="rest-panel">
+    <div class="rest-title" id="rest-title">⚓ Making Fast</div>
+    <div class="rest-watch-anim">
+      <div class="rest-star">✦</div>
+    </div>
+    <div class="rest-desc" id="rest-desc">The crew secures their stations. Eight hours of quiet in the Phlogiston.</div>
+    <div class="rest-complete" id="rest-complete">⚓ Watch Complete</div>
   </div>
 </div>
 
@@ -2425,129 +2520,387 @@ const LANE_DANGER_COLORS = ['','#44ee88','#ddcc22','#ff8844','#ff4422','#cc22ff'
 
 const LANES_DIR = {
   // REFUGE ↔ REALM  (Arcane Inner Flow: realm→refuge is WITH flow inward)
-  'refuge->realm': { d:1, label:'IEN Patrol Route (Inner Arc)',       lore:'The Arcane Inner Flow pushes outward from the core. You fight the current heading outward to Realmspace.',   pool:['corsair','corsair','corsair'],                       rate:0.014, warzone:false, flow:-1, flowName:'Arcane Inner Flow' },
-  'realm->refuge': { d:1, label:'IEN Patrol Route (Inner Arc)',       lore:'The Arcane Inner Flow carries you inward toward Refuge. Smooth sailing on the current.',                      pool:['corsair','corsair','corsair'],                       rate:0.014, warzone:false, flow:+1, flowName:'Arcane Inner Flow' },
+  'refuge->realm': { d:1, label:'IEN Patrol Route (Inner Arc)',       lore:'The Arcane Inner Flow pushes outward from the core. You fight the current heading outward to Realmspace.',   pool:['corsair','corsair','corsair'],                       rate:0.140, warzone:false, flow:-1, flowName:'Arcane Inner Flow' },
+  'realm->refuge': { d:1, label:'IEN Patrol Route (Inner Arc)',       lore:'The Arcane Inner Flow carries you inward toward Refuge. Smooth sailing on the current.',                      pool:['corsair','corsair','corsair'],                       rate:0.140, warzone:false, flow:+1, flowName:'Arcane Inner Flow' },
 
   // REFUGE ↔ GREY   (Mystara Flow: refuge→grey WITH flow eastward)
-  'refuge->grey':  { d:2, label:'Merchant Route (Mystara Flow)',      lore:'The Mystara Flow sweeps eastward — you ride it toward Greyspace. Fast passage, but pirates know it too.',    pool:['corsair','plunderer','plunderer','neogi'],            rate:0.022, warzone:false, flow:+1, flowName:'Mystara Flow' },
-  'grey->refuge':  { d:2, label:'Merchant Route (Mystara Flow)',      lore:'You push against the Mystara Flow heading back to Refuge. Dwarven trade vessels slow the lanes further.',    pool:['corsair','plunderer','plunderer','neogi'],            rate:0.022, warzone:false, flow:-1, flowName:'Mystara Flow' },
+  'refuge->grey':  { d:2, label:'Merchant Route (Mystara Flow)',      lore:'The Mystara Flow sweeps eastward — you ride it toward Greyspace. Fast passage, but pirates know it too.',    pool:['corsair','plunderer','plunderer','neogi'],            rate:0.220, warzone:false, flow:+1, flowName:'Mystara Flow' },
+  'grey->refuge':  { d:2, label:'Merchant Route (Mystara Flow)',      lore:'You push against the Mystara Flow heading back to Refuge. Dwarven trade vessels slow the lanes further.',    pool:['corsair','plunderer','plunderer','neogi'],            rate:0.220, warzone:false, flow:-1, flowName:'Mystara Flow' },
 
   // REFUGE ↔ CLUSTER  (Arcane Inner Flow: cluster→refuge WITH flow inward)
-  'refuge->cluster':{ d:2, label:'Freeport Corridor (Inner Arc)',     lore:'You push outward against the Arcane Inner Flow toward Clusterspace. Heavy pirate traffic.',                   pool:['corsair','corsair','plunderer','plunderer'],          rate:0.022, warzone:false, flow:-1, flowName:'Arcane Inner Flow' },
-  'cluster->refuge':{ d:2, label:'Freeport Corridor (Inner Arc)',     lore:'The Arcane Inner Flow carries you inward to Refuge. Plunderer fleets ride the same current.',                pool:['corsair','corsair','plunderer','plunderer'],          rate:0.022, warzone:false, flow:+1, flowName:'Arcane Inner Flow' },
+  'refuge->cluster':{ d:2, label:'Freeport Corridor (Inner Arc)',     lore:'You push outward against the Arcane Inner Flow toward Clusterspace. Heavy pirate traffic.',                   pool:['corsair','corsair','plunderer','plunderer'],          rate:0.220, warzone:false, flow:-1, flowName:'Arcane Inner Flow' },
+  'cluster->refuge':{ d:2, label:'Freeport Corridor (Inner Arc)',     lore:'The Arcane Inner Flow carries you inward to Refuge. Plunderer fleets ride the same current.',                pool:['corsair','corsair','plunderer','plunderer'],          rate:0.220, warzone:false, flow:+1, flowName:'Arcane Inner Flow' },
 
   // REALM ↔ GREY    (Arcane Inner Flow: grey→realm WITH flow inward)
-  'realm->grey':   { d:2, label:'Inner Sphere Route (Inner Arc)',     lore:'You push outward against the Arcane Inner Flow. Neogi slavers patrol this lane heavily.',                    pool:['corsair','plunderer','neogi','neogi'],                rate:0.024, warzone:false, flow:-1, flowName:'Arcane Inner Flow' },
-  'grey->realm':   { d:2, label:'Inner Sphere Route (Inner Arc)',     lore:'The Arcane Inner Flow carries you inward toward Realmspace. Corsairs and neogi slavers ride the same current.', pool:['corsair','plunderer','neogi','neogi'],             rate:0.024, warzone:false, flow:+1, flowName:'Arcane Inner Flow' },
+  'realm->grey':   { d:2, label:'Inner Sphere Route (Inner Arc)',     lore:'You push outward against the Arcane Inner Flow. Neogi slavers patrol this lane heavily.',                    pool:['corsair','plunderer','neogi','neogi'],                rate:0.240, warzone:false, flow:-1, flowName:'Arcane Inner Flow' },
+  'grey->realm':   { d:2, label:'Inner Sphere Route (Inner Arc)',     lore:'The Arcane Inner Flow carries you inward toward Realmspace. Corsairs and neogi slavers ride the same current.', pool:['corsair','plunderer','neogi','neogi'],             rate:0.240, warzone:false, flow:+1, flowName:'Arcane Inner Flow' },
 
   // REALM ↔ CLUSTER  (War zone — crossflow, no major river eases this crossing)
-  'realm->cluster':{ d:3, label:'⚔ ILLITHID/GITH WAR ZONE',          lore:'The ancient war rages here. No flow river crosses this zone — both factions attack any vessel.',             pool:['nautiloid','nautiloid','githyanki','githyanki','nautiloid'], rate:0.046, warzone:true,  flow:0, flowName:null },
-  'cluster->realm':{ d:3, label:'⚔ ILLITHID/GITH WAR ZONE',          lore:'The ancient war rages here. No flow river crosses this zone — both factions attack any vessel.',             pool:['nautiloid','nautiloid','githyanki','githyanki','nautiloid'], rate:0.046, warzone:true,  flow:0, flowName:null },
+  'realm->cluster':{ d:3, label:'⚔ ILLITHID/GITH WAR ZONE',          lore:'The ancient war rages here. No flow river crosses this zone — both factions attack any vessel.',             pool:['nautiloid','nautiloid','githyanki','githyanki','nautiloid'], rate:0.460, warzone:true,  flow:0, flowName:null },
+  'cluster->realm':{ d:3, label:'⚔ ILLITHID/GITH WAR ZONE',          lore:'The ancient war rages here. No flow river crosses this zone — both factions attack any vessel.',             pool:['nautiloid','nautiloid','githyanki','githyanki','nautiloid'], rate:0.460, warzone:true,  flow:0, flowName:null },
 
   // REALM ↔ HERO   (Radiant Triangle Flow: realm→hero WITH flow clockwise)
-  'realm->hero':   { d:3, label:'Long Void Crossing (Radiant Triangle)', lore:'The Radiant Triangle Flow sweeps you toward Herospace. Black Fleet patrols ride the same current.',      pool:['blackfleet','blackfleet','githyanki','plunderer'],    rate:0.030, warzone:false, flow:+1, flowName:'Radiant Triangle Flow' },
-  'hero->realm':   { d:3, label:'Long Void Crossing (Radiant Triangle)', lore:'You fight the Radiant Triangle Flow heading back toward Realmspace. Githyanki raiders exploit the delay.', pool:['blackfleet','blackfleet','githyanki','plunderer'],   rate:0.030, warzone:false, flow:-1, flowName:'Radiant Triangle Flow' },
+  'realm->hero':   { d:3, label:'Long Void Crossing (Radiant Triangle)', lore:'The Radiant Triangle Flow sweeps you toward Herospace. Black Fleet patrols ride the same current.',      pool:['blackfleet','blackfleet','githyanki','plunderer'],    rate:0.300, warzone:false, flow:+1, flowName:'Radiant Triangle Flow' },
+  'hero->realm':   { d:3, label:'Long Void Crossing (Radiant Triangle)', lore:'You fight the Radiant Triangle Flow heading back toward Realmspace. Githyanki raiders exploit the delay.', pool:['blackfleet','blackfleet','githyanki','plunderer'],   rate:0.300, warzone:false, flow:-1, flowName:'Radiant Triangle Flow' },
 
   // GREY ↔ CLUSTER  (crossflow — no major river)
-  'grey->cluster': { d:2, label:'Salvage Passage',                    lore:'Crossflow region — no major river aids this route. Plunderer fleets pick over old wrecks.',                 pool:['plunderer','plunderer','neogi'],                     rate:0.025, warzone:false, flow:0,  flowName:null },
-  'cluster->grey': { d:2, label:'Salvage Passage',                    lore:'Crossflow region — no major river aids this route. Neogi have claimed several derelicts here.',              pool:['plunderer','plunderer','neogi'],                     rate:0.025, warzone:false, flow:0,  flowName:null },
+  'grey->cluster': { d:2, label:'Salvage Passage',                    lore:'Crossflow region — no major river aids this route. Plunderer fleets pick over old wrecks.',                 pool:['plunderer','plunderer','neogi'],                     rate:0.250, warzone:false, flow:0,  flowName:null },
+  'cluster->grey': { d:2, label:'Salvage Passage',                    lore:'Crossflow region — no major river aids this route. Neogi have claimed several derelicts here.',              pool:['plunderer','plunderer','neogi'],                     rate:0.250, warzone:false, flow:0,  flowName:null },
 
   // GREY ↔ KRYNN   (Mystara Flow: grey→krynn WITH flow eastward)
-  'grey->krynn':   { d:3, label:'Dragon Passage (Mystara Flow)',       lore:'The Mystara Flow rushes you eastward toward Krynnspace. Black Fleet Reavers ride it too.',                  pool:['plunderer','blackfleet','githyanki','neogi'],         rate:0.032, warzone:false, flow:+1, flowName:'Mystara Flow' },
-  'krynn->grey':   { d:3, label:'Dragon Passage (Mystara Flow)',       lore:'You fight the Mystara Flow heading back toward Greyspace. Githyanki warbands ambush those slowed by it.',  pool:['plunderer','blackfleet','githyanki','neogi'],         rate:0.032, warzone:false, flow:-1, flowName:'Mystara Flow' },
+  'grey->krynn':   { d:3, label:'Dragon Passage (Mystara Flow)',       lore:'The Mystara Flow rushes you eastward toward Krynnspace. Black Fleet Reavers ride it too.',                  pool:['plunderer','blackfleet','githyanki','neogi'],         rate:0.320, warzone:false, flow:+1, flowName:'Mystara Flow' },
+  'krynn->grey':   { d:3, label:'Dragon Passage (Mystara Flow)',       lore:'You fight the Mystara Flow heading back toward Greyspace. Githyanki warbands ambush those slowed by it.',  pool:['plunderer','blackfleet','githyanki','neogi'],         rate:0.320, warzone:false, flow:-1, flowName:'Mystara Flow' },
 
   // GREY ↔ DARK    (Pillar Flow: grey→dark WITH flow into the deep void)
-  'grey->dark':    { d:4, label:'Void Crossing (Pillar Flow)',         lore:'The Pillar Flow drags you down into the deep void toward Darkspace. Leviathans follow the same current.',   pool:['leviathan','beholder','blackfleet'],                  rate:0.040, warzone:false, flow:+1, flowName:'Pillar Flow' },
-  'dark->grey':    { d:4, label:'Void Crossing (Pillar Flow)',         lore:'You fight the Pillar Flow surging upward out of Darkspace. Beholders nest in the churn and turbulence.',    pool:['leviathan','beholder','blackfleet'],                  rate:0.040, warzone:false, flow:-1, flowName:'Pillar Flow' },
+  'grey->dark':    { d:4, label:'Void Crossing (Pillar Flow)',         lore:'The Pillar Flow drags you down into the deep void toward Darkspace. Leviathans follow the same current.',   pool:['leviathan','beholder','blackfleet'],                  rate:0.400, warzone:false, flow:+1, flowName:'Pillar Flow' },
+  'dark->grey':    { d:4, label:'Void Crossing (Pillar Flow)',         lore:'You fight the Pillar Flow surging upward out of Darkspace. Beholders nest in the churn and turbulence.',    pool:['leviathan','beholder','blackfleet'],                  rate:0.400, warzone:false, flow:-1, flowName:'Pillar Flow' },
 
   // KRYNN ↔ HERO   (Radiant Triangle Flow: hero→krynn WITH flow clockwise)
-  'hero->krynn':   { d:3, label:'Twin-Sun Approach (Radiant Triangle)', lore:'The Radiant Triangle Flow sweeps you onward toward Krynnspace. Elite pirates ride the same river.',       pool:['blackfleet','blackfleet','beholder','githyanki'],     rate:0.034, warzone:false, flow:+1, flowName:'Radiant Triangle Flow' },
-  'krynn->hero':   { d:3, label:'Twin-Sun Approach (Radiant Triangle)', lore:'You fight the Radiant Triangle Flow heading back toward Herospace. Beholder tyrants exploit the turbulence.', pool:['blackfleet','blackfleet','beholder','githyanki'],  rate:0.034, warzone:false, flow:-1, flowName:'Radiant Triangle Flow' },
+  'hero->krynn':   { d:3, label:'Twin-Sun Approach (Radiant Triangle)', lore:'The Radiant Triangle Flow sweeps you onward toward Krynnspace. Elite pirates ride the same river.',       pool:['blackfleet','blackfleet','beholder','githyanki'],     rate:0.340, warzone:false, flow:+1, flowName:'Radiant Triangle Flow' },
+  'krynn->hero':   { d:3, label:'Twin-Sun Approach (Radiant Triangle)', lore:'You fight the Radiant Triangle Flow heading back toward Herospace. Beholder tyrants exploit the turbulence.', pool:['blackfleet','blackfleet','beholder','githyanki'],  rate:0.340, warzone:false, flow:-1, flowName:'Radiant Triangle Flow' },
 
   // KRYNN ↔ DARK   (crossflow — no major river)
-  'krynn->dark':   { d:4, label:'Shadow Approach',                    lore:'Crossflow region. Githyanki and leviathans contest this lawless stretch of void.',                           pool:['leviathan','beholder','githyanki'],                   rate:0.038, warzone:false, flow:0,  flowName:null },
-  'dark->krynn':   { d:4, label:'Shadow Approach',                    lore:'Crossflow region. Beholder tyrants nest along the turbulent approach to Krynnspace.',                        pool:['leviathan','beholder','githyanki'],                   rate:0.038, warzone:false, flow:0,  flowName:null },
+  'krynn->dark':   { d:4, label:'Shadow Approach',                    lore:'Crossflow region. Githyanki and leviathans contest this lawless stretch of void.',                           pool:['leviathan','beholder','githyanki'],                   rate:0.380, warzone:false, flow:0,  flowName:null },
+  'dark->krynn':   { d:4, label:'Shadow Approach',                    lore:'Crossflow region. Beholder tyrants nest along the turbulent approach to Krynnspace.',                        pool:['leviathan','beholder','githyanki'],                   rate:0.380, warzone:false, flow:0,  flowName:null },
 
   // CLUSTER ↔ HERO  (crossflow)
-  'cluster->hero': { d:3, label:"Relic Hunters' Route",               lore:'Crossflow region. Black Fleet Reavers hunt for pre-Sundering artifacts in the debris fields.',              pool:['blackfleet','githyanki','nautiloid','neogi'],         rate:0.033, warzone:false, flow:0,  flowName:null },
-  'hero->cluster': { d:3, label:"Relic Hunters' Route",               lore:'Crossflow region. Githyanki raiders and nautiloids actively hunt returning relic-laden vessels.',           pool:['blackfleet','githyanki','nautiloid','neogi'],         rate:0.033, warzone:false, flow:0,  flowName:null },
+  'cluster->hero': { d:3, label:"Relic Hunters' Route",               lore:'Crossflow region. Black Fleet Reavers hunt for pre-Sundering artifacts in the debris fields.',              pool:['blackfleet','githyanki','nautiloid','neogi'],         rate:0.330, warzone:false, flow:0,  flowName:null },
+  'hero->cluster': { d:3, label:"Relic Hunters' Route",               lore:'Crossflow region. Githyanki raiders and nautiloids actively hunt returning relic-laden vessels.',           pool:['blackfleet','githyanki','nautiloid','neogi'],         rate:0.330, warzone:false, flow:0,  flowName:null },
 
   // CLUSTER ↔ DARK  (Black Flow: dark→cluster WITH flow upward)
-  'cluster->dark': { d:4, label:'The Deep Dark (Black Flow)',          lore:'You fight the Black Flow surging upward from Darkspace. Void creatures hunt in the churning currents.',     pool:['leviathan','beholder','beholder'],                    rate:0.043, warzone:false, flow:-1, flowName:'Black Flow' },
-  'dark->cluster': { d:4, label:'The Deep Dark (Black Flow)',          lore:'The Black Flow carries you upward from Darkspace toward Clusterspace. Leviathans rise with the current.',   pool:['leviathan','beholder','beholder'],                    rate:0.043, warzone:false, flow:+1, flowName:'Black Flow' },
+  'cluster->dark': { d:4, label:'The Deep Dark (Black Flow)',          lore:'You fight the Black Flow surging upward from Darkspace. Void creatures hunt in the churning currents.',     pool:['leviathan','beholder','beholder'],                    rate:0.430, warzone:false, flow:-1, flowName:'Black Flow' },
+  'dark->cluster': { d:4, label:'The Deep Dark (Black Flow)',          lore:'The Black Flow carries you upward from Darkspace toward Clusterspace. Leviathans rise with the current.',   pool:['leviathan','beholder','beholder'],                    rate:0.430, warzone:false, flow:+1, flowName:'Black Flow' },
 
   // HERO ↔ DARK    (Hammer Flow: hero→dark WITH flow southward)
-  'hero->dark':    { d:4, label:'Lightless Passage (Hammer Flow)',     lore:'The Hammer Flow drives you down into Darkspace. Astral leviathans ride the same deep current.',            pool:['leviathan','beholder','blackfleet','githyanki'],      rate:0.040, warzone:false, flow:+1, flowName:'Hammer Flow' },
-  'dark->hero':    { d:4, label:'Lightless Passage (Hammer Flow)',     lore:'You fight the Hammer Flow pushing back up toward Herospace. The turbulence batters the hull.',              pool:['leviathan','beholder','blackfleet','githyanki'],      rate:0.040, warzone:false, flow:-1, flowName:'Hammer Flow' },
+  'hero->dark':    { d:4, label:'Lightless Passage (Hammer Flow)',     lore:'The Hammer Flow drives you down into Darkspace. Astral leviathans ride the same deep current.',            pool:['leviathan','beholder','blackfleet','githyanki'],      rate:0.400, warzone:false, flow:+1, flowName:'Hammer Flow' },
+  'dark->hero':    { d:4, label:'Lightless Passage (Hammer Flow)',     lore:'You fight the Hammer Flow pushing back up toward Herospace. The turbulence batters the hull.',              pool:['leviathan','beholder','blackfleet','githyanki'],      rate:0.400, warzone:false, flow:-1, flowName:'Hammer Flow' },
 
   // DARK ↔ ELDER   (Danger 5 — no flow, pure psychic void)
-  'dark->elder':   { d:5, label:'Elder Approach',                      lore:"The Elder Brain's psychic shadow blankets this region. No flow river touches Elder Space — it consumes them.", pool:['leviathan','beholder','nautiloid'],               rate:0.052, warzone:false, flow:0,  flowName:null },
-  'elder->dark':   { d:5, label:'Elder Approach',                      lore:'Fleeing Elder Space — the psychic wake still clings to the hull. Maximum danger in all directions.',         pool:['leviathan','beholder','nautiloid'],                   rate:0.050, warzone:false, flow:0,  flowName:null },
+  'dark->elder':   { d:5, label:'Elder Approach',                      lore:"The Elder Brain's psychic shadow blankets this region. No flow river touches Elder Space — it consumes them.", pool:['leviathan','beholder','nautiloid'],               rate:0.520, warzone:false, flow:0,  flowName:null },
+  'elder->dark':   { d:5, label:'Elder Approach',                      lore:'Fleeing Elder Space — the psychic wake still clings to the hull. Maximum danger in all directions.',         pool:['leviathan','beholder','nautiloid'],                   rate:0.500, warzone:false, flow:0,  flowName:null },
   // ── The Breach (Elder Space ↔ Ragestar) ──────────────────────────────
-  'elder->ragestar': { d:5, label:'The Far Realm Breach',    lore:'The wound left by the Elder Brain tears through reality itself. Far Realm entities cluster near the edges of the rift.',         pool:['frStalker','frHorde','leviathan'],    rate:0.065, warzone:false, flow:0, flowName:null },
-  'ragestar->elder': { d:5, label:'The Far Realm Breach',    lore:'Returning through the Breach — reality knits itself back behind you, but the crossing never gets easier.',                       pool:['frStalker','frHorde','nautiloid'],    rate:0.060, warzone:false, flow:0, flowName:null },
+  'elder->ragestar': { d:5, label:'The Far Realm Breach',    lore:'The wound left by the Elder Brain tears through reality itself. Far Realm entities cluster near the edges of the rift.',         pool:['frStalker','frHorde','leviathan'],    rate:0.550, warzone:false, flow:0, flowName:null },
+  'ragestar->elder': { d:5, label:'The Far Realm Breach',    lore:'Returning through the Breach — reality knits itself back behind you, but the crossing never gets easier.',                       pool:['frStalker','frHorde','nautiloid'],    rate:0.550, warzone:false, flow:0, flowName:null },
   // ── Ragestar lanes ───────────────────────────────────────────────────
-  'ragestar->vodoni': { d:3, label:'Ember Run',              lore:'A fast-current lane through Ragestar volcanic ejecta clouds. The Vodoni patrol it with unsettling regularity.',                  pool:['vodoniPatrol','corsair','plunderer'], rate:0.032, warzone:false, flow:1, flowName:'Ember Flow' },
-  'vodoni->ragestar': { d:3, label:'Ember Run',              lore:'Against the Ember Flow — slower passage through volcanic ash lanes. Vodoni patrols are less frequent heading outward.',          pool:['vodoniPatrol','corsair'],             rate:0.028, warzone:false, flow:-1, flowName:'Ember Flow' },
-  'ragestar->theweird': { d:4, label:'Murmur Lane',          lore:'The Phlogiston here tastes like static. Ships that linger too long report crew hearing things. Move quickly.',                   pool:['nautiloid','frStalker','neogi'],      rate:0.042, warzone:false, flow:0, flowName:null },
-  'theweird->ragestar': { d:4, label:'Murmur Lane',          lore:'Outbound from the Weird — the murmuring fades, replaced by a ringing that lasts for days.',                                     pool:['nautiloid','frStalker'],              rate:0.038, warzone:false, flow:0, flowName:null },
-  'ragestar->dukagsh':  { d:3, label:'Scro Passage',         lore:'The Scro claim this lane as sovereign space. They will attack vessels they deem insufficiently armed — proof of strength.',     pool:['scroBattle','corsair','plunderer'],   rate:0.030, warzone:false, flow:0, flowName:null },
-  'dukagsh->ragestar':  { d:3, label:'Scro Passage',         lore:'The Scro watch you leave. They respect the departure of a ship that survived the passage — just barely.',                       pool:['scroBattle','corsair'],               rate:0.028, warzone:false, flow:0, flowName:null },
+  'ragestar->vodoni': { d:3, label:'Ember Run',              lore:'A fast-current lane through Ragestar volcanic ejecta clouds. The Vodoni patrol it with unsettling regularity.',                  pool:['vodoniPatrol','corsair','plunderer'], rate:0.320, warzone:false, flow:1, flowName:'Ember Flow' },
+  'vodoni->ragestar': { d:3, label:'Ember Run',              lore:'Against the Ember Flow — slower passage through volcanic ash lanes. Vodoni patrols are less frequent heading outward.',          pool:['vodoniPatrol','corsair'],             rate:0.280, warzone:false, flow:-1, flowName:'Ember Flow' },
+  'ragestar->theweird': { d:4, label:'Murmur Lane',          lore:'The Phlogiston here tastes like static. Ships that linger too long report crew hearing things. Move quickly.',                   pool:['nautiloid','frStalker','neogi'],      rate:0.420, warzone:false, flow:0, flowName:null },
+  'theweird->ragestar': { d:4, label:'Murmur Lane',          lore:'Outbound from the Weird — the murmuring fades, replaced by a ringing that lasts for days.',                                     pool:['nautiloid','frStalker'],              rate:0.380, warzone:false, flow:0, flowName:null },
+  'ragestar->dukagsh':  { d:3, label:'Scro Passage',         lore:'The Scro claim this lane as sovereign space. They will attack vessels they deem insufficiently armed — proof of strength.',     pool:['scroBattle','corsair','plunderer'],   rate:0.300, warzone:false, flow:0, flowName:null },
+  'dukagsh->ragestar':  { d:3, label:'Scro Passage',         lore:'The Scro watch you leave. They respect the departure of a ship that survived the passage — just barely.',                       pool:['scroBattle','corsair'],               rate:0.280, warzone:false, flow:0, flowName:null },
   // ── Vodoni lanes ─────────────────────────────────────────────────────
-  'vodoni->donig':    { d:3, label:'Iron March',             lore:'Vodoni expansion corridor into Donig — active war zone, both sides shooting at anything that moves.',                           pool:['vodoniPatrol','scroBattle'],          rate:0.038, warzone:true,  flow:0, flowName:null },
-  'donig->vodoni':    { d:3, label:'Iron March',             lore:'Fleeing Donig toward Vodoni — ducking debris from two different wars simultaneously.',                                          pool:['vodoniPatrol','corsair','plunderer'], rate:0.035, warzone:true,  flow:0, flowName:null },
-  'vodoni->dukagsh':  { d:2, label:'Treaty Corridor',        lore:'A negotiated lane between the Vodoni Empire and the Scro — both factions maintain grudging peace here. For now.',              pool:['vodoniPatrol','scroBattle'],          rate:0.020, warzone:false, flow:0, flowName:null },
-  'dukagsh->vodoni':  { d:2, label:'Treaty Corridor',        lore:'The Scro respect the treaty. They also never stop calculating when to end it.',                                                 pool:['scroBattle','vodoniPatrol'],          rate:0.020, warzone:false, flow:0, flowName:null },
+  'vodoni->donig':    { d:3, label:'Iron March',             lore:'Vodoni expansion corridor into Donig — active war zone, both sides shooting at anything that moves.',                           pool:['vodoniPatrol','scroBattle'],          rate:0.380, warzone:true,  flow:0, flowName:null },
+  'donig->vodoni':    { d:3, label:'Iron March',             lore:'Fleeing Donig toward Vodoni — ducking debris from two different wars simultaneously.',                                          pool:['vodoniPatrol','corsair','plunderer'], rate:0.350, warzone:true,  flow:0, flowName:null },
+  'vodoni->dukagsh':  { d:2, label:'Treaty Corridor',        lore:'A negotiated lane between the Vodoni Empire and the Scro — both factions maintain grudging peace here. For now.',              pool:['vodoniPatrol','scroBattle'],          rate:0.200, warzone:false, flow:0, flowName:null },
+  'dukagsh->vodoni':  { d:2, label:'Treaty Corridor',        lore:'The Scro respect the treaty. They also never stop calculating when to end it.',                                                 pool:['scroBattle','vodoniPatrol'],          rate:0.200, warzone:false, flow:0, flowName:null },
   // ── Dukagsh lanes ────────────────────────────────────────────────────
-  'dukagsh->theweird':{ d:3, label:'Madness Reach',          lore:'The Scro avoid this lane where possible. Their shamans say the Weird speaks to them in voices of dead kin.',                   pool:['nautiloid','frStalker','scroBattle'], rate:0.035, warzone:false, flow:0, flowName:null },
-  'theweird->dukagsh':{ d:3, label:'Madness Reach',          lore:'Outbound from the Weird — the Scro ships on this lane look quietly relieved to see you leaving.',                               pool:['nautiloid','frStalker'],              rate:0.032, warzone:false, flow:0, flowName:null },
-  'dukagsh->solaris': { d:3, label:'Star Road',              lore:'A flow-current lane toward the Solaris white dwarf. The heat increases steadily. Scro use it as a patrol corridor.',           pool:['scroBattle','vodoniPatrol'],          rate:0.028, warzone:false, flow:1, flowName:'Star Road Flow' },
-  'solaris->dukagsh': { d:3, label:'Star Road',              lore:'Cooling down from Solaris — the heat gradient creates actual phlogiston eddies here. Good for ambushes.',                      pool:['scroBattle','corsair'],               rate:0.030, warzone:false, flow:-1, flowName:'Star Road Flow' },
+  'dukagsh->theweird':{ d:3, label:'Madness Reach',          lore:'The Scro avoid this lane where possible. Their shamans say the Weird speaks to them in voices of dead kin.',                   pool:['nautiloid','frStalker','scroBattle'], rate:0.350, warzone:false, flow:0, flowName:null },
+  'theweird->dukagsh':{ d:3, label:'Madness Reach',          lore:'Outbound from the Weird — the Scro ships on this lane look quietly relieved to see you leaving.',                               pool:['nautiloid','frStalker'],              rate:0.320, warzone:false, flow:0, flowName:null },
+  'dukagsh->solaris': { d:3, label:'Star Road',              lore:'A flow-current lane toward the Solaris white dwarf. The heat increases steadily. Scro use it as a patrol corridor.',           pool:['scroBattle','vodoniPatrol'],          rate:0.280, warzone:false, flow:1, flowName:'Star Road Flow' },
+  'solaris->dukagsh': { d:3, label:'Star Road',              lore:'Cooling down from Solaris — the heat gradient creates actual phlogiston eddies here. Good for ambushes.',                      pool:['scroBattle','corsair'],               rate:0.300, warzone:false, flow:-1, flowName:'Star Road Flow' },
   // ── Donig lanes ──────────────────────────────────────────────────────
-  'donig->squrm':     { d:4, label:'Chitin Road',            lore:'Thri-kreen hunting grounds. They test every vessel that passes. Fail the test and they attack. Pass it... they still attack.',  pool:['thrikreen','frHorde','corsair'],      rate:0.045, warzone:true,  flow:0, flowName:null, worldBoss:'wb_grex' },
-  'squrm->donig':     { d:4, label:'Chitin Road',            lore:'Inbound to Donig — thri-kreen escort you to the edge of their territory, then vanish. The war-sphere looms.',                  pool:['thrikreen','vodoniPatrol'],           rate:0.040, warzone:true,  flow:0, flowName:null, worldBoss:'wb_grex' },
+  'donig->squrm':     { d:4, label:'Chitin Road',            lore:'Thri-kreen hunting grounds. They test every vessel that passes. Fail the test and they attack. Pass it... they still attack.',  pool:['thrikreen','frHorde','corsair'],      rate:0.450, warzone:true,  flow:0, flowName:null, worldBoss:'wb_grex' },
+  'squrm->donig':     { d:4, label:'Chitin Road',            lore:'Inbound to Donig — thri-kreen escort you to the edge of their territory, then vanish. The war-sphere looms.',                  pool:['thrikreen','vodoniPatrol'],           rate:0.400, warzone:true,  flow:0, flowName:null, worldBoss:'wb_grex' },
   // ── The Weird lanes ──────────────────────────────────────────────────
-  'theweird->baresun':{ d:4, label:'Scar Run',               lore:'Both spheres are Far Realm-touched. The lane between them is thin in places — you can sometimes see something moving behind reality.', pool:['frStalker','frHorde','nautiloid'], rate:0.050, warzone:false, flow:0, flowName:null, worldBoss:'wb_murmur' },
-  'baresun->theweird':{ d:4, label:'Scar Run',               lore:'Outbound from Baresun — the Far Realm scar follows your wake for a while before releasing you.',                                pool:['frStalker','frHorde'],                rate:0.045, warzone:false, flow:0, flowName:null, worldBoss:'wb_murmur' },
+  'theweird->baresun':{ d:4, label:'Scar Run',               lore:'Both spheres are Far Realm-touched. The lane between them is thin in places — you can sometimes see something moving behind reality.', pool:['frStalker','frHorde','nautiloid'], rate:0.500, warzone:false, flow:0, flowName:null, worldBoss:'wb_murmur' },
+  'baresun->theweird':{ d:4, label:'Scar Run',               lore:'Outbound from Baresun — the Far Realm scar follows your wake for a while before releasing you.',                                pool:['frStalker','frHorde'],                rate:0.450, warzone:false, flow:0, flowName:null, worldBoss:'wb_murmur' },
   // ── Solaris lanes ────────────────────────────────────────────────────
-  'solaris->squrm':   { d:3, label:'Heatwave Corridor',      lore:'The stellar radiation makes targeting difficult. The thri-kreen navigate it perfectly; they claim the heat is comfortable.',   pool:['thrikreen','vodoniPatrol'],           rate:0.030, warzone:false, flow:0, flowName:null },
-  'squrm->solaris':   { d:3, label:'Heatwave Corridor',      lore:'The thri-kreen who escort you partway seem genuinely reluctant to approach Solaris any closer.',                                pool:['thrikreen','scroBattle'],             rate:0.028, warzone:false, flow:0, flowName:null },
-  'solaris->nehwon':  { d:3, label:'Mythic Current',         lore:'A strange undercurrent of destiny and narrative probability runs through this lane. Ships traveling it often arrive with stories.', pool:['corsair','plunderer','frStalker'],  rate:0.025, warzone:false, flow:1, flowName:'Mythic Current' },
-  'nehwon->solaris':  { d:3, label:'Mythic Current',         lore:'Against the Mythic Current — the stories you arrive with feel less resolved. A hero without a destination is just lost.',       pool:['corsair','plunderer'],                rate:0.028, warzone:false, flow:-1, flowName:'Mythic Current' },
+  'solaris->squrm':   { d:3, label:'Heatwave Corridor',      lore:'The stellar radiation makes targeting difficult. The thri-kreen navigate it perfectly; they claim the heat is comfortable.',   pool:['thrikreen','vodoniPatrol'],           rate:0.300, warzone:false, flow:0, flowName:null },
+  'squrm->solaris':   { d:3, label:'Heatwave Corridor',      lore:'The thri-kreen who escort you partway seem genuinely reluctant to approach Solaris any closer.',                                pool:['thrikreen','scroBattle'],             rate:0.280, warzone:false, flow:0, flowName:null },
+  'solaris->nehwon':  { d:3, label:'Mythic Current',         lore:'A strange undercurrent of destiny and narrative probability runs through this lane. Ships traveling it often arrive with stories.', pool:['corsair','plunderer','frStalker'],  rate:0.250, warzone:false, flow:1, flowName:'Mythic Current' },
+  'nehwon->solaris':  { d:3, label:'Mythic Current',         lore:'Against the Mythic Current — the stories you arrive with feel less resolved. A hero without a destination is just lost.',       pool:['corsair','plunderer'],                rate:0.280, warzone:false, flow:-1, flowName:'Mythic Current' },
   // ── Baresun lanes ────────────────────────────────────────────────────
-  'baresun->thedas':  { d:4, label:'Veil Shard Lane',        lore:'The Veil — the barrier between the physical world and the spirit world that Thedas relies upon — is thin here. Things slip through.', pool:['frStalker','frHorde','nautiloid'], rate:0.042, warzone:false, flow:0, flowName:null, worldBoss:'wb_admiral' },
-  'thedas->baresun':  { d:4, label:'Veil Shard Lane',        lore:'Outbound from Thedas — Tevinter enchantments mark your hull. You are watched by things that do not have eyes.',                 pool:['frStalker','frHorde'],                rate:0.038, warzone:false, flow:0, flowName:null, worldBoss:'wb_admiral' },
+  'baresun->thedas':  { d:4, label:'Veil Shard Lane',        lore:'The Veil — the barrier between the physical world and the spirit world that Thedas relies upon — is thin here. Things slip through.', pool:['frStalker','frHorde','nautiloid'], rate:0.420, warzone:false, flow:0, flowName:null, worldBoss:'wb_admiral' },
+  'thedas->baresun':  { d:4, label:'Veil Shard Lane',        lore:'Outbound from Thedas — Tevinter enchantments mark your hull. You are watched by things that do not have eyes.',                 pool:['frStalker','frHorde'],                rate:0.380, warzone:false, flow:0, flowName:null, worldBoss:'wb_admiral' },
   // ── Squrm lanes ──────────────────────────────────────────────────────
-  'squrm->nehwon':    { d:3, label:'Amber Road',             lore:'Thri-kreen trade corridor to Nehwon — the two cultures trade combat philosophy. Travelers are considered goods in transit.',    pool:['thrikreen','corsair'],                rate:0.025, warzone:false, flow:0, flowName:null, worldBoss:'wb_clutch' },
-  'nehwon->squrm':    { d:3, label:'Amber Road',             lore:'Inbound to Squrm — the thri-kreen assess your hull damage and count your weapons. They are impressed by neither.',              pool:['thrikreen','plunderer'],              rate:0.028, warzone:false, flow:0, flowName:null, worldBoss:'wb_clutch' },
+  'squrm->nehwon':    { d:3, label:'Amber Road',             lore:'Thri-kreen trade corridor to Nehwon — the two cultures trade combat philosophy. Travelers are considered goods in transit.',    pool:['thrikreen','corsair'],                rate:0.250, warzone:false, flow:0, flowName:null, worldBoss:'wb_clutch' },
+  'nehwon->squrm':    { d:3, label:'Amber Road',             lore:'Inbound to Squrm — the thri-kreen assess your hull damage and count your weapons. They are impressed by neither.',              pool:['thrikreen','plunderer'],              rate:0.280, warzone:false, flow:0, flowName:null, worldBoss:'wb_clutch' },
   // ── Nehwon lanes ─────────────────────────────────────────────────────
-  'nehwon->thedas':   { d:2, label:'The Pilgrim Way',        lore:'A quiet lane between two spheres that each have their own ancient mythologies. Both cultures have a word for this route.',      pool:['corsair','plunderer'],                rate:0.018, warzone:false, flow:0, flowName:null },
-  'thedas->nehwon':   { d:2, label:'The Pilgrim Way',        lore:'Inbound to Nehwon — the sense of narrative weight increases as you approach. Even the phlogiston looks more... intentional.',  pool:['corsair','plunderer'],                rate:0.018, warzone:false, flow:0, flowName:null },
+  'nehwon->thedas':   { d:2, label:'The Pilgrim Way',        lore:'A quiet lane between two spheres that each have their own ancient mythologies. Both cultures have a word for this route.',      pool:['corsair','plunderer'],                rate:0.180, warzone:false, flow:0, flowName:null },
+  'thedas->nehwon':   { d:2, label:'The Pilgrim Way',        lore:'Inbound to Nehwon — the sense of narrative weight increases as you approach. Even the phlogiston looks more... intentional.',  pool:['corsair','plunderer'],                rate:0.180, warzone:false, flow:0, flowName:null },
 
   // ── NEW PATROL LANES (hidden until world boss discovered) ─────────────
   // Hollow Admiral triangle: baresun↔nehwon
   'baresun->nehwon':  { d:4, label:'The Wound Road',         lore:'An uncharted lane through twisted space. Navigation charts show nothing here — something has been actively preventing survey vessels from mapping it.',
-                        pool:['frStalker','frHorde','nautiloid'], rate:0.048, warzone:false, flow:0, flowName:null, patrolBoss:'wb_admiral' },
+                        pool:['frStalker','frHorde','nautiloid'], rate:0.480, warzone:false, flow:0, flowName:null, patrolBoss:'wb_admiral' },
   'nehwon->baresun':  { d:4, label:'The Wound Road',         lore:'Inbound from Nehwon toward Baresun — the geometry gets stranger the closer you get. The Harbormistress warned you about this lane.',
-                        pool:['frStalker','frHorde'],             rate:0.045, warzone:false, flow:0, flowName:null, patrolBoss:'wb_admiral' },
+                        pool:['frStalker','frHorde'],             rate:0.450, warzone:false, flow:0, flowName:null, patrolBoss:'wb_admiral' },
   // Chorggrak triangle: solaris↔donig
   'solaris->donig':   { d:4, label:'The Consumption Corridor', lore:'A lane that appears on no known chart. Ships that entered it before the boss was identified simply never arrived at their destinations.',
-                        pool:['thrikreen','frHorde','frStalker'], rate:0.050, warzone:true,  flow:0, flowName:null, patrolBoss:'wb_clutch' },
+                        pool:['thrikreen','frHorde','frStalker'], rate:0.500, warzone:true,  flow:0, flowName:null, patrolBoss:'wb_clutch' },
   'donig->solaris':   { d:4, label:'The Consumption Corridor', lore:'The Donig portmaster looked at your chart and went pale when you showed her this lane. "We do not go that way," she said, and would not explain further.',
-                        pool:['thrikreen','frHorde'],             rate:0.047, warzone:true,  flow:0, flowName:null, patrolBoss:'wb_clutch' },
+                        pool:['thrikreen','frHorde'],             rate:0.470, warzone:true,  flow:0, flowName:null, patrolBoss:'wb_clutch' },
 
   // HERO ↔ ELDER   (Danger 5 — no flow)
-  'hero->elder':   { d:5, label:"Void's Edge",                         lore:'Elder corruption seeps along this approach. The Phlogiston itself seems to recoil from Elder Space.',       pool:['leviathan','beholder'],                              rate:0.050, warzone:false, flow:0,  flowName:null },
-  'elder->hero':   { d:5, label:"Void's Edge",                         lore:'The Elder corruption follows your wake. Leviathans shadow the ship the entire route.',                      pool:['leviathan','beholder'],                              rate:0.048, warzone:false, flow:0,  flowName:null },
+  'hero->elder':   { d:5, label:"Void's Edge",                         lore:'Elder corruption seeps along this approach. The Phlogiston itself seems to recoil from Elder Space.',       pool:['leviathan','beholder'],                              rate:0.500, warzone:false, flow:0,  flowName:null },
+  'elder->hero':   { d:5, label:"Void's Edge",                         lore:'The Elder corruption follows your wake. Leviathans shadow the ship the entire route.',                      pool:['leviathan','beholder'],                              rate:0.480, warzone:false, flow:0,  flowName:null },
 };
 
 // Flow tick multipliers: riding the current is 40% faster; fighting it is 60% slower
 const FLOW_TICK_MULT = { '+1': 0.60, '0': 1.00, '-1': 1.60 };
 
+// ╔══════════════════════════════════════════════════════╗
+// ║  WATCH & FATIGUE SYSTEM                              ║
+// ╚══════════════════════════════════════════════════════╝
+
+// Watch names
+const WATCH_NAMES = ['Morning Watch','Day Watch','Night Watch'];
+
+// ── Lane watch costs ─────────────────────────────────────────
+// How many watches it takes to cross a lane at base speed (speed 4, no flow)
+// Watch cost per lane — 3 watches = 1 day
+// Design intent:
+//   Refuge→Realm  d:1 flow:-1  → 6 watches (2 full days fighting the inner flow)
+//   Realm→Refuge  d:1 flow:+1  → 2 watches (riding the current — under a day)
+//   Refuge→Cluster d:2 flow:-1 → 6 watches (2 days — similar distance to Realm)
+//   Cluster→Refuge d:2 flow:+1 → 2 watches (current does the work)
+//   Realm→Hero    d:3 flow:+1  → 3 watches (1 day with the Radiant Triangle)
+//   Hero→Realm    d:3 flow:-1  → 6 watches (2 days against the triangle)
+//   War zones     d:3 flow:0   → 6 watches (no current, active danger)
+//   Grey→Dark     d:4 flow:+1  → 5 watches
+//   Dark→Grey     d:4 flow:-1  → capped at 9 (3 days max on any lane)
+//   Elder         d:5           → 12 watches (4 days)
+// Each watch of real animation = WATCH_REAL_MS milliseconds
+const WATCH_REAL_MS = 6000; // 12 real seconds per watch
+
+// Base cost by danger rating BEFORE flow modifier
+const LANE_BASE_WATCHES = { 1: 4, 2: 4, 3: 6, 4: 8, 5: 12 };
+// Max watches on any single lane (prevents absurd against-flow penalties)
+const LANE_MAX_WATCHES = 9;
+
+function laneWatchCost(lane, ship) {
+  let cost = LANE_BASE_WATCHES[lane.d] || 6;
+  // Flow modifier
+  if (lane.flow === 1)  cost = Math.max(1, Math.ceil(cost * 0.5));  // with current: halved
+  if (lane.flow === -1) cost = Math.min(LANE_MAX_WATCHES, Math.ceil(cost * 1.5)); // against: ×1.5, capped
+  // Speed bonus: each 2 above base speed 4 saves 1 watch
+  const speedBonus = Math.floor((ship.speed - 4) / 2);
+  cost = Math.max(1, cost - speedBonus);
+  return cost;
+}
+
+function calcMoveBudget(lane, ship) {
+  // Always 1 move per watch — every lane triggers a watch break opportunity
+  const speedBonus = Math.floor((ship.speed - 4) / 4);
+  return Math.max(1, 1 + speedBonus + fatigueMovePenalty());
+}
+
+function fatigueLevel() {
+  const w = G.watch?.watchesWithoutRest || 0;
+  if (w <= 2) return 0; // Fresh      — watches 1–2 (morning + day watch of day 1)
+  if (w <= 5) return 1; // Tired      — watch 3 through end of day 2 watch 2
+  if (w <= 8) return 2; // Fatigued   — watch 6 = end of day 2 watch 3, through day 3
+  return 3;             // Exhausted  — watch 9+ (pushing into third full day)
+}
+function fatigueName()        { return ['Fresh','Tired','Fatigued','Exhausted'][fatigueLevel()]; }
+function fatigueMoveClass()   { return ['fresh','tired','fatigued','exhausted'][fatigueLevel()]; }
+function fatigueMovePenalty() { return [0, 0, -1, -1][fatigueLevel()]; } // only penalty at fatigued+
+function fatigueDamageMult()  { return [1.0, 1.0, 0.85, 0.70][fatigueLevel()]; }
+
+function consumeMove() {
+  if (!G.watch) return;
+  G.watch.moveUsed++;
+  updateWatchHUD();
+}
+
+// Advance to next watch — called by rest or by the end of a watch segment
+function advanceWatch() {
+  if (!G.watch) return;
+  G.watch.watchNum++;
+  if (G.watch.watchNum > 3) {
+    G.watch.watchNum = 1;
+    G.watch.day++;
+    G.travelDays = (G.travelDays || 0) + 1;
+    G.ship.air = Math.max(0, G.ship.air - 1); // 1 air per full day
+    if (G.ship.air <= 0) { doDefeat(); return; }
+    updateUI();
+    addLog(`Day ${G.watch.day} begins. Air: ${G.ship.air} days remaining.`, '');
+  }
+  // Reset move budget — use current lane if mid-travel, else open phlogiston
+  const lane = G.tvl?.lane || { flow: 0 };
+  G.watch.moveBudget = calcMoveBudget(lane, G.ship);
+  G.watch.moveUsed = 0;
+}
+
+// ── Mid-journey watch pause ───────────────────────────────────
+// Called when a watch expires during travel — ship stops, player chooses Continue or Rest
+function watchExpiredMidJourney() {
+  if (!G.watch || G.watch._pauseShown) return;
+  G.watch._pauseShown = true;
+
+  clearInterval(G.tvl.timer);
+  G.phase = 'map'; // unblock UI
+
+  // Advance the watch clock (time passed regardless)
+  advanceWatch();
+  G.watch.watchesWithoutRest++;
+
+  const lvl = fatigueLevel();
+  const watchName = WATCH_NAMES[(G.watch.watchNum - 1) % 3];
+  const remaining = G.tvl ? Math.round(100 - G.tvl.prog) : 0;
+  const fatWarning = lvl >= 2 ? `\n\n⚠ Fatigue: ${fatigueName()} — damage penalty active.` : lvl === 1 ? `\n\nFatigue: Tired — move budget reduced.` : '';
+  const destName = G.tvl.to ? G.spheres?.find(s=>s.id===G.tvl.to)?.n : (G.tvl.toWp?.n || G.tvl.toFragSite?.n || 'destination');
+
+  showMsg(
+    `⚓ Watch Complete — ${WATCH_NAMES[((G.watch.watchNum-1)+2)%3]}`,
+    `Eight hours have passed. ${destName} is approximately ${remaining}% ahead.\n\n${watchName} has begun. The crew awaits your orders.${fatWarning}`,
+    '⛵ Continue Sailing',
+    () => {
+      G.watch._pauseShown = false;
+      G.phase = 'traveling';
+      G.tvl.timer = setInterval(travelTick, G.tvl.tickMs || 100);
+    },
+    '🌙 Rest This Watch',
+    () => {
+      G.watch._pauseShown = false;
+      doRest();
+    }
+  );
+  updateWatchHUD();
+}
+
+// Rest: spend a watch doing nothing — reduces fatigue by 1 level
+function doRest() {
+  if (G.watch?.restingPhase) return;
+  if (G.phase === 'traveling') {
+    clearInterval(G.tvl.timer);
+    G.phase = 'map';
+  }
+  G.watch.restingPhase = true;
+
+  const overlay = document.getElementById('rest-overlay');
+  const titleEl = document.getElementById('rest-title');
+  const descEl  = document.getElementById('rest-desc');
+  const doneEl  = document.getElementById('rest-complete');
+  doneEl.classList.remove('on');
+
+  const fatigLvl  = fatigueLevel();
+  const watchName = WATCH_NAMES[(G.watch.watchNum - 1) % 3];
+  const titles = ['⚓ Securing for Watch','🌙 Standing Down','⭐ Night Watch Rest','☠ Desperately Needed Rest'];
+  const descs  = [
+    'The crew secures their stations. Eight hours of quiet in the Phlogiston. The stars drift past.',
+    'The helm is lashed, the sails furled. You take your rest while the ship drifts with the flow.',
+    'Night watch set. Two hands keep the eye. The rest sleep like the dead and need it.',
+    'The crew can barely function. You make fast and collapse. Eight hours of black, dreamless void.',
+  ];
+  titleEl.textContent = titles[Math.min(fatigLvl, titles.length-1)];
+  descEl.textContent  = descs[Math.min(fatigLvl, descs.length-1)];
+  overlay.classList.add('on');
+
+  setTimeout(() => {
+    doneEl.classList.add('on');
+    setTimeout(() => {
+      overlay.classList.remove('on');
+      G.watch.restingPhase = false;
+
+      // Rest recovery: drop 2 full fatigue levels
+      // Exhausted (8+) → Tired (≤5): drop to 5
+      // Fatigued  (6-7) → Fresh (≤3): drop to 3  
+      // Tired (4-5) → Fresh: drop to 0
+      // Fresh: already 0
+      const wwr = G.watch.watchesWithoutRest;
+      if      (wwr >= 9) G.watch.watchesWithoutRest = 4; // Exhausted → Tired
+      else if (wwr >= 6) G.watch.watchesWithoutRest = 0; // Fatigued  → Fresh
+      else               G.watch.watchesWithoutRest = 0; // Tired/Fresh → Fresh
+
+      // Advance the watch clock — rest costs a watch
+      advanceWatch();
+
+      // Crew recover on good rest
+      if (fatigLvl >= 2 && G.ship.crew < G.ship.maxCrew) {
+        G.ship.crew = Math.min(G.ship.maxCrew, G.ship.crew + 1);
+        addLog('The crew is rested. One injured hand returns to duty.', 'gd');
+      }
+
+      const newWatchName = WATCH_NAMES[(G.watch.watchNum-1)%3];
+      addLog(`${watchName} rest complete. Day ${G.watch.day}, ${newWatchName} — move budget restored. Fatigue: ${fatigueName()}.`, '');
+      addJournalEntry(`We stood down for ${watchName.toLowerCase()} — eight hours of quiet. The ${fatigueName().toLowerCase()} crew needed it.`, '');
+
+      updateWatchHUD();
+      updateUI();
+      _writeAutoSave();
+
+      // If mid-journey, offer to continue
+      if (G._resumeTravel) {
+        const rt = G._resumeTravel;
+        G._resumeTravel = null;
+        const destName = G.spheres?.find(s=>s.id===rt.toId)?.n || rt.toId;
+        showMsg('⚓ Rested', `Ready to resume. ${destName} — ${rt.watchesRemaining} watch${rt.watchesRemaining>1?'es':''} remaining.`,
+          '⛵ Resume Course', () => {
+            if(hasMovesRemaining()) startTravel(rt.toId, rt.watchesRemaining, rt.pausedPos, rt.pausedProg);
+            else showMsg('⚓ Watch Exhausted', `Rest again before continuing. (Fatigue: ${fatigueName()})`, 'Understood', null);
+          });
+      } else if (G.tvl && (G.tvl.to || G.tvl.toWp || G.tvl.toFragSite) && G.tvl.prog < 100) {
+        const destName = G.tvl.to ? G.spheres?.find(s=>s.id===G.tvl.to)?.n : (G.tvl.toWp?.n || G.tvl.toFragSite?.n || 'destination');
+        showMsg('⚓ Rested', `Ready to resume. ${destName} awaits.`, '⛵ Resume Course', () => {
+          G.phase = 'traveling';
+          G.tvl.timer = setInterval(travelTick, G.tvl.tickMs || 100);
+        });
+      }
+    }, 800);
+  }, 2000);
+}
+
+// Update Watch HUD
+function updateWatchHUD() {
+  if (!G.watch) return;
+  const hud = document.getElementById('watch-hud');
+  if (!hud) return;
+
+  // Only show on map/traveling phases
+  const active = G.phase === 'map' || G.phase === 'traveling';
+  hud.classList.toggle('on', active);
+
+  document.getElementById('wh-day').textContent = `Day ${G.watch.day}`;
+
+  // Watch pips (3 per day)
+  const pipsEl = document.getElementById('wh-pips');
+  pipsEl.innerHTML = '';
+  for (let i = 1; i <= 3; i++) {
+    const pip = document.createElement('div');
+    pip.className = 'wh-pip' + (i < G.watch.watchNum ? ' used' : i === G.watch.watchNum ? ' on' : '');
+    pipsEl.appendChild(pip);
+  }
+
+  // Move budget
+  const remaining = Math.max(0, G.watch.moveBudget - G.watch.moveUsed);
+  document.getElementById('wh-move').textContent = `${remaining}/${G.watch.moveBudget} moves`;
+
+  // Fatigue badge
+  const badge = document.getElementById('fatigue-badge');
+  const badgeLabels = ['✦ Fresh', '😴 Tired', '⚠ Fatigued', '⚠ Exhausted'];
+  badge.textContent = badgeLabels[fatigueLevel()];
+  badge.className = `fatigue-${fatigueMoveClass()}`;
+
+  // Rest button
+  const restBtn = document.getElementById('rest-btn');
+  if (restBtn) {
+    restBtn.style.display = active ? '' : 'none';
+    restBtn.className = '';  // reset
+    restBtn.id = 'rest-btn'; // preserve id
+    restBtn.classList.add('on', fatigueMoveClass());
+    const lvl = fatigueLevel();
+    restBtn.textContent = lvl >= 2 ? `⚠ Rest Now! (${fatigueName()})` : '🌙 Rest (End Watch)';
+  }
+}
+
+function hasMovesRemaining() {
+  if (!G.watch) return true;
+  return (G.watch.moveBudget - G.watch.moveUsed) > 0;
+}
+
+// Called when travel starts — consumes a move and increments fatigue counter
+function watchTravelStarted() {
+  if (!G.watch) return;
+  consumeMove();
+  // Note: watchesWithoutRest is incremented in travelTick when a watch segment expires
+  // without the player choosing to rest. Not here.
+}
+
 function getLane(from, to) {
   return LANES_DIR[from + '->' + to]
       || LANES_DIR[to + '->' + from]   // fallback to reverse (shouldn't normally hit)
-      || { d:2, label:'Open Phlogiston', lore:'Uncharted void. Pirate activity likely.', pool:['corsair','plunderer','neogi'], rate:0.020, warzone:false, flow:0, flowName:null };
+      || { d:2, label:'Open Phlogiston', lore:'Uncharted void. Pirate activity likely.', pool:['corsair','plunderer','neogi'], rate:0.200, warzone:false, flow:0, flowName:null };
 }
 
 function isConnected(fromId, toId) {
@@ -2837,14 +3190,19 @@ function shipSz(type, bw, bh) {
 
 // Preload — silently skip any file the browser can't load
 function loadSounds() {
-  // Load from sounds/ folder (external MP3 files)
+  // Load from sounds/ folder — use fetch HEAD to skip missing files silently
   Object.entries(SOUND_DATA).forEach(([key, path]) => {
-    try {
-      const a = new Audio();
-      a.preload = 'auto';
-      a.src = path;
-      _SFX[key] = a;
-    } catch(_) {}
+    fetch(path, {method:'HEAD'})
+      .then(r => {
+        if (!r.ok) return; // file doesn't exist — skip silently
+        try {
+          const a = new Audio();
+          a.preload = 'auto';
+          a.src = path;
+          _SFX[key] = a;
+        } catch(_) {}
+      })
+      .catch(() => {}); // network error or CORS — skip silently
   });
 }
 
@@ -3003,6 +3361,7 @@ function initGame() {
     clues: new Set(),           // sphere IDs whose fragment clues have been granted
     fragsCollected: new Set(),  // fragment site IDs whose guardians have been defeated
     _msgCb:null, _pendingLoot:[], _pendingGold:0, _pendingFragSite:null, atFragSite:null,
+    _msgCb2:null, _resumeTravel:null,
     stars:[], phlo:[], animId:null,
     worldBossDefeated: new Set(),
     view:{zoom:1,panX:0,panY:0,follow:true,_pan:false,_lastMx:0,_lastMy:0,_didDrag:false},
@@ -3019,6 +3378,15 @@ function initGame() {
     // ── Captain's Log ────────────────────────────────────
     captainLog: [],    // [{day, loc, text, type}] newest-first
     travelDays: 0,     // in-game days elapsed (air drain = 1 day)
+    // ── Watch & Fatigue system ───────────────────────────
+    watch: {
+      day:       1,      // current in-game day
+      watchNum:  1,      // 1=Morning, 2=Day, 3=Night
+      moveBudget:0,      // movement points remaining this watch
+      moveUsed:  0,      // how many points spent this watch
+      watchesWithoutRest: 0,  // fatigue accumulator
+      restingPhase: false,    // true while rest animation plays
+    },
   };
   // Assign 2-3 quests per faction per run (shuffled), so the player has variety
   const byFaction = {};
@@ -3035,6 +3403,10 @@ function initGame() {
   for(let i=0;i<55;i++) G.phlo.push({x:Math.random(),y:Math.random(),vx:(Math.random()-.5)*0.0006,vy:(Math.random()-.5)*0.0006,sz:Math.random()*90+35,col:PC[i%PC.length],a:Math.random()*0.10+0.03,da:(Math.random()-.5)*0.0008});
 
   ensureLqState(); updateUI(); updateFragUI();
+  // ── Initialize watch budget (no lane yet — use open phlogiston defaults)
+  G.watch.moveBudget = calcMoveBudget({ flow: 0 }, G.ship);
+  G.watch.moveUsed   = 0;
+  updateWatchHUD();
   renderLoop();
   loadSounds();
   loadShipImages();
@@ -3065,15 +3437,22 @@ function worldToScreen(wx,wy){
 function getShipWorldPos(){
   const W=cv.width,H=cv.height;
   if(G.phase==='traveling'){
-    const fp=G.tvl.fromPos?{x:G.tvl.fromPos.x*W,y:G.tvl.fromPos.y*H}:sPos(G.spheres.find(s=>s.id===G.tvl.from)||{x:.5,y:.5});
-    const tp=G.tvl.toWp?{x:G.tvl.toWp.x*W,y:G.tvl.toWp.y*H}:sPos(G.spheres.find(s=>s.id===G.tvl.to)||{x:.5,y:.5});
-    // Use same sub-tick smoothing for camera follow
-    const _tMs=G.tvl.tickMs||100;
-    const _el=G.tvl.lastTickTime?Math.min(_tMs,performance.now()-G.tvl.lastTickTime):0;
-    const _pv=G.tvl.prevProg!==undefined?G.tvl.prevProg:G.tvl.prog;
-    const pg=(_pv+(G.tvl.prog-_pv)*(_el/_tMs))/100;
-    return {x:fp.x+(tp.x-fp.x)*pg,y:fp.y+(tp.y-fp.y)*pg};
+    // Always lerp from the true lane origin (fixed sphere position) to destination
+    const origin = G.tvl._laneOrigin || G.tvl.fromPos || {x:.5,y:.5};
+    const fp = {x: origin.x * W, y: origin.y * H};
+    const tp = G.tvl.toWp
+      ? {x:G.tvl.toWp.x*W, y:G.tvl.toWp.y*H}
+      : sPos(G.spheres.find(s=>s.id===G.tvl.to)||{x:.5,y:.5});
+    // Sub-tick smoothing
+    const _tMs = G.tvl.tickMs || 100;
+    const _el  = G.tvl.lastTickTime ? Math.min(_tMs, performance.now()-G.tvl.lastTickTime) : 0;
+    const _pv  = G.tvl.prevProg !== undefined ? G.tvl.prevProg : G.tvl.prog;
+    const smoothProg = _pv + (G.tvl.prog - _pv) * (_el / _tMs);
+    const pg = Math.max(0, Math.min(1, smoothProg / 100));
+    return {x: fp.x+(tp.x-fp.x)*pg, y: fp.y+(tp.y-fp.y)*pg};
   }
+  // Mid-lane watch break — ship is paused between spheres
+  if(G.ship.midLanePos) return {x: G.ship.midLanePos.x*W, y: G.ship.midLanePos.y*H};
   if(G.ship.atWp) return {x:G.ship.atWp.x*W+28,y:G.ship.atWp.y*H+8};
   if(G.ship.atFragSite) return {x:G.ship.atFragSite.x*W+28,y:G.ship.atFragSite.y*H-24};
   const cur=G.spheres.find(s=>s.id===G.ship.loc);
@@ -3209,64 +3588,58 @@ function renderLoop(ts=0) {
   });
   cx.globalAlpha=1; cx.textBaseline='alphabetic';
 
-  // ── Active travel arc ─────────────────────────────────
-  if(G.phase==='traveling'){
-    const fp = G.tvl.fromPos
-      ? {x:G.tvl.fromPos.x*W, y:G.tvl.fromPos.y*H}
-      : sPos(G.spheres.find(s=>s.id===G.tvl.from)||{x:.5,y:.5});
-    const tp = G.tvl.toWp
+  // ── Active travel arc (also shown during mid-lane watch break) ────────
+  if(G.phase==='traveling' || G.ship.midLanePos){
+    const origin = G.tvl?._laneOrigin || G.tvl?.fromPos || G.ship.midLanePos || {x:.5,y:.5};
+    const fp = G.ship.midLanePos
+      ? {x: G.ship.midLanePos.x*W, y: G.ship.midLanePos.y*H}
+      : {x: origin.x*W, y: origin.y*H};
+    const destId = G.tvl?.to;
+    const tp = G.tvl?.toWp
       ? {x:G.tvl.toWp.x*W, y:G.tvl.toWp.y*H}
-      : sPos(G.spheres.find(s=>s.id===G.tvl.to)||{x:.5,y:.5});
-    const lc = G.tvl.lane ? (LANE_DANGER_COLORS[G.tvl.lane.d]||'#aa66ff') : '#aa66ff';
+      : sPos(G.spheres.find(s=>s.id===destId)||{x:.5,y:.5});
+    const lc = G.tvl?.lane ? (LANE_DANGER_COLORS[G.tvl.lane.d]||'#aa66ff') : '#aa66ff';
+    // Draw remaining arc line (ship→destination)
     cx.strokeStyle=lc; cx.lineWidth=2; cx.globalAlpha=0.5; cx.setLineDash([3,4]);
     cx.beginPath(); cx.moveTo(fp.x,fp.y); cx.lineTo(tp.x,tp.y); cx.stroke();
     cx.setLineDash([]); cx.globalAlpha=1;
 
-    // Sub-tick interpolation: smooth 60fps position between 10fps ticks
-    const _tickMs  = G.tvl.tickMs || 100;
-    const _elapsed = G.tvl.lastTickTime ? Math.min(_tickMs, performance.now()-G.tvl.lastTickTime) : 0;
-    const _frac    = _elapsed / _tickMs;
-    const _prev    = G.tvl.prevProg !== undefined ? G.tvl.prevProg : G.tvl.prog;
-    const pg = (_prev + (G.tvl.prog - _prev) * _frac) / 100;
-    const sx = fp.x+(tp.x-fp.x)*pg;
-    const sy = fp.y+(tp.y-fp.y)*pg;
-
-    // Angle to destination
-    const dx = tp.x-fp.x, dy = tp.y-fp.y;
-    const travelAngle = Math.atan2(dy, dx);
-
-    // Bob: gentle vertical oscillation (relative to travel direction, simulated as y offset before rotate)
-    const bob   = Math.sin(t*1.8)*2.2;
-    // Rock: subtle rotation wobble around travel angle
-    const rock  = Math.sin(t*1.3)*0.055;
-
-    // Engine trail — small glowing particles behind the ship
-    const trailX = sx - Math.cos(travelAngle)*22;
-    const trailY = sy - Math.sin(travelAngle)*22;
-    for(let i=0;i<4;i++){
-      const tr = 0.6-i*0.13;
-      const td = i*6;
-      const tx2 = trailX - Math.cos(travelAngle)*td;
-      const ty2 = trailY - Math.sin(travelAngle)*td;
-      const tsz = (3.5-i*0.6)*tr;
-      cx.globalAlpha = tr*0.55;
-      cx.fillStyle = i<2 ? '#cc66ff' : '#7733aa';
-      cx.beginPath(); cx.arc(tx2,ty2,tsz,0,Math.PI*2); cx.fill();
+    if(G.phase==='traveling'){
+      // ── Active travel: ship moves with engine trail and rotation ──
+      const _tickMs  = G.tvl.tickMs || 100;
+      const _elapsed = G.tvl.lastTickTime ? Math.min(_tickMs, performance.now()-G.tvl.lastTickTime) : 0;
+      const _prev    = G.tvl.prevProg !== undefined ? G.tvl.prevProg : G.tvl.prog;
+      const smoothProg = _prev + (G.tvl.prog - _prev) * (_elapsed / _tickMs);
+      const pg = Math.max(0, Math.min(1, smoothProg / 100));
+      const sx = fp.x+(tp.x-fp.x)*pg;
+      const sy = fp.y+(tp.y-fp.y)*pg;
+      const dx = tp.x-fp.x, dy = tp.y-fp.y;
+      const travelAngle = Math.atan2(dy, dx);
+      const bob   = Math.sin(t*1.8)*2.2;
+      const rock  = Math.sin(t*1.3)*0.055;
+      // Engine trail
+      const trailX = sx - Math.cos(travelAngle)*22;
+      const trailY = sy - Math.sin(travelAngle)*22;
+      for(let i=0;i<4;i++){
+        const tr = 0.6-i*0.13; const td = i*6;
+        const tx2 = trailX - Math.cos(travelAngle)*td;
+        const ty2 = trailY - Math.sin(travelAngle)*td;
+        cx.globalAlpha = tr*0.55;
+        cx.fillStyle = i<2 ? '#cc66ff' : '#7733aa';
+        cx.beginPath(); cx.arc(tx2,ty2,(3.5-i*0.6)*tr,0,Math.PI*2); cx.fill();
+      }
+      cx.globalAlpha=1;
+      cx.save(); cx.translate(sx,sy); cx.rotate(travelAngle+rock);
+      const [_tw,_th]=shipSz(G.ship.type,40,24);
+      drawShipImg(G.ship.type,cx,0,bob,_tw,_th,false,()=>{
+        if(G.ship.type==='pinnace')drawPinnace(cx,0,bob,18,false,t);
+        else if(G.ship.type==='squid')drawSquid(cx,0,bob,18,false,t);
+        else if(G.ship.type==='manow')drawManow(cx,0,bob,20,false,t);
+        else drawHammer(cx,0,bob,18,false,t);
+      });
+      cx.restore();
     }
-    cx.globalAlpha=1;
-
-    // Draw ship rotated to face destination, with bob and rock
-    cx.save();
-    cx.translate(sx, sy);
-    cx.rotate(travelAngle + rock);
-    const [_tw,_th]=shipSz(G.ship.type,40,24);
-    drawShipImg(G.ship.type,cx,0,bob,_tw,_th,false,()=>{
-      if(G.ship.type==='pinnace')drawPinnace(cx,0,bob,18,false,t);
-      else if(G.ship.type==='squid')drawSquid(cx,0,bob,18,false,t);
-      else if(G.ship.type==='manow')drawManow(cx,0,bob,20,false,t);
-      else drawHammer(cx,0,bob,18,false,t);
-    });
-    cx.restore();
+    // midLanePos idle draw is handled below in the else block
 
   } else {
     // Ship at rest — idle gentle bob only, no rotation
@@ -3289,6 +3662,18 @@ function renderLoop(ts=0) {
       cx.save(); cx.translate(rx,ry); cx.rotate(idleRock);
       const [_iw,_ih]=shipSz(G.ship.type,40,24);
       drawShipImg(G.ship.type,cx,0,idleBob,_iw,_ih,false,()=>{
+        if(G.ship.type==='pinnace')drawPinnace(cx,0,idleBob,16,false,t);
+        else if(G.ship.type==='squid')drawSquid(cx,0,idleBob,16,false,t);
+        else if(G.ship.type==='manow')drawManow(cx,0,idleBob,18,false,t);
+        else drawHammer(cx,0,idleBob,16,false,t);
+      });
+      cx.restore();
+    } else if(G.ship.midLanePos){
+      // Ship paused mid-lane during watch break — draw at saved position
+      const rx = G.ship.midLanePos.x*W, ry = G.ship.midLanePos.y*H;
+      cx.save(); cx.translate(rx,ry); cx.rotate(idleRock);
+      const [_mw,_mh]=shipSz(G.ship.type,40,24);
+      drawShipImg(G.ship.type,cx,0,idleBob,_mw,_mh,false,()=>{
         if(G.ship.type==='pinnace')drawPinnace(cx,0,idleBob,16,false,t);
         else if(G.ship.type==='squid')drawSquid(cx,0,idleBob,16,false,t);
         else if(G.ship.type==='manow')drawManow(cx,0,idleBob,18,false,t);
@@ -4200,47 +4585,113 @@ function getShipPos(){
   return sph ? {x:sph.x, y:sph.y} : {x:.5,y:.5};
 }
 
-function startTravel(toId){
+function startTravel(toId, _resumeWatchesLeft, _pausedPos, _pausedProg){
   if(G.phase!=='map')return;
-  const from=getShipPos();  // capture waypoint pos BEFORE clearing atWp
-  G.ship.atWp=null; G.ship.atFragSite=null;
-  G.ship.atFragSite=null;
-  const t=G.spheres.find(s=>s.id===toId);
-  const dist=Math.hypot(t.x-from.x,t.y-from.y);
-  G.phase='traveling';
-  const fromId=G.ship.loc||'refuge';
-  const lane=getLane(fromId,toId);
-  // Base steps from distance; speed shortens them
-  const steps=Math.max(18,Math.round(dist*80/G.ship.speed));
-  // Tick interval: base 100ms, divided by speed factor, multiplied by flow factor
-  // Speed 4 (base) = 100ms; Speed 8 = 50ms; Speed 2 = 200ms
-  const speedMult = 4 / G.ship.speed;           // base speed=4 → ×1.00
-  const flowMult  = FLOW_TICK_MULT[String(lane.flow ?? 0)] ?? 1.0;
-  const tickMs    = Math.round(100 * speedMult * flowMult);
-  G.tvl={ from:fromId, to:toId, toWp:null, fromPos:from,
-          prog:0, prevProg:0, lastTickTime:performance.now(), steps, cur:0, dist, timer:null, lane, tickMs };
-  document.getElementById('tvlbar').classList.add('on'); setTag(`Traveling → ${t.n}`);
+  if (!hasMovesRemaining()) {
+    showMsg('⚓ Watch Exhausted',
+      `Your crew has completed a full watch underway. Rest before the next leg.\n\nFatigue: ${fatigueName()}`,
+      'Understood', null);
+    return;
+  }
+
+  G.ship.atWp = null; G.ship.atFragSite = null; G.ship.midLanePos = null;
+  const t = G.spheres.find(s=>s.id===toId);
+  G.phase = 'traveling';
+  const fromId = G.ship.loc || 'refuge';
+  const lane = getLane(fromId, toId);
+
+  // ── Origin sphere position (always the true lane start, never mid-lane) ──
+  const originSph = G.spheres.find(s=>s.id===fromId) || {x:.5, y:.5};
+  // On resume, recover _laneOrigin from the previous G.tvl if it exists
+  const laneOrigin = (_pausedProg !== undefined && G.tvl?._laneOrigin)
+    ? G.tvl._laneOrigin
+    : {x: originSph.x, y: originSph.y};
+
+  // Total watches for this lane — on resume, _resumeWatchesLeft is watches still needed
+  const totalWatches = _resumeWatchesLeft !== undefined ? _resumeWatchesLeft : laneWatchCost(lane, G.ship);
+
+  // Update move budget on first watch of a brand-new lane
+  if (G.watch && G.watch.moveUsed === 0) {
+    G.watch.moveBudget = calcMoveBudget(lane, G.ship);
+  }
+  // Only consume a move on a brand-new departure, not on resume
+  if (!_pausedProg) {
+    watchTravelStarted();
+  }
+  updateWatchHUD();
+
+  // Real-time duration for this watch segment
+  const fatFactor = fatigueLevel() >= 3 ? 1.2 : 1.0;
+  const watchMs   = Math.round(WATCH_REAL_MS * fatFactor);
+  const steps     = Math.max(40, Math.round(watchMs / 100));
+  const tickMs    = Math.round(watchMs / steps);
+
+  // Progress: 0–100 across the FULL lane
+  // watchPct = how many % of the bar one watch covers (stays constant across resumes)
+  const watchPct = _resumeWatchesLeft !== undefined && _pausedProg !== undefined
+    ? (100 - _pausedProg) / _resumeWatchesLeft   // remaining % split across remaining watches
+    : 100 / totalWatches;                         // fresh start: even split
+
+  const progStart = _pausedProg !== undefined ? _pausedProg : 0;
+  const progEnd   = Math.min(100, progStart + watchPct);
+
+  G.tvl = {
+    from: fromId, to: toId, toWp: null,
+    fromPos: laneOrigin,
+    _laneOrigin: laneOrigin,
+    prog: progStart,
+    prevProg: progStart,
+    lastTickTime: performance.now(),
+    steps, cur: 0,
+    dist: Math.hypot(t.x - originSph.x, t.y - originSph.y),
+    timer: null, lane, tickMs,
+    _watchesLeft:   totalWatches - 1,
+    _progEnd:       progEnd,
+    _watchPct:      watchPct,   // how many % of bar each watch covers
+    _totalWatches:  totalWatches,
+  };
+
+  document.getElementById('tvlbar').classList.add('on');
+  document.getElementById('tvllabel').textContent =
+    totalWatches > 1
+      ? `→ ${t.n}  (${totalWatches} watch${totalWatches>1?'es':''} remaining)`
+      : `→ ${t.n}`;
+  setTag(`Traveling → ${t.n}`);
   snd('travel_begin', 0.8);
-  const dangerLabel = lane.warzone ? ' ⚠ WAR ZONE' : lane.d >= 4 ? ' ⚠ EXTREME DANGER' : lane.d === 3 ? ' ⚠ DANGEROUS' : '';
-  const flowLabel = lane.flow === 1  ? ` 〜 Riding the ${lane.flowName}…`
-                  : lane.flow === -1 ? ` ⚡ Fighting the ${lane.flowName} — progress will be slow.`
-                  : '';
-  addLog(`Setting course for ${t.n} via ${lane.label}.${dangerLabel}${flowLabel}`,'imp');
-  G.tvl.timer=setInterval(travelTick, tickMs);
+
+  if (!_pausedProg) { // only log on very first departure
+    const dangerLabel = lane.warzone ? ' ⚠ WAR ZONE' : lane.d >= 4 ? ' ⚠ EXTREME DANGER' : lane.d === 3 ? ' ⚠ DANGEROUS' : '';
+    const flowLabel = lane.flow === 1  ? ` 〜 Riding the ${lane.flowName}…`
+                    : lane.flow === -1 ? ` ⚡ Fighting the ${lane.flowName}.` : '';
+    const watchLabel = totalWatches > 1 ? ` (${totalWatches}-watch crossing)` : '';
+    addLog(`Setting course for ${t.n} via ${lane.label}.${dangerLabel}${flowLabel}${watchLabel}`, 'imp');
+  } else {
+    addLog(`Resuming course to ${t.n}…`, '');
+  }
+
+  G.tvl.timer = setInterval(travelTick, tickMs);
 }
 
 function startWaypointTravel(wp){
   if(G.phase!=='map')return;
-  const from=getShipPos();  // capture current pos BEFORE clearing atWp
+  if (!hasMovesRemaining()) {
+    showMsg('⚓ Watch Exhausted',
+      `Your crew needs rest before the next leg. (Fatigue: ${fatigueName()})`, 'Understood', null);
+    return;
+  }
+  const from=getShipPos();
   G.ship.atWp=null; G.ship.atFragSite=null;
   G.ship.atFragSite=null;
   const dist=Math.hypot(wp.x-from.x, wp.y-from.y);
   G.phase='traveling';
-  // Waypoints are short detours — low danger but encounters possible
-  const lane={ d:1, label:`Route to ${wp.n}`, lore:'A short diversion from the main Phlogiston lanes.', pool:['nautiloid','neogi'], rate:0.014, warzone:false };
-  const wpSteps=Math.max(10,Math.round(dist*70/G.ship.speed));
-  const wpSpeedMult = 4 / G.ship.speed;
-  const wpTickMs = Math.round(100 * wpSpeedMult); // waypoints: no flow bonus
+  const lane={ d:1, label:`Route to ${wp.n}`, lore:'A short diversion from the main Phlogiston lanes.', pool:['nautiloid','neogi'], rate:0.140, warzone:false, flow:0 };
+  // Waypoints: ~5s real time base
+  const speedFactor = 4 / G.ship.speed;
+  const fatFactor = fatigueLevel() >= 3 ? 1.25 : 1.0;
+  const totalMs = Math.round(5000 * speedFactor * fatFactor);
+  const wpSteps = Math.max(20, Math.round(totalMs / 100));
+  const wpTickMs = Math.round(totalMs / wpSteps);
+  watchTravelStarted(); updateWatchHUD();
   G.tvl={ from:G.ship.loc, to:null, toWp:wp, fromPos:from,
           prog:0, prevProg:0, lastTickTime:performance.now(), steps:wpSteps, cur:0, dist, timer:null, lane, tickMs:wpTickMs };
   document.getElementById('tvlbar').classList.add('on');
@@ -4253,18 +4704,26 @@ function startWaypointTravel(wp){
 
 function startFragSiteTravel(fs){
   if(G.phase!=='map') return;
+  if (!hasMovesRemaining()) {
+    showMsg('⚓ Watch Exhausted',
+      `You need rest before pressing further. (Fatigue: ${fatigueName()})`, 'Understood', null);
+    return;
+  }
   const from = getShipPos();
   G.ship.atWp = null;
   G.ship.atFragSite = null;
   const dist = Math.hypot(fs.x - from.x, fs.y - from.y);
   G.phase = 'traveling';
-  // Fragment sites use a moderate danger lane — they're in the open phlogiston
   const lane = { d:2, label:`Route to ${fs.n}`,
     lore:'Uncharted space between the lanes. Something lurks out here.',
-    pool:['nautiloid','neogi','corsair','plunderer'], rate:0.018, warzone:false };
-  const fsSteps = Math.max(12, Math.round(dist*75/G.ship.speed));
-  const fsSpeedMult = 4 / G.ship.speed;
-  const fsTickMs = Math.round(100 * fsSpeedMult); // frag sites: no flow bonus (off-lane)
+    pool:['nautiloid','neogi','corsair','plunderer'], rate:0.180, warzone:false, flow:0 };
+  // Fragment sites: ~10s base (short off-lane trip)
+  const speedFactor = 4 / G.ship.speed;
+  const fatFactor = fatigueLevel() >= 3 ? 1.25 : 1.0;
+  const totalMs = Math.round(10000 * speedFactor * fatFactor);
+  const fsSteps = Math.max(20, Math.round(totalMs / 100));
+  const fsTickMs = Math.round(totalMs / fsSteps);
+  watchTravelStarted(); updateWatchHUD();
   G.tvl = { from:G.ship.loc, to:null, toWp:null, toFragSite:fs, fromPos:from,
             prog:0, prevProg:0, lastTickTime:performance.now(), steps:fsSteps, cur:0, dist, timer:null, lane, tickMs:fsTickMs };
   document.getElementById('tvlbar').classList.add('on');
@@ -4277,92 +4736,176 @@ function startFragSiteTravel(fs){
 
 function travelTick(){
   if(G.phase!=='traveling'){ clearInterval(G.tvl.timer); return; }
-  G.tvl.prevProg = G.tvl.prog;          // snapshot before increment for smooth interpolation
+  G.tvl.prevProg = G.tvl.prog;
   G.tvl.lastTickTime = performance.now();
-  G.tvl.cur++; G.tvl.prog=(G.tvl.cur/G.tvl.steps)*100;
-  document.getElementById('tvlf').style.width=G.tvl.prog+'%';
+  G.tvl.cur++;
 
-  // Air drains every ~500ms of real time regardless of tick speed
-  // Track elapsed real time using tickMs
-  const tickMs = G.tvl.tickMs || 100;
-  const airRateTicks = Math.max(1, Math.round(500 / tickMs)); // drain 1 air per 500ms real time
-  if(G.tvl.cur % airRateTicks === 0){
-    G.ship.air=Math.max(0,G.ship.air-1); updateUI();
-    G.travelDays = (G.travelDays||0) + 1;
-    if(G.ship.air<=0){ clearInterval(G.tvl.timer); addLog('Air supply exhausted! Your crew suffocates in the void!','dmg'); doDefeat(); return; }
+  // Progress: advance from current position toward _progEnd
+  const segEnd   = G.tvl._progEnd || 100;
+  const watchPct = G.tvl._watchPct || (100 / (G.tvl._totalWatches || 1));
+  const segStart = segEnd - watchPct;
+  // Advance linearly from segStart to segEnd over `steps` ticks
+  G.tvl.prog = segStart + (G.tvl.cur / G.tvl.steps) * watchPct;
+  G.tvl.prog = Math.min(G.tvl.prog, segEnd);
+  document.getElementById('tvlf').style.width = G.tvl.prog + '%';
+
+  // ── Encounters: 2 checks per watch segment ────────────────
+  const lane = G.tvl.lane || getLane(G.tvl.from, G.tvl.to);
+  const e1 = segStart + (segEnd - segStart) * 0.38;
+  const e2 = segStart + (segEnd - segStart) * 0.72;
+  for(const cp of [e1, e2]){
+    const key = `_enc${Math.round(cp)}`;
+    if(G.tvl.prog >= cp && G.tvl.prevProg < cp && !G.tvl[key]){
+      G.tvl[key] = true;
+      const chance = (lane.rate || 0.200) * (fatigueLevel() >= 2 ? 1.3 : 1.0);
+      if(Math.random() < chance){
+        clearInterval(G.tvl.timer);
+        startCombat((lane.pool||['nautiloid','neogi'])[Math.floor(Math.random()*(lane.pool||['nautiloid','neogi']).length)]);
+        return;
+      }
+    }
   }
 
-  // Lane-based encounter rate — use stored lane data
-  const lane = G.tvl.lane || getLane(G.tvl.from, G.tvl.to);
-
-  // ── World boss patrol intercept: boss is on this exact lane segment ──
+  // ── World boss patrol intercept ───────────────────────────
   if(G.wbPatrol && G.postVictory && !G.tvl._bossChecked){
     for(const [wbKey, state] of Object.entries(G.wbPatrol)){
-      const wb = WORLD_BOSSES[wbKey];
-      if(!wb) continue;
-      const bossFrom = wb.patrol[state.fromIdx];
-      const bossTo   = wb.patrol[state.toIdx];
-      const travelFrom = G.tvl.from, travelTo = G.tvl.to;
-      // Same leg (either direction)
-      const sameleg = (bossFrom===travelFrom&&bossTo===travelTo)||(bossFrom===travelTo&&bossTo===travelFrom);
+      const wb = WORLD_BOSSES[wbKey]; if(!wb) continue;
+      const bossFrom=wb.patrol[state.fromIdx], bossTo=wb.patrol[state.toIdx];
+      const sameleg=(bossFrom===G.tvl.from&&bossTo===G.tvl.to)||(bossFrom===G.tvl.to&&bossTo===G.tvl.from);
       if(sameleg){
-        // Intercept when progress crosses the boss's position
-        const myProg   = G.tvl.prog;
-        const bossProg = (bossFrom===travelFrom) ? state.prog*100 : (1-state.prog)*100;
-        if(myProg >= bossProg && (G.tvl.prevProg||0) < bossProg){
-          G.tvl._bossChecked = true;
-          clearInterval(G.tvl.timer);
-          addLog(`⚠ ${wb.intro}`,'dmg');
-          startWorldBossCombat(wbKey);
-          return;
+        const bossProg=(bossFrom===G.tvl.from)?state.prog*100:(1-state.prog)*100;
+        if(G.tvl.prog>=bossProg&&G.tvl.prevProg<bossProg){
+          G.tvl._bossChecked=true; clearInterval(G.tvl.timer);
+          addLog(`⚠ ${wb.intro}`,'dmg'); startWorldBossCombat(wbKey); return;
         }
       }
     }
   }
 
-  const chance = (lane.rate || 0.026) * (1 + G.tvl.dist * 0.8);
-  if(Math.random()<chance&&G.tvl.cur>3){
-    clearInterval(G.tvl.timer);
-    const pool = lane.pool || ['nautiloid','neogi'];
-    startCombat(pool[Math.floor(Math.random()*pool.length)]);
-    return;
-  }
-  // ── Roaming faction encounter (separate from combat roll) ──
-  if((G.tvl._roamCount||0) < 2 && G.tvl.prog > 15 && G.tvl.prog < 85 && Math.random() < 0.045){
-    // Space out multiple encounters — don't fire twice in the same stretch
-    if(!G.tvl._lastRoamProg || G.tvl.prog - G.tvl._lastRoamProg > 35){
-      G.tvl._roamCount = (G.tvl._roamCount||0) + 1;
-      G.tvl._lastRoamProg = G.tvl.prog;
-      const sphereId = G.tvl.to || G.tvl.from;
-      const factionId = SPHERE_FACTION[sphereId] || SPHERE_FACTION[G.tvl.from];
-      if(factionId && FACTIONS[factionId]){
-        const rep = G.rep[factionId] || 0;
-        if(rep <= -50){
-          clearInterval(G.tvl.timer);
-          const fac = FACTIONS[factionId];
-          addLog(`⚠ ${fac.n} forces intercept your vessel — HOSTILE!`,'dmg');
-          startCombat(fac.shipKey);
-          return;
-        } else {
-          clearInterval(G.tvl.timer);
-          triggerRoamingEncounter(factionId);
-          return;
-        }
+  // ── Roaming faction encounter (once per watch segment) ────
+  // Low rate — NPCs are rare encounters, not constant interruptions
+  const roamKey = `_roam${Math.round(segEnd)}`;
+  if(!G.tvl[roamKey] && G.tvl.prog > segStart + (segEnd-segStart)*0.5 && Math.random() < 0.006){
+    G.tvl[roamKey] = true;
+    const factionId = SPHERE_FACTION[G.tvl.to||''] || SPHERE_FACTION[G.tvl.from||''];
+    if(factionId && FACTIONS[factionId]){
+      if((G.rep[factionId]||0) <= -50){
+        clearInterval(G.tvl.timer);
+        addLog(`⚠ ${FACTIONS[factionId].n} forces intercept your vessel — HOSTILE!`,'dmg');
+        startCombat(FACTIONS[factionId].shipKey); return;
+      } else {
+        clearInterval(G.tvl.timer); triggerRoamingEncounter(factionId); return;
       }
     }
   }
-  if(G.tvl.prog>=100){
+
+  // ── Exhaustion chip damage ─────────────────────────────────
+  if(fatigueLevel()>=3 && G.tvl.cur % Math.max(1,Math.floor(G.tvl.steps/3))===0){
+    const dmg=Math.ceil(Math.random()*3); G.ship.hull=Math.max(0,G.ship.hull-dmg);
+    addLog(`⚠ Exhausted crew — navigation error! Hull −${dmg}.`,'dmg'); updateUI();
+    if(G.ship.hull<=0){clearInterval(G.tvl.timer);doDefeat();return;}
+  }
+
+  // ── Watch segment complete ─────────────────────────────────
+  if(G.tvl.prog >= segEnd - 0.05){
     clearInterval(G.tvl.timer);
-    if(G.tvl.toWp) arriveAtWaypoint(G.tvl.toWp);
-    else if(G.tvl.toFragSite) arriveAtFragSite(G.tvl.toFragSite);
-    else arrive(G.tvl.to);
+    const watchesLeft = G.tvl._watchesLeft || 0;
+
+    if(watchesLeft <= 0){
+      // ─ ARRIVED — count this final watch ─
+      advanceWatch();
+      G.ship.air = Math.max(0, G.ship.air - 1); updateUI();
+      if(G.ship.air<=0){addLog('Air supply exhausted!','dmg');doDefeat();return;}
+      document.getElementById('tvlbar').classList.remove('on');
+      if(G.tvl.toWp)          arriveAtWaypoint(G.tvl.toWp);
+      else if(G.tvl.toFragSite) arriveAtFragSite(G.tvl.toFragSite);
+      else                    arrive(G.tvl.to);
+    } else {
+      // ─ MORE WATCHES NEEDED — stop and prompt ─
+      const toId = G.tvl.to;
+      const watchesRemaining = watchesLeft;
+      const totalWatches = G.tvl._totalWatches || watchesLeft + 1;
+
+      // ── Save mid-lane position using same formula as the renderer ──
+      // Renderer: origin + (dest - origin) * (prog/100)
+      const W = cv.width, H = cv.height;
+      const laneOrigin = G.tvl._laneOrigin || G.tvl.fromPos || {x:.5, y:.5};
+      const destSph = G.spheres.find(s => s.id === toId) || {x:.5, y:.5};
+      const pg = Math.max(0, Math.min(1, G.tvl.prog / 100));
+      const pausedPos = {
+        x: laneOrigin.x + (destSph.x - laneOrigin.x) * pg,
+        y: laneOrigin.y + (destSph.y - laneOrigin.y) * pg,
+      };
+      const pausedProg = G.tvl.prog;
+
+      // Store mid-lane position on ship so renderer shows ship here during the break
+      G.ship.midLanePos = pausedPos;
+
+      // Advance watch clock — time passed
+      advanceWatch();
+      G.watch.watchesWithoutRest++;
+      G.phase = 'map';
+      document.getElementById('tvlbar').classList.remove('on');
+
+      const destName = G.spheres?.find(s=>s.id===toId)?.n || toId;
+      const pct = Math.round(pausedProg);
+      const lvl = fatigueLevel();
+      const fatStr = lvl >= 3 ? `\n\n⚠ EXHAUSTED — crew is making navigation errors. Rest now or take hull damage.`
+                   : lvl >= 2 ? `\n\n⚠ FATIGUED — combat damage reduced. Rest is strongly advised.`
+                   : lvl === 1 ? `\n\n😴 TIRED — the crew has been underway for a full day without rest. Combat effectiveness will drop if you push further. Consider resting this watch.` : '';
+      const prevWatch = WATCH_NAMES[((G.watch.watchNum - 1) + 2) % 3];
+      const curWatch  = WATCH_NAMES[(G.watch.watchNum - 1) % 3];
+      const watchIcons = ['🌅','☀️','🌙'];
+      const curIcon = watchIcons[(G.watch.watchNum - 1) % 3];
+
+      updateWatchHUD();
+
+      // On mobile, Rest should be the easy tap when crew is tired+
+      // Swap button order: Rest becomes primary (btn1) when fatigued
+      const continueCb = () => {
+        if(hasMovesRemaining()){
+          startTravel(toId, watchesRemaining, pausedPos, pausedProg);
+        } else {
+          showMsg('⚓ Watch Exhausted', `Rest before continuing. (Fatigue: ${fatigueName()})`, 'Understood', null);
+        }
+      };
+      const restCb = () => {
+        G._resumeTravel = { toId, watchesRemaining, pausedPos, pausedProg };
+        doRest();
+      };
+
+      if(lvl >= 1){
+        // Tired or worse — Rest is the big primary button
+        showMsg(
+          `${curIcon} ${prevWatch} Complete — Day ${G.watch.day}`,
+          `${curWatch} begins.\n\n${destName} is ${pct}% of the way across — ${watchesRemaining} watch${watchesRemaining>1?'es':''} remaining.${fatStr}`,
+          '🌙 Rest This Watch',
+          restCb,
+          '⛵ Continue Anyway',
+          continueCb
+        );
+        // De-emphasise the continue button
+        setTimeout(()=>{ const b=document.getElementById('msgbtn2'); if(b) b.classList.add('muted'); },0);
+      } else {
+        // Fresh — Continue is primary
+        showMsg(
+          `${curIcon} ${prevWatch} Complete — Day ${G.watch.day}`,
+          `${curWatch} begins.\n\n${destName} is ${pct}% of the way across — ${watchesRemaining} watch${watchesRemaining>1?'es':''} remaining.\n\nThe crew stands ready at their stations.`,
+          '⛵ Continue Sailing',
+          continueCb,
+          '🌙 Rest This Watch',
+          restCb
+        );
+        setTimeout(()=>{ const b=document.getElementById('msgbtn2'); if(b) b.classList.remove('muted'); },0);
+      }
+    }
   }
 }
 
 function arrive(id){
   document.getElementById('tvlbar').classList.remove('on');
   const sph=G.spheres.find(s=>s.id===id);
-  G.ship.loc=id; G.phase='map';
+  G.ship.loc=id; G.phase='map'; G.ship.midLanePos=null;
   snd('sphere_arrive', 0.85);
   if(sph.boss){
     if(G.postVictory){
@@ -4435,6 +4978,7 @@ function enterPort(sph){
   setAmbient('port');
   snd('port_dock', 0.7);
   document.getElementById('ov-port').classList.add('on');
+  document.getElementById('watch-hud').classList.remove('on'); // hide during port
   document.getElementById('pt-name').textContent=sph.n;
   document.getElementById('pt-desc').textContent=sph.portDesc||sph.lore;
   document.getElementById('pt-gold').textContent=G.ship.gold;
@@ -4453,6 +4997,7 @@ function enterPort(sph){
   }
   document.getElementById('tab-cargo').classList.remove('act');
   buildShop(); addLog(`Docked at ${sph.n}.`,'gd');
+  updatePortRestBtn();
   // Quest pickup — show collect button if this sphere has accepted-state cargo waiting
   checkQuestPickup(sph.id);
   // Update the "Talk to Locals" button based on whether rumors have been heard
@@ -4767,7 +5312,42 @@ function departPort(){
   document.getElementById('ov-port').classList.remove('on');
   G.phase='map'; setTag('Navigation'); updateUI(); _portSphere=null;
   setAmbient('map');
+  updateWatchHUD(); // restore watch HUD now that port is closed
 _writeAutoSave();
+}
+
+// Rest while at port — same as doRest() but stays inside port overlay
+function doPortRest() {
+  const lvl = fatigueLevel();
+  const restBtn = document.getElementById('pt-rest-btn');
+  if(restBtn) restBtn.disabled = true;
+
+  // Temporarily close port, rest, then reopen
+  document.getElementById('watch-hud').classList.remove('on');
+  doRest();
+
+  // After rest animation (2.8s total), reopen port
+  setTimeout(() => {
+    if(G.phase === 'map' && _portSphere) {
+      G.phase = 'port';
+      document.getElementById('watch-hud').classList.remove('on');
+      if(restBtn) {
+        restBtn.disabled = false;
+        updatePortRestBtn();
+      }
+    }
+  }, 3200);
+}
+
+function updatePortRestBtn() {
+  const btn = document.getElementById('pt-rest-btn');
+  if(!btn) return;
+  const lvl = fatigueLevel();
+  const labels = ['🌙 Rest at Berth','🌙 Rest (Tired)','⚠ Rest Now! (Fatigued)','⚠ Rest Now! (Exhausted)'];
+  const colors = ['#cc99ff','#ffcc44','#ff8844','#ff4444'];
+  btn.textContent = labels[lvl];
+  btn.style.color = colors[lvl];
+  btn.style.borderColor = lvl >= 2 ? colors[lvl]+'55' : '#5522aa55';
 }
 
 function enterWaypoint(wp){
@@ -4811,7 +5391,7 @@ function buildWaypointShop(){
 
 function arriveAtWaypoint(wp){
   document.getElementById('tvlbar').classList.remove('on');
-  G.ship.atWp=wp;
+  G.ship.atWp=wp; G.ship.midLanePos=null;
   G.phase='map';
   snd('sphere_arrive',0.7);
   addLog(`Arrived at ${wp.ico} ${wp.n}. Click it again to resupply.`,'gd');
@@ -4820,15 +5400,13 @@ function arriveAtWaypoint(wp){
 
 function departWaypoint(){
   document.getElementById('ov-waypoint').classList.remove('on');
-  // atWp intentionally NOT cleared here — ship stays at waypoint position on map
-  // until the player clicks a new destination, at which point startTravel clears it
   G.phase='map'; setTag('Navigation'); updateUI();
   setAmbient('map');
 }
 
 function arriveAtFragSite(fs){
   document.getElementById('tvlbar').classList.remove('on');
-  G.phase = 'map';
+  G.phase = 'map'; G.ship.midLanePos = null;
   G.ship.atFragSite = fs;
   // Position ship at the site
   G.tvl = { from:G.ship.loc, to:null, toWp:null, toFragSite:null,
@@ -5639,11 +6217,11 @@ async function doAction(type, idx, itemUid) {
           const crewStatus = e.crew !== undefined ? ` | Enemy crew: ${e.crew}/${e.maxCrew}` : '';
           cLog(`🧠 Psionic Lance — ${hullHit} hull + ${crewHit} enemy crew drained!${crewStatus} [−1 your crew from feedback]`, 'gd');
           if(e.crew !== undefined && e.crew <= 0){
-            cLog(`☠ ${e.name} crew wiped out — weapons degraded, no specials!`, 'dmg');
+            cLog(`☠ ${e.name} crew wiped out — ship is dead in the void!`, 'dmg');
           }
           updateCbtUI();
           await sleep(500);
-          if(e.hp <= 0){ cbtWin(); return; }
+          if(checkEnemyDead()){ return; }
           break;
         }
 
@@ -5685,7 +6263,11 @@ async function doAction(type, idx, itemUid) {
           G.ship.hull = Math.min(G.ship.hull, G.ship.maxHull);
           cLog(`⬡ Dissolution Ray corrodes — enemy max hull −5, your max hull −2.`, 'dmg');
         }
-        e.hp -= G._instakill ? e.hp : totalDmg;
+        // Apply fatigue damage penalty
+        const fatMult = fatigueDamageMult();
+        const fatiguedTotalDmg = fatMult < 1.0 ? Math.max(1, Math.floor(totalDmg * fatMult)) : totalDmg;
+        if(fatMult < 1.0) cLog(`⚠ Fatigued crew — damage reduced (×${fatMult})`, 'dmg');
+        e.hp -= G._instakill ? e.hp : fatiguedTotalDmg;
         // Apply cooldown — Rapid Reload System reduces by cdBonus (min 1 for weapons that have reload)
         const _cdBonus = G.ship.cdBonus||0;
         G.cbt.cds[idx] = w.cd > 0 ? Math.max(1, w.cd - _cdBonus) : 0;
@@ -5731,7 +6313,7 @@ async function doAction(type, idx, itemUid) {
           wk==='entropic' ? 'dodge-ignored' : '',
           wk==='dissray'  ? 'corroding' : '',
         ].filter(Boolean).join(' · ');
-        cLog(`🔥 ${w.n}: ${totalDmg} damage!${notes ? ' ['+notes+']' : ''} (Enemy hull: ${Math.max(0,e.hp+totalDmg)} → ${Math.max(0,e.hp)})`, 'gd');
+        cLog(`🔥 ${w.n}: ${fatiguedTotalDmg} damage!${fatMult<1?' (fatigued)':''}${notes ? ' ['+notes+']' : ''} (Enemy hull: ${Math.max(0,e.hp+fatiguedTotalDmg)} → ${Math.max(0,e.hp)})`, 'gd');
         updateCbtUI();
         await sleep(fireCount === 1 ? 500 : 340);
 
@@ -5752,7 +6334,7 @@ async function doAction(type, idx, itemUid) {
           }
         }
 
-        if (e.hp <= 0) { cbtWin(); return; }
+        if(checkEnemyDead()){ return; }
       }
       break;
     }
@@ -5788,7 +6370,7 @@ async function doAction(type, idx, itemUid) {
         G.cbt.linkedCd = 5;
         cLog(`🔥 Linked Fire: ${lDmg} combined damage [${lParts.join(' + ')}] (Enemy hull: ${Math.max(0,e.hp+lDmg)} → ${Math.max(0,e.hp)})`, 'gd');
         updateCbtUI(); await sleep(550);
-        if (e.hp <= 0) { cbtWin(); return; }
+        if(checkEnemyDead()){ return; }
       }
       break;
     }
@@ -5824,7 +6406,7 @@ async function doAction(type, idx, itemUid) {
         G.cbt.volleyCd = 8;
         cLog(`🔥 Volley: ${vDmg} total damage [${vParts.join(' + ')}] (Enemy hull: ${Math.max(0,e.hp+vDmg)} → ${Math.max(0,e.hp)})`, 'gd');
         updateCbtUI(); await sleep(600);
-        if (e.hp <= 0) { cbtWin(); return; }
+        if(checkEnemyDead()){ return; }
       }
       break;
     }
@@ -5970,7 +6552,7 @@ async function doAction(type, idx, itemUid) {
           triggerAnim(eCV(), 'anim-shake');
           snd('ram_hit', 0.9);
           cLog(`Void Stranglehold — ${dmg} damage dealt and enemy fully immobilized next round!`, 'gd');
-          if(e.hp <= 0){ G.cbt.sigCd = tData.cdRounds; updateCbtUI(); cbtWin(); return; }
+          if(checkEnemyDead(tData.cdRounds)){ return; }
         } else if (tier === 2) {
           // 8 damage + halve next attack
           const dmg = 8;
@@ -5980,7 +6562,7 @@ async function doAction(type, idx, itemUid) {
           snd('ram_hit', 0.7);
           G.cbt._squidGrip = true; G.cbt._squidGripTurns = 2;
           cLog(`Crushing Grip — ${dmg} damage + enemy attacks halved for 2 turns!`, 'gd');
-          if(e.hp <= 0){ G.cbt.sigCd = tData.cdRounds; updateCbtUI(); cbtWin(); return; }
+          if(checkEnemyDead(tData.cdRounds)){ return; }
         } else {
           // T1 — halve next attack only
           G.cbt._squidGrip = true; G.cbt._squidGripTurns = 2;
@@ -6015,7 +6597,7 @@ async function doAction(type, idx, itemUid) {
           cLog(`${tData.n} — ${resDmg} impact damage! (Self: −${selfCost} hull)`, 'gd');
         }
 
-        if(e.hp <= 0){ G.cbt.sigCd = tData.cdRounds; updateCbtUI(); cbtWin(); return; }
+        if(checkEnemyDead(tData.cdRounds)){ return; }
         if(G.ship.hull <= 0){ updateCbtUI(); doDefeat(); return; }
 
       } else if (G.ship.type === 'manow') {
@@ -6055,7 +6637,7 @@ async function doAction(type, idx, itemUid) {
         if(tier === 3){ G.cbt._manowSuppressed = true; cLog(`Elven Battle Formation — enemy attack suppressed next round!`, 'gd'); }
 
         G.cbt.eStat = 'normal'; // dodge/phase expended
-        if(e.hp <= 0){ G.cbt.sigCd = tData.cdRounds; updateCbtUI(); cbtWin(); return; }
+        if(checkEnemyDead(tData.cdRounds)){ return; }
       }
 
       G.cbt.sigCd = tData.cdRounds;
@@ -6097,7 +6679,7 @@ async function enemyTurn() {
     cLog(`🔥 ${e.name} burns for ${e.burnDmg} fire damage!`, 'gd');
     updateCbtUI();
     await sleep(550);
-    if (e.hp <= 0) { cbtWin(); return; }
+    if(checkEnemyDead()){ return; }
   }
 
   // Null Bolt — tick down nullify counter
@@ -6156,6 +6738,7 @@ async function enemyTurn() {
           e.crew = Math.max(0, e.crew - healDef.crewCost);
           cLog(`${healDef.crewCost} crew sacrificed...`,'dmg');
           updateCbtUI(); await sleep(300);
+          if(checkEnemyDead()){ return; }
         }
         if(healDef.disarmAll){ Object.keys(G.cbt.cds).forEach(k=>{G.cbt.cds[k]=Math.max(G.cbt.cds[k]||0,1);}); cLog(`All your weapons suppressed for 1 round!`,'dmg'); }
         const healed = Math.min(healDef.amt, e.maxHp - e.hp);
@@ -6390,6 +6973,22 @@ async function enemyTurn() {
   buildCbtBtns();
 }
 
+// Single death check — hp OR crew reaching 0 kills the enemy
+function checkEnemyDead(sigCdOverride){
+  const e = G.cbt?.enemy;
+  if(!e) return false;
+  if(e.hp <= 0 || (e.crew !== undefined && e.crew <= 0)){
+    if(sigCdOverride !== undefined) G.cbt.sigCd = sigCdOverride;
+    updateCbtUI();
+    if(e.crew !== undefined && e.crew <= 0 && e.hp > 0){
+      cLog(`☠ ${e.name} — all hands lost. The ship drifts, dead in the void.`, 'dmg');
+    }
+    cbtWin();
+    return true;
+  }
+  return false;
+}
+
 function cbtWin(){
   const e=G.cbt.enemy; const g=e.g[0]+Math.floor(Math.random()*(e.g[1]-e.g[0]+1));
   const items=genLoot(G.cbt.pendingLootKey);
@@ -6430,8 +7029,8 @@ function cbtWin(){
 
 function endCbt(won){
   document.getElementById('ov-combat').classList.remove('on');
+  updateWatchHUD();
   if(G.tvl.toFragSite){
-    // Was traveling to a fragment site — resume that journey
     G.phase='traveling';
     setTag(`Traveling → ${G.tvl.toFragSite.n}`);
     setAmbient('map');
@@ -6440,7 +7039,7 @@ function endCbt(won){
     G.tvl.timer=setInterval(travelTick, G.tvl.tickMs || 100);
     return;
   }
-  if(!G.tvl.to){ // no destination — just return to map
+  if(!G.tvl.to){
     G.phase='map'; setTag('Navigation'); updateUI(); setAmbient('map');
     if(won) addLog('Enemy destroyed. Returning to navigation.','gd');
     return;
@@ -6667,7 +7266,7 @@ function useItem(uid, inCombat){
       G.cbt.enemy.stunsNext=true;
       { const nd=15; G.cbt.enemy.hp=Math.max(0,G.cbt.enemy.hp-nd); floatDmg(eCV(),nd,false); triggerAnim(eCV(),'anim-shake'); snd('stun',0.9); }
       addLog('💥 Null Sphere Grenade: enemy stunned + 15 direct damage!','gd');
-      if(G.phase==='combat'){updateCbtUI(); if(G.cbt.enemy.hp<=0){cbtWin();return;}}
+      if(G.phase==='combat'){updateCbtUI(); if(checkEnemyDead()){return;}}
       break;
     case 'disable':
       if(G.phase!=='combat'&&!inCombat){ showMsg('Combat Only','Phase Disruptor can only be used during combat.'); return; }
@@ -6991,12 +7590,30 @@ function addLog(msg,type){
   d.className='le'+(type?' '+type:''); d.textContent='▸ '+msg; la.appendChild(d); la.scrollTop=la.scrollHeight;
   while(la.children.length>7)la.removeChild(la.firstChild);
 }
-function showMsg(title,body,btn,cb){
-  document.getElementById('msgtitle').textContent=title; document.getElementById('msgbody').textContent=body;
-  document.getElementById('msgbtn').textContent=btn||'Continue'; document.getElementById('msgbox').classList.add('on');
+function showMsg(title,body,btn,cb,btn2,cb2){
+  document.getElementById('msgtitle').textContent=title;
+  document.getElementById('msgbody').textContent=body;
+  document.getElementById('msgbtn').textContent=btn||'Continue';
+  document.getElementById('msgbox').classList.add('on');
   G._msgCb=cb||null;
+  const btn2El = document.getElementById('msgbtn2');
+  if(btn2El){
+    if(btn2){ btn2El.textContent=btn2; btn2El.style.display=''; G._msgCb2=cb2||null; }
+    else    { btn2El.style.display='none'; G._msgCb2=null; }
+  }
 }
-function dismissMsg(){ document.getElementById('msgbox').classList.remove('on'); if(G._msgCb){const cb=G._msgCb;G._msgCb=null;cb();} }
+function dismissMsg(){
+  document.getElementById('msgbox').classList.remove('on');
+  document.getElementById('msgbtn2').style.display='none';
+  if(G._msgCb){const cb=G._msgCb;G._msgCb=null;cb();}
+  G._msgCb2=null;
+}
+function dismissMsg2(){
+  document.getElementById('msgbox').classList.remove('on');
+  document.getElementById('msgbtn2').style.display='none';
+  if(G._msgCb2){const cb=G._msgCb2;G._msgCb2=null;cb();}
+  G._msgCb=null;
+}
 
 
 // ── DOCKMASTER CONVERSATION ─────────────────────────────────────────────────
@@ -7701,6 +8318,8 @@ function drawZoomHud(cx,W,H,t){
     followBtn.style.color = G.view.follow ? '#ddaaff' : '#7755aa';
   }
 }
+// Alias — called from zoom/pan handlers
+function updateZoomHud(){ drawZoomHud(null, cv?.width||800, cv?.height||600, 0); }
 
 // Wire up DOM zoom HUD buttons
 (function(){
@@ -7887,6 +8506,7 @@ function _buildSaveEntry(slot, name) {
       _breachArrived: G._breachArrived || {},
       captainLog: G.captainLog || [],
       travelDays: G.travelDays || 0,
+      watch: G.watch || {},
     })
   };
 }
@@ -7933,6 +8553,7 @@ function _applyLoad(save) {
       _breachArrived: state._breachArrived || {},
       captainLog: state.captainLog || [],
       travelDays: state.travelDays || 0,
+      watch: state.watch || { day:1, watchNum:1, moveBudget:3, moveUsed:0, watchesWithoutRest:0, restingPhase:false },
       view:{zoom:1,panX:0,panY:0,follow:true,_pan:false,_lastMx:0,_lastMy:0,_didDrag:false},
     };
     for (let i = 0; i < 220; i++) G.stars.push({ x:Math.random(),y:Math.random(),r:Math.random()*1.8+0.3,twk:Math.random()*Math.PI*2,spd:Math.random()*0.014+0.003,br:Math.random() });
@@ -7944,7 +8565,7 @@ function _applyLoad(save) {
       G.ship.sigTier = SIG_ABILITY[G.ship.type] ? 1 : null;
     }
     _gameActive = true;
-    updateUI(); updateFragUI();
+    updateUI(); updateFragUI(); updateWatchHUD();
     renderLoop(); loadSounds(); loadShipImages(); loadVoiceFiles(); ensureLqState();
     setTimeout(() => setAmbient('map'), 200);
     hideSaveOverlay(); hideLoad(); hideMainMenu();
