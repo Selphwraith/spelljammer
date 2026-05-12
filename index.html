@@ -1002,6 +1002,33 @@ body {
 #rest-btn.fatigued { border:1px solid #aa440066; background:rgba(30,10,0,0.8); color:#ff8844; animation:fatpulse 1.6s ease-in-out infinite; }
 #rest-btn.exhausted{ border:1px solid #aa000066; background:rgba(30,0,0,0.8); color:#ff4444; animation:fatpulse 0.8s ease-in-out infinite; }
 
+/* ── COMBAT INVENTORY PANEL ── */
+#cbt-inv-panel {
+  display:none; width:100%;
+  background:rgba(4,0,14,0.96); border:1px solid #44228844;
+  border-radius:4px; padding:6px 8px; margin:3px 0;
+  max-height:140px; overflow-y:auto;
+}
+#cbt-inv-panel.on { display:block; }
+.cbt-inv-grid { display:flex; flex-wrap:wrap; gap:4px; }
+.cbt-inv-item {
+  font-family:'Cinzel',serif; font-size:0.563em; letter-spacing:0.5px;
+  padding:5px 8px; border-radius:3px; cursor:pointer;
+  border:1px solid #44aaff44; color:#88ccff; background:rgba(0,20,40,0.7);
+  transition:all 0.15s; display:flex; align-items:center; gap:4px;
+  max-width:100%;
+}
+.cbt-inv-item:hover { border-color:#88ccff; color:#cceeff; background:rgba(0,30,60,0.9); }
+.cbt-inv-item.item-disable { border-color:#ffd70044; color:#ffd700; background:rgba(30,25,0,0.7); }
+.cbt-inv-item.item-disable:hover { border-color:#ffd700; }
+.cbt-inv-item-name { font-weight:bold; }
+.cbt-inv-empty { font-size:0.563em; color:#553355; font-style:italic; padding:4px 0; }
+#cbt-inv-toggle {
+  width:100%; text-align:left;
+}
+#cbt-inv-toggle.has-items { border-color:#44aaff66; color:#88ccff; }
+#cbt-inv-toggle.no-items  { border-color:#33224455; color:#553355; opacity:0.6; }
+
 /* Volume panel */
 .vol-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
 .vol-lbl { font-size: 0.625em; color:#9977cc; width:58px; flex-shrink:0; }
@@ -1234,6 +1261,11 @@ body {
 
     <!-- Combat log — full width, always at the bottom -->
     <div class="clog" id="clog"></div>
+
+    <!-- Collapsible item inventory (shown during combat) -->
+    <div id="cbt-inv-panel">
+      <div class="cbt-inv-grid" id="cbt-inv-grid"></div>
+    </div>
 
     <!-- Legacy cacts kept for "enemy acting" message -->
     <div id="cacts" style="display:none;"></div>
@@ -2713,8 +2745,11 @@ function getWatchRealMs() {
 // A faster ship covers a lane in fewer 8-hr shifts, not by rushing each shift
 // d:1 with=1, no=2, against=3  |  d:2 with=2, no=3, against=4
 // d:3 with=2, no=3, against=4  |  d:4 with=2, no=4, against=5(cap)  |  d:5=6
-const LANE_BASE_LEGS = { 1: 2, 2: 3, 3: 3, 4: 4, 5: 6 };
-const LANE_MAX_LEGS  = 8; // cap for against-flow extreme lanes
+// Lane base legs scaled so Refuge→Realm (d:1, against flow) = 7 days
+// Multiplier ≈ 7/3 applied and rounded to clean integers
+// d:1 base=5, d:2 base=7, d:3 base=7, d:4 base=9, d:5 base=14
+const LANE_BASE_LEGS = { 1: 5, 2: 7, 3: 7, 4: 9, 5: 14 };
+const LANE_MAX_LEGS  = 18; // cap for against-flow extreme lanes
 
 function laneWatchCost(lane, ship) {
   let cost = LANE_BASE_LEGS[lane.d] || 3;
@@ -3554,7 +3589,7 @@ function initGame() {
     phase:'map',
     ship:{
       type:'pinnace', name:'Elven Comet',
-      hull:65, maxHull:65, crew:6, maxCrew:6, air:30, maxAir:30, gold:150, speed:4,
+      hull:65, maxHull:65, crew:6, maxCrew:6, air:12, maxAir:12, gold:150, speed:4,
       resist:0, wpns:['ballista'], upgrades:[], inv:[],
       loc:'refuge', atWp:null, sigTier:null,
     },
@@ -4828,8 +4863,7 @@ cv.addEventListener('click',e=>{
     // If currently at a fragment site, only allow returning to the associated sphere
     if(G.ship.atFragSite){
       if(sph.id === G.ship.atFragSite.sphere){
-        // Return to home sphere
-        G.ship.atFragSite = null;
+        // Return to home sphere — startTravel captures departPos before clearing atFragSite
         startTravel(sph.id);
       } else {
         const homeName = G.spheres.find(s=>s.id===G.ship.atFragSite.sphere)?.n || 'the associated sphere';
@@ -5336,7 +5370,7 @@ function shopItems(stock){
   // ── Basic supplies (always available) ──────────────────
   if(s.hull<s.maxHull) items.push({ico:'🔧',name:'Repair Hull',desc:`Restore to ${s.maxHull} HP`,cost:Math.floor((s.maxHull-s.hull)*0.5),act:'repair'});
   if(s.crew<s.maxCrew) items.push({ico:'👥',name:'Hire Crew',desc:`Refill crew to ${s.maxCrew}`,cost:(s.maxCrew-s.crew)*3,act:'crew'});
-  if(s.air<(s.maxAir||30)) items.push({ico:'💨',name:'Refill Air',desc:`Restore to ${s.maxAir||30} days`,cost:Math.floor((30-s.air)*0.5),act:'air'});
+  if(s.air<(s.maxAir||12)) items.push({ico:'💨',name:'Refill Air',desc:`Restore to ${s.maxAir||12} days`,cost:Math.floor((30-s.air)*0.5),act:'air'});
 
   // ── Void Welder — available at drydock ports to buy ─────
   if(stock && stock.drydock){
@@ -5436,7 +5470,7 @@ function buy(item){
   switch(item.act){
     case 'repair':  s.hull=s.maxHull; snd('repair_hull',0.7); addLog('Hull repaired.','gd'); break;
     case 'crew':    s.crew=s.maxCrew; snd('purchase',0.7); addLog('Crew hired to full.','gd'); break;
-    case 'air':     s.air=s.maxAir||30; snd('purchase',0.7); addLog('Air supply refilled.','gd'); break;
+    case 'air':     s.air=s.maxAir||12; snd('purchase',0.7); addLog('Air supply refilled.','gd'); break;
     case 'wpn': {
       const ri = wpnReplaces(item.wk, s.wpns);
       if(ri >= 0) {
@@ -5502,7 +5536,7 @@ function buy(item){
           s.maxCrew += 8; s.crew = s.maxCrew;
           addLog(`Crew Quarters installed: +8 max crew.`, 'gd'); break;
         case 'recycler':
-          s.maxAir = (s.maxAir || 30) * 2;
+          s.maxAir = (s.maxAir || 12) * 2;
           s.air    = s.maxAir; // top up to new max
           addLog(`Air Recycler installed: air capacity doubled to ${s.maxAir} days!`, 'gd');
           break;
@@ -5610,7 +5644,7 @@ function buildWaypointShop(){
   const items=[];
   if(s.hull<s.maxHull) items.push({ico:'🔧',name:'Emergency Repair',desc:`Restore to ${s.maxHull} HP`,cost:Math.ceil((s.maxHull-s.hull)*0.7),act:'repair'});
   if(s.crew<s.maxCrew) items.push({ico:'👥',name:'Crew from Reserves',desc:`Refill crew to ${s.maxCrew}`,cost:(s.maxCrew-s.crew)*5,act:'crew'});
-  if(s.air<(s.maxAir||30)) items.push({ico:'💨',name:'Emergency Air',desc:`Restore to ${s.maxAir||30} days`,cost:Math.ceil((30-s.air)*0.8),act:'air'});
+  if(s.air<(s.maxAir||12)) items.push({ico:'💨',name:'Emergency Air',desc:`Restore to ${s.maxAir||12} days`,cost:Math.ceil((30-s.air)*0.8),act:'air'});
   if(!items.length){
     const d=document.createElement('div'); d.style.cssText='color:#5544aa;font-style:italic;font-size:13px;grid-column:1/-1;text-align:center;padding:14px;';
     d.textContent='All supplies already at maximum.'; grid.appendChild(d); return;
@@ -5624,7 +5658,7 @@ function buildWaypointShop(){
       s.gold-=item.cost;
       if(item.act==='repair'){ s.hull=s.maxHull; snd('repair_hull',0.7); addLog('Hull repaired at waypoint.','gd'); }
       if(item.act==='crew'){ s.crew=s.maxCrew; snd('purchase',0.7); addLog('Crew replenished.','gd'); }
-      if(item.act==='air'){ s.air=s.maxAir||30; snd('purchase',0.6); addLog('Air supply refilled.','gd'); }
+      if(item.act==='air'){ s.air=s.maxAir||12; snd('purchase',0.6); addLog('Air supply refilled.','gd'); }
       updateUI(); buildWaypointShop();
     };
     grid.appendChild(d);
@@ -6438,16 +6472,39 @@ function buildCbtPanels() {
     rb.onclick = () => doAction('repair'); abilityRow.appendChild(rb);
   }
 
-  G.ship.inv.filter(i => i.type === 'usable').forEach(item => {
-    const ub = document.createElement('button'); ub.className = 'btn';
-    const isDisabler = item.use && item.use.startsWith('disable');
-    ub.style.borderColor = isDisabler ? '#ffd70066' : '#44aaff66';
-    ub.style.color = isDisabler ? '#ffd700' : '#88ccff';
-    ub.innerHTML = item.ico + ' <strong>' + item.n + '</strong> <em style="font-size:9px;color:#556688">' + item.desc + '</em>';
-    ub.onclick = () => doAction('item', 0, item.uid);
-    abilityRow.appendChild(ub);
-  });
+  // ── Items toggle button ──────────────────────────────────
+  const usables = G.ship.inv.filter(i => i.type === 'usable');
+  const invPanel = document.getElementById('cbt-inv-panel');
+  const invGrid  = document.getElementById('cbt-inv-grid');
 
+  if (invGrid) {
+    invGrid.innerHTML = '';
+    if (usables.length === 0) {
+      invGrid.innerHTML = '<div class="cbt-inv-empty">No usable items in hold.</div>';
+    } else {
+      usables.forEach(item => {
+        const btn = document.createElement('button');
+        const isDisabler = item.use && item.use.startsWith('disable');
+        btn.className = 'cbt-inv-item' + (isDisabler ? ' item-disable' : '');
+        btn.innerHTML = `<span>${item.ico}</span><span class="cbt-inv-item-name">${item.n}</span>`;
+        btn.title = item.desc;
+        btn.onclick = () => { doAction('item', 0, item.uid); };
+        invGrid.appendChild(btn);
+      });
+    }
+  }
+
+  const itb = document.createElement('button');
+  itb.id = 'cbt-inv-toggle';
+  itb.className = 'btn' + (usables.length ? ' has-items' : ' no-items');
+  itb.innerHTML = `🎒 Items (${usables.length})`;
+  itb.onclick = () => {
+    if (invPanel) invPanel.classList.toggle('on');
+    itb.innerHTML = `🎒 Items (${usables.length}) ${invPanel?.classList.contains('on') ? '▲' : '▼'}`;
+  };
+  abilityRow.appendChild(itb);
+
+  // ── Flee — always at the bottom ──────────────────────────
   const fb = document.createElement('button'); fb.className = 'btn dmg';
   fb.textContent = '💨 Flee (50% chance)';
   fb.onclick = () => doAction('flee'); abilityRow.appendChild(fb);
@@ -7397,6 +7454,8 @@ function cbtWin(){
 
 function endCbt(won){
   document.getElementById('ov-combat').classList.remove('on');
+  const invPanel = document.getElementById('cbt-inv-panel');
+  if (invPanel) invPanel.classList.remove('on');
   updateWatchHUD();
   _stopLoop();         // stop combat ambient loop
   _titleVolume(0.35);  // restore title to full volume
@@ -7748,7 +7807,7 @@ function buildShipOverlay(){
   const stats=[
     ['Hull Points',`${s.hull} / ${s.maxHull}`],
     ['Crew',`${s.crew} / ${s.maxCrew}`],
-    ['Air Supply',`${s.air} days`],
+    ['Air Supply',`${s.air}/${s.maxAir||12} days`],
     ['Speed Rating',s.speed],
     ['Damage Resist',s.resist>0?`-${s.resist} incoming`:'—'],
     ['Weapon Slots',`${s.wpns.length} / ${st.slots} filled`],
@@ -7899,12 +7958,12 @@ function updateUI(){
   $id('s-crew',s.crew); $id('s-mcrew',s.maxCrew); $id('s-air',s.air);
   // Show max air if recycler installed
   const airEl = document.getElementById('s-air');
-  if(airEl) airEl.parentElement.innerHTML = `<span id="s-air">${s.air}</span><span style="color:#446655;font-size:0.85em;">/${s.maxAir||30}</span> days`;
+  if(airEl) airEl.parentElement.innerHTML = `<span id="s-air">${s.air}</span><span style="color:#446655;font-size:0.85em;">/${s.maxAir||12}</span> days`;
   $id('s-gold',s.gold); $id('s-speed',s.speed); $id('s-name',s.name);
   $id('s-resist',s.resist>0?`-${s.resist}`:'—');
   document.getElementById('b-hull').style.width=Math.max(0,(s.hull/s.maxHull)*100)+'%';
   document.getElementById('b-crew').style.width=Math.max(0,(s.crew/s.maxCrew)*100)+'%';
-  document.getElementById('b-air').style.width=Math.max(0,(s.air/(s.maxAir||30))*100)+'%';
+  document.getElementById('b-air').style.width=Math.max(0,(s.air/(s.maxAir||12))*100)+'%';
   document.getElementById('w-list').innerHTML=s.wpns.map((k,i)=>{
     const w=WPN[k]; const cd=G.cbt.cds?.[i]||0;
     return `<div class="witem">${cd>0?'🔄':'●'} ${w.n} ${cd>0?`(${cd} rd cooldown)`:`(${w.info})`}</div>`;
@@ -7940,7 +7999,7 @@ function updateMobileHUD(){
   $id('sd-items',s.inv.length); $id('sd-invval',invValSd);
   const sdBH=document.getElementById('sd-b-hull'); if(sdBH)sdBH.style.width=Math.max(0,(s.hull/s.maxHull)*100)+'%';
   const sdBC=document.getElementById('sd-b-crew'); if(sdBC)sdBC.style.width=Math.max(0,(s.crew/s.maxCrew)*100)+'%';
-  const sdBA=document.getElementById('sd-b-air'); if(sdBA)sdBA.style.width=Math.max(0,(s.air/(s.maxAir||30))*100)+'%';
+  const sdBA=document.getElementById('sd-b-air'); if(sdBA)sdBA.style.width=Math.max(0,(s.air/(s.maxAir||12))*100)+'%';
   const sdWL=document.getElementById('sd-w-list');
   if(sdWL) sdWL.innerHTML=s.wpns.map((k,i)=>{
     const w=WPN[k]; const cd=G.cbt.cds?.[i]||0;
@@ -8540,8 +8599,7 @@ document.addEventListener('click', e=>{
       // At a fragment site — only allow return to the associated sphere
       if(G.ship.atFragSite){
         if(sph.id === G.ship.atFragSite.sphere){
-          G.ship.atFragSite = null;
-          startTravel(sph.id);
+          startTravel(sph.id); // startTravel captures departPos before clearing atFragSite
         } else {
           const homeName = G.spheres.find(s=>s.id===G.ship.atFragSite.sphere)?.n || 'the associated sphere';
           showMsg('No Direct Route','From '+G.ship.atFragSite.n+' you can only return to '+homeName+'.');
@@ -9132,7 +9190,7 @@ const LOCAL_QUEST_DATA = {
             check: (G) => (G.localQuests?.realm_q1_kills || 0) >= 1,
             rewardFn: (G) => {
               G.ship.gold += 80;
-              G.ship.air = G.ship.maxAir||30;
+              G.ship.air = G.ship.maxAir||12;
               addLog('Ensign Vaen transfers 80 gold and restores your air supply. "Navigation is clear. Good hunting, Captain."', 'gd');
             },
             trigger: (G) => { G.localQuests.realm_q1_kills = 0; }
@@ -9789,7 +9847,7 @@ function showLqShop(npc) {
     if(item.act === 'upg' && G.ship.upgrades.includes(item.upg)) return;
     // Hide supplies that are already full
     if(item.act === 'hull40' && G.ship.hull >= G.ship.maxHull) return;
-    if(item.act === 'air' && G.ship.air >= (G.ship.maxAir||30)) return;
+    if(item.act === 'air' && G.ship.air >= (G.ship.maxAir||12)) return;
     if(item.act === 'crew4' && G.ship.crew >= G.ship.maxCrew) return;
     const canAfford = G.ship.gold >= item.cost;
     const d = document.createElement('div');
@@ -9807,7 +9865,7 @@ function showLqShop(npc) {
           G.ship.hull = Math.min(G.ship.maxHull, G.ship.hull + 40); msg = 'Hull patched (+40 HP).';
           snd('purchase', 0.8); snd('repair_hull', 0.7);
         } else if(item.act === 'air') {
-          G.ship.air = G.ship.maxAir||30; msg = 'Air supply restored.';
+          G.ship.air = G.ship.maxAir||12; msg = 'Air supply restored.';
           snd('purchase', 0.8);
         } else if(item.act === 'crew4') {
           G.ship.crew = Math.min(G.ship.maxCrew, G.ship.crew + 4); msg = '4 crew assigned.';
@@ -9819,7 +9877,7 @@ function showLqShop(npc) {
             if(item.upg==='engine'){G.ship.speed+=2;}
             if(item.upg==='quarters'){G.ship.maxCrew+=8;G.ship.crew=G.ship.maxCrew;}
             if(item.upg==='recycler'){
-              G.ship.maxAir = (G.ship.maxAir||30) * 2;
+              G.ship.maxAir = (G.ship.maxAir||12) * 2;
               G.ship.air    = G.ship.maxAir;
               addLog(`Air Recycler installed: air capacity doubled to ${G.ship.maxAir} days!`,'gd');
             }
