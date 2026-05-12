@@ -3165,8 +3165,9 @@ const SOUND_DATA = {
   'loot_open': 'sounds/loot_open.mp3',
   'title': 'sounds/title.mp3',
   'travel_hum': 'sounds/travel_hum.mp3',       // looping engine hum during travel
-  'elder_theme': 'sounds/elder_theme.mp3',       // plays during Elder Brain / Caiphon fight
+  'elder_theme': 'sounds/elder_theme.mp3',       // plays during Elder Brain fight
   'caiphon_reveal': 'sounds/caiphon_reveal.mp3', // sting when Caiphon descends
+  'caiphon_theme': 'sounds/caiphon_theme.mp3',   // full replacement track for Caiphon fight
 };
 
 // SOUND_FILES kept for reference but audio now loads from SOUND_DATA
@@ -3341,6 +3342,18 @@ function stopElderTheme() {
     try { _elderThemeEl.pause(); } catch(_) {}
     _elderThemeEl = null;
   }
+}
+
+function startCaiphonTheme() {
+  stopElderTheme(); // kill elder theme completely first
+  if (_muted || !_SFX['caiphon_theme']) return;
+  try {
+    const a = _SFX['caiphon_theme'].cloneNode();
+    a.loop   = true;
+    a.volume = Math.min(1, 0.60 * (_VOL?.master||1) * (_VOL?.music||1));
+    a.play().catch(()=>{});
+    _elderThemeEl = a; // reuse same ref so stopElderTheme() cleans it up on victory
+  } catch(_) {}
 }
 
 function playCaiphonRevealSting() {
@@ -5730,7 +5743,10 @@ function triggerCaiphonReveal() {
     updateCbtUI();
     drawCbtShips('caiphon');
     buildCbtBtns();
-    snd('combat_start', 1.0);
+
+    // Elder theme ends — Caiphon theme begins
+    startCaiphonTheme();
+
     cLog('', '');
     cLog('The Purple Star turns its attention toward you. Choose your action.', '');
   }, 7500);
