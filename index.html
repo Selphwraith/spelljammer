@@ -3211,7 +3211,7 @@ function applyVolumes() {
     }
   });
   if (_loopEl) _loopEl.volume = Math.min(1, _VOL.master * _VOL.music * 0.45); // combat loop
-  if (_titleEl) _titleVolume(G?.phase === 'combat' ? 0.06 : 0.35); // ducked in combat
+  if (_titleEl) _titleVolume(G?.phase === 'combat' ? 0.00 : 0.35); // ducked in combat
   if (_victoryEl) _victoryEl.volume = Math.min(1, _VOL.master * _VOL.music * 1.0);
   const btn = document.getElementById('mute-btn');
   if (btn) btn.textContent = _VOL.master === 0 ? '🔇 Sound' : '🔊 Sound';
@@ -3553,7 +3553,7 @@ function playTitle(){
   if(_muted || !_SFX['title']) return;
   if(_titleEl && !_titleEl.paused){
     // Already playing — just make sure volume is right for current context
-    _titleVolume(G?.phase === 'combat' ? 0.06 : 0.35);
+    _titleVolume(G?.phase === 'combat' ? 0.00 : 0.35);
     return;
   }
   if(!_titleEl){
@@ -3585,7 +3585,7 @@ function _titleVolume(vol){
 function setAmbient(scene) {
   if(scene === 'combat'){
     // Always duck title immediately — whether or not combat music file exists
-    _titleVolume(0.06);
+    _titleVolume(0.00);
     if(!_muted && _SFX['ambient_combat']){
       _stopLoop();
       try {
