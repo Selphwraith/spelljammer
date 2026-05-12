@@ -1422,10 +1422,10 @@ body {
 
   <!-- WAYPOINT PORT (supplies only) -->
   <div class="ovlay" id="ov-waypoint">
-    <button class="ovl-close-btn" onclick="departWaypoint()">⛵ Depart</button>
+    <button class="ovl-close-btn" onclick="departWaypoint()">⛵ Continue Journey</button>
     <div class="ptop" id="wp-name">IEN Relay Station</div>
     <div class="pdesc" id="wp-desc">Emergency resupply only.</div>
-    <div style="font-size:11px;color:#6644aa;font-style:italic;margin-bottom:4px;">No trade, weapons, or upgrades available at waypoints.</div>
+    <div style="font-size:11px;color:#6644aa;font-style:italic;margin-bottom:4px;">Field prices — 50% above port rates. No weapons or upgrades.</div>
     <div class="sgrid" id="wpgrid" style="max-width:420px;grid-template-columns:repeat(3,1fr);"></div>
   </div>
 
@@ -3086,14 +3086,33 @@ const MAP_CONNECTIONS = [
 ];
 
 // ── WAYPOINTS (repositioned to match expanded map) ───────
+// Weigh Stations — positioned at lane midpoints, auto-intercept during travel
+// Each station belongs to a specific lane (both directions)
 const WAYPOINTS = [
-  { id:'wp1', n:'IEN Relay Station',    x:.14, y:.34, ico:'📡', desc:'An active IEN navigation relay. Emergency air, hull repair, and crew rotation available.' },
-  { id:'wp2', n:'Derelict Tradepost',   x:.36, y:.10, ico:'🏚', desc:'A damaged platform. Air tanks, hull scraps, and old crew bunks remain.' },
-  { id:'wp3', n:'Rogue Comet Base',     x:.70, y:.08, ico:'☄',  desc:'A waystation drilled into a rogue comet\'s ice body. IEN stocked it for long patrols.' },
-  { id:'wp4', n:'Asteroid Refuge',      x:.12, y:.66, ico:'🪨', desc:'A pressurized asteroid cluster with a repair bay and breathable air reserves.' },
-  { id:'wp5', n:'Ghost Ship Meridian',  x:.55, y:.56, ico:'👻', desc:'An abandoned Hammership adrift on Phlogiston currents, helm dark, crew missing. Interceptable from any heading — a drifting vessel has no fixed lane.' },
-  { id:'wp6', n:'Void Monastery',       x:.88, y:.44, ico:'⛩',  desc:'Neutral monks who aid all travelers regardless of allegiance.' },
-  { id:'wp7', n:'IEN Emergency Buoy',   x:.38, y:.84, ico:'🔵', desc:'A cluster of IEN emergency buoys. Air canisters and medical supplies remain.' },
+  { id:'wp_refuge_realm',   n:'IEN Relay Station Alpha',   x:.125, y:.340, ico:'📡', lanes:['refuge->realm','realm->refuge'],
+    desc:'An Imperial Elven Navy navigation relay. Emergency resupply at field prices.' },
+  { id:'wp_refuge_grey',    n:'Merchant Drift Platform',   x:.275, y:.280, ico:'🏚', lanes:['refuge->grey','grey->refuge'],
+    desc:'A battered trade platform riding the Mystara Flow. Supplies for coin, no questions asked.' },
+  { id:'wp_refuge_cluster', n:'Freeport Cache Station',    x:.125, y:.660, ico:'🪨', lanes:['refuge->cluster','cluster->refuge'],
+    desc:'A pressurised asteroid depot. Corsairs and IEN alike resupply here under uneasy truce.' },
+  { id:'wp_realm_hero',     n:'Radiant Triangle Waystation',x:.540, y:.430, ico:'⛩', lanes:['realm->hero','hero->realm'],
+    desc:'Neutral monks maintain this station on the Triangle current. Rest and resupply available.' },
+  { id:'wp_realm_grey',     n:'Void Drifter Depot',        x:.330, y:.120, ico:'☄',  lanes:['realm->grey','grey->realm'],
+    desc:'A cluster of salvaged hulls lashed together. Rough but functional.' },
+  { id:'wp_realm_cluster',  n:'War Zone Supply Drop',      x:.180, y:.500, ico:'🔵', lanes:['realm->cluster','cluster->realm'],
+    desc:'IEN emergency buoys mark this resupply cache in the war zone. Grab what you need fast.' },
+  { id:'wp_grey_dark',      n:'Pillar Flow Outpost',       x:.580, y:.470, ico:'👻', lanes:['grey->dark','dark->grey'],
+    desc:'A lonely beacon station where the Pillar Flow deepens. The monks here look haunted.' },
+  { id:'wp_grey_krynn',     n:'Dragon Passage Anchorage',  x:.680, y:.095, ico:'🐉', lanes:['grey->krynn','krynn->grey'],
+    desc:'A dwarven-built mooring station on the Mystara Flow. Solid, overpriced, reliable.' },
+  { id:'wp_hero_dark',      n:'Hammer Flow Beacon',        x:.790, y:.780, ico:'⚓', lanes:['hero->dark','dark->hero'],
+    desc:'A deep-void beacon where the Hammer Flow bends. Last chance before Darkspace.' },
+  { id:'wp_dark_cluster',   n:'Black Flow Staging Point',  x:.430, y:.850, ico:'🌑', lanes:['dark->cluster','cluster->dark'],
+    desc:'A lightless cache station riding the Black Flow. Supplies are fresh. The crew is not.' },
+  { id:'wp_krynn_dark',     n:'Shadow Approach Waystation', x:.780, y:.505, ico:'💀', lanes:['krynn->dark','dark->krynn'],
+    desc:'A crossflow cache between Krynnspace and the deep dark. Expensive, but you\'re out of options.' },
+  { id:'wp_krynn_hero',     n:'Radiant Spur Station',      x:.890, y:.405, ico:'⭐', lanes:['krynn->hero','hero->krynn'],
+    desc:'A cheerful station on the Triangle inner arc. Hot food, warm crew bunks, cold prices.' },
 ];
 // All audio files live in a  sounds/  subfolder next to index.html
 // File list is at the bottom of this script for reference.
@@ -3516,51 +3535,57 @@ function sndVoice(vol = 1.0) {
 let _titleEl = null;
 function playTitle(){
   if(_muted || !_SFX['title']) return;
-  if(_titleEl && !_titleEl.paused) return; // already playing — don't restart
+  if(_titleEl && !_titleEl.paused){
+    // Already playing — just make sure volume is right for current context
+    _titleVolume(G?.phase === 'combat' ? 0.06 : 0.35);
+    return;
+  }
   if(!_titleEl){
     try {
       const a = _SFX['title'].cloneNode();
       a.loop = true;
-      a.volume = Math.min(1, 0.35 * _VOL.master * _VOL.music);
+      a.volume = Math.min(1, 0.35 * (_VOL?.master||1) * (_VOL?.music||1));
       a.play().catch(()=>{});
       _titleEl = a;
     } catch(_){}
   } else {
-    // Resume from where it was
     try {
-      _titleEl.volume = Math.min(1, 0.35 * _VOL.master * _VOL.music);
+      _titleEl.volume = Math.min(1, 0.35 * (_VOL?.master||1) * (_VOL?.music||1));
       _titleEl.play().catch(()=>{});
     } catch(_){}
   }
 }
 
 function stopTitle(){
-  // Only truly stop on mute — otherwise just pause so it resumes from same position
   if(_titleEl){ try{ _titleEl.pause(); }catch(_){} }
 }
 
 function _titleVolume(vol){
-  if(_titleEl) try{ _titleEl.volume = Math.min(1, vol * _VOL.master * _VOL.music); }catch(_){}
+  if(_titleEl){
+    try{ _titleEl.volume = Math.min(1, Math.max(0, vol * (_VOL?.master||1) * (_VOL?.music||1))); }catch(_){}
+  }
 }
 
 function setAmbient(scene) {
   if(scene === 'combat'){
-    // Duck title during combat — start combat loop
-    _titleVolume(0.06); // nearly silent but still running so position is preserved
-    if(_muted || !_SFX['ambient_combat']) return;
-    _stopLoop();
-    try {
-      const a = _SFX['ambient_combat'].cloneNode();
-      a.loop = true;
-      a.volume = Math.min(1, 0.45 * _VOL.master * _VOL.music);
-      a.play().catch(()=>{});
-      _loopEl = a;
-    } catch(_) {}
+    // Always duck title immediately — whether or not combat music file exists
+    _titleVolume(0.06);
+    if(!_muted && _SFX['ambient_combat']){
+      _stopLoop();
+      try {
+        const a = _SFX['ambient_combat'].cloneNode();
+        a.loop = true;
+        a.volume = Math.min(1, 0.45 * (_VOL?.master||1) * (_VOL?.music||1));
+        a.play().catch(()=>{});
+        _loopEl = a;
+      } catch(_) {}
+    }
   } else {
-    // map / port / any non-combat scene — stop combat loop, restore title
+    // Leaving combat — stop combat loop and restore title to full volume
     _stopLoop();
     _titleVolume(0.35);
-    playTitle(); // ensures it's playing if it somehow stopped
+    // If title isn't playing at all, start it
+    if(!_titleEl || _titleEl.paused) playTitle();
   }
 }
 
@@ -4765,19 +4790,14 @@ cv.addEventListener('click',e=>{
     if(Math.hypot(mx-wp.x*cv.width,my-wp.y*cv.height)<18){
       snd('sphere_click',0.6);
       if(G.phase==='traveling'){
-        // Divert mid-flight: stop travel and fly to this waypoint instead
-        clearInterval(G.tvl.timer);
-        document.getElementById('tvlbar').classList.remove('on');
-        G.phase='map';
-        addLog(`Diverting to ${wp.n}…`,'gd');
-        startWaypointTravel(wp);
+        // Can no longer manually divert — waystations auto-intercept during lane travel
+        showMsg(`${wp.ico} ${wp.n}`, `${wp.desc}\n\nThis waystation lies on your route — your ship will automatically intercept it during passage.`, 'Understood', null);
       } else if(G.phase==='map'){
         // Already AT this waypoint → open supply
         if(G.ship.atWp && G.ship.atWp.id===wp.id){
-          enterWaypoint(wp);
+          openWaystationShop(wp);
         } else {
-          // Travel to the waypoint
-          startWaypointTravel(wp);
+          showMsg(`${wp.ico} ${wp.n}`, `${wp.desc}\n\nThis waystation lies on the lane between its two spheres — your ship will stop here automatically when you travel that route.`, 'Understood', null);
         }
       }
       return;
@@ -5086,6 +5106,31 @@ function travelTick(){
         startCombat((lane.pool||['nautiloid','neogi'])[Math.floor(Math.random()*(lane.pool||['nautiloid','neogi']).length)]);
         return;
       }
+    }
+  }
+
+  // ── Waystation auto-intercept (once per lane, near midpoint) ──
+  // Only fires on main sphere-to-sphere travel, not fragment/waypoint trips
+  if(G.tvl.to && !G.tvl.toWp && !G.tvl.toFragSite && !G.tvl._wpHit){
+    const laneKey = `${G.tvl.from}->${G.tvl.to}`;
+    const ws = WAYPOINTS.find(w => w.lanes && w.lanes.includes(laneKey));
+    if(ws && G.tvl.prog >= 45 && G.tvl.prevProg < 45){
+      G.tvl._wpHit = true;
+      clearInterval(G.tvl.timer);
+      stopTravelHum();
+      G.phase = 'map';
+      document.getElementById('tvlbar').classList.remove('on');
+      // Store resume state
+      const laneOrigin = G.tvl._laneOrigin || G.tvl.fromPos || {x:.5,y:.5};
+      const destSph = G.spheres.find(s=>s.id===G.tvl.to) || {x:.5,y:.5};
+      const pg = G.tvl.prog / 100;
+      const pausedPos = { x: laneOrigin.x + (destSph.x-laneOrigin.x)*pg, y: laneOrigin.y + (destSph.y-laneOrigin.y)*pg };
+      G.ship.midLanePos = pausedPos;
+      G.tvl._pausedProg = G.tvl.prog;
+      G.tvl._watchesRemaining = G.tvl._watchesLeft || 0;
+      G._resumeTravel = { toId:G.tvl.to, watchesRemaining:G.tvl._watchesLeft||0, pausedPos, pausedProg:G.tvl.prog, laneOrigin };
+      showWaystationOffer(ws);
+      return;
     }
   }
 
@@ -5674,10 +5719,139 @@ function arriveAtWaypoint(wp){
   setTag('Navigation'); updateUI();
 }
 
+function showWaystationOffer(ws){
+  const s = G.ship;
+  const needsAnything = s.hull < s.maxHull || s.crew < s.maxCrew || s.air < (s.maxAir||12);
+  showMsg(
+    `${ws.ico} ${ws.n}`,
+    `${ws.desc}\n\nYour course takes you past this waystation. Do you wish to stop?\n\nSupplies are available at field prices — 50% above port rates. Resting here resets fatigue.`,
+    '⚓ Stop & Resupply',
+    () => {
+      G.ship.midLanePos = G._resumeTravel?.pausedPos || null;
+      openWaystationShop(ws);
+    },
+    '➤ Pass Through',
+    () => {
+      // Resume travel
+      const rt = G._resumeTravel; G._resumeTravel = null;
+      G.ship.midLanePos = null;
+      if(rt) startTravel(rt.toId, rt.watchesRemaining, rt.pausedPos, rt.pausedProg, rt.laneOrigin);
+    }
+  );
+  snd('sphere_arrive', 0.6);
+  addLog(`${ws.ico} ${ws.n} detected on current heading. Weighing options…`, 'imp');
+}
+
+function openWaystationShop(ws){
+  // Build the waystation overlay using existing wp overlay
+  const s = G.ship;
+  document.getElementById('wp-name').textContent = `${ws.ico} ${ws.n}`;
+  document.getElementById('wp-desc').textContent = ws.desc;
+  buildWaystationGrid(ws);
+  document.getElementById('ov-waypoint').classList.add('on');
+  G.phase = 'port'; // use port phase so UI updates correctly
+  G._currentWaystation = ws;
+  updateUI();
+}
+
+function buildWaystationGrid(ws){
+  const s = G.ship;
+  const grid = document.getElementById('wpgrid');
+  grid.innerHTML = '';
+  const PREMIUM = 1.5; // 50% markup on port prices
+
+  const items = [];
+
+  // Hull repair
+  if(s.hull < s.maxHull){
+    const base = Math.floor((s.maxHull - s.hull) * 0.5);
+    const cost = Math.ceil(base * PREMIUM);
+    items.push({ ico:'🔧', name:'Repair Hull', desc:`Restore to ${s.maxHull} HP`, cost, act:'repair' });
+  }
+
+  // Crew
+  if(s.crew < s.maxCrew){
+    const base = Math.ceil((s.maxCrew - s.crew) * 8);
+    const cost = Math.ceil(base * PREMIUM);
+    items.push({ ico:'👥', name:'Hire Crew', desc:`Restore to ${s.maxCrew}`, cost, act:'crew' });
+  }
+
+  // Air
+  const maxAir = s.maxAir || 12;
+  if(s.air < maxAir){
+    const base = Math.floor((maxAir - s.air) * 0.5);
+    const cost = Math.ceil(base * PREMIUM);
+    items.push({ ico:'💨', name:'Refill Air', desc:`Restore to ${maxAir} days`, cost, act:'air' });
+  }
+
+  // Rest (always available — resets fatigue, costs time = 1 day + gold)
+  const restCost = Math.ceil(30 * PREMIUM);
+  items.push({ ico:'🌙', name:'Anchor & Rest', desc:'Crew rests — fatigue cleared, 1 day passes', cost:restCost, act:'rest_wp' });
+
+  if(items.length === 0){
+    grid.innerHTML = '<div style="color:#5533aa;font-style:italic;font-size:11px;grid-column:1/-1;text-align:center;padding:8px;">Nothing needed — your ship is in full order.</div>';
+  }
+
+  items.forEach(item => {
+    const affordable = s.gold >= item.cost;
+    const card = document.createElement('div');
+    card.className = 'shop-card' + (affordable ? '' : ' cant-afford');
+    card.innerHTML =
+      `<div class="sh-ico">${item.ico}</div>` +
+      `<div class="sh-name">${item.name}</div>` +
+      `<div class="sh-desc">${item.desc}</div>` +
+      `<div class="sh-cost ${affordable?'':'cant'}">⚜ ${item.cost}</div>`;
+    if(affordable) card.onclick = () => waystationPurchase(item, ws);
+    grid.appendChild(card);
+  });
+}
+
+function waystationPurchase(item, ws){
+  const s = G.ship;
+  if(s.gold < item.cost){ addLog('Not enough gold.','dmg'); return; }
+  s.gold -= item.cost;
+  snd('purchase', 0.7);
+  switch(item.act){
+    case 'repair':
+      s.hull = s.maxHull;
+      addLog(`🔧 Hull repaired to ${s.maxHull}. (${ws.n})`, 'gd'); break;
+    case 'crew':
+      s.crew = s.maxCrew;
+      addLog(`👥 Crew restored to ${s.maxCrew}. (${ws.n})`, 'gd'); break;
+    case 'air':
+      s.air = s.maxAir || 12;
+      addLog(`💨 Air refilled to ${s.air} days. (${ws.n})`, 'gd'); break;
+    case 'rest_wp':
+      // Anchor rest — clears fatigue, advances day
+      G.watch.legsPushed = 0;
+      G.watch.legsToday  = 0;
+      advanceWatch();
+      addLog(`🌙 Crew rested at ${ws.n}. Day ${G.watch.day}. Fatigue cleared.`, 'gd');
+      addJournalEntry(`Anchored at waystation ${ws.n}. Paid ${item.cost} gold for berth. Full rest.`, '');
+      updateWatchHUD();
+      break;
+  }
+  updateUI();
+  buildWaystationGrid(ws);
+  document.getElementById('pt-gold') && (document.getElementById('pt-gold').textContent = s.gold);
+}
+
+// Override departWaypoint to handle waystation resume
 function departWaypoint(){
   document.getElementById('ov-waypoint').classList.remove('on');
-  G.phase='map'; setTag('Navigation'); updateUI();
-  /* title plays continuously */
+  G.phase = 'map'; setTag('Navigation'); updateUI();
+  G._currentWaystation = null;
+  // If we stopped here mid-journey, offer to resume
+  if(G._resumeTravel){
+    const rt = G._resumeTravel; G._resumeTravel = null;
+    const dn = G.spheres?.find(s=>s.id===rt.toId)?.n || rt.toId;
+    showMsg('⚓ Underway',
+      `${dn} — continuing course.`,
+      '⛵ Resume Course', () => {
+        G.ship.midLanePos = null;
+        startTravel(rt.toId, rt.watchesRemaining, rt.pausedPos, rt.pausedProg, rt.laneOrigin);
+      });
+  }
 }
 
 function arriveAtFragSite(fs){
@@ -7457,8 +7631,7 @@ function endCbt(won){
   const invPanel = document.getElementById('cbt-inv-panel');
   if (invPanel) invPanel.classList.remove('on');
   updateWatchHUD();
-  _stopLoop();         // stop combat ambient loop
-  _titleVolume(0.35);  // restore title to full volume
+  setAmbient('map'); // stops combat loop, restores + resumes title
   if(G.tvl.toFragSite){
     G.phase='traveling';
     setTag(`Traveling → ${G.tvl.toFragSite.n}`);
@@ -8556,15 +8729,11 @@ document.addEventListener('click', e=>{
     for(const wp of WAYPOINTS){
       if(Math.hypot(mx-wp.x*cv.width, my-wp.y*cv.height) < hitR){
         snd('sphere_click',0.6);
-        if(G.phase==='traveling'){
-          clearInterval(G.tvl.timer);
-          document.getElementById('tvlbar').classList.remove('on');
-          G.phase='map';
-          addLog('Diverting to '+wp.n+'…','gd');
-          startWaypointTravel(wp);
-        } else if(G.phase==='map'){
-          if(G.ship.atWp && G.ship.atWp.id===wp.id){ enterWaypoint(wp); }
-          else { startWaypointTravel(wp); }
+        if(G.phase==='map'){
+          if(G.ship.atWp && G.ship.atWp.id===wp.id){ openWaystationShop(wp); }
+          else { showMsg(`${wp.ico} ${wp.n}`, `${wp.desc}\n\nThis waystation lies on the lane between its two spheres — your ship will stop here automatically when you travel that route.`, 'Understood', null); }
+        } else if(G.phase==='traveling'){
+          showMsg(`${wp.ico} ${wp.n}`, `${wp.desc}\n\nYour ship will intercept this waystation automatically when passing through its lane.`, 'Understood', null);
         }
         return;
       }
