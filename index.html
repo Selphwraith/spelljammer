@@ -11137,32 +11137,110 @@ window.addEventListener('keydown', e=>{
   if(e.key==='`'&&e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA'){
     e.preventDefault(); toggleDebugCon();
   }
-  if(e.key==='Escape'&&e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA'){
+
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+
+  // ── ESCAPE — close top-most open overlay; menu only when all clear ──
+  if(e.key==='Escape'){
     e.preventDefault();
-    // Priority: close open overlays first, then open menu
-    const overlays = [
-      {id:'ov-wpnpicker', close:()=>wpnPickerCancel()},
-      {id:'ov-inv',      close:()=>closeOverlay('inv')},
-      {id:'ov-wpn',      close:()=>closeOverlay('wpn')},
-      {id:'ov-shp',      close:()=>closeOverlay('shp')},
-      {id:'ov-qlog',     close:()=>closeOverlay('qlog')},
-      {id:'ov-journal',  close:()=>closeOverlay('journal')},
-      {id:'briefing-overlay', close:()=>document.getElementById('briefing-overlay').classList.add('hidden')},
-      {id:'save-overlay', close:()=>{ hideSaveOverlay(); if(_gameActive) showMainMenu(); }},
-      {id:'font-panel',  close:()=>document.getElementById('font-panel').style.display='none'},
+
+    const escLayers = [
+      { check: ()=> document.getElementById('debug-con')?.style.display!=='none',
+        close: ()=> toggleDebugCon?.() },
+      { check: ()=> document.getElementById('cin-ovl')?.style.display==='flex',
+        close: ()=> { try{ endCinematic?.(); }catch(_){ document.getElementById('cin-ovl').style.display='none'; } } },
+      { check: ()=> document.getElementById('ov-roam')?.style.display==='flex',
+        close: ()=> roamContinue?.() },
+      { check: ()=> document.getElementById('ov-faction-rep')?.classList.contains('on'),
+        close: ()=> closeOverlay('faction-rep') },
+      { check: ()=> document.getElementById('ov-wpnpicker')?.classList.contains('on'),
+        close: ()=> wpnPickerCancel() },
+      { check: ()=> document.getElementById('briefing-overlay') && !document.getElementById('briefing-overlay').classList.contains('hidden'),
+        close: ()=> document.getElementById('briefing-overlay').classList.add('hidden') },
+      { check: ()=> document.getElementById('save-overlay') && !document.getElementById('save-overlay').classList.contains('hidden'),
+        close: ()=> hideSaveOverlay?.() },
+      { check: ()=> document.getElementById('font-panel')?.style.display!=='none',
+        close: ()=> hideFontPanel?.() },
+      { check: ()=> document.getElementById('msgbox')?.classList.contains('on'),
+        close: ()=> dismissMsg?.() },
+      { check: ()=> document.getElementById('lq-shop')?.classList.contains('on'),
+        close: ()=> closeLqShop?.() },
+      { check: ()=> document.getElementById('ov-dockmaster')?.classList.contains('on'),
+        close: ()=> closeDockmaster?.() },
+      { check: ()=> document.getElementById('ov-loot')?.classList.contains('on'),
+        close: ()=> claimLoot?.() },
+      { check: ()=> document.getElementById('ov-inv')?.classList.contains('on'),
+        close: ()=> closeOverlay('inv') },
+      { check: ()=> document.getElementById('ov-wpn')?.classList.contains('on'),
+        close: ()=> closeOverlay('wpn') },
+      { check: ()=> document.getElementById('ov-shp')?.classList.contains('on'),
+        close: ()=> closeOverlay('shp') },
+      { check: ()=> document.getElementById('ov-qlog')?.classList.contains('on'),
+        close: ()=> closeOverlay('qlog') },
+      { check: ()=> document.getElementById('ov-journal')?.classList.contains('on'),
+        close: ()=> closeOverlay('journal') },
+      { check: ()=> { const el=document.getElementById('ov-localquest'); return el&&(el.style.display==='flex'||el.style.display==='block'); },
+        close: ()=> { if(typeof closeLocalQuest==='function') closeLocalQuest(); else document.getElementById('ov-localquest').style.display='none'; } },
+      { check: ()=> document.getElementById('ov-waypoint')?.classList.contains('on'),
+        close: ()=> departWaypoint?.() },
+      { check: ()=> document.getElementById('ov-port')?.classList.contains('on'),
+        close: ()=> departPort?.() },
+      // Combat: intentionally no Escape — use the Flee button
     ];
-    for(const ov of overlays){
-      const el=document.getElementById(ov.id);
-      if(el&&(el.classList.contains('on')||(!el.classList.contains('hidden')&&el.style.display!=='none'&&ov.id==='font-panel'))){
-        ov.close(); return;
-      }
+
+    for(const layer of escLayers){
+      try{ if(layer.check()){ layer.close(); return; } }catch(_){}
     }
-    // Nothing open — toggle the main menu
+
+    // All clear — toggle main menu
     const menu=document.getElementById('main-menu');
     if(menu&&!menu.classList.contains('hidden')){
       if(_gameActive) hideMainMenu();
-    } else if(_gameActive || !_gameActive){
+    } else if(_gameActive){
       showMainMenu();
+    }
+    return;
+  }
+
+  // ── ENTER — trigger primary confirm for whatever is on top ──
+  if(e.key==='Enter'){
+    // Weapon slot picker — confirm if slot is selected
+    if(document.getElementById('ov-wpnpicker')?.classList.contains('on')){
+      const btn=document.getElementById('wpnpicker-confirm-btn');
+      if(btn&&btn.style.display!=='none'){ e.preventDefault(); btn.click(); }
+      return;
+    }
+    // Message box — primary button
+    if(document.getElementById('msgbox')?.classList.contains('on')){
+      e.preventDefault(); document.getElementById('msgbtn')?.click(); return;
+    }
+    // Loot overlay — claim all
+    if(document.getElementById('ov-loot')?.classList.contains('on')){
+      e.preventDefault(); claimLoot?.(); return;
+    }
+    // Cinematic — next slide
+    if(document.getElementById('cin-ovl')?.style.display==='flex'){
+      e.preventDefault(); document.getElementById('cin-next-btn')?.click(); return;
+    }
+    // Dockmaster — advance dialogue
+    if(document.getElementById('ov-dockmaster')?.classList.contains('on')){
+      e.preventDefault(); document.getElementById('dm-next-btn')?.click(); return;
+    }
+    // Rest overlay — dismiss when "Watch Complete" banner is showing
+    if(document.getElementById('rest-overlay')?.classList.contains('on')){
+      const done=document.getElementById('rest-complete');
+      if(done?.classList.contains('on')){ e.preventDefault(); done.click(); }
+      return;
+    }
+    // Roaming encounter — continue when continue button visible
+    if(document.getElementById('ov-roam')?.style.display==='flex'){
+      const btn=document.getElementById('roam-continue-btn');
+      if(btn&&btn.style.display!=='none'){ e.preventDefault(); btn.click(); }
+      return;
+    }
+    // Waystation — depart
+    if(document.getElementById('ov-waypoint')?.classList.contains('on')){
+      e.preventDefault(); departWaypoint?.(); return;
     }
   }
 });
