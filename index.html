@@ -2773,9 +2773,14 @@ function calcMoveBudget() { return 1; }
 
 function calcMoveBudget() { return 1; } // 1 leg per day always
 
+// ── Absolute hour counter — the only source of truth for time ──
+// totalHours starts at 0 (06:00 Day 1). Each 8-hr leg adds 8.
+// Day = floor(totalHours / 24) + 1.  Clock = (06 + totalHours) % 24.
+// Whenever totalHours crosses a 24-hr mark, advanceDay() fires.
+
 function currentHour() {
   if (!G.watch) return DAY_START_HOUR;
-  return (DAY_START_HOUR + (G.watch.legsToday || 0) * LEG_HOURS) % 24;
+  return (DAY_START_HOUR + (G.watch.totalHours || 0)) % 24;
 }
 function timeStr(h) { return String(h).padStart(2,'0') + ':00'; }
 function watchTimeStr() {
@@ -2783,12 +2788,48 @@ function watchTimeStr() {
   return `Day ${G.watch.day} — ${timeStr(currentHour())}`;
 }
 
-// D&D fatigue: Fresh → Fatigued → Exhausted (no Tired level)
+// Called once per completed leg (8 hours) — rest OR push
+// Adds 8 hours; if we cross a 24-hr mark, a new day fires
+function tickLeg() {
+  if (!G.watch) return;
+  const prev = G.watch.totalHours || 0;
+  G.watch.totalHours = prev + LEG_HOURS;
+  G.watch.moveUsed   = 0;
+  G.watch.moveBudget = 1;
+
+  // How many 24-hr marks did we cross?
+  const prevDays = Math.floor(prev / 24);
+  const newDays  = Math.floor(G.watch.totalHours / 24);
+  const crossed  = newDays - prevDays;
+
+  for (let i = 0; i < crossed; i++) {
+    G.watch.day++;
+    G.travelDays = (G.travelDays || 0) + 1;
+    G.ship.air   = Math.max(0, G.ship.air - 1);
+    if (G.ship.air <= 0) { updateUI(); doDefeat(); return; }
+    addLog(`06:00 — Day ${G.watch.day}. Air: ${G.ship.air} days remaining.`, '');
+  }
+  updateUI();
+  updateWatchHUD();
+}
+
+// advanceWatch — called when anchoring (full rest)
+// Ticks the leg (time passes) AND resets fatigue
+function advanceWatch(silent) {
+  if (!G.watch) return;
+  tickLeg();                   // time and air
+  G.watch.legsPushed = 0;      // fatigue cleared by rest
+  if (!silent) addLog(`06:00 — Day ${G.watch.day}. Rested. Air: ${G.ship.air} days remaining.`, '');
+}
+
+function hasMovesRemaining() { return true; } // moves always available; fatigue is the limit
+
+// D&D fatigue: Fresh → Fatigued → Exhausted
 function fatigueLevel() {
   const pushed = G.watch?.legsPushed || 0;
   if (pushed === 0) return 0; // Fresh
-  if (pushed === 1) return 2; // Fatigued (1 failed con check)
-  return 3;                   // Exhausted (2+ failed)
+  if (pushed === 1) return 2; // Fatigued
+  return 3;                   // Exhausted
 }
 function fatigueName()        { return ['Fresh','','Fatigued','Exhausted'][fatigueLevel()]; }
 function fatigueMoveClass()   { return ['fresh','fresh','fatigued','exhausted'][fatigueLevel()]; }
@@ -2801,38 +2842,13 @@ function consumeMove() {
   updateWatchHUD();
 }
 
-// New day — called after anchoring
-function advanceWatch() {
-  if (!G.watch) return;
-  G.watch.day++;
-  G.travelDays = (G.travelDays || 0) + 1;
-  G.watch.legsToday  = 0;
-  G.watch.legsPushed = 0;
-  G.watch.moveBudget = 1;
-  G.watch.moveUsed   = 0;
-  G.ship.air = Math.max(0, G.ship.air - 1);
-  if (G.ship.air <= 0) { doDefeat(); return; }
-  updateUI();
-  addLog(`06:00 — Day ${G.watch.day}. Air: ${G.ship.air} days remaining.`, '');
-}
-
-// Complete a travel leg (called at end of each 8-hr segment)
-function completeLeg() {
-  if (!G.watch) return;
-  G.watch.legsToday  = (G.watch.legsToday  || 0) + 1;
-  G.watch.moveUsed   = 0;
-  G.watch.moveBudget = 1;
-}
-
-function hasMovesRemaining() { return true; } // moves always available; fatigue is the limit
-
 // ── End-of-leg popup: Anchor or Push On? ──────────────────────
 function watchExpiredMidJourney() {
   if (!G.watch || G.watch._pauseShown) return;
   G.watch._pauseShown = true;
   clearInterval(G.tvl.timer);
   G.phase = 'map';
-  completeLeg();
+  tickLeg(); // 8 hours pass — day/air update if 06:00 crossed
   stopTravelHum();
 
   const hour = currentHour();
@@ -2952,14 +2968,14 @@ function doRest() {
     setTimeout(() => {
       overlay.classList.remove('on');
       G.watch.restingPhase = false;
-      G.watch.legsPushed   = 0; // full rest = Fresh
-      G.watch.legsToday    = 0;
+      G.watch.legsPushed   = 0; // full rest = Fresh — fatigue cleared
 
       if (fatigLvl >= 2 && G.ship.crew < G.ship.maxCrew) {
         G.ship.crew = Math.min(G.ship.maxCrew, G.ship.crew + 1);
         addLog('The crew is rested. One injured hand returns to duty.', 'gd');
       }
-      advanceWatch();
+      // tickLeg already ran in watchExpiredMidJourney — don't double-count
+      // Just log the wake-up with current day state
       addLog(`06:00 — Anchor lifted. Day ${G.watch.day}. Helmsman is ${fatigueName()}.`, '');
       addJournalEntry(`Anchored ${timeStr(hour)}–06:00. Full rest. Helmsman fresh. Day ${G.watch.day} underway.`, '');
       updateWatchHUD(); updateUI(); _writeAutoSave();
@@ -2993,13 +3009,13 @@ function updateWatchHUD() {
 
   document.getElementById('wh-day').textContent = watchTimeStr();
 
-  // Leg pips — filled dots for legs sailed today
+  // Leg pips — show position within current 24-hr cycle (0-3 legs)
   const pipsEl = document.getElementById('wh-pips');
   pipsEl.innerHTML = '';
+  const legsInDay = Math.floor((G.watch.totalHours || 0) % 24 / LEG_HOURS);
   for (let i = 0; i < 3; i++) {
     const pip = document.createElement('div');
-    const sailed = G.watch.legsToday || 0;
-    pip.className = 'wh-pip' + (i < sailed ? ' used' : i === sailed ? ' on' : '');
+    pip.className = 'wh-pip' + (i < legsInDay ? ' used' : i === legsInDay ? ' on' : '');
     pipsEl.appendChild(pip);
   }
 
@@ -3644,12 +3660,12 @@ function initGame() {
     travelDays: 0,     // in-game days elapsed (air drain = 1 day)
     // ── Watch & Fatigue system ───────────────────────────
     watch: {
-      day:        1,      // current in-game day
-      legsToday:  0,      // how many 8-hr legs sailed today
-      legsPushed: 0,      // how many legs pushed past the safe limit (fatigue driver)
+      day:        1,
+      totalHours: 0,      // absolute hours elapsed (each leg = +8hrs)
+      legsPushed: 0,      // fatigue counter — reset only by full rest
       moveBudget: 1,
       moveUsed:   0,
-      watchesWithoutRest: 0, // legacy compat — unused but kept for save/load
+      watchesWithoutRest: 0, // legacy compat — unused
       restingPhase: false,
     },
   };
@@ -5180,10 +5196,8 @@ function travelTick(){
     const watchesLeft = G.tvl._watchesLeft || 0;
 
     if(watchesLeft <= 0){
-      // ─ ARRIVED — count this final watch ─
+      // ─ ARRIVED — tick the final leg (day/air via tickLeg inside advanceWatch) ─
       advanceWatch();
-      G.ship.air = Math.max(0, G.ship.air - 1); updateUI();
-      if(G.ship.air<=0){addLog('Air supply exhausted!','dmg');doDefeat();return;}
       document.getElementById('tvlbar').classList.remove('on');
       if(G.tvl.toWp)          arriveAtWaypoint(G.tvl.toWp);
       else if(G.tvl.toFragSite) arriveAtFragSite(G.tvl.toFragSite);
@@ -5822,10 +5836,9 @@ function waystationPurchase(item, ws){
       s.air = s.maxAir || 12;
       addLog(`💨 Air refilled to ${s.air} days. (${ws.n})`, 'gd'); break;
     case 'rest_wp':
-      // Anchor rest — clears fatigue, advances day
+      // Anchor rest — clears fatigue; tickLeg advances time/air
       G.watch.legsPushed = 0;
-      G.watch.legsToday  = 0;
-      advanceWatch();
+      tickLeg();
       addLog(`🌙 Crew rested at ${ws.n}. Day ${G.watch.day}. Fatigue cleared.`, 'gd');
       addJournalEntry(`Anchored at waystation ${ws.n}. Paid ${item.cost} gold for berth. Full rest.`, '');
       updateWatchHUD();
@@ -9167,7 +9180,7 @@ function _applyLoad(save) {
       _breachArrived: state._breachArrived || {},
       captainLog: state.captainLog || [],
       travelDays: state.travelDays || 0,
-      watch: state.watch || { day:1, legsToday:0, legsPushed:0, moveBudget:1, moveUsed:0, watchesWithoutRest:0, restingPhase:false },
+      watch: state.watch || { day:1, totalHours:0, legsPushed:0, moveBudget:1, moveUsed:0, watchesWithoutRest:0, restingPhase:false },
       view:{zoom:1,panX:0,panY:0,follow:true,_pan:false,_lastMx:0,_lastMy:0,_didDrag:false},
     };
     for (let i = 0; i < 220; i++) G.stars.push({ x:Math.random(),y:Math.random(),r:Math.random()*1.8+0.3,twk:Math.random()*Math.PI*2,spd:Math.random()*0.014+0.003,br:Math.random() });
