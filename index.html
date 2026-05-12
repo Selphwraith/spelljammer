@@ -2824,17 +2824,15 @@ Anchoring now means full rest and a fresh helmsman at dawn. Pushing on risks fat
   const anchorCb = () => {
     G.watch._pauseShown = false;
     G.watch.legsPushed = 0;
-    // Store resume info before advanceWatch clears anything
+    // Store resume info — doRest() will find this and show the resume prompt after the animation
     const toId = G.tvl?.to;
     const watchesRemaining = G.tvl?._watchesRemaining;
     const pausedPos  = G.ship.midLanePos;
     const pausedProg = G.tvl?._pausedProg;
     const laneOrigin = G.tvl?._laneOrigin;
     if (toId) G._resumeTravel = { toId, watchesRemaining, pausedPos, pausedProg, laneOrigin };
-    advanceWatch();
-    addLog(`${timeStr(hour)} — Anchored. The crew rests. Underway again at 06:00.`, '');
-    addJournalEntry(`Anchored at ${timeStr(hour)} after 8 hours underway. Full rest. The Phlogiston drifts past in the dark.`, '');
-    updateWatchHUD(); _writeAutoSave();
+    // doRest() handles the animation, advanceWatch, and the resume prompt
+    doRest();
   };
   const pushCb = () => {
     G.watch._pauseShown = false;
@@ -2933,6 +2931,8 @@ function doRest() {
 
       if (G._resumeTravel) {
         const rt = G._resumeTravel; G._resumeTravel = null;
+        // Ensure ship stays at mid-lane position while prompt is shown
+        if (rt.pausedPos) G.ship.midLanePos = rt.pausedPos;
         const dn = G.spheres?.find(s=>s.id===rt.toId)?.n || rt.toId;
         showMsg('⚓ Rested — Ready to Sail',
           `Day ${G.watch.day}, 06:00. ${dn} — ${rt.watchesRemaining} leg${rt.watchesRemaining>1?'s':''} remaining.`,
@@ -3140,8 +3140,8 @@ function applyVolumes() {
       if (val) val.textContent = el.value + '%';
     }
   });
-  if (_loopEl) _loopEl.volume = Math.min(1, _VOL.master * _VOL.music * 0.28);
-  if (_titleEl) _titleEl.volume = Math.min(1, _VOL.master * _VOL.music * 0.35);
+  if (_loopEl) _loopEl.volume = Math.min(1, _VOL.master * _VOL.music * 0.45); // combat loop
+  if (_titleEl) _titleVolume(G?.phase === 'combat' ? 0.06 : 0.35); // ducked in combat
   if (_victoryEl) _victoryEl.volume = Math.min(1, _VOL.master * _VOL.music * 1.0);
   const btn = document.getElementById('mute-btn');
   if (btn) btn.textContent = _VOL.master === 0 ? '🔇 Sound' : '🔊 Sound';
@@ -3178,20 +3178,17 @@ function toggleMute() {
   applyVolumes();
   _updateVolSliders();
   if (_VOL.master === 0) {
-    _stopLoop(); stopTitle();
+    _stopLoop(); stopTitle(); stopTravelHum(); stopElderTheme();
   } else {
-    const onMenu = !_gameActive || (G && G.phase === 'menu');
-    if (onMenu) { playTitle(); }
-    else if (_gameActive && G && G.phase) {
-      setAmbient(G.phase === 'combat' ? 'combat' : G.phase === 'port' ? 'port' : 'map');
+    playTitle(); // resume from position — don't restart
+    if (_gameActive && G?.phase === 'combat') {
+      setAmbient('combat');
     }
   }
 }
 
 // ── Embedded sound data (base64) — works on mobile and desktop without a server
 const SOUND_DATA = {
-  'ambient_map': 'sounds/ambient_phlogiston.mp3',
-  'ambient_port': 'sounds/ambient_port.mp3',
   'ambient_combat': 'sounds/ambient_combat.mp3',
   'sphere_click': 'sounds/sphere_click.mp3',
   'travel_begin': 'sounds/travel_begin.mp3',
@@ -3330,26 +3327,7 @@ function snd(key, vol = 1.0) {
 }
 
 // Start an ambient loop (stops the previous one with a short fade)
-function setAmbient(scene) {
-  if (_muted) return;
-  const key = { map:'ambient_map', port:'ambient_port', combat:'ambient_combat' }[scene];
-  const baseVol = scene === 'combat' ? 0.45 : 0.28;
-  if (!key || !_SFX[key]) return;
-  _stopLoop();
-  try {
-    const a = _SFX[key].cloneNode();
-    a.loop = true;
-    a.volume = Math.min(1, baseVol * _VOL.master * _VOL.music);
-    a.play().catch(() => {});
-    _loopEl = a;
-  } catch(_) {}
-}
-
-function _stopLoop() {
-  if (_loopEl) { try { _loopEl.pause(); } catch(_) {} _loopEl = null; }
-}
-
-// ── Travel hum — looping engine sound during travel ────────
+// Travel hum — looping engine sound during travel ────────
 let _travelHumEl = null;
 
 function startTravelHum() {
@@ -3383,6 +3361,7 @@ let _elderThemeEl = null;
 
 function startElderTheme() {
   stopElderTheme();
+  _titleVolume(0.0); // silence title during boss fight
   if (_muted || !_SFX['elder_theme']) return;
   try {
     const a = _SFX['elder_theme'].cloneNode();
@@ -3398,6 +3377,8 @@ function stopElderTheme() {
     try { _elderThemeEl.pause(); } catch(_) {}
     _elderThemeEl = null;
   }
+  // Restore title to full volume now that boss music is done
+  _titleVolume(0.35);
 }
 
 function startCaiphonTheme() {
@@ -3500,17 +3481,56 @@ function sndVoice(vol = 1.0) {
 let _titleEl = null;
 function playTitle(){
   if(_muted || !_SFX['title']) return;
-  stopTitle();
-  try {
-    const a = _SFX['title'].cloneNode();
-    a.loop = true;
-    a.volume = Math.min(1, 0.35 * _VOL.master * _VOL.music);
-    a.play().catch(()=>{});
-    _titleEl = a;
-  } catch(_){}
+  if(_titleEl && !_titleEl.paused) return; // already playing — don't restart
+  if(!_titleEl){
+    try {
+      const a = _SFX['title'].cloneNode();
+      a.loop = true;
+      a.volume = Math.min(1, 0.35 * _VOL.master * _VOL.music);
+      a.play().catch(()=>{});
+      _titleEl = a;
+    } catch(_){}
+  } else {
+    // Resume from where it was
+    try {
+      _titleEl.volume = Math.min(1, 0.35 * _VOL.master * _VOL.music);
+      _titleEl.play().catch(()=>{});
+    } catch(_){}
+  }
 }
+
 function stopTitle(){
-  if(_titleEl){ try{ _titleEl.pause(); }catch(_){} _titleEl=null; }
+  // Only truly stop on mute — otherwise just pause so it resumes from same position
+  if(_titleEl){ try{ _titleEl.pause(); }catch(_){} }
+}
+
+function _titleVolume(vol){
+  if(_titleEl) try{ _titleEl.volume = Math.min(1, vol * _VOL.master * _VOL.music); }catch(_){}
+}
+
+function setAmbient(scene) {
+  if(scene === 'combat'){
+    // Duck title during combat — start combat loop
+    _titleVolume(0.06); // nearly silent but still running so position is preserved
+    if(_muted || !_SFX['ambient_combat']) return;
+    _stopLoop();
+    try {
+      const a = _SFX['ambient_combat'].cloneNode();
+      a.loop = true;
+      a.volume = Math.min(1, 0.45 * _VOL.master * _VOL.music);
+      a.play().catch(()=>{});
+      _loopEl = a;
+    } catch(_) {}
+  } else {
+    // map / port / any non-combat scene — stop combat loop, restore title
+    _stopLoop();
+    _titleVolume(0.35);
+    playTitle(); // ensures it's playing if it somehow stopped
+  }
+}
+
+function _stopLoop() {
+  if (_loopEl) { try { _loopEl.pause(); } catch(_) {} _loopEl = null; }
 }
 
 // Weapon key → sound key
@@ -3596,7 +3616,7 @@ function initGame() {
   loadSounds();
   loadShipImages();
   loadVoiceFiles();
-  setTimeout(() => setAmbient('map'), 300); // slight delay lets audio context unlock on user gesture
+  setTimeout(() => playTitle(), 300); // ensure title playing // slight delay lets audio context unlock on user gesture
   addLog('Captain — IEN Scout Comet "Elven Comet" standing by at Refuge Station. Six Astral Chart Fragments. One Elder Brain. Orders received. Click a Crystal Sphere to depart.','imp');
   addJournalEntry('Departed Refuge Station aboard the Elven Comet. Orders sealed, destination unknown to all but Command. Six Astral Chart Fragments lie scattered across the Phlogiston. The Elder Brain must not be allowed to reassemble them. We sail at first light — if light means anything in the void between spheres.', 'imp');
 }
@@ -3627,7 +3647,9 @@ function getShipWorldPos(){
     const fp = {x: origin.x * W, y: origin.y * H};
     const tp = G.tvl.toWp
       ? {x:G.tvl.toWp.x*W, y:G.tvl.toWp.y*H}
-      : sPos(G.spheres.find(s=>s.id===G.tvl.to)||{x:.5,y:.5});
+      : G.tvl.toFragSite
+        ? {x:G.tvl.toFragSite.x*W, y:G.tvl.toFragSite.y*H}
+        : sPos(G.spheres.find(s=>s.id===G.tvl.to)||{x:.5,y:.5});
     // Sub-tick smoothing
     const _tMs = G.tvl.tickMs || 100;
     const _el  = G.tvl.lastTickTime ? Math.min(_tMs, performance.now()-G.tvl.lastTickTime) : 0;
@@ -3782,7 +3804,9 @@ function renderLoop(ts=0) {
     const destId = G.tvl?.to;
     const tp = G.tvl?.toWp
       ? {x:G.tvl.toWp.x*W, y:G.tvl.toWp.y*H}
-      : sPos(G.spheres.find(s=>s.id===destId)||{x:.5,y:.5});
+      : G.tvl?.toFragSite
+        ? {x:G.tvl.toFragSite.x*W, y:G.tvl.toFragSite.y*H}
+        : sPos(G.spheres.find(s=>s.id===destId)||{x:.5,y:.5});
     const lc = G.tvl?.lane ? (LANE_DANGER_COLORS[G.tvl.lane.d]||'#aa66ff') : '#aa66ff';
     // Draw remaining arc line (ship→destination)
     cx.strokeStyle=lc; cx.lineWidth=2; cx.globalAlpha=0.5; cx.setLineDash([3,4]);
@@ -4847,18 +4871,28 @@ function startTravel(toId, _resumeWatchesLeft, _pausedPos, _pausedProg, _savedLa
     return;
   }
 
-  G.ship.atWp = null; G.ship.atFragSite = null; G.ship.midLanePos = null;
+  // Capture actual ship position BEFORE clearing atFragSite/atWp
+  // (used as laneOrigin so ship renders from correct mid-map position)
+  const departPos = G.ship.atFragSite
+    ? {x: G.ship.atFragSite.x, y: G.ship.atFragSite.y}
+    : G.ship.atWp
+      ? {x: G.ship.atWp.x, y: G.ship.atWp.y}
+      : null;
+
+  G.ship.atWp = null; G.ship.atFragSite = null;
+  // On resume: set midLanePos to paused position — cleared on first tick so no visual jump
+  G.ship.midLanePos = _pausedPos || null;
   const t = G.spheres.find(s=>s.id===toId);
   G.phase = 'traveling';
   const fromId = G.ship.loc || 'refuge';
   const lane = getLane(fromId, toId);
 
-  // ── Origin sphere position (always the true lane start, never mid-lane) ──
+  // ── Origin position for rendering ──────────────────────────────────────────
   const originSph = G.spheres.find(s=>s.id===fromId) || {x:.5, y:.5};
-  // On resume: prefer saved laneOrigin > G.tvl._laneOrigin > origin sphere
+  // Priority: saved laneOrigin (resume) > actual departure pos (frag site/waypoint) > sphere
   const laneOrigin = (_pausedProg !== undefined)
     ? (_savedLaneOrigin || G.tvl?._laneOrigin || {x: originSph.x, y: originSph.y})
-    : {x: originSph.x, y: originSph.y};
+    : (departPos || {x: originSph.x, y: originSph.y});
 
   // Total watches for this lane — on resume, _resumeWatchesLeft is watches still needed
   const totalWatches = _resumeWatchesLeft !== undefined ? _resumeWatchesLeft : laneWatchCost(lane, G.ship);
@@ -4992,6 +5026,8 @@ function travelTick(){
   G.tvl.prevProg = G.tvl.prog;
   G.tvl.lastTickTime = performance.now();
   G.tvl.cur++;
+  // Clear mid-lane pause position now that we're actively moving
+  if (G.tvl.cur === 1 && G.ship.midLanePos) G.ship.midLanePos = null;
 
   // Progress: advance from current position toward _progEnd
   const segEnd   = G.tvl._progEnd || 100;
@@ -5179,7 +5215,7 @@ function enterPort(sph){
     return;
   }
   _portSphere=sph; G.phase='port';
-  setAmbient('port');
+  /* title plays continuously */
   snd('port_dock', 0.7);
   document.getElementById('ov-port').classList.add('on');
   document.getElementById('watch-hud').classList.remove('on'); // hide during port
@@ -5517,7 +5553,7 @@ function upgradeShip(typeKey){
 function departPort(){
   document.getElementById('ov-port').classList.remove('on');
   G.phase='map'; setTag('Navigation'); updateUI(); _portSphere=null;
-  setAmbient('map');
+  /* title plays continuously */
   updateWatchHUD(); // restore watch HUD now that port is closed
 _writeAutoSave();
 }
@@ -5562,7 +5598,7 @@ function enterWaypoint(wp){
   document.getElementById('wp-name').textContent=`${wp.ico} ${wp.n}`;
   document.getElementById('wp-desc').textContent=wp.desc;
   setTag(`Waypoint — ${wp.n}`);
-  setAmbient('port');
+  /* title plays continuously */
   snd('port_dock', 0.5);
   buildWaypointShop();
   addLog(`Docked at waypoint: ${wp.n}.`,'gd');
@@ -5607,7 +5643,7 @@ function arriveAtWaypoint(wp){
 function departWaypoint(){
   document.getElementById('ov-waypoint').classList.remove('on');
   G.phase='map'; setTag('Navigation'); updateUI();
-  setAmbient('map');
+  /* title plays continuously */
 }
 
 function arriveAtFragSite(fs){
@@ -5684,7 +5720,7 @@ function confirmGuardianFight(){
 function dismissGuardian(){
   document.getElementById('ov-guardian').classList.remove('on');
   _pendingGuardianSite = null;
-  setAmbient('map'); // back to calm
+  /* title plays continuously */ // back to calm
   addLog('You withdraw from the site. The guardian watches as you depart.','');
 }
 
@@ -5697,7 +5733,7 @@ function startCombat(key){
   const eWpns = (t.wpns||[]).map(w=>({...w}));
   const eCds  = eWpns.map(()=>0);
   const eDisabled = eWpns.map(()=>0);
-  G.cbt={ enemy:{...t, hp:t.maxHp, crew:t.crew||0, burnLeft:0, stunsNext:false, _key:key, _healUsed:false, _buffResist:0, _buffResistTurns:0, _buffAtk:0, _buffAtkTurns:0},
+  G.cbt={ enemy:{...t, hp:t.maxHp, crew:t.crew!==undefined?t.crew:undefined, burnLeft:0, stunsNext:false, _key:key, _healUsed:false, _buffResist:0, _buffResistTurns:0, _buffAtk:0, _buffAtkTurns:0},
     pStat:'normal', eStat:'normal', pTurn:true, cds:{}, linkedCd:0, volleyCd:0,
     pendingLootKey:key, playerStunnedNext:false,
     eWpns, eCds, eDisabled, targeting:false, rageStacks:0, sigCd:0
@@ -5815,7 +5851,7 @@ function startFragmentFight(site){
   const guardian = FRAG_GUARDIANS[site.guardianKey];
   const eWpns = (guardian.wpns||[]).map(w=>({...w}));
   G.phase='combat'; setTag('COMBAT — FRAGMENT GUARDIAN');
-  G.cbt={ enemy:{...guardian, hp:guardian.maxHp, crew:guardian.crew||0, burnLeft:0, stunsNext:false, _healUsed:false, _buffResist:0, _buffResistTurns:0, _buffAtk:0, _buffAtkTurns:0},
+  G.cbt={ enemy:{...guardian, hp:guardian.maxHp, crew:guardian.crew!==undefined?guardian.crew:undefined, maxCrew:guardian.maxCrew||undefined, burnLeft:0, stunsNext:false, _healUsed:false, _buffResist:0, _buffResistTurns:0, _buffAtk:0, _buffAtkTurns:0},
           pStat:'normal', eStat:'normal', pTurn:true, cds:{}, linkedCd:0, volleyCd:0,
           pendingLootKey:site.guardianKey, playerStunnedNext:false,
           eWpns, eCds:eWpns.map(()=>0), eDisabled:eWpns.map(()=>0),
@@ -5838,7 +5874,7 @@ function startWorldBossCombat(key){
   const eWpns = (boss.wpns||[]).map(w=>({...w}));
   const eCds = eWpns.map(()=>0);
   const eDisabled = eWpns.map(()=>0);
-  G.cbt={ enemy:{...boss, hp:boss.maxHp, crew:boss.crew||0, burnLeft:0, stunsNext:false, _key:key, _worldBoss:true, _healUsed:false, _buffResist:0, _buffResistTurns:0, _buffAtk:0, _buffAtkTurns:0},
+  G.cbt={ enemy:{...boss, hp:boss.maxHp, crew:boss.crew!==undefined?boss.crew:undefined, burnLeft:0, stunsNext:false, _key:key, _worldBoss:true, _healUsed:false, _buffResist:0, _buffResistTurns:0, _buffAtk:0, _buffAtkTurns:0},
           pStat:'normal', eStat:'normal', pTurn:true, cds:{}, linkedCd:0, volleyCd:0,
           pendingLootKey:key, playerStunnedNext:false, eWpns, eCds, eDisabled, targeting:false, rageStacks:0, sigCd:0 };
   G.ship.wpns.forEach((_,i)=>G.cbt.cds[i]=0);
@@ -7362,22 +7398,24 @@ function cbtWin(){
 function endCbt(won){
   document.getElementById('ov-combat').classList.remove('on');
   updateWatchHUD();
+  _stopLoop();         // stop combat ambient loop
+  _titleVolume(0.35);  // restore title to full volume
   if(G.tvl.toFragSite){
     G.phase='traveling';
     setTag(`Traveling → ${G.tvl.toFragSite.n}`);
-    setAmbient('map');
+    /* title plays continuously */
     if(won) addLog('Enemy destroyed. Resuming course to '+G.tvl.toFragSite.n+'…','gd');
     document.getElementById('tvlbar').classList.add('on');
     G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); startTravelHum();
     return;
   }
   if(!G.tvl.to){
-    G.phase='map'; setTag('Navigation'); updateUI(); setAmbient('map');
+    G.phase='map'; setTag('Navigation'); updateUI(); /* title plays continuously */
     if(won) addLog('Enemy destroyed. Returning to navigation.','gd');
     return;
   }
   G.phase='traveling'; setTag(`Traveling → ${G.spheres.find(s=>s.id===G.tvl.to)?.n||''}`);
-  setAmbient('map');
+  /* title plays continuously */
   if(won)addLog('Resuming voyage.','');
   document.getElementById('tvlbar').classList.add('on');
   G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); startTravelHum();
@@ -7476,7 +7514,7 @@ function claimLoot(){
     const wonSite = FRAGMENT_SITES.find(fs=>fs.guardianKey===G._lootKey);
     G.ship.atFragSite = wonSite || null;
     G.phase='map'; setTag('Navigation'); updateUI();
-    setAmbient('map');
+    /* title plays continuously */
     return;
   }
   endCbt(true);
@@ -7765,7 +7803,7 @@ function buildShipOverlay(){
 // ╚══════════════════════════════════════════════════════╝
 function doDefeat(){
   G.phase='defeat';
-  _stopLoop();
+  _stopLoop(); stopTitle(); stopTravelHum();
   snd('defeat', 1.0);
   document.getElementById('ov-combat').classList.remove('on');
   document.getElementById('tvlbar').classList.remove('on');
@@ -7775,8 +7813,7 @@ function doDefeat(){
 }
 function doVictory(){
   G.phase='victory';
-  _stopLoop();
-  stopElderTheme();
+  _stopLoop(); stopTitle(); stopElderTheme();
   jlogElderBrain();
   setTimeout(()=>_playVictoryMusic(), 400);
   document.getElementById('ov-loot').classList.remove('on');
@@ -7785,7 +7822,7 @@ function doVictory(){
 
 function doFarRealmVictory(){
   G.phase='victory';
-  _stopLoop();
+  _stopLoop(); stopTitle(); stopElderTheme();
   jlogShothothug();
   setTimeout(()=>_playVictoryMusic(), 400);
   document.getElementById('ov-loot').classList.remove('on');
@@ -7826,7 +7863,7 @@ function continueSailing(){
   }
   _gameActive = true;
   renderLoop();
-  setAmbient('map');
+  /* title plays continuously */
   updateUI(); updateFragUI();
   setTag('Free Sail — Post Victory');
   addLog('The Elder Brain is destroyed. The Phlogiston is yours, Captain. Sail wherever you wish.', 'imp');
@@ -8710,10 +8747,10 @@ function menuShowSave() {
   showSaveOverlay();
 }
 
-function hideMainMenu(keepTitle) {
+function hideMainMenu() {
   const el = document.getElementById('main-menu');
   if (el) el.classList.add('hidden');
-  if(!keepTitle) stopTitle();
+  // Title continues playing — no need to stop it
 }
 
 function menuNewGame() {
@@ -8733,9 +8770,8 @@ function menuNewGame() {
 function menuContinue() {
   if (!_gameActive) return;
   hideMainMenu();
-  // Restore ambient for current phase
-  const scene = G.phase === 'combat' ? 'combat' : G.phase === 'port' ? 'port' : 'map';
-  setTimeout(() => setAmbient(scene), 100);
+  // If in combat, restore combat ambient — otherwise title already playing
+  if (G.phase === 'combat') setTimeout(() => setAmbient('combat'), 100);
   setTag(G.phase === 'port' ? `Port — ${G.spheres.find(s=>s.id===G.ship.loc)?.n||''}` : 'Navigation');
 }
 
@@ -8918,7 +8954,7 @@ function _applyLoad(save) {
     _gameActive = true;
     updateUI(); updateFragUI(); updateWatchHUD();
     renderLoop(); loadSounds(); loadShipImages(); loadVoiceFiles(); ensureLqState();
-    setTimeout(() => setAmbient('map'), 200);
+    setTimeout(() => playTitle(), 200); // ensure title playing
     hideSaveOverlay(); hideLoad(); hideMainMenu();
     addLog(`Voyage restored — ${save.shipName} at ${save.loc}. Welcome back, Captain.`, 'imp');
   } catch(e) {
