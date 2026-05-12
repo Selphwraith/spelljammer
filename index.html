@@ -3492,6 +3492,7 @@ const SHIP_IMAGE_DATA = {
   'vodoniPatrol': 'images/ship_vodoni.png',
   'scroBattle':   'images/ship_scro.png',
   'thrikreen':    'images/ship_thrikreen.png',
+  'neogi':        'images/ship_neogi.png',
   'frStalker':    'images/ship_frstalker.png',
   'frHorde':      'images/ship_frhorde.png',
   'elder':        'images/ship_elder.png',
@@ -6703,6 +6704,7 @@ function drawCbtShips(key){
   else if(key==='frStalker')   _eF('frStalker',false,   ()=>drawFarRealmStalker(ec,60,44,28));
   else if(key==='frHorde')     _eF('frHorde',false,     ()=>drawFarRealmHorde(ec,60,44,28));
   else if(key==='thrikreen')   _eF('thrikreen',false,   ()=>drawThriKreen(ec,60,44,28));
+  else if(key==='neogi')       _eF('neogi',false,       ()=>drawNeogi(ec,60,44,28));
   else if(key==='wb_grex')     _eF('wb_grex',false,     ()=>drawWarlordGrex(ec,60,44,28));
   else if(key==='wb_admiral')  _eF('wb_admiral',false,  ()=>drawHollowAdmiral(ec,60,44,28));
   else if(key==='wb_clutch')   _eF('wb_clutch',false,   ()=>drawClutchMother(ec,60,44,28));
@@ -6834,6 +6836,65 @@ function drawThriKreen(ctx,x,y,sz){
   const eg=ctx.createRadialGradient(-s*16,0,0,-s*16,0,s*5);
   eg.addColorStop(0,'rgba(100,255,50,0.8)'); eg.addColorStop(1,'transparent');
   ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(-s*16,0,s*5,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawNeogi(ctx,x,y,sz){
+  // Neogi Deathspider — spider-shaped void vessel, chitinous hull, 8 articulated legs
+  ctx.save(); ctx.translate(x,y); const s=sz/20;
+  // Central abdomen — bloated sphere
+  const bodyGrad=ctx.createRadialGradient(-s*2,s,s*3,-s*2,0,s*12);
+  bodyGrad.addColorStop(0,'#3a1a00'); bodyGrad.addColorStop(1,'#1a0800');
+  ctx.fillStyle=bodyGrad;
+  ctx.beginPath(); ctx.ellipse(-s*2,0,s*12,s*8,0,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#6633001a'; ctx.lineWidth=s*0.6;
+  ctx.beginPath(); ctx.ellipse(-s*2,0,s*12,s*8,0,0,Math.PI*2); ctx.stroke();
+  // Cephalothorax — smaller forward section
+  ctx.fillStyle='#2a1200';
+  ctx.beginPath(); ctx.ellipse(s*7,0,s*6,s*4.5,0,0,Math.PI*2); ctx.fill();
+  // Prow — skull-like faceplate
+  ctx.fillStyle='#1e0c00';
+  ctx.beginPath(); ctx.ellipse(s*13,0,s*4,s*3.5,0,0,Math.PI*2); ctx.fill();
+  // Eye cluster — 8 red eyes around faceplate
+  const eyePositions=[[s*14,-s*2],[s*14,s*2],[s*15,0],[s*12,-s*2.5],[s*12,s*2.5],[s*16,-s*1],[s*16,s*1],[s*13,0]];
+  eyePositions.forEach(([ex,ey],i)=>{
+    const r=i<3?s*1.2:s*0.7;
+    ctx.fillStyle=i<3?'#ff2200':'#cc1100';
+    ctx.shadowColor='#ff0000'; ctx.shadowBlur=i<3?6:3;
+    ctx.beginPath(); ctx.arc(ex,ey,r,0,Math.PI*2); ctx.fill();
+  });
+  ctx.shadowBlur=0;
+  // 8 articulated legs — 4 per side, jointed
+  const legData=[
+    // [shoulderX, shoulderY, elbowX, elbowY, tipX, tipY]
+    [-s*6,-s*7, -s*10,-s*14, -s*6,-s*20],
+    [-s*2,-s*7, -s*2, -s*15,  s*2,-s*20],
+    [ s*4,-s*6,  s*8, -s*13,  s*14,-s*18],
+    [ s*8,-s*5,  s*14,-s*11,  s*20,-s*14],
+    [-s*6, s*7, -s*10, s*14, -s*6, s*20],
+    [-s*2, s*7, -s*2,  s*15,  s*2, s*20],
+    [ s*4, s*6,  s*8,  s*13,  s*14, s*18],
+    [ s*8, s*5,  s*14, s*11,  s*20, s*14],
+  ];
+  ctx.strokeStyle='#4a2200'; ctx.lineWidth=s*1.4;
+  legData.forEach(([sx,sy,ex,ey,tx,ty])=>{
+    ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(ex,ey); ctx.lineTo(tx,ty); ctx.stroke();
+    // Claw tips — two-pronged
+    const ang=Math.atan2(ty-ey,tx-ex);
+    ctx.lineWidth=s*0.8;
+    ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(tx+Math.cos(ang+0.5)*s*3,ty+Math.sin(ang+0.5)*s*3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(tx+Math.cos(ang-0.5)*s*3,ty+Math.sin(ang-0.5)*s*3); ctx.stroke();
+    ctx.lineWidth=s*1.4;
+  });
+  // Chitin banding on abdomen
+  ctx.strokeStyle='#5c2a0044'; ctx.lineWidth=s*0.5;
+  for(let i=0;i<3;i++){
+    ctx.beginPath(); ctx.ellipse(-s*2,0,s*(8+i*1.5),s*(5+i*1),0,0,Math.PI*2); ctx.stroke();
+  }
+  // Engine venom glow — sickly green
+  const eg=ctx.createRadialGradient(-s*14,0,0,-s*14,0,s*5);
+  eg.addColorStop(0,'rgba(80,200,20,0.6)'); eg.addColorStop(1,'transparent');
+  ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(-s*14,0,s*5,0,Math.PI*2); ctx.fill();
   ctx.restore();
 }
 
@@ -8266,6 +8327,7 @@ function showLootOverlay(key, gold, items){
   else if(key==='frStalker')   _lF('frStalker',false,   ()=>drawFarRealmStalker(lc,90,55,32));
   else if(key==='frHorde')     _lF('frHorde',false,     ()=>drawFarRealmHorde(lc,90,55,32));
   else if(key==='thrikreen')   _lF('thrikreen',false,   ()=>drawThriKreen(lc,90,55,32));
+  else if(key==='neogi')       _lF('neogi',false,       ()=>drawNeogi(lc,90,55,32));
   else if(key==='wb_grex')     _lF('wb_grex',false,     ()=>drawWarlordGrex(lc,90,55,32));
   else if(key==='wb_admiral')  _lF('wb_admiral',false,  ()=>drawHollowAdmiral(lc,90,55,32));
   else if(key==='wb_clutch')   _lF('wb_clutch',false,   ()=>drawClutchMother(lc,90,55,32));
