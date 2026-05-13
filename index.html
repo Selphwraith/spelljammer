@@ -200,7 +200,7 @@ body {
   flex-direction: row;
   gap: 10px;
   width: 100%;
-  max-width: 660px;
+  max-width: 780px;
   align-items: flex-start;
 }
 .cbt-col {
@@ -223,20 +223,21 @@ body {
 /* Keep cships alias working for any legacy JS references */
 .cships { display: flex; gap: 28px; align-items: center; width: 100%; max-width: 660px; }
 .cblock { flex:1; background:rgba(15,3,38,0.88); border:1px solid #5522aa; border-radius:5px; padding:11px; text-align:center; }
+.cblock canvas { width: 200px; height: 130px; display:block; margin: 6px auto; border-radius:4px; border:1px solid #33005533; }
 .cname { font-family:'Cinzel',serif; font-size: 0.688em; color:#9966dd; margin-bottom:5px; }
 .cstat { font-size: 0.688em; color:#8877aa; margin-top:3px; }
 .hpw { background:#12002a; border:1px solid #33004422; border-radius:2px; height:9px; overflow:hidden; margin-top:3px; }
 .hpf { height:100%; background:linear-gradient(90deg,#ff4444,#ff6644); transition:width 0.5s; }
 .hpf.me { background:linear-gradient(90deg,#00ee77,#44aaff); }
 .cvs { font-family:'Cinzel',serif; font-size: 1.5em; color:#5522aa; font-weight:900; }
-.clog { background:rgba(6,0,18,0.88); border:1px solid #22003322; border-radius:4px; padding:8px 10px; max-width:660px; width:100%; height:120px; overflow-y:auto; font-size: 0.813em; color:#aa99cc; font-style:italic; line-height:1.6; }
-.cacts { display:flex; gap:7px; flex-wrap:wrap; justify-content:center; max-width:660px; }
+.clog { background:rgba(6,0,18,0.88); border:1px solid #22003322; border-radius:4px; padding:8px 10px; max-width:780px; width:100%; height:120px; overflow-y:auto; font-size: 0.813em; color:#aa99cc; font-style:italic; line-height:1.6; }
+.cacts { display:flex; gap:7px; flex-wrap:wrap; justify-content:center; max-width:780px; }
 /* Weapon button with cooldown pip */
 .wpn-btn-wrap { position:relative; display:inline-block; }
 .cd-pip { position:absolute; top:-4px; right:-4px; background:#ff7744; color:#fff; font-size: 0.563em; border-radius:50%; width:14px; height:14px; display:flex; align-items:center; justify-content:center; font-family:'Cinzel',serif; font-weight:700; }
 
 /* ── COMBAT WEAPON PANELS ── */
-.cbt-panels { display:flex; gap:10px; width:100%; max-width:660px; margin-top:2px; }
+.cbt-panels { display:flex; gap:10px; width:100%; max-width:780px; margin-top:2px; }
 .cbt-wpn-panel { flex:1; background:rgba(8,2,22,0.92); border:1px solid #33005566; border-radius:5px; padding:7px; min-width:0; max-height:200px; overflow-y:auto; }
 .cbt-panel-title { font-family:'Cinzel',serif; font-size: 0.563em; letter-spacing:2px; color:#6644aa; text-transform:uppercase; margin-bottom:5px; padding-bottom:3px; border-bottom:1px solid #22003333; }
 .cbt-panel-title.enemy-title { color:#aa3333; }
@@ -650,7 +651,7 @@ body {
     border: 1px solid #33005544;
     border-radius: 5px;
   }
-  .cblock canvas { width: 52px !important; height: 34px !important; float: right; margin-left: 4px; }
+  .cblock canvas { width: 140px !important; height: 90px !important; float: none; margin: 4px auto !important; }
   .cname { font-size: 0.75em; font-weight: 700; margin-bottom: 4px; line-height: 1.2; }
   .cstat { font-size: 0.688em; line-height: 1.7; }
   .hpw { height: 7px; border-radius: 3px; margin: 2px 0; }
@@ -788,7 +789,7 @@ body {
   overflow: hidden;
 }
 #ov-localquest.on { display: block; }
-#lq-canvas { width:100%; height:100%; display:block; }
+#lq-canvas { position:absolute; inset:0; width:100%; height:100%; display:block; z-index:1; }
 
 /* Quest NPC card */
 #lq-card {
@@ -796,7 +797,7 @@ body {
   width: 280px; background: rgba(6,0,20,0.97);
   border: 1px solid #44118877; border-radius: 8px;
   padding: 18px 18px 14px; display: none; flex-direction: column; gap: 10px;
-  box-shadow: 0 0 40px #33006644;
+  box-shadow: 0 0 40px #33006644; z-index:10;
 }
 #lq-card.on { display: flex; }
 .lq-portrait { width:46px; height:46px; border-radius:50%; border:2px solid #44118866; display:flex; align-items:center; justify-content:center; font-size: 1.375em; flex-shrink:0; }
@@ -818,14 +819,14 @@ body {
   position:absolute; bottom:8px; left:50%; transform:translateX(-50%);
   background:rgba(5,0,15,0.85); border:1px solid #33005533; border-radius:4px;
   padding:5px 14px; font-size: 0.688em; color:#7766aa; font-style:italic;
-  pointer-events:none; max-width:500px; text-align:center;
+  pointer-events:none; max-width:500px; text-align:center; z-index:10;
 }
 /* Close / Back buttons */
 #lq-back {
   position:absolute; top:10px; left:14px; background:none;
   border:1px solid #44006644; border-radius:3px; color:#6655aa;
   font-size: 0.75em; padding:4px 10px; cursor:pointer;
-  font-family:'Cinzel',serif; letter-spacing:1px; z-index:5;
+  font-family:'Cinzel',serif; letter-spacing:1px; z-index:10;
   display:none;
 }
 #lq-back:hover { border-color:#9966dd; color:#ddbbff; }
@@ -833,7 +834,7 @@ body {
   position:absolute; top:10px; right:14px; background:none;
   border:1px solid #44006644; border-radius:3px; color:#6655aa;
   font-size: 0.75em; padding:4px 10px; cursor:pointer;
-  font-family:'Cinzel',serif; letter-spacing:1px; z-index:5;
+  font-family:'Cinzel',serif; letter-spacing:1px; z-index:10;
 }
 #lq-close:hover { border-color:#9966dd; color:#ddbbff; }
 
@@ -933,7 +934,7 @@ body {
   width:300px; background:rgba(6,0,20,0.97);
   border:1px solid #44558877; border-radius:8px;
   padding:16px; display:none; flex-direction:column; gap:10px;
-  box-shadow: 0 0 40px #00336644; max-height:80vh; overflow-y:auto;
+  box-shadow: 0 0 40px #00336644; max-height:80vh; overflow-y:auto; z-index:10;
 }
 #lq-shop.on { display:flex; }
 .lq-shop-title { font-family:'Cinzel',serif; font-size: 0.813em; color:#88ccff; letter-spacing:2px; }
@@ -1343,7 +1344,7 @@ body {
       <div class="cbt-col cbt-col-player">
         <div class="cblock">
           <div class="cname" id="ct-pname">Pinnace</div>
-          <canvas id="cv-player" width="120" height="80"></canvas>
+          <canvas id="cv-player" width="200" height="130"></canvas>
           <div class="cstat">Hull: <span id="ct-php">65</span>/<span id="ct-pmhp">65</span></div>
           <div class="hpw"><div class="hpf me" id="ct-pbar" style="width:100%"></div></div>
           <div class="cstat">Status: <span id="ct-pstat">Ready</span></div>
@@ -1361,7 +1362,7 @@ body {
       <div class="cbt-col cbt-col-enemy">
         <div class="cblock">
           <div class="cname" id="ct-ename">Nautiloid</div>
-          <canvas id="cv-enemy" width="120" height="80"></canvas>
+          <canvas id="cv-enemy" width="200" height="130"></canvas>
           <div class="cstat">Hull: <span id="ct-ehp">80</span>/<span id="ct-emhp">80</span></div>
           <div class="hpw"><div class="hpf" id="ct-ebar" style="width:100%"></div></div>
           <div class="cstat">Crew: <span id="ct-ecrew">—</span> <span id="ct-emcrew" style="color:#556677"></span></div>
@@ -6944,44 +6945,44 @@ function updateCbtUI(){
 
 function drawCbtShips(key){
   const pc=document.getElementById('cv-player').getContext('2d');
-  pc.clearRect(0,0,120,80);
-  const [_pw,_ph]=shipSz(G.ship.type,90,55);
-  drawShipImg(G.ship.type,pc,60,44,_pw,_ph,false,()=>{
-    if(G.ship.type==='pinnace')drawPinnace(pc,60,44,28,false);
-    else if(G.ship.type==='squid')drawSquid(pc,60,44,28,false);
-    else if(G.ship.type==='manow')drawManow(pc,60,44,28,false);
-    else drawHammer(pc,60,44,28,false);
+  pc.clearRect(0,0,200,130);
+  const [_pw,_ph]=shipSz(G.ship.type,160,100);
+  drawShipImg(G.ship.type,pc,100,65,_pw,_ph,false,()=>{
+    if(G.ship.type==='pinnace')drawPinnace(pc,100,65,46,false);
+    else if(G.ship.type==='squid')drawSquid(pc,100,65,46,false);
+    else if(G.ship.type==='manow')drawManow(pc,100,65,46,false);
+    else drawHammer(pc,100,65,46,false);
   });
   const ec=document.getElementById('cv-enemy').getContext('2d');
-  ec.clearRect(0,0,120,80);
-  const _eF=(k,flip,fn)=>drawShipImg(k,ec,60,44,90,55,flip,fn);
-  if(key==='fg_realm')       _eF('squid',true,     ()=>drawSquid(ec,60,44,28,true));
-  else if(key==='fg_grey')   _eF('hammer',true,    ()=>drawHammer(ec,60,44,28,true));
-  else if(key==='fg_krynn')  _eF('githyanki',false,()=>drawGithyanki(ec,60,44,28));
-  else if(key==='fg_cluster')_eF('squid',true,     ()=>drawSquid(ec,60,44,28,true));
-  else if(key==='fg_hero')   _eF('beholder',false, ()=>drawBeholder(ec,60,44,28));
-  else if(key==='fg_dark')   _eF('leviathan',false,()=>drawLeviathan(ec,60,44,28));
-  else if(key==='corsair')   _eF('corsair',true,   ()=>drawCorsairSloop(ec,60,44,28,true));
-  else if(key==='plunderer') _eF('plunderer',true, ()=>drawPlundererBrig(ec,60,44,28,true));
-  else if(key==='blackfleet')_eF('blackfleet',true,()=>drawBlackFleetReaver(ec,60,44,28,true));
-  else if(key==='nautiloid') _eF('nautiloid',false,()=>drawNautiloid(ec,60,44,28));
-  else if(key==='elder')     _eF('elder',false,    ()=>drawElder(ec,60,44,28));
-  else if(key==='caiphon')   _eF('caiphon',false,  ()=>drawCaiphon(ec,60,44,28,performance.now()/1000));
-  else if(key==='beholder')  _eF('beholder',false, ()=>drawBeholder(ec,60,44,28));
-  else if(key==='leviathan') _eF('leviathan',false,()=>drawLeviathan(ec,60,44,28));
-  else if(key==='githyanki') _eF('githyanki',false,()=>drawGithyanki(ec,60,44,28));
-  else if(key==='vodoniPatrol')_eF('vodoniPatrol',false,()=>drawVodoniWarship(ec,60,44,28));
-  else if(key==='scroBattle')  _eF('scroBattle',false,  ()=>drawScroBattleCruiser(ec,60,44,28));
-  else if(key==='frStalker')   _eF('frStalker',false,   ()=>drawFarRealmStalker(ec,60,44,28));
-  else if(key==='frHorde')     _eF('frHorde',false,     ()=>drawFarRealmHorde(ec,60,44,28));
-  else if(key==='thrikreen')   _eF('thrikreen',false,   ()=>drawThriKreen(ec,60,44,28));
-  else if(key==='neogi')       _eF('neogi',false,       ()=>drawNeogi(ec,60,44,28));
-  else if(key==='wb_grex')     _eF('wb_grex',false,     ()=>drawWarlordGrex(ec,60,44,28));
-  else if(key==='wb_admiral')  _eF('wb_admiral',false,  ()=>drawHollowAdmiral(ec,60,44,28));
-  else if(key==='wb_clutch')   _eF('wb_clutch',false,   ()=>drawClutchMother(ec,60,44,28));
-  else if(key==='wb_murmur')   _eF('wb_murmur',false,   ()=>drawTheMurmur(ec,60,44,28));
-  else if(key==='shothothug')  _eF('wb_murmur',false,   ()=>drawTheMurmur(ec,60,44,28));
-  else drawSquid(ec,60,44,28,true);
+  ec.clearRect(0,0,200,130);
+  const _eF=(k,flip,fn)=>drawShipImg(k,ec,100,65,160,100,flip,fn);
+  if(key==='fg_realm')       _eF('squid',true,     ()=>drawSquid(ec,100,65,46,true));
+  else if(key==='fg_grey')   _eF('hammer',true,    ()=>drawHammer(ec,100,65,46,true));
+  else if(key==='fg_krynn')  _eF('githyanki',false,()=>drawGithyanki(ec,100,65,46));
+  else if(key==='fg_cluster')_eF('squid',true,     ()=>drawSquid(ec,100,65,46,true));
+  else if(key==='fg_hero')   _eF('beholder',false, ()=>drawBeholder(ec,100,65,46));
+  else if(key==='fg_dark')   _eF('leviathan',false,()=>drawLeviathan(ec,100,65,46));
+  else if(key==='corsair')   _eF('corsair',true,   ()=>drawCorsairSloop(ec,100,65,46,true));
+  else if(key==='plunderer') _eF('plunderer',true, ()=>drawPlundererBrig(ec,100,65,46,true));
+  else if(key==='blackfleet')_eF('blackfleet',true,()=>drawBlackFleetReaver(ec,100,65,46,true));
+  else if(key==='nautiloid') _eF('nautiloid',false,()=>drawNautiloid(ec,100,65,46));
+  else if(key==='elder')     _eF('elder',false,    ()=>drawElder(ec,100,65,46));
+  else if(key==='caiphon')   _eF('caiphon',false,  ()=>drawCaiphon(ec,100,65,46,performance.now()/1000));
+  else if(key==='beholder')  _eF('beholder',false, ()=>drawBeholder(ec,100,65,46));
+  else if(key==='leviathan') _eF('leviathan',false,()=>drawLeviathan(ec,100,65,46));
+  else if(key==='githyanki') _eF('githyanki',false,()=>drawGithyanki(ec,100,65,46));
+  else if(key==='vodoniPatrol')_eF('vodoniPatrol',false,()=>drawVodoniWarship(ec,100,65,46));
+  else if(key==='scroBattle')  _eF('scroBattle',false,  ()=>drawScroBattleCruiser(ec,100,65,46));
+  else if(key==='frStalker')   _eF('frStalker',false,   ()=>drawFarRealmStalker(ec,100,65,46));
+  else if(key==='frHorde')     _eF('frHorde',false,     ()=>drawFarRealmHorde(ec,100,65,46));
+  else if(key==='thrikreen')   _eF('thrikreen',false,   ()=>drawThriKreen(ec,100,65,46));
+  else if(key==='neogi')       _eF('neogi',false,       ()=>drawNeogi(ec,100,65,46));
+  else if(key==='wb_grex')     _eF('wb_grex',false,     ()=>drawWarlordGrex(ec,100,65,46));
+  else if(key==='wb_admiral')  _eF('wb_admiral',false,  ()=>drawHollowAdmiral(ec,100,65,46));
+  else if(key==='wb_clutch')   _eF('wb_clutch',false,   ()=>drawClutchMother(ec,100,65,46));
+  else if(key==='wb_murmur')   _eF('wb_murmur',false,   ()=>drawTheMurmur(ec,100,65,46));
+  else if(key==='shothothug')  _eF('wb_murmur',false,   ()=>drawTheMurmur(ec,100,65,46));
+  else drawSquid(ec,100,65,46,true);
 }
 
 
@@ -8143,13 +8144,19 @@ async function doAction(type, idx, itemUid) {
   updateCbtUI();
   await sleep(350);
   if (G.phase !== 'combat') return; // fight ended during async chain
-  if (G.cbt.enemy.hp > 0) await enemyTurn();
+  if (G.cbt.enemy.hp > 0) {
+    // Brief pause so player can read their own action's result before enemy responds
+    await sleep(900);
+    if (G.phase !== 'combat') return;
+    await enemyTurn();
+  }
 }
 
 // ── ENEMY TURN (async) ────────────────────────────────
 async function enemyTurn() {
   if (G.phase !== 'combat') return;
   G.cbt.pTurn = false;
+  cLogSep('— ENEMY —');
   const e = G.cbt.enemy;
 
   // Burn DoT
@@ -8479,10 +8486,13 @@ async function enemyTurn() {
   }
 
   updateCbtUI();
-  await sleep(280);
+  await sleep(700);  // let enemy action visuals settle before player can act
   if(G.phase !== 'combat') return;
+  cLogSep('— YOUR TURN —');
   G.cbt.pTurn = true;
   buildCbtBtns();
+  // Auto-focus first combat action for keyboard users
+  setTimeout(() => { if(G.cbt?.pTurn) KBNav.activate(); }, 50);
 }
 
 // Single death check — hp OR crew reaching 0 kills the enemy
@@ -9112,6 +9122,12 @@ function cLog(msg,type){
   d.textContent=msg; d.style.color=type==='dmg'?'#ff8866':type==='gd'?'#44ee88':'#aa99cc';
   d.style.marginBottom='2px'; b.appendChild(d); b.scrollTop=b.scrollHeight;
 }
+function cLogSep(label){
+  const b=document.getElementById('clog'); const d=document.createElement('div');
+  d.style.cssText='color:#33224455;font-size:9px;letter-spacing:2px;padding:4px 0 2px;border-top:1px solid #22113322;margin-top:3px;';
+  d.textContent = label || '─────────────';
+  b.appendChild(d); b.scrollTop=b.scrollHeight;
+}
 function addLog(msg,type){
   const la=document.getElementById('logarea'); const d=document.createElement('div');
   d.className='le'+(type?' '+type:''); d.textContent='▸ '+msg; la.appendChild(d); la.scrollTop=la.scrollHeight;
@@ -9641,6 +9657,11 @@ function showFactionRep(){
   el.style.display = 'flex';
 }
 
+function closeFactionRep() {
+  const el = document.getElementById('ov-faction-rep');
+  if(el) el.style.display = 'none';
+}
+
 function closeDockmaster() {
   document.getElementById('ov-dockmaster').classList.remove('on');
   _dmSphere = null;
@@ -9823,6 +9844,14 @@ window.addEventListener('keydown', e=>{
   if(!G.view) return;
   // Don't fire if focus is in a text input
   if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+  // Don't pan when any overlay/window is open — arrows navigate UI instead
+  const anyOverlayOpen = document.querySelector(
+    '#ov-port.on, #ov-waypoint.on, #ov-wpnpicker.on, #ov-inv.on, #ov-wpn.on, #ov-shp.on, ' +
+    '#ov-qlog.on, #ov-journal.on, #ov-loot.on, #ov-dockmaster.on, ' +
+    '#ov-localquest.on, #ov-combat.on, #msgbox.on, ' +
+    '[id="briefing-overlay"]:not(.hidden), [id="save-overlay"]:not(.hidden)'
+  );
+  if(anyOverlayOpen) return;
   const W=cv.width, H=cv.height;
   const PAN_STEP=40;
   switch(e.key){
@@ -11548,8 +11577,8 @@ window.addEventListener('keydown', e=>{
         close: ()=> { try{ endCinematic?.(); }catch(_){ document.getElementById('cin-ovl').style.display='none'; } } },
       { check: ()=> document.getElementById('ov-roam')?.style.display==='flex',
         close: ()=> roamContinue?.() },
-      { check: ()=> document.getElementById('ov-faction-rep')?.classList.contains('on'),
-        close: ()=> closeOverlay('faction-rep') },
+      { check: ()=> { const el=document.getElementById('ov-faction-rep'); return el && el.style.display==='flex'; },
+        close: ()=> closeFactionRep() },
       { check: ()=> document.getElementById('ov-wpnpicker')?.classList.contains('on'),
         close: ()=> wpnPickerCancel() },
       { check: ()=> document.getElementById('briefing-overlay') && !document.getElementById('briefing-overlay').classList.contains('hidden'),
@@ -12210,7 +12239,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <div id="fr-factions" style="margin-bottom:14px;"></div>
     <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:#443366;margin:12px 0 6px;">MISSIONS</div>
     <div id="fr-quests"></div>
-    <button onclick="document.getElementById('ov-faction-rep').style.display='none'" class="btn" style="margin-top:16px;width:100%;font-size:11px;padding:8px;">✕ Close</button>
+    <button onclick="closeFactionRep()" class="btn" style="margin-top:16px;width:100%;font-size:11px;padding:8px;">✕ Close</button>
   </div>
 </div>
 
