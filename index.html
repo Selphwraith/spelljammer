@@ -1905,7 +1905,7 @@ const ENM = {
   // ── Tier 3 Bandits ────────────────────────────────────
   blackfleet:{ name:'Black Fleet Reaver',   sub:'Elite Pirate Warship',   hp:148, maxHp:148, crew:10, maxCrew:10, g:[49,90],
     atk:[{n:'Heavy Cannon Fire',d:[3,8],txt:'Precisely aimed heavy fire strikes your hull.'},{n:'Corsair Squadron',d:[2,6],txt:'Three escort sloops strafe your flanks simultaneously!'}],
-    sp:{n:'Void Ambush',c:0.25,txt:'The Reaver drops from void-shadow — your targeting is blind this round!',fx:'dodge'},col:'#aa2211',diff:3,
+    sp:{n:'Void Ambush',c:0.25,txt:'The Reaver drops from void-shadow — it will be hard to target next round!',fx:'dodge'},col:'#aa2211',diff:3,
     wpns:[
       { n:'Heavy Siege Cannon',  ico:'🔥', d:[3,8], cd:2, threat:3, txt:'Armour-piercing shot — ignores 2 resistance.' },
       { n:'Escort Squadron',     ico:'⚔️', d:[2,6], cd:1, threat:2, txt:'Three flanking sloops strafe your hull simultaneously.' }
@@ -1921,7 +1921,7 @@ const ENM = {
     ]},
   githyanki:{ name:'Githyanki Warship',  sub:'Silver Sword Class',   hp:135, maxHp:135, crew:10, maxCrew:10, g:[30,56],
     atk:[{n:'Silver Sword Broadside',d:[3,8],txt:'A volley of silver-tipped bolts slams your hull.'},{n:'Gish Boarding Party',d:[2,6],txt:'Warriors teleport aboard — hull and crew loss!',crew:2}],
-    sp:{n:'Dimension Step',c:0.25,txt:'The warship blinks away — your shot misses!',fx:'dodge'},col:'#ff8844',diff:2,
+    sp:{n:'Dimension Step',c:0.25,txt:'Dimension Step — the warship blinks into a flanking position, evading your next shot!',fx:'dodge'},col:'#ff8844',diff:2,
     heal:{n:'Astral Armor',c:0.22,txt:'The githyanki channels silver sword energy into their hull plating — damage resistance surges!',fx:'buff',buffStat:'resist',buffAmt:3,buffTurns:2},
     wpns:[
       { n:'Silver Sword Battery', ico:'⚔️', d:[3,8], cd:1, threat:3, txt:'Planar-edged bolts — cannot be dodged by Evasive Maneuver.', seeking:true },
@@ -1986,7 +1986,7 @@ const ENM = {
     ]},
   thrikreen:   { name:'Thri-Kreen Hunter',   sub:'Clutch Raider',           hp:108, maxHp:108, crew:12, maxCrew:12, g:[30,60],
     atk:[{n:'Fang Bolt Salvo',d:[2,6],txt:'Crystalline fang-bolts tear into your hull from six launchers at once!'},{n:'Claw Boarding',d:[2,6],txt:'Thri-kreen warriors lock onto your hull and begin cutting!',crew:1}],
-    sp:{n:'Chitin Shield',c:0.22,txt:'The vessel rotates its organic chitin plating — your attack deflects!',fx:'dodge'},col:'#22cc44',diff:2,
+    sp:{n:'Chitin Shield',c:0.22,txt:'The vessel rotates its organic chitin plating into a deflection angle — ready to absorb the next hit!',fx:'dodge'},col:'#22cc44',diff:2,
     heal:{n:'Clutch Bond',c:0.22,txt:'The clutch-mother calls survivors back to the ship — fallen warriors reconstituted into hull integrity!',fx:'heal',amt:16,crewCost:3,threshold:0.50},
     wpns:[
       { n:'Fang Bolt Launchers', ico:'🦷', d:[2,6], cd:0, threat:2, txt:'Six crystalline launchers — fires every round.' },
@@ -2390,10 +2390,10 @@ const FRAG_GUARDIANS = {
     sp:{n:'Corsair Ambush',c:0.25,txt:'Hidden corsairs spring from the debris field — flanking strike!',fx:'summon',d:[2,6]}, col:'#cc8833', diff:2 },
   fg_grey:   { name:'Iron Warden Drekk',       sub:'Fragment Guardian — Dwarven Vault',    hp:178, maxHp:178, g:[90,135],
     atk:[{n:'Siege Cannon Barrage',d:[3,8],txt:'Heavy dwarven siege guns pound your hull in sequence!'},{n:'Iron Boarding Party',d:[2,6],txt:'Armored marines storm your decks — crew lost!',crew:1}],
-    sp:{n:'Fortress Protocol',c:0.22,txt:'The warden locks its hull plates — your shot deflects harmlessly!',fx:'dodge'}, col:'#aa7722', diff:2 },
+    sp:{n:'Fortress Protocol',c:0.22,txt:'Fortress Protocol — the warden locks its hull plates into a deflection brace!',fx:'dodge'}, col:'#aa7722', diff:2 },
   fg_krynn:  { name:"War-Commander Zith'ral",  sub:"Fragment Guardian — The Star Nest",   hp:172, maxHp:172, g:[88,128],
     atk:[{n:'Silver Sword Salvo',d:[3,8],txt:'Elite githyanki warriors unleash a devastating broadside!'},{n:'Astral Boarding',d:[2,8],txt:'Warriors phase through your hull — crew dragged away!',crew:2}],
-    sp:{n:'Planar Step Formation',c:0.28,txt:'The entire warship formation blinks sideways — your targeting goes dark!',fx:'dodge'}, col:'#dd8833', diff:3 },
+    sp:{n:'Planar Step Formation',c:0.28,txt:'Planar Step Formation — the entire formation blinks sideways, breaking your targeting lock!',fx:'dodge'}, col:'#dd8833', diff:3 },
   fg_cluster:{ name:'The Broker',              sub:"Fragment Guardian — The Broker's Cache", hp:158, maxHp:158, g:[85,125],
     atk:[{n:'Venom Barrage',d:[2,8],txt:'Neogi venom-bolts corrode your hull plating!'},{n:'Thrall Wave',d:[1,8],txt:'Mind-controlled thralls storm your ship — crew lost!',crew:2}],
     sp:{n:'Enslave Crew',c:0.28,txt:"The Broker's psychic web ensnares two of your crew — they turn against you!",fx:'crew'}, col:'#bb5511', diff:3 },
@@ -8310,11 +8310,13 @@ async function enemyTurn() {
         break;
       case 'dodge':
         G.cbt.eStat = 'dodging';
+        floatText(eCV(), '🌀 EVADING', '#88ccff', 10);
         cLog(e.sp.txt, 'dmg');
         await sleep(400);
         break;
       case 'phase':
         G.cbt.eStat = 'phased';
+        floatText(eCV(), '👻 PHASING', '#cc88ff', 10);
         cLog(e.sp.txt, 'dmg');
         await sleep(400);
         break;
