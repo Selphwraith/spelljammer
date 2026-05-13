@@ -114,6 +114,23 @@ body {
 .inv-body { display:flex; gap:16px; width:100%; max-width:680px; }
 .inv-grid-wrap { flex:1; }
 .inv-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+
+/* ── KEYBOARD NAVIGATION FOCUS ────────────────────────────────── */
+.kb-focus {
+  outline: 2px solid #ffcc44 !important;
+  outline-offset: -2px !important;
+  box-shadow: 0 0 14px #ffcc4455 !important;
+  position: relative;
+  z-index: 1;
+}
+.kb-focus::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background: rgba(255,200,50,0.06);
+  pointer-events: none;
+}
+
 .inv-item {
   background:rgba(18,4,40,0.85); border:1px solid #33004466;
   border-radius:4px; padding:8px 5px; text-align:center;
@@ -5741,6 +5758,7 @@ function wpnPickerCancel() {
   _wpnPickerItem = null;
   _wpnPickerSlot = null;
   document.getElementById('ov-wpnpicker').classList.remove('on');
+  _kbNavResetOnClose();
 }
 
 function wpnPickerConfirm() {
@@ -5997,6 +6015,259 @@ function _wpnCompareStatHtml(w, vs, isNew) {
        + (spTxt ? `<br><span style="color:#ff9944;font-size:9px;">${spTxt}</span>` : '')
        + (w.hullPenalty > 0 ? `<br><span style="color:#ff5533;">−${w.hullPenalty} max hull equipped</span>` : '');
 }
+
+
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║  KBNav — Keyboard / Scroll Navigation System                            ║
+// ║  Arrow keys + mouse wheel move focus; Enter confirms; Esc handled above ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+const KBNav = (() => {
+  let _ctx   = null;   // active context id string
+  let _idx   = -1;     // currently focused item index (-1 = none)
+  let _items = [];     // live NodeList/Array of focusable items in active ctx
+
+  // ── Context definitions ─────────────────────────────────────────────────
+  // Each entry: { id, selector, container, confirm(el), isActive() }
+  const CONTEXTS = [
+    {
+      id: 'shop',
+      container: () => document.getElementById('shopgrid'),
+      selector:  '.sitem:not(.dis)',
+      allSelector: '.sitem',
+      isActive:  () => document.getElementById('ov-port')?.classList.contains('on') && document.getElementById('shopgrid')?.children.length > 0,
+      confirm:   (el) => el.click(),
+    },
+    {
+      id: 'waystation',
+      container: () => document.querySelector('#ov-waypoint .shop-grid, #ov-waypoint [class*="grid"]') ||
+                        document.getElementById('ov-waypoint'),
+      selector:  '.shop-card:not(.cant-afford)',
+      allSelector: '.shop-card',
+      isActive:  () => document.getElementById('ov-waypoint')?.classList.contains('on'),
+      confirm:   (el) => el.click(),
+    },
+    {
+      id: 'wpnpicker',
+      container: () => document.getElementById('wpnpicker-slots'),
+      selector:  '.wpnp-slot',
+      allSelector: '.wpnp-slot',
+      isActive:  () => document.getElementById('ov-wpnpicker')?.classList.contains('on'),
+      confirm:   (el) => {
+        el.click();
+        // If already selected, hit confirm button
+        if (el.classList.contains('selected')) {
+          const btn = document.getElementById('wpnpicker-confirm-btn');
+          if (btn && btn.style.display !== 'none') btn.click();
+        }
+      },
+    },
+    {
+      id: 'inv',
+      container: () => document.getElementById('ov-inv'),
+      selector:  '.inv-item',
+      allSelector: '.inv-item',
+      isActive:  () => document.getElementById('ov-inv')?.classList.contains('on'),
+      confirm:   (el) => el.click(),
+    },
+    {
+      id: 'lq-shop',
+      container: () => document.getElementById('lq-shop'),
+      selector:  '.lq-shop-item:not(.dis)',
+      allSelector: '.lq-shop-item',
+      isActive:  () => document.getElementById('lq-shop')?.classList.contains('on'),
+      confirm:   (el) => el.click(),
+    },
+    {
+      id: 'roam',
+      container: () => document.getElementById('roam-result'),
+      selector:  'button:not([disabled])',
+      allSelector: 'button',
+      isActive:  () => {
+        const el = document.getElementById('ov-roam');
+        return el && (el.style.display === 'flex' || el.style.display === 'block');
+      },
+      confirm:   (el) => el.click(),
+    },
+    {
+      id: 'loot',
+      container: () => document.getElementById('loot-grid'),
+      selector:  '.loot-card',
+      allSelector: '.loot-card',
+      isActive:  () => document.getElementById('ov-loot')?.classList.contains('on'),
+      confirm:   () => claimLoot?.(),
+    },
+    {
+      id: 'combat',
+      container: () => document.getElementById('cacts'),
+      selector:  'button:not([disabled])',
+      allSelector: 'button',
+      isActive:  () => G?.phase === 'combat' && G?.cbt?.pTurn === true,
+      confirm:   (el) => el.click(),
+    },
+    {
+      id: 'wpn-loadout',
+      container: () => document.getElementById('wpn-grid'),
+      selector:  '.wpn-card:not(.empty)',
+      allSelector: '.wpn-card',
+      isActive:  () => document.getElementById('ov-wpn')?.classList.contains('on'),
+      confirm:   (el) => el.click(),
+    },
+    {
+      id: 'msgbox',
+      container: () => document.getElementById('msgbox'),
+      selector:  'button:not([style*="display:none"]):not([style*="display: none"])',
+      allSelector: 'button',
+      isActive:  () => document.getElementById('msgbox')?.classList.contains('on'),
+      confirm:   (el) => el.click(),
+    },
+    {
+      id: 'dockmaster',
+      container: () => document.getElementById('ov-dockmaster'),
+      selector:  'button:not([disabled])',
+      allSelector: 'button',
+      isActive:  () => document.getElementById('ov-dockmaster')?.classList.contains('on'),
+      confirm:   (el) => el.click(),
+    },
+  ];
+
+  // ── Internals ────────────────────────────────────────────────────────────
+  function _getItems(ctx) {
+    const container = ctx.container();
+    if (!container) return [];
+    const sel = ctx.allSelector || ctx.selector;
+    return Array.from(container.querySelectorAll(sel)).filter(el => {
+      // Only include visible, non-hidden elements
+      const style = window.getComputedStyle(el);
+      return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+    });
+  }
+
+  function _clearFocus() {
+    document.querySelectorAll('.kb-focus').forEach(el => el.classList.remove('kb-focus'));
+  }
+
+  function _setFocus(idx) {
+    _clearFocus();
+    if (!_items.length || idx < 0) { _idx = -1; return; }
+    _idx = Math.max(0, Math.min(idx, _items.length - 1));
+    const el = _items[_idx];
+    el.classList.add('kb-focus');
+    el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  function _move(delta) {
+    if (!_ctx) return false;
+    _items = _getItems(_ctx);
+    if (!_items.length) return false;
+    if (_idx < 0) {
+      _setFocus(delta > 0 ? 0 : _items.length - 1);
+    } else {
+      let next = _idx + delta;
+      // Wrap around
+      if (next < 0) next = _items.length - 1;
+      if (next >= _items.length) next = 0;
+      _setFocus(next);
+    }
+    return true;
+  }
+
+  function _confirm() {
+    if (!_ctx || _idx < 0 || !_items[_idx]) return false;
+    _ctx.confirm(_items[_idx]);
+    return true;
+  }
+
+  // ── Public API ───────────────────────────────────────────────────────────
+  function activate() {
+    // Find the highest-priority active context
+    for (const ctx of CONTEXTS) {
+      try {
+        if (ctx.isActive()) {
+          if (_ctx !== ctx) {
+            // Context changed — reset
+            _clearFocus();
+            _ctx = ctx;
+            _idx = -1;
+            _items = _getItems(ctx);
+          }
+          return ctx;
+        }
+      } catch(_) {}
+    }
+    _clearFocus();
+    _ctx = null;
+    _idx = -1;
+    _items = [];
+    return null;
+  }
+
+  function moveUp()    { activate(); return _move(-1); }
+  function moveDown()  { activate(); return _move(+1); }
+  function confirm()   { return _confirm(); }
+  function reset()     { _clearFocus(); _ctx = null; _idx = -1; _items = []; }
+  function refresh()   { if (_ctx) { _items = _getItems(_ctx); if (_idx >= _items.length) _idx = _items.length - 1; _setFocus(_idx); } }
+
+  // When mouse hovers an item that belongs to a context, sync focus to it
+  function syncHover(el) {
+    activate();
+    if (!_ctx) return;
+    const idx = _items.indexOf(el);
+    if (idx >= 0) { _idx = idx; _clearFocus(); el.classList.add('kb-focus'); }
+  }
+
+  // Mouse wheel on any overlay scrolls the active context
+  function onWheel(delta) {
+    activate();
+    if (!_ctx) return false;
+    return _move(delta > 0 ? 1 : -1);
+  }
+
+  return { activate, moveUp, moveDown, confirm, reset, refresh, syncHover, onWheel };
+})();
+
+// ── Wire KBNav into the keydown handler (called from main keydown listener) ──
+// Called at the start of the keydown handler; returns true if consumed.
+function kbNavKey(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return false;
+
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+    if (KBNav.moveDown()) { e.preventDefault(); return true; }
+  }
+  if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+    if (KBNav.moveUp()) { e.preventDefault(); return true; }
+  }
+  // Enter: try KBNav confirm first, then fall through to existing Enter logic
+  if (e.key === 'Enter') {
+    if (KBNav.confirm()) { e.preventDefault(); return true; }
+  }
+  return false;
+}
+
+// ── Wire hover sync so mouse and keyboard stay in sync ──────────────────────
+document.addEventListener('mouseover', e => {
+  const el = e.target.closest(
+    '.sitem, .shop-card, .wpnp-slot, .inv-item, .lq-shop-item, .wpn-card, .loot-card'
+  );
+  if (el) KBNav.syncHover(el);
+}, { passive: true });
+
+// ── Mouse wheel on overlays ──────────────────────────────────────────────────
+document.addEventListener('wheel', e => {
+  const inOverlay = e.target.closest(
+    '#ov-port, #ov-waypoint, #ov-wpnpicker, #ov-inv, #lq-shop, #roam-result, #loot-grid, #cacts, #ov-wpn, #ov-dockmaster, #msgbox'
+  );
+  if (inOverlay) {
+    if (KBNav.onWheel(e.deltaY)) {
+      // Only prevent default if the container isn't scrollable itself
+      const container = inOverlay;
+      const isScrollable = container.scrollHeight > container.clientHeight;
+      if (!isScrollable) e.preventDefault();
+    }
+  }
+}, { passive: false });
+
+// ── Reset KBNav when overlays close ─────────────────────────────────────────
+function _kbNavResetOnClose() { KBNav.reset(); }
 
 function buy(item){
   if(G.ship.gold<item.cost)return;
@@ -8405,7 +8676,7 @@ function openOverlay(which){
   if(which==='qlog'){ buildQuestLog('active'); document.getElementById('ov-qlog').classList.add('on'); }
   if(which==='journal'){ buildJournal(); document.getElementById('ov-journal').classList.add('on'); }
 }
-function closeOverlay(which){ document.getElementById('ov-'+which).classList.remove('on'); }
+function closeOverlay(which){ document.getElementById('ov-'+which).classList.remove('on'); _kbNavResetOnClose(); }
 
 function setInvFilter(f,el){
   G.invFilter=f; G.selItem=null;
@@ -10440,6 +10711,7 @@ function closeLocalQuest() {
   document.getElementById('ov-localquest').classList.remove('on');
   if(LQ.animId) { cancelAnimationFrame(LQ.animId); LQ.animId = null; }
   LQ.selectedNpc = null;
+  _kbNavResetOnClose();
 }
 
 // Navigate back one level within the local quest hub
@@ -11261,6 +11533,9 @@ window.addEventListener('keydown', e=>{
   }
 
   if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+
+  // ── KBNav: Arrow keys and nav-layer Enter ──
+  if(kbNavKey(e)) return;
 
   // ── ESCAPE — close top-most open overlay; menu only when all clear ──
   if(e.key==='Escape'){
