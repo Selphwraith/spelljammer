@@ -76,8 +76,13 @@ body {
   overflow-y:auto; overflow-x:hidden;
   -webkit-overflow-scrolling: touch;
   z-index:10;
+  touch-action: pan-y; /* allow scrolling within overlay, block map pan */
+  pointer-events: none; /* off by default when hidden */
 }
-.ovlay.on { display:flex; }
+.ovlay.on {
+  display:flex;
+  pointer-events: all; /* fully intercept all touches when visible */
+}
 .ovl-close-btn { position:absolute; top:10px; right:14px; background:none; border:1px solid #44006644; border-radius:3px; color:#6655aa; font-size: 0.75em; padding:4px 10px; cursor:pointer; font-family:'Cinzel',serif; letter-spacing:1px; }
 .ovl-close-btn:hover { border-color:#9966dd; color:#ddbbff; }
 
@@ -312,8 +317,8 @@ body {
 #tvlf { height:100%; background:linear-gradient(90deg,#9933ff,#ff3399); transition:width 0.08s linear; }
 
 /* ── MSG BOX ── */
-#msgbox { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(4,0,13,0.97); border:1px solid #5522aa; border-radius:6px; padding:20px 26px; text-align:center; display:none; z-index:60; max-width:360px; box-shadow:0 0 36px #6633aa44; }
-#msgbox.on { display:block; }
+#msgbox { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(4,0,13,0.97); border:1px solid #5522aa; border-radius:6px; padding:20px 26px; text-align:center; display:none; z-index:60; max-width:360px; box-shadow:0 0 36px #6633aa44; pointer-events:none; }
+#msgbox.on { display:block; pointer-events:all; touch-action:manipulation; }
 #msgtitle { font-family:'Cinzel',serif; font-size: 1.063em; color:#ffd700; margin-bottom:8px; }
 #msgbody { font-size: 0.813em; color:#aa99cc; margin-bottom:12px; line-height:1.6; white-space:pre-line; }
 #msgbtn, #msgbtn2 { min-height:44px; min-width:120px; font-size:0.875em; padding:10px 16px; }
@@ -788,8 +793,9 @@ body {
   display: none; z-index: 60;
   background: radial-gradient(ellipse at 40% 50%, #050018 60%, #020010 100%);
   overflow: hidden;
+  pointer-events: none;
 }
-#ov-localquest.on { display: block; }
+#ov-localquest.on { display: block; pointer-events: all; touch-action: none; }
 #lq-canvas { position:absolute; inset:0; width:100%; height:100%; display:block; z-index:1; }
 
 /* Quest NPC card */
@@ -9670,37 +9676,48 @@ function restart(){
 // ── _anyOverlayOpen — returns true if any window/overlay is covering the map ──
 // Used to block map canvas clicks when UI is open, preventing travel state corruption.
 function _anyOverlayOpen() {
+  // Safety — if G not yet initialized, block all map interaction
+  if (!G || !G.phase) return true;
   // Rest animation in progress
   if (G.watch?.restingPhase) return true;
-  // Phase-based blocks (port = docked, combat = fighting)
+  // Phase-based blocks
   if (G.phase === 'port' || G.phase === 'combat') return true;
-  // Overlay panels with .on class
+  // Any overlay with .on class
   const onOverlays = [
     'ov-port','ov-waypoint','ov-wpnpicker','ov-inv','ov-wpn','ov-shp',
     'ov-qlog','ov-journal','ov-loot','ov-dockmaster','ov-combat',
-    'ov-localquest','msgbox','rest-overlay',
+    'ov-localquest','ov-faction-rep','msgbox','rest-overlay',
   ];
   for (const id of onOverlays) {
     const el = document.getElementById(id);
     if (el && el.classList.contains('on')) return true;
   }
-  // Overlays using style.display instead of .on class
-  const el_fr = document.getElementById('ov-faction-rep');
-  if (el_fr && el_fr.style.display === 'flex') return true;
-  const el_roam = document.getElementById('ov-roam');
-  if (el_roam && (el_roam.style.display === 'flex' || el_roam.style.display === 'block')) return true;
+  // Any visible element that uses style.display instead of .on
+  const displayIds = ['ov-faction-rep','ov-roam'];
+  for (const id of displayIds) {
+    const el = document.getElementById(id);
+    if (el && el.style.display && el.style.display !== 'none') return true;
+  }
+  // Local quest overlay (dual-mode: .on or display)
   const lq = document.getElementById('ov-localquest');
-  if (lq && (lq.classList.contains('on') || lq.style.display === 'flex' || lq.style.display === 'block')) return true;
-  // Briefing / save overlays use .hidden class (visible = NOT hidden)
+  if (lq && (lq.classList.contains('on') || (lq.style.display && lq.style.display !== 'none'))) return true;
+  // Briefing / save (visible = NOT .hidden)
   const briefing = document.getElementById('briefing-overlay');
   if (briefing && !briefing.classList.contains('hidden')) return true;
   const saveOv = document.getElementById('save-overlay');
   if (saveOv && !saveOv.classList.contains('hidden')) return true;
-  // Font panel, cinematic, debug console
-  if (document.getElementById('font-panel')?.style.display === 'flex') return true;
-  if (document.getElementById('cin-ovl')?.style.display === 'flex') return true;
-  if (document.getElementById('debug-con')?.style.display !== 'none' &&
-      document.getElementById('debug-con')?.style.display !== '') return true;
+  // Font panel, cinematic, debug console — any non-none display
+  const miscIds = ['font-panel','cin-ovl'];
+  for (const id of miscIds) {
+    const el = document.getElementById(id);
+    if (el && el.style.display && el.style.display !== 'none') return true;
+  }
+  // Debug console
+  const dbg = document.getElementById('debug-con');
+  if (dbg && dbg.style.display && dbg.style.display !== 'none') return true;
+  // Stats drawer open on mobile
+  const drawer = document.getElementById('stats-drawer');
+  if (drawer && drawer.classList.contains('open')) return true;
   return false;
 }
 
@@ -10316,11 +10333,12 @@ function showFactionRep(){
   document.getElementById('fr-factions').innerHTML = frows;
   document.getElementById('fr-quests').innerHTML = qrows || '<div style="font-size:11px;color:#443355;">No missions on record.</div>';
   el.style.display = 'flex';
+  el.classList.add('on'); // needed for pointer-events:all from .ovlay.on CSS rule
 }
 
 function closeFactionRep() {
   const el = document.getElementById('ov-faction-rep');
-  if(el) el.style.display = 'none';
+  if(el) { el.style.display = 'none'; el.classList.remove('on'); }
 }
 
 function closeDockmaster() {
