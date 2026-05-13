@@ -1062,7 +1062,7 @@ body {
   position:absolute; top:10px; left:50%; transform:translateX(-50%);
   background:rgba(4,0,14,0.94); border:1px solid #44118866; border-radius:6px;
   padding:6px 14px; display:none; flex-direction:column; align-items:center; gap:3px;
-  z-index:20; min-width:210px; pointer-events:none;
+  z-index:8; min-width:210px; pointer-events:none;
 }
 #watch-hud.on { display:flex; }
 .wh-row { display:flex; align-items:center; gap:8px; }
@@ -3337,8 +3337,8 @@ function updateWatchHUD() {
   const hud = document.getElementById('watch-hud');
   if (!hud) return;
 
-  // Only show on map/traveling phases
-  const active = G.phase === 'map' || G.phase === 'traveling';
+  // Only show on map/traveling phases — hide during combat and all overlays
+  const active = (G.phase === 'map' || G.phase === 'traveling') && G.phase !== 'combat';
   hud.classList.toggle('on', active);
 
   document.getElementById('wh-day').textContent = watchTimeStr();
@@ -6887,6 +6887,7 @@ function startCombat(key){
   if(key === 'elder'){ startElderCaiphonSequence(); return; }
 
   G.phase='combat'; setTag('COMBAT');
+  document.getElementById('watch-hud')?.classList.remove('on'); // hide time HUD during combat
   const t=ENM[key];
   const eWpns = (t.wpns||[]).map(w=>({...w}));
   const eCds  = eWpns.map(()=>0);
