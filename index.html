@@ -3479,7 +3479,7 @@ let _muted = false;
 // ── VOLUME STATE ─────────────────────────────────────────
 // All values 0.0–1.0. snd() and setAmbient() multiply their
 // base vol by the relevant category scalar before playing.
-const _VOL = { master:0.8, music:0.8, sfx:0.8, voice:0.8 };
+const _VOL = { master:0.8, music:0.8, sfx:0.8, voice:0.8, particles:0.5 };
 
 // ── FONT SCALE PREFERENCE ────────────────────────────────────────────────────
 const FS_KEY = 'sj_font_scale';
@@ -3528,7 +3528,7 @@ function toggleVolPanel(e) {
 }
 
 function _updateVolSliders() {
-  ['master','music','sfx','voice'].forEach(k => {
+  ['master','music','sfx','voice','particles'].forEach(k => {
     const el = document.getElementById('vol-' + k);
     const val = document.getElementById('vol-' + k + '-val');
     if (el) { el.value = Math.round(_VOL[k] * 100); _applySliderTrack(el); }
@@ -3541,7 +3541,7 @@ function _applySliderTrack(el) {
 }
 
 function applyVolumes() {
-  ['master','music','sfx','voice'].forEach(k => {
+  ['master','music','sfx','voice','particles'].forEach(k => {
     const el = document.getElementById('vol-' + k);
     const val = document.getElementById('vol-' + k + '-val');
     if (el) {
@@ -4117,12 +4117,130 @@ function clampView(W,H){
   }
 }
 
+
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║  LANE PARTICLE SYSTEM                                                    ║
+// ║  Flowing phlogiston particles along map lanes showing current direction  ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+const _LP = { pools:{}, _lastTs:0, inited:false };
+
+// Max particles per direction per lane at density=1.0
+const LP_MAX = 8;
+
+// Base travel speed per danger tier (fraction of lane per second)
+const LP_SPEED = [0.013, 0.016, 0.020, 0.026, 0.034];
+
+// Colors per danger tier
+const LP_COL = ['#44ffee','#44ffcc','#8899ff','#ff8844','#ff4444'];
+
+function _lpInit() {
+  _LP.pools = {};
+  _LP.inited = true;
+  if (!G || !G.spheres) return;
+  MAP_CONNECTIONS.forEach(([a, b]) => {
+    const lane = getLane(a, b);
+    const key = a + '->' + b;
+    const spd = LP_SPEED[Math.min(lane.d, LP_SPEED.length-1)] || 0.018;
+    const dirs = lane.flow === 0 ? [1, -1] : [lane.flow];
+    const pool = [];
+    dirs.forEach(dir => {
+      for (let i = 0; i < LP_MAX; i++) {
+        pool.push({
+          t:     dir === 1 ? i / LP_MAX : 1 - i / LP_MAX, // spread evenly
+          speed: spd * (0.85 + Math.random() * 0.3), // slight random variation
+          dir,
+          phase: Math.random() * Math.PI * 2,
+          size:  1.0 + Math.random() * 1.2,
+        });
+      }
+    });
+    _LP.pools[key] = pool;
+  });
+}
+
+function _lpTick(dt) {
+  if (dt > 0.2) dt = 0.2; // clamp large deltas (tab blur etc)
+  Object.values(_LP.pools).forEach(pool => {
+    pool.forEach(p => {
+      p.t += p.speed * dt * p.dir;
+      if (p.t > 1) p.t -= 1;
+      if (p.t < 0) p.t += 1;
+    });
+  });
+}
+
+function _lpDraw(cx, t) {
+  if (!G || !G.spheres) return;
+  const density = _VOL?.particles ?? 0.5;
+  if (density <= 0) return;
+  const maxVis = Math.max(1, Math.round(LP_MAX * density));
+
+  cx.save();
+  // Additive blending makes particles glow against dark space
+  cx.globalCompositeOperation = 'lighter';
+
+  MAP_CONNECTIONS.forEach(([a, b]) => {
+    const sa = G.spheres.find(s => s.id === a);
+    const sb = G.spheres.find(s => s.id === b);
+    if (!sa || !sb) return;
+    if ((sa.breach || sb.breach) && !G.postVictory) return;
+    const lc = LANES_DIR[a+'->'+b] || LANES_DIR[b+'->'+a];
+    if (lc?.patrolBoss && !(G.wbDiscovered?.has(lc.patrolBoss))) return;
+
+    const lane = getLane(a, b);
+    const pool = _LP.pools[a + '->' + b];
+    if (!pool) return;
+
+    const pa = sPos(sa), pb = sPos(sb);
+    const col = LP_COL[Math.min(lane.d, LP_COL.length-1)];
+
+    // Track per-direction count
+    const vis = {1:0, [-1]:0};
+
+    pool.forEach(p => {
+      if (vis[p.dir] >= maxVis) return;
+      vis[p.dir]++;
+
+      const px = pa.x + (pb.x - pa.x) * p.t;
+      const py = pa.y + (pb.y - pa.y) * p.t;
+
+      const flicker = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(t * 2.6 + p.phase));
+      const sz = p.size * (0.8 + 0.4 * Math.sin(t * 1.4 + p.phase * 0.7));
+      const r = sz * 3.5;
+
+      // Glow halo
+      const grad = cx.createRadialGradient(px, py, 0, px, py, r);
+      grad.addColorStop(0, col + 'cc');
+      grad.addColorStop(0.5, col + '44');
+      grad.addColorStop(1, col + '00');
+      cx.globalAlpha = flicker * 0.7;
+      cx.fillStyle = grad;
+      cx.beginPath(); cx.arc(px, py, r, 0, Math.PI * 2); cx.fill();
+
+      // Bright core
+      cx.globalAlpha = flicker;
+      cx.fillStyle = '#ffffff';
+      cx.beginPath(); cx.arc(px, py, sz * 0.5, 0, Math.PI * 2); cx.fill();
+    });
+  });
+
+  cx.globalAlpha = 1;
+  cx.globalCompositeOperation = 'source-over';
+  cx.restore();
+}
+
 function renderLoop(ts=0) {
   if(G.phase==='defeat'||G.phase==='victory'){ return; }
   G.animId=requestAnimationFrame(renderLoop);
   resizeCv();
   const W=cv.width, H=cv.height, t=ts/1000;
   cx.fillStyle='#030009'; cx.fillRect(0,0,W,H);
+
+  // Init and tick lane particles
+  if (!_LP.inited) _lpInit();
+  const _lpDt = _LP._lastTs > 0 ? Math.min(0.1, (ts - _LP._lastTs) / 1000) : 0.016;
+  _LP._lastTs = ts;
+  _lpTick(_lpDt);
 
   G.phlo.forEach(p=>{
     const gr=cx.createRadialGradient(p.x*W,p.y*H,0,p.x*W,p.y*H,p.sz);
@@ -4188,27 +4306,7 @@ function renderLoop(ts=0) {
     cx.beginPath(); cx.moveTo(pa.x,pa.y); cx.lineTo(pb.x,pb.y); cx.stroke();
     cx.setLineDash([]);
 
-    // Flow direction arrow — drawn near midpoint, offset slightly
-    if(lane.flow !== 0 && lane.flowName){
-      // Determine arrow direction: flow:+1 means a→b is WITH flow
-      // so arrow points from a toward b; flow:-1 means arrow points b→a
-      const ang = Math.atan2(pb.y-pa.y, pb.x-pa.x) + (lane.flow === -1 ? Math.PI : 0);
-      const arrowX = mx + Math.cos(ang+Math.PI/2)*9;
-      const arrowY = my + Math.sin(ang+Math.PI/2)*9;
-      const arrowLen = 7;
-      cx.globalAlpha = 0.65;
-      cx.strokeStyle = lane.flow === 1 ? '#44ffcc' : '#ff7755';
-      cx.lineWidth = 1.5;
-      cx.setLineDash([]);
-      cx.save();
-      cx.translate(arrowX, arrowY);
-      cx.rotate(ang);
-      cx.beginPath();
-      cx.moveTo(-arrowLen, 0); cx.lineTo(arrowLen, 0);
-      cx.moveTo(arrowLen-4, -3); cx.lineTo(arrowLen, 0); cx.lineTo(arrowLen-4, 3);
-      cx.stroke();
-      cx.restore();
-    }
+    // ── Flow arrow REMOVED — direction shown by lane particles ──
 
     // Danger badge at midpoint
     cx.globalAlpha=1;
@@ -4224,6 +4322,9 @@ function renderLoop(ts=0) {
     }
   });
   cx.globalAlpha=1; cx.textBaseline='alphabetic';
+
+  // ── Lane flow particles (drawn inside the same view transform) ────────
+  _lpDraw(cx, t);
 
   // ── Active travel arc (also shown during mid-lane watch break) ────────
   if(G.phase==='traveling' || G.ship.midLanePos){
@@ -5295,6 +5396,7 @@ function getShipPos(){
 
 function startTravel(toId, _resumeWatchesLeft, _pausedPos, _pausedProg, _savedLaneOrigin){
   if(G.phase!=='map')return;
+  _LP.inited = false; _LP._lastTs = 0; _LP.pools = {}; // reinit lane particles for new game
   G._restResumeBackup = null; // clear backup — travel is now underway
   // On resume (_pausedProg defined), skip the move budget check — advanceWatch already reset it
   if (!_pausedProg && !hasMovesRemaining()) {
@@ -12990,7 +13092,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </div>
 <!-- ═══ VOLUME PANEL (fixed position, always accessible) ═══ -->
 <div id="vol-panel" style="display:none;position:fixed;top:44px;right:8px;z-index:9998;background:rgba(5,0,18,0.97);border:1px solid #44118888;border-radius:6px;padding:14px 18px;width:240px;box-shadow:0 4px 32px rgba(0,0,0,0.9);" onclick="event.stopPropagation()">
-  <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:2px;color:#7755aa;margin-bottom:12px;text-transform:uppercase;">⚙ Audio Settings</div>
+  <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:2px;color:#7755aa;margin-bottom:12px;text-transform:uppercase;">⚙ Audio &amp; Display</div>
   <div class="vol-row">
     <span class="vol-lbl">🔊 Master</span>
     <input type="range" id="vol-master" min="0" max="100" value="80" oninput="applyVolumes()" style="flex:1;">
@@ -13011,6 +13113,14 @@ document.addEventListener('DOMContentLoaded', () => {
     <input type="range" id="vol-voice" min="0" max="100" value="80" oninput="applyVolumes()" style="flex:1;">
     <span class="vol-val" id="vol-voice-val">80%</span>
   </div>
+  <div style="height:1px;background:#33115533;margin:10px 0;"></div>
+  <div style="font-family:'Cinzel',serif;font-size:8px;letter-spacing:2px;color:#554477;margin-bottom:8px;text-transform:uppercase;">✦ Lane Particles</div>
+  <div class="vol-row">
+    <span class="vol-lbl">✦ Density</span>
+    <input type="range" id="vol-particles" min="0" max="100" value="50" oninput="applyVolumes()" style="flex:1;">
+    <span class="vol-val" id="vol-particles-val">50%</span>
+  </div>
+  <div style="font-size:9px;color:#443355;margin-top:-4px;margin-bottom:6px;font-style:italic;">0 = off · 50 = default · 100 = full</div>
   <div style="margin-top:12px;display:flex;gap:8px;">
     <button onclick="setAllVol(0)" style="flex:1;font-family:'Cinzel',serif;font-size:10px;padding:7px 4px;background:rgba(30,0,0,0.8);border:1px solid #66223388;border-radius:3px;color:#aa6688;cursor:pointer;">🔇 Mute All</button>
     <button onclick="setAllVol(80)" style="flex:1;font-family:'Cinzel',serif;font-size:10px;padding:7px 4px;background:rgba(0,10,30,0.8);border:1px solid #33449988;border-radius:3px;color:#7799cc;cursor:pointer;">↺ Reset</button>
