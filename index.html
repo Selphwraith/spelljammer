@@ -1886,6 +1886,122 @@ const SIG_ABILITY = {
 };
 
 const ENM = {
+  // ── Tier 0 — Green Lane (first lane, intro difficulty) ────────────────────
+  goblin_cutter: { name:"Goblin War-Cutter",    sub:'Scrapheap Raider',       hp:28,  maxHp:28,  crew:5,  maxCrew:5,  g:[5,14],
+    atk:[{n:'Junk Volley',d:[1,4],txt:'A chaotic spray of scrap metal and broken bolts rattles your hull!'},{n:'Ramming Run',d:[1,6],txt:'The goblin cutter slams full speed into your flank — crude but painful!'}],
+    sp:{n:'Panic Boarding',c:0.18,txt:'Goblins pour across in a screaming mob — one crew dragged off in the chaos!',fx:'crew',crewSteal:1},col:'#556611',diff:1,
+    wpns:[
+      { n:'Junk Cannon',         ico:'💩', d:[1,4], cd:0, threat:1, txt:'Scrap-loaded barrel fires every round — unreliable but constant.' },
+      { n:'Crude Ram Spike',     ico:'⚙️', d:[1,6], cd:2, threat:2, txt:'A massive sharpened prow spike on a spring-loaded mount.' }
+    ]},
+
+  scro_patrol: { name:"Scro Patrol Craft",       sub:'Orcs of the Void',       hp:38,  maxHp:38,  crew:6,  maxCrew:6,  g:[8,18],
+    atk:[{n:'Bolt Volley',d:[1,6],txt:'Disciplined crossbow teams fire from the broadside ports in unison!'},{n:'Boarding Axe Team',d:[1,4],txt:'Scro marines throw grapples and charge across — hull gouged by battle-axes!',crew:1}],
+    sp:{n:'Iron Discipline',c:0.20,txt:'The Scro captain orders a disciplined volley at point-blank range — concentrated fire!',fx:'summon',d:[1,6]},col:'#774411',diff:1,
+    wpns:[
+      { n:'Bolt Thrower Array',  ico:'🏹', d:[1,6], cd:0, threat:1, txt:'Military crossbow teams — disciplined fire every round.' },
+      { n:'Boarding Axe Volley', ico:'🪓', d:[1,4], cd:1, threat:2, txt:'Grapple-and-board — deals hull damage and 1 crew loss.', crew:1 }
+    ]},
+
+
+  // ── Tier 0 — First Lane Additions ────────────────────────────────────────
+  goblin_rocketer: { name:"Goblin Rocket-Barge",  sub:'Fire-Crazed Pyromaniacs',  hp:32,  maxHp:32,  crew:5, maxCrew:5,  g:[6,15],
+    atk:[{n:'Wildfire Rocket',d:[1,6],txt:'A wobbling fire-rocket screams across the void and detonates against your hull!'},{n:'Bottle Bombs',d:[1,4],txt:'Goblins hurl flaming bottles from their barge — crude incendiary devices splash fire across your deck!'}],
+    sp:{n:'Kamikaze Lunge',c:0.20,txt:'The barge surges forward in a suicidal charge — the goblin crew is screaming with glee!',fx:'summon',d:[1,8]},col:'#ff6600',diff:1,
+    wpns:[
+      { n:'Wildfire Rockets',   ico:'🚀', d:[1,6], cd:0, threat:1, txt:'Crude but incendiary — fires every round, always lit.' },
+      { n:'Bottle Bomb Volley', ico:'🍾', cd:2,    d:[1,4], threat:2, txt:'Burning phlogiston bottles hurled in clusters — 20% chance to start a fire DoT (2 dmg/round for 2 rounds).', special:'burn' }
+    ]},
+
+  goblin_shaman_boat: { name:"Goblin Shaman Skiff", sub:'Waaagh-Touched Vessel', hp:26, maxHp:26, crew:4, maxCrew:4, g:[5,12],
+    atk:[{n:'Hex Bolt',d:[1,4],txt:'The goblin shaman flings a crackling green hex-bolt — weapon systems flicker and stutter!'},{n:'Spirit Screech',d:[1,6],txt:'A wailing spirit-shriek from the shaman rattles your helm crew!',crew:1}],
+    sp:{n:'Waaagh Surge',c:0.22,txt:"The shaman whips the crew into a frenzy — the skiff lurches forward at impossible speed!",fx:'dodge'},col:'#44aa22',diff:1,
+    wpns:[
+      { n:'Hex Bolt Caster',    ico:'🟢', d:[1,4], cd:1, threat:1, txt:'Magical disruption — disables one player weapon for 1 round.', sabotage:true },
+      { n:'Spirit Screech Horn',ico:'📯', d:[1,6], cd:2, threat:2, txt:'Wails tear at your crew\'s morale — 1 crew loss on hit.', crew:1 }
+    ]},
+
+  scro_enforcer: { name:"Scro Enforcer Cutter",  sub:'Void Gendarmerie',        hp:44,  maxHp:44,  crew:7,  maxCrew:7,  g:[10,22],
+    atk:[{n:'Armour-Piercing Bolt',d:[1,8],txt:'A heavy crossbow bolt fired from a reinforced mount punches clean through your outer plating!'},{n:'Suppression Volley',d:[1,6],txt:'Disciplined suppression fire from scro regulars forces your crew below decks!'}],
+    sp:{n:'Military Sweep',c:0.22,txt:'The enforcer executes a textbook flanking pass — concentrated fire from three angles at once!',fx:'summon',d:[1,6]},col:'#886622',diff:1,
+    heal:{n:'Field Repair',c:0.20,txt:'Scro damage-control teams slam emergency patches over the worst breaches!',fx:'heal',amt:10,threshold:0.45},
+    wpns:[
+      { n:'AP Bolt Launcher',   ico:'🔩', d:[1,8], cd:1, threat:2, txt:'Armour-piercing military bolt — reliable damage, 1-round reload.' },
+      { n:'Suppression Guns',   ico:'🎯', d:[1,6], cd:0, threat:1, txt:'Disciplined suppression — fires every round, keeps your crew pinned.' }
+    ]},
+
+  scro_slaver: { name:"Scro Slaver Brig",       sub:'Void Press-Gang',          hp:52,  maxHp:52,  crew:8,  maxCrew:8,  g:[12,26],
+    atk:[{n:'Chain Harpoon',d:[1,6],txt:'A barbed chain harpoon punches through your hull and drags crew members screaming into the void!',crew:1},{n:'Shock Net',d:[1,4],txt:'An electrified cargo net wraps around your hull — crew members are stunned and dragged aboard!'}],
+    sp:{n:'Press-Gang Raid',c:0.25,txt:'Scro slavers swing across in mass — two of your crew are captured and put to work on the brig!',fx:'crew',crewSteal:2},col:'#aa6611',diff:1,
+    wpns:[
+      { n:'Chain Harpoon Rig',  ico:'⛓️', d:[1,6], cd:1, threat:2, txt:'Barbed harpoon — deals damage AND removes 1 crew.', crew:1 },
+      { n:'Shock Net Launcher', ico:'🕸️', d:[1,4], cd:2, threat:3, txt:'Stuns and captures — 1 crew loss. Stolen crew added to their count.', crew:1 }
+    ]},
+
+  // ── Tier 0-1 — Phlogiston Natives ────────────────────────────────────────
+  phlog_mote: { name:"Phlogiston Mote Swarm",   sub:'Living Fire Sprites',      hp:18,  maxHp:18,  crew:0,  maxCrew:0,  g:[4,10],
+    atk:[{n:'Ember Swarm',d:[1,4],txt:'Dozens of tiny living embers swarm across your hull, burning through seams and port seals!'},{n:'Flash Burst',d:[1,3],txt:'A blinding flash of pure phlogiston ignites around your helm viewport!'}],
+    sp:{n:'Ignition Cloud',c:0.28,txt:'The swarm coalesces into a dense ignition cloud — your hull is engulfed in slow-burning phlogiston fire!',fx:'multi',d:[1,4]},col:'#ffcc00',diff:0,
+    wpns:[
+      { n:'Ember Swarm',        ico:'✨', d:[1,4], cd:0, threat:1, txt:'Swarming living fire — fires every round without pause.' },
+      { n:'Flash Burst',        ico:'💥', d:[1,3], cd:1, threat:1, txt:'Blinding detonation — low damage but disrupts targeting.' }
+    ]},
+
+  phlog_flamewing: { name:"Phlogiston Flamewing", sub:'Void Fire Predator',     hp:36,  maxHp:36,  crew:0,  maxCrew:0,  g:[8,18],
+    atk:[{n:'Wing Slash',d:[1,6],txt:'Razor-edged wings of crystallised phlogiston rake across your hull in a burning pass!'},{n:'Fire Breath',d:[2,4],txt:'The flamewing exhales a jet of super-compressed phlogiston — it ignites on contact with your hull!'}],
+    sp:{n:'Dive Bomb',c:0.24,txt:'The flamewing folds its wings and plunges directly into your hull — explosive impact!',fx:'summon',d:[2,4]},col:'#ff4400',diff:1,
+    heal:{n:'Phlog Absorption',c:0.22,txt:'The flamewing draws raw phlogiston through its membrane, sealing wing-tears with new crystalline growth!',fx:'heal',amt:8,threshold:0.45},
+    wpns:[
+      { n:'Wing Slash',         ico:'🔥', d:[1,6], cd:1, threat:2, txt:'Crystalline phlogiston wing — sharp enough to shear hull plating.' },
+      { n:'Fire Breath',        ico:'🌬️', d:[2,4], cd:2, threat:3, txt:'Compressed phlogiston jet — 25% chance to start burn DoT.', special:'burn' }
+    ]},
+
+  phlog_vinecrawler: { name:"Phlogiston Vinecrawler", sub:'Void Flora Predator', hp:48, maxHp:48, crew:0, maxCrew:0, g:[11,24],
+    atk:[{n:'Grasping Tendrils',d:[1,8],txt:'Glowing phlogiston vines reach across the void and wrap your hull — slow crushing pressure cracks your plating!'},{n:'Spore Burst',d:[1,6],txt:'The vinecrawler ruptures a seed-pod — corrosive phlogiston spores eat into your hull joints!'}],
+    sp:{n:'Entangle',c:0.26,txt:'A mass of phlogiston vines wraps your ship — weapons are fouled for one round!',fx:'stun'},col:'#22bb44',diff:1,
+    heal:{n:'Void Photosynthesis',c:0.25,txt:'The vinecrawler spreads its glowing fronds wide, drinking in raw phlogiston to knit torn vines back together!',fx:'heal',amt:12,threshold:0.50},
+    wpns:[
+      { n:'Grasping Tendrils',  ico:'🌿', d:[1,8], cd:1, threat:2, txt:'Crushing vine wrap — high damage, slow cooldown.' },
+      { n:'Spore Burst',        ico:'🍄', cd:2, d:[1,6], threat:3, txt:'Corrosive spore cloud — eats hull joints, 20% chance disables 1 random weapon.', sabotage:true }
+    ]},
+
+  // ── Tier 1-2 — Scro Military (scattered mid-early lanes) ─────────────────
+  scro_warship: { name:"Scro Warship",            sub:'Void Grenadier',          hp:72,  maxHp:72,  crew:9,  maxCrew:9,  g:[18,36],
+    atk:[{n:'Grenade Broadside',d:[2,6],txt:'Scro grenadiers hurl cluster bombs from the broadside hatches — shrapnel everywhere!'},{n:'Marine Assault',d:[1,8],txt:'Armoured scro marines breach your hull and drag crew into the void!',crew:1}],
+    sp:{n:'Rage Volley',c:0.22,txt:'The scro crew works into a battle frenzy — weapon output surges this round!',fx:'summon',d:[2,6]},col:'#993311',diff:2,
+    heal:{n:'Orcish Grit',c:0.20,txt:'Scro damage control crews hammer broken plating back into shape with terrifying speed!',fx:'heal',amt:14,threshold:0.45},
+    wpns:[
+      { n:'Cluster Bomb Battery',ico:'💣', d:[2,6], cd:1, threat:2, txt:'Grenade volley — wide impact area, hits hard.' },
+      { n:'Breach Lances',       ico:'🗡️', d:[1,8], cd:2, threat:3, txt:'Hull-penetrating spikes. Deals damage AND removes 1 crew.', crew:1 }
+    ]},
+
+  scro_dreadnought: { name:"Scro Dreadnought",    sub:'Siege Battlewagon',      hp:140, maxHp:140, crew:14, maxCrew:14, g:[38,68],
+    atk:[{n:'Siege Cannon Broadside',d:[3,8],txt:'Heavy siege cannons pound your hull in a coordinated triple salvo!'},{n:'Assault Marine Wave',d:[2,6],txt:'Two waves of scro marines breach your hull simultaneously!',crew:2}],
+    sp:{n:'Warchief Command',c:0.25,txt:'The warchief directs focused fire — all weapons overcharge this round for maximum impact!',fx:'summon',d:[2,8]},col:'#cc4400',diff:3,
+    heal:{n:'Battle Repair Crews',c:0.22,txt:'Scro engineers bolt emergency armour plates over breaches — hull partially restored!',fx:'heal',amt:20,threshold:0.50},
+    wpns:[
+      { n:'Siege Cannon Battery',ico:'🔫', d:[3,8], cd:1, threat:3, txt:'Heavy siege guns — disciplined fire, guaranteed to sting.' },
+      { n:'Marine Assault Wave', ico:'⚔️', d:[2,6], cd:2, threat:4, txt:'Coordinated boarding assault — hull damage AND removes 2 crew.', crew:2 }
+    ]},
+
+  // ── Phlogiston Natives (scattered across all lanes) ─────────────────────
+  phlog_jellyfish: { name:"Phlogiston Medusa",    sub:'Living Fire-Jelly',      hp:44,  maxHp:44,  crew:0,  maxCrew:0,  g:[10,22],
+    atk:[{n:'Spark Tendril Lash',d:[1,6],txt:'Electrified phlogiston tendrils slap across your hull in a shower of sparks!'},{n:'Luminous Pulse',d:[1,4],txt:'A blinding bioluminescent pulse scrambles your targeting crystals!',disarm:true}],
+    sp:{n:'Phlogiston Bloom',c:0.25,txt:'The medusa expands its gas-sac — phlogiston ignites around your hull, scorching everything!',fx:'multi',d:[1,6]},col:'#ffaa00',diff:1,
+    heal:{n:'Phlog Absorption',c:0.28,txt:'The medusa draws raw phlogiston into its body, knitting torn membrane back together!',fx:'heal',amt:12,threshold:0.50},
+    wpns:[
+      { n:'Spark Tendrils',      ico:'⚡', d:[1,6], cd:0, threat:2, txt:'Electrical discharge — fires every round, no reload.' },
+      { n:'Ignition Pulse',      ico:'🔆', d:[1,4], cd:2, threat:3, txt:'Bioluminescent scrambler — disarms one random player weapon for 1 round.', sabotage:true }
+    ]},
+
+  void_shark: { name:"Void Shark",                sub:'Phlogiston Predator',    hp:60,  maxHp:60,  crew:0,  maxCrew:0,  g:[14,28],
+    atk:[{n:'Ram Strike',d:[2,6],txt:'The void shark drives its armoured snout straight through your hull plating!'},{n:'Fin Slash',d:[1,8],txt:'Jagged bony fins rake along your hull as it sweeps past in a death roll!'}],
+    sp:{n:'Death Roll',c:0.22,txt:'The shark locks on and rolls — crushing your hull between its fins and inertia!',fx:'summon',d:[2,6]},col:'#3366aa',diff:1,
+    heal:{n:'Void Drift',c:0.25,txt:'The shark drifts sideways into raw phlogiston, drawing energy to close surface wounds!',fx:'heal',amt:10,threshold:0.45},
+    wpns:[
+      { n:'Ram Strike',          ico:'🦈', d:[2,6], cd:1, threat:2, txt:'Full-speed impact — heavy direct hit.' },
+      { n:'Fin Rake',            ico:'🪃', d:[1,8], cd:2, threat:3, txt:'Slashing pass — high variance, bone-edged fins.' }
+    ]},
   // ── Tier 1 Bandits ────────────────────────────────────
   corsair:   { name:'Void Corsairs',        sub:'Pirate Sloop',          hp:42,  maxHp:42,  crew:4,  maxCrew:4,  g:[9,21],
     atk:[{n:'Rusty Broadside',d:[1,6],txt:'A ragged volley from their battered guns.'},{n:'Grappling Hook',d:[1,4],txt:'Hooks drag across your hull!',crew:1}],
@@ -2738,20 +2854,20 @@ const LANE_DANGER_COLORS = ['','#44ee88','#ddcc22','#ff8844','#ff4422','#cc22ff'
 
 const LANES_DIR = {
   // REFUGE ↔ REALM  (Arcane Inner Flow: realm→refuge is WITH flow inward)
-  'refuge->realm': { d:1, label:'IEN Patrol Route (Inner Arc)',       lore:'The Arcane Inner Flow pushes outward from the core. You fight the current heading outward to Realmspace.',   pool:['corsair','corsair','corsair'],                       rate:0.140, warzone:false, flow:-1, flowName:'Arcane Inner Flow' },
-  'realm->refuge': { d:1, label:'IEN Patrol Route (Inner Arc)',       lore:'The Arcane Inner Flow carries you inward toward Refuge. Smooth sailing on the current.',                      pool:['corsair','corsair','corsair'],                       rate:0.140, warzone:false, flow:+1, flowName:'Arcane Inner Flow' },
+  'refuge->realm': { d:1, label:'IEN Patrol Route (Inner Arc)',       lore:'The Arcane Inner Flow pushes outward from the core. You fight the current heading outward to Realmspace.',   pool:['goblin_cutter','goblin_rocketer','goblin_cutter','corsair','scro_patrol','scro_enforcer','phlog_mote'],                       rate:0.140, warzone:false, flow:-1, flowName:'Arcane Inner Flow' },
+  'realm->refuge': { d:1, label:'IEN Patrol Route (Inner Arc)',       lore:'The Arcane Inner Flow carries you inward toward Refuge. Smooth sailing on the current.',                      pool:['corsair','goblin_cutter','goblin_rocketer','scro_patrol','phlog_mote'],                       rate:0.140, warzone:false, flow:+1, flowName:'Arcane Inner Flow' },
 
   // REFUGE ↔ GREY   (Mystara Flow: refuge→grey WITH flow eastward)
-  'refuge->grey':  { d:2, label:'Merchant Route (Mystara Flow)',      lore:'The Mystara Flow sweeps eastward — you ride it toward Greyspace. Fast passage, but pirates know it too.',    pool:['corsair','plunderer','plunderer','neogi'],            rate:0.220, warzone:false, flow:+1, flowName:'Mystara Flow' },
-  'grey->refuge':  { d:2, label:'Merchant Route (Mystara Flow)',      lore:'You push against the Mystara Flow heading back to Refuge. Dwarven trade vessels slow the lanes further.',    pool:['corsair','plunderer','plunderer','neogi'],            rate:0.220, warzone:false, flow:-1, flowName:'Mystara Flow' },
+  'refuge->grey':  { d:2, label:'Merchant Route (Mystara Flow)',      lore:'The Mystara Flow sweeps eastward — you ride it toward Greyspace. Fast passage, but pirates know it too.',    pool:['corsair','plunderer','scro_patrol','scro_slaver','goblin_shaman_boat','neogi','void_shark','phlog_jellyfish','phlog_flamewing'],     rate:0.220, warzone:false, flow:+1, flowName:'Mystara Flow' },
+  'grey->refuge':  { d:2, label:'Merchant Route (Mystara Flow)',      lore:'You push against the Mystara Flow heading back to Refuge. Dwarven trade vessels slow the lanes further.',    pool:['corsair','plunderer','scro_patrol','scro_slaver','goblin_shaman_boat','neogi','void_shark','phlog_jellyfish','phlog_flamewing'],     rate:0.220, warzone:false, flow:-1, flowName:'Mystara Flow' },
 
   // REFUGE ↔ CLUSTER  (Arcane Inner Flow: cluster→refuge WITH flow inward)
-  'refuge->cluster':{ d:2, label:'Freeport Corridor (Inner Arc)',     lore:'You push outward against the Arcane Inner Flow toward Clusterspace. Heavy pirate traffic.',                   pool:['corsair','corsair','plunderer','plunderer'],          rate:0.220, warzone:false, flow:-1, flowName:'Arcane Inner Flow' },
-  'cluster->refuge':{ d:2, label:'Freeport Corridor (Inner Arc)',     lore:'The Arcane Inner Flow carries you inward to Refuge. Plunderer fleets ride the same current.',                pool:['corsair','corsair','plunderer','plunderer'],          rate:0.220, warzone:false, flow:+1, flowName:'Arcane Inner Flow' },
+  'refuge->cluster':{ d:2, label:'Freeport Corridor (Inner Arc)',     lore:'You push outward against the Arcane Inner Flow toward Clusterspace. Heavy pirate traffic.',                   pool:['goblin_cutter','goblin_rocketer','goblin_shaman_boat','corsair','scro_patrol','scro_enforcer','scro_slaver','plunderer','void_shark','phlog_vinecrawler'],              rate:0.220, warzone:false, flow:-1, flowName:'Arcane Inner Flow' },
+  'cluster->refuge':{ d:2, label:'Freeport Corridor (Inner Arc)',     lore:'The Arcane Inner Flow carries you inward to Refuge. Plunderer fleets ride the same current.',                pool:['goblin_cutter','goblin_rocketer','goblin_shaman_boat','corsair','scro_patrol','scro_enforcer','scro_slaver','plunderer','void_shark','phlog_vinecrawler'],              rate:0.220, warzone:false, flow:+1, flowName:'Arcane Inner Flow' },
 
   // REALM ↔ GREY    (Arcane Inner Flow: grey→realm WITH flow inward)
-  'realm->grey':   { d:2, label:'Inner Sphere Route (Inner Arc)',     lore:'You push outward against the Arcane Inner Flow. Neogi slavers patrol this lane heavily.',                    pool:['corsair','plunderer','neogi','neogi'],                rate:0.240, warzone:false, flow:-1, flowName:'Arcane Inner Flow' },
-  'grey->realm':   { d:2, label:'Inner Sphere Route (Inner Arc)',     lore:'The Arcane Inner Flow carries you inward toward Realmspace. Corsairs and neogi slavers ride the same current.', pool:['corsair','plunderer','neogi','neogi'],             rate:0.240, warzone:false, flow:+1, flowName:'Arcane Inner Flow' },
+  'realm->grey':   { d:2, label:'Inner Sphere Route (Inner Arc)',     lore:'You push outward against the Arcane Inner Flow. Neogi slavers patrol this lane heavily.',                    pool:['corsair','plunderer','scro_warship','scro_slaver','neogi','phlog_jellyfish','phlog_flamewing','phlog_vinecrawler'],                rate:0.240, warzone:false, flow:-1, flowName:'Arcane Inner Flow' },
+  'grey->realm':   { d:2, label:'Inner Sphere Route (Inner Arc)',     lore:'The Arcane Inner Flow carries you inward toward Realmspace. Corsairs and neogi slavers ride the same current.', pool:['corsair','plunderer','scro_warship','scro_slaver','neogi','phlog_jellyfish','phlog_flamewing','phlog_vinecrawler'],                rate:0.240, warzone:false, flow:+1, flowName:'Arcane Inner Flow' },
 
   // REALM ↔ CLUSTER  (War zone — crossflow, no major river eases this crossing)
   'realm->cluster':{ d:3, label:'⚔ ILLITHID/GITH WAR ZONE',          lore:'The ancient war rages here. No flow river crosses this zone — both factions attack any vessel.',             pool:['nautiloid','nautiloid','githyanki','githyanki','nautiloid'], rate:0.460, warzone:true,  flow:0, flowName:null },
@@ -2762,12 +2878,12 @@ const LANES_DIR = {
   'hero->realm':   { d:3, label:'Long Void Crossing (Radiant Triangle)', lore:'You fight the Radiant Triangle Flow heading back toward Realmspace. Githyanki raiders exploit the delay.', pool:['blackfleet','blackfleet','githyanki','plunderer'],   rate:0.300, warzone:false, flow:-1, flowName:'Radiant Triangle Flow' },
 
   // GREY ↔ CLUSTER  (crossflow — no major river)
-  'grey->cluster': { d:2, label:'Salvage Passage',                    lore:'Crossflow region — no major river aids this route. Plunderer fleets pick over old wrecks.',                 pool:['plunderer','plunderer','neogi'],                     rate:0.250, warzone:false, flow:0,  flowName:null },
+  'grey->cluster': { d:2, label:'Salvage Passage',                    lore:'Crossflow region — no major river aids this route. Plunderer fleets pick over old wrecks.',                 pool:['plunderer','scro_warship','neogi','void_shark'],     rate:0.250, warzone:false, flow:0,  flowName:null },
   'cluster->grey': { d:2, label:'Salvage Passage',                    lore:'Crossflow region — no major river aids this route. Neogi have claimed several derelicts here.',              pool:['plunderer','plunderer','neogi'],                     rate:0.250, warzone:false, flow:0,  flowName:null },
 
   // GREY ↔ KRYNN   (Mystara Flow: grey→krynn WITH flow eastward)
-  'grey->krynn':   { d:3, label:'Dragon Passage (Mystara Flow)',       lore:'The Mystara Flow rushes you eastward toward Krynnspace. Black Fleet Reavers ride it too.',                  pool:['plunderer','blackfleet','githyanki','neogi'],         rate:0.320, warzone:false, flow:+1, flowName:'Mystara Flow' },
-  'krynn->grey':   { d:3, label:'Dragon Passage (Mystara Flow)',       lore:'You fight the Mystara Flow heading back toward Greyspace. Githyanki warbands ambush those slowed by it.',  pool:['plunderer','blackfleet','githyanki','neogi'],         rate:0.320, warzone:false, flow:-1, flowName:'Mystara Flow' },
+  'grey->krynn':   { d:3, label:'Dragon Passage (Mystara Flow)',       lore:'The Mystara Flow rushes you eastward toward Krynnspace. Black Fleet Reavers ride it too.',                  pool:['plunderer','scro_warship','scro_dreadnought','blackfleet','neogi'],            rate:0.320, warzone:false, flow:+1, flowName:'Mystara Flow' },
+  'krynn->grey':   { d:3, label:'Dragon Passage (Mystara Flow)',       lore:'You fight the Mystara Flow heading back toward Greyspace. Githyanki warbands ambush those slowed by it.',  pool:['plunderer','scro_warship','scro_dreadnought','blackfleet','neogi'],            rate:0.320, warzone:false, flow:-1, flowName:'Mystara Flow' },
 
   // GREY ↔ DARK    (Pillar Flow: grey→dark WITH flow into the deep void)
   'grey->dark':    { d:4, label:'Void Crossing (Pillar Flow)',         lore:'The Pillar Flow drags you down into the deep void toward Darkspace. Leviathans follow the same current.',   pool:['leviathan','beholder','blackfleet'],                  rate:0.400, warzone:false, flow:+1, flowName:'Pillar Flow' },
@@ -2782,7 +2898,7 @@ const LANES_DIR = {
   'dark->krynn':   { d:4, label:'Shadow Approach',                    lore:'Crossflow region. Beholder tyrants nest along the turbulent approach to Krynnspace.',                        pool:['leviathan','beholder','githyanki'],                   rate:0.380, warzone:false, flow:0,  flowName:null },
 
   // CLUSTER ↔ HERO  (crossflow)
-  'cluster->hero': { d:3, label:"Relic Hunters' Route",               lore:'Crossflow region. Black Fleet Reavers hunt for pre-Sundering artifacts in the debris fields.',              pool:['blackfleet','githyanki','nautiloid','neogi'],         rate:0.330, warzone:false, flow:0,  flowName:null },
+  'cluster->hero': { d:3, label:"Relic Hunters' Route",               lore:'Crossflow region. Black Fleet Reavers hunt for pre-Sundering artifacts in the debris fields.',              pool:['blackfleet','scro_dreadnought','githyanki','nautiloid','neogi'], rate:0.330, warzone:false, flow:0,  flowName:null },
   'hero->cluster': { d:3, label:"Relic Hunters' Route",               lore:'Crossflow region. Githyanki raiders and nautiloids actively hunt returning relic-laden vessels.',           pool:['blackfleet','githyanki','nautiloid','neogi'],         rate:0.330, warzone:false, flow:0,  flowName:null },
 
   // CLUSTER ↔ DARK  (Black Flow: dark→cluster WITH flow upward)
@@ -3510,7 +3626,20 @@ const SHIP_IMAGE_DATA = {
   'vodoniPatrol': 'images/ship_vodoni.png',
   'scroBattle':   'images/ship_scro.png',
   'thrikreen':    'images/ship_thrikreen.png',
-  'neogi':        'images/ship_neogi.png',
+  'neogi':           'images/ship_neogi.png',
+  'goblin_cutter':      'images/ship_goblin_cutter.png',
+  'goblin_rocketer':    'images/ship_goblin_rocketer.png',
+  'goblin_shaman_boat': 'images/ship_goblin_shaman.png',
+  'scro_patrol':        'images/ship_scro_patrol.png',
+  'scro_enforcer':      'images/ship_scro_enforcer.png',
+  'scro_slaver':        'images/ship_scro_slaver.png',
+  'scro_warship':       'images/ship_scro_warship.png',
+  'scro_dreadnought':   'images/ship_scro_dreadnought.png',
+  'phlog_mote':         'images/ship_phlog_mote.png',
+  'phlog_jellyfish':    'images/ship_phlog_jellyfish.png',
+  'phlog_flamewing':    'images/ship_phlog_flamewing.png',
+  'phlog_vinecrawler':  'images/ship_phlog_vinecrawler.png',
+  'void_shark':         'images/ship_void_shark.png',
   'frStalker':    'images/ship_frstalker.png',
   'frHorde':      'images/ship_frhorde.png',
   'elder':        'images/ship_elder.png',
@@ -3603,7 +3732,7 @@ function startTravelHum() {
   try {
     const a = _SFX['travel_hum'].cloneNode();
     a.loop   = true;
-    a.volume = Math.min(1, 0.35 * (_VOL?.master||1) * (_VOL?.sfx||1));
+    a.volume = Math.min(1, 0.65 * (_VOL?.master||1) * (_VOL?.sfx||1));
     a.play().catch(()=>{});
     _travelHumEl = a;
   } catch(_) {}
@@ -6977,6 +7106,20 @@ function drawCbtShips(key){
   else if(key==='frHorde')     _eF('frHorde',false,     ()=>drawFarRealmHorde(ec,100,65,46));
   else if(key==='thrikreen')   _eF('thrikreen',false,   ()=>drawThriKreen(ec,100,65,46));
   else if(key==='neogi')       _eF('neogi',false,       ()=>drawNeogi(ec,100,65,46));
+  else if(key==='goblin_cutter')      _eF('goblin_cutter',true,      ()=>drawGoblinCutter(ec,100,65,46));
+  else if(key==='goblin_rocketer')    _eF('goblin_rocketer',true,    ()=>drawGoblinRocketer(ec,100,65,46));
+  else if(key==='goblin_shaman_boat') _eF('goblin_shaman_boat',true, ()=>drawGoblinShaman(ec,100,65,46));
+  else if(key==='scro_patrol')        _eF('scro_patrol',true,        ()=>drawScroPatrol(ec,100,65,46));
+  else if(key==='scro_enforcer')      _eF('scro_enforcer',true,      ()=>drawScroEnforcer(ec,100,65,46));
+  else if(key==='scro_slaver')        _eF('scro_slaver',true,        ()=>drawScroSlaver(ec,100,65,46));
+  else if(key==='phlog_mote')         _eF('phlog_mote',false,        ()=>drawPhlogMote(ec,100,65,46));
+  else if(key==='phlog_flamewing')    _eF('phlog_flamewing',false,   ()=>drawPhlogFlamewing(ec,100,65,46));
+  else if(key==='phlog_vinecrawler')  _eF('phlog_vinecrawler',false, ()=>drawPhlogVinecrawler(ec,100,65,46));
+  else if(key==='scro_patrol')    _eF('scro_patrol',true,    ()=>drawScroPatrol(ec,100,65,46));
+  else if(key==='scro_warship')   _eF('scro_warship',true,   ()=>drawScroWarship(ec,100,65,46));
+  else if(key==='scro_dreadnought') _eF('scro_dreadnought',true, ()=>drawScroDreadnought(ec,100,65,46));
+  else if(key==='phlog_jellyfish') _eF('phlog_jellyfish',false, ()=>drawPhlogJellyfish(ec,100,65,46));
+  else if(key==='void_shark')     _eF('void_shark',true,     ()=>drawVoidShark(ec,100,65,46));
   else if(key==='wb_grex')     _eF('wb_grex',false,     ()=>drawWarlordGrex(ec,100,65,46));
   else if(key==='wb_admiral')  _eF('wb_admiral',false,  ()=>drawHollowAdmiral(ec,100,65,46));
   else if(key==='wb_clutch')   _eF('wb_clutch',false,   ()=>drawClutchMother(ec,100,65,46));
@@ -7170,7 +7313,430 @@ function drawNeogi(ctx,x,y,sz){
   ctx.restore();
 }
 
+function drawGoblinCutter(ctx,x,y,sz){
+  // Goblin War-Cutter — ramshackle hull bolted together from wreckage and spite
+  ctx.save(); ctx.translate(x,y); const s=sz/20;
+  // Jagged, asymmetric hull plates
+  ctx.fillStyle='#2a2200';
+  ctx.beginPath(); ctx.moveTo(s*14,0); ctx.lineTo(s*4,-s*5); ctx.lineTo(-s*6,-s*4);
+  ctx.lineTo(-s*14,s*1); ctx.lineTo(-s*10,s*5); ctx.lineTo(s*2,s*5); ctx.closePath(); ctx.fill();
+  // Mismatched armour patches
+  ctx.fillStyle='#443300';
+  [[s*6,-s*3,s*5,s*3],[s*1,-s*4,s*4,s*3],[-s*5,-s*3,s*4,s*4]].forEach(([rx,ry,rw,rh])=>{
+    ctx.beginPath(); ctx.rect(rx,ry,rw,rh); ctx.fill();
+  });
+  // Junk spikes on prow
+  ctx.strokeStyle='#667700'; ctx.lineWidth=s*1;
+  [[s*14,0,s*19,-s*3],[s*14,0,s*19,s*2],[s*12,-s*4,s*17,-s*6]].forEach(([x1,y1,x2,y2])=>{
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  });
+  // Goblin eyes peering from ports
+  ctx.fillStyle='#aaff00';
+  [[-s*2,-s*2],[s*4,-s*1],[-s*7,s*1]].forEach(([ex,ey])=>{
+    ctx.beginPath(); ctx.arc(ex,ey,s*0.9,0,Math.PI*2); ctx.fill();
+  });
+  // Ramshackle engine — smoke-belching
+  const eg=ctx.createRadialGradient(-s*12,0,0,-s*12,0,s*5);
+  eg.addColorStop(0,'rgba(180,100,0,0.8)'); eg.addColorStop(1,'transparent');
+  ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(-s*12,0,s*5,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawScroPatrol(ctx,x,y,sz){
+  // Scro Patrol Craft — lean military sloop, orcish angular design
+  ctx.save(); ctx.translate(x,y); const s=sz/20;
+  // Main hull — angular military profile
+  ctx.fillStyle='#331100';
+  ctx.beginPath(); ctx.moveTo(s*16,0); ctx.lineTo(s*6,-s*4); ctx.lineTo(-s*10,-s*5);
+  ctx.lineTo(-s*16,0); ctx.lineTo(-s*10,s*5); ctx.lineTo(s*6,s*4); ctx.closePath(); ctx.fill();
+  // Military plating bands
+  ctx.strokeStyle='#552200'; ctx.lineWidth=s*1;
+  ctx.beginPath(); ctx.moveTo(s*10,-s*4); ctx.lineTo(s*10,s*4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-s*2,-s*5); ctx.lineTo(-s*2,s*5); ctx.stroke();
+  // Bolt thrower ports — three per side
+  ctx.fillStyle='#221100';
+  for(let i=0;i<3;i++){
+    ctx.beginPath(); ctx.arc(s*6-i*s*5, -s*4, s*1.2, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(s*6-i*s*5,  s*4, s*1.2, 0, Math.PI*2); ctx.fill();
+  }
+  // Scro war-banner on hull
+  ctx.fillStyle='#dd3300'; ctx.fillRect(-s*2,-s*3,s*5,s*6);
+  ctx.fillStyle='#ffcc00'; ctx.font=`${s*5}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('☠',-s*0,s*0.5);
+  // Engine glow — red-orange
+  const eg=ctx.createRadialGradient(-s*14,0,0,-s*14,0,s*4);
+  eg.addColorStop(0,'rgba(255,60,0,0.8)'); eg.addColorStop(1,'transparent');
+  ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(-s*14,0,s*4,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawScroWarship(ctx,x,y,sz){
+  // Scro Warship — wider, more armoured, grenadier ports visible
+  ctx.save(); ctx.translate(x,y); const s=sz/20;
+  // Heavy angular hull
+  ctx.fillStyle='#3d1500';
+  ctx.beginPath(); ctx.moveTo(s*15,0); ctx.lineTo(s*8,-s*7); ctx.lineTo(-s*8,-s*8);
+  ctx.lineTo(-s*16,-s*2); ctx.lineTo(-s*16,s*2); ctx.lineTo(-s*8,s*8);
+  ctx.lineTo(s*8,s*7); ctx.closePath(); ctx.fill();
+  // Heavy armour ribbing
+  ctx.strokeStyle='#661e00'; ctx.lineWidth=s*1.5;
+  for(let i=0;i<4;i++){
+    const bx=-s*6+i*s*5;
+    ctx.beginPath(); ctx.moveTo(bx,-s*7); ctx.lineTo(bx,s*7); ctx.stroke();
+  }
+  // Grenade hatch ports — larger than patrol
+  ctx.fillStyle='#1a0800';
+  for(let i=0;i<2;i++){
+    const hx=s*4-i*s*8;
+    [[hx,-s*7],[hx,s*7]].forEach(([px,py])=>{
+      ctx.beginPath(); ctx.arc(px,py,s*1.8,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#aa3300'; ctx.lineWidth=s*0.5; ctx.stroke();
+    });
+  }
+  // Scro war-crest — larger
+  ctx.fillStyle='#cc2200'; ctx.fillRect(s*2,-s*4,s*6,s*8);
+  ctx.fillStyle='#ffaa00'; ctx.font=`${s*6}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('☠',s*5,0);
+  // Dual engine glow
+  [-s*3,s*3].forEach(oy=>{
+    const eg=ctx.createRadialGradient(-s*15,oy,0,-s*15,oy,s*4);
+    eg.addColorStop(0,'rgba(255,80,0,0.85)'); eg.addColorStop(1,'transparent');
+    ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(-s*15,oy,s*4,0,Math.PI*2); ctx.fill();
+  });
+  ctx.restore();
+}
+
+function drawScroDreadnought(ctx,x,y,sz){
+  // Scro Dreadnought — massive siege battlewagon, fortress-like
+  ctx.save(); ctx.translate(x,y); const s=sz/20;
+  // Massive reinforced hull
+  const hg=ctx.createLinearGradient(-s*18,0,s*16,0);
+  hg.addColorStop(0,'#200a00'); hg.addColorStop(0.5,'#4d1800'); hg.addColorStop(1,'#2a0c00');
+  ctx.fillStyle=hg;
+  ctx.beginPath(); ctx.moveTo(s*17,-s*2); ctx.lineTo(s*10,-s*9); ctx.lineTo(-s*6,-s*10);
+  ctx.lineTo(-s*18,-s*3); ctx.lineTo(-s*18,s*3); ctx.lineTo(-s*6,s*10);
+  ctx.lineTo(s*10,s*9); ctx.closePath(); ctx.fill();
+  // Siege cannon towers — two per side
+  ctx.fillStyle='#6a2200';
+  [[-s*2,-s*9],[s*5,-s*9],[-s*2,s*9],[s*5,s*9]].forEach(([tx,ty])=>{
+    ctx.beginPath(); ctx.arc(tx,ty,s*2.5,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#222200'; ctx.lineWidth=s*2.5;
+    const oy=Math.sign(ty);
+    ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(tx,ty+oy*s*4); ctx.stroke();
+  });
+  // Heavy armour plating
+  ctx.strokeStyle='#882500'; ctx.lineWidth=s*2;
+  for(let i=0;i<5;i++){
+    const bx=-s*12+i*s*6;
+    ctx.beginPath(); ctx.moveTo(bx,-s*9); ctx.lineTo(bx,s*9); ctx.stroke();
+  }
+  // Command tower on top
+  ctx.fillStyle='#551a00';
+  ctx.beginPath(); ctx.rect(-s*4,-s*4,s*8,s*8); ctx.fill();
+  ctx.fillStyle='#ff2200'; ctx.font=`${s*7}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('⚔',0,0);
+  // Triple engine glow
+  [-s*5,0,s*5].forEach(oy=>{
+    const eg=ctx.createRadialGradient(-s*17,oy,0,-s*17,oy,s*5);
+    eg.addColorStop(0,'rgba(255,100,0,0.9)'); eg.addColorStop(1,'transparent');
+    ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(-s*17,oy,s*5,0,Math.PI*2); ctx.fill();
+  });
+  ctx.restore();
+}
+
+function drawPhlogJellyfish(ctx,x,y,sz){
+  // Phlogiston Medusa — translucent bioluminescent gas-creature of the flow
+  ctx.save(); ctx.translate(x,y); const s=sz/20;
+  // Pulsing gas-sac body — translucent
+  const bg=ctx.createRadialGradient(0,0,s*2,0,0,s*12);
+  bg.addColorStop(0,'rgba(255,200,50,0.5)'); bg.addColorStop(0.5,'rgba(255,120,0,0.25)'); bg.addColorStop(1,'rgba(255,60,0,0.05)');
+  ctx.fillStyle=bg;
+  ctx.beginPath(); ctx.arc(0,0,s*12,0,Math.PI*2); ctx.fill();
+  // Inner organs — luminescent
+  const ig=ctx.createRadialGradient(0,0,0,0,0,s*5);
+  ig.addColorStop(0,'rgba(255,240,100,0.8)'); ig.addColorStop(1,'rgba(255,150,0,0.2)');
+  ctx.fillStyle=ig; ctx.beginPath(); ctx.ellipse(0,0,s*5,s*4,0,0,Math.PI*2); ctx.fill();
+  // Tendril ribbons — 8 flowing tendrils
+  ctx.strokeStyle='rgba(255,180,0,0.6)'; ctx.lineWidth=s*0.8;
+  for(let i=0;i<8;i++){
+    const baseAngle=(i/8)*Math.PI*2;
+    const bx=Math.cos(baseAngle)*s*10;
+    const by=Math.sin(baseAngle)*s*10;
+    const cx2=bx+Math.cos(baseAngle+0.8)*s*8;
+    const cy2=by+Math.sin(baseAngle+0.8)*s*8;
+    ctx.beginPath(); ctx.moveTo(Math.cos(baseAngle)*s*8,Math.sin(baseAngle)*s*8);
+    ctx.quadraticCurveTo(bx,by,cx2,cy2); ctx.stroke();
+  }
+  // Electric spark nodes
+  ctx.fillStyle='rgba(255,255,100,0.9)';
+  ctx.shadowColor='#ffff00'; ctx.shadowBlur=8;
+  for(let i=0;i<5;i++){
+    const a=(i/5)*Math.PI*2;
+    ctx.beginPath(); ctx.arc(Math.cos(a)*s*7,Math.sin(a)*s*7,s*1.2,0,Math.PI*2); ctx.fill();
+  }
+  ctx.shadowBlur=0;
+  ctx.restore();
+}
+
+function drawVoidShark(ctx,x,y,sz){
+  // Void Shark — armoured phlogiston predator, bioluminescent lines, pure aggression
+  ctx.save(); ctx.translate(x,y); const s=sz/20;
+  // Torpedo body
+  const bg=ctx.createLinearGradient(-s*18,0,s*16,0);
+  bg.addColorStop(0,'#050a20'); bg.addColorStop(0.3,'#0a1a3a'); bg.addColorStop(1,'#071530');
+  ctx.fillStyle=bg;
+  ctx.beginPath(); ctx.moveTo(s*18,0); ctx.lineTo(s*10,-s*4); ctx.lineTo(-s*12,-s*5);
+  ctx.lineTo(-s*18,0); ctx.lineTo(-s*12,s*5); ctx.lineTo(s*10,s*4); ctx.closePath(); ctx.fill();
+  // Dorsal fin
+  ctx.fillStyle='#0a1830';
+  ctx.beginPath(); ctx.moveTo(s*2,-s*5); ctx.lineTo(s*8,-s*12); ctx.lineTo(s*10,-s*5); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#1a3060'; ctx.lineWidth=s*0.5; ctx.stroke();
+  // Pectoral fins
+  ctx.fillStyle='#0a1830';
+  [[s*4,-s*5,s*0,-s*12,-s*6,-s*5],[s*4,s*5,s*0,s*12,-s*6,s*5]].forEach(([x1,y1,x2,y2,x3,y3])=>{
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.lineTo(x3,y3); ctx.closePath(); ctx.fill();
+  });
+  // Bioluminescent lateral line
+  ctx.strokeStyle='rgba(50,180,255,0.7)'; ctx.lineWidth=s*0.8;
+  ctx.beginPath(); ctx.moveTo(s*16,0); ctx.lineTo(-s*15,0); ctx.stroke();
+  // Glowing spots along lateral line
+  ctx.fillStyle='rgba(80,200,255,0.8)';
+  ctx.shadowColor='#44aaff'; ctx.shadowBlur=8;
+  for(let i=0;i<6;i++){
+    ctx.beginPath(); ctx.arc(s*12-i*s*4,0,s*0.8,0,Math.PI*2); ctx.fill();
+  }
+  ctx.shadowBlur=0;
+  // Predator jaws
+  ctx.fillStyle='#224488';
+  ctx.beginPath(); ctx.moveTo(s*18,0); ctx.lineTo(s*14,-s*2); ctx.lineTo(s*13,0); ctx.lineTo(s*14,s*2); ctx.closePath(); ctx.fill();
+  // Eyes — predator glow
+  ctx.fillStyle='rgba(0,220,255,0.9)';
+  ctx.shadowColor='#00ddff'; ctx.shadowBlur=10;
+  [[s*12,-s*2],[s*12,s*2]].forEach(([ex,ey])=>{
+    ctx.beginPath(); ctx.arc(ex,ey,s*1.3,0,Math.PI*2); ctx.fill();
+  });
+  ctx.shadowBlur=0;
+  // Tail — crescent
+  ctx.fillStyle='#0a1830'; ctx.strokeStyle='#1a3060'; ctx.lineWidth=s*0.5;
+  ctx.beginPath(); ctx.moveTo(-s*14,-s*7); ctx.lineTo(-s*18,0); ctx.lineTo(-s*14,s*7); ctx.lineTo(-s*12,0); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+
 // ── World Boss Drawings ───────────────────────────────────
+
+function drawGoblinRocketer(ctx,x,y,sz){
+  // Goblin Rocket-Barge — flat raft hull bristling with tubes and rockets, chaotic energy
+  ctx.save(); ctx.translate(x,y); const s=sz/20;
+  // Flat raft hull
+  const bg=ctx.createLinearGradient(-s*14,0,s*14,0);
+  bg.addColorStop(0,'#332200'); bg.addColorStop(1,'#553300');
+  ctx.fillStyle=bg;
+  ctx.beginPath(); ctx.rect(-s*14,-s*5,s*28,s*10); ctx.fill();
+  ctx.strokeStyle='#775500'; ctx.lineWidth=s*0.7; ctx.strokeRect(-s*14,-s*5,s*28,s*10);
+  // Rocket tubes (4 of them, staggered)
+  const tubes=[[-s*8,-s*7],[-s*2,-s*9],[s*4,-s*7],[s*10,-s*9]];
+  tubes.forEach(([tx,ty])=>{
+    ctx.fillStyle='#553311';
+    ctx.beginPath(); ctx.rect(tx-s*1.5,ty,s*3,s*4); ctx.fill();
+    ctx.strokeStyle='#886622'; ctx.lineWidth=s*0.5; ctx.strokeRect(tx-s*1.5,ty,s*3,s*4);
+    // Flame in tube
+    const fg=ctx.createRadialGradient(tx,ty+s*4,0,tx,ty+s*4,s*2);
+    fg.addColorStop(0,'rgba(255,200,50,0.9)'); fg.addColorStop(1,'transparent');
+    ctx.fillStyle=fg; ctx.beginPath(); ctx.arc(tx,ty+s*4,s*2,0,Math.PI*2); ctx.fill();
+  });
+  // Crew goblins (tiny dots)
+  ctx.fillStyle='#88aa22';
+  [[s*6,0],[s*0,0],[-s*6,0]].forEach(([gx,gy])=>{
+    ctx.beginPath(); ctx.arc(gx,gy,s*1.5,0,Math.PI*2); ctx.fill();
+  });
+  // Fire trail
+  const ff=ctx.createRadialGradient(-s*16,0,0,-s*16,0,s*8);
+  ff.addColorStop(0,'rgba(255,100,0,0.7)'); ff.addColorStop(1,'transparent');
+  ctx.fillStyle=ff; ctx.beginPath(); ctx.arc(-s*16,0,s*8,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawGoblinShaman(ctx,x,y,sz){
+  // Goblin Shaman Skiff — skeletal frame hung with charms, glowing magical runes
+  ctx.save(); ctx.translate(x,y); const s=sz/20;
+  // Narrow skiff body
+  ctx.fillStyle='#1a2200';
+  ctx.beginPath(); ctx.moveTo(s*12,0); ctx.lineTo(s*6,-s*3); ctx.lineTo(-s*10,-s*4);
+  ctx.lineTo(-s*14,0); ctx.lineTo(-s*10,s*4); ctx.lineTo(s*6,s*3); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#44bb22'; ctx.lineWidth=s*0.4; ctx.stroke();
+  // Magical rune glows
+  ctx.shadowColor='#22ff44'; ctx.shadowBlur=12;
+  ctx.fillStyle='rgba(50,255,80,0.6)';
+  [[s*4,-s*2],[s*0,s*2],[-s*5,0],[-s*9,-s*1]].forEach(([rx,ry])=>{
+    ctx.beginPath(); ctx.arc(rx,ry,s*1.2,0,Math.PI*2); ctx.fill();
+  });
+  ctx.shadowBlur=0;
+  // Totem pole mast
+  ctx.fillStyle='#553311'; ctx.strokeStyle='#886633'; ctx.lineWidth=s*0.5;
+  ctx.beginPath(); ctx.rect(-s*1,- s*12,s*2,s*12); ctx.fill(); ctx.stroke();
+  // Skull charm on mast
+  ctx.fillStyle='#ccaa88';
+  ctx.beginPath(); ctx.arc(0,-s*12,s*2,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#220000';
+  ctx.beginPath(); ctx.arc(-s*0.6,-s*12,s*0.5,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(s*0.6,-s*12,s*0.5,0,Math.PI*2); ctx.fill();
+  // Green energy wake
+  const gg=ctx.createRadialGradient(-s*14,0,0,-s*14,0,s*5);
+  gg.addColorStop(0,'rgba(50,200,50,0.5)'); gg.addColorStop(1,'transparent');
+  ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(-s*14,0,s*5,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawScroEnforcer(ctx,x,y,sz){
+  // Scro Enforcer Cutter — angular military cutter, armour-plate overlaps, menacing prow
+  ctx.save(); ctx.translate(x,y); const s=sz/20;
+  // Armoured hull
+  const bg=ctx.createLinearGradient(-s*14,0,s*16,0);
+  bg.addColorStop(0,'#2a1a08'); bg.addColorStop(1,'#3a2510');
+  ctx.fillStyle=bg;
+  ctx.beginPath(); ctx.moveTo(s*16,0); ctx.lineTo(s*8,-s*5); ctx.lineTo(-s*12,-s*6);
+  ctx.lineTo(-s*16,0); ctx.lineTo(-s*12,s*6); ctx.lineTo(s*8,s*5); ctx.closePath(); ctx.fill();
+  // Armour plates — overlapping rectangles
+  ctx.fillStyle='rgba(80,50,20,0.7)';
+  [[-s*4,-s*5],[-s*0,-s*5],[s*6,-s*4]].forEach(([px,py])=>{
+    ctx.beginPath(); ctx.rect(px,py,s*5,s*4); ctx.fill();
+    ctx.strokeStyle='#664422'; ctx.lineWidth=s*0.4; ctx.strokeRect(px,py,s*5,s*4);
+  });
+  [[-s*4,s*1],[-s*0,s*1],[s*6,s*0]].forEach(([px,py])=>{
+    ctx.beginPath(); ctx.rect(px,py,s*5,s*4); ctx.fill();
+    ctx.strokeStyle='#664422'; ctx.lineWidth=s*0.4; ctx.strokeRect(px,py,s*5,s*4);
+  });
+  // Prow spike
+  ctx.fillStyle='#88552200'; ctx.strokeStyle='#aa7733'; ctx.lineWidth=s*0.8;
+  ctx.beginPath(); ctx.moveTo(s*16,0); ctx.lineTo(s*22,-s*1.5); ctx.lineTo(s*22,s*1.5); ctx.closePath(); ctx.fill(); ctx.stroke();
+  // Crew ports — tiny windows
+  ctx.fillStyle='#ffcc66';
+  [[s*4,-s*4],[s*0,-s*4],[s*4,s*4],[s*0,s*4]].forEach(([wx,wy])=>{
+    ctx.beginPath(); ctx.rect(wx-s*0.8,wy-s*0.5,s*1.6,s*1); ctx.fill();
+  });
+  const eg=ctx.createRadialGradient(-s*14,0,0,-s*14,0,s*5);
+  eg.addColorStop(0,'rgba(180,80,20,0.6)'); eg.addColorStop(1,'transparent');
+  ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(-s*14,0,s*5,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawScroSlaver(ctx,x,y,sz){
+  // Scro Slaver Brig — heavy blunt-prowed brig with chain rigs and holding cages
+  ctx.save(); ctx.translate(x,y); const s=sz/20;
+  // Wide flat hull
+  const bg=ctx.createLinearGradient(-s*16,0,s*14,0);
+  bg.addColorStop(0,'#221108'); bg.addColorStop(1,'#3a2010');
+  ctx.fillStyle=bg;
+  ctx.beginPath(); ctx.moveTo(s*14,0); ctx.lineTo(s*6,-s*7); ctx.lineTo(-s*14,-s*7);
+  ctx.lineTo(-s*18,0); ctx.lineTo(-s*14,s*7); ctx.lineTo(s*6,s*7); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#6a3311'; ctx.lineWidth=s*0.6; ctx.stroke();
+  // Cage bars along sides — slave hold
+  ctx.strokeStyle='#885522'; ctx.lineWidth=s*0.5;
+  for(let i=0;i<5;i++){
+    const bx=-s*10+i*s*4;
+    ctx.beginPath(); ctx.moveTo(bx,-s*7); ctx.lineTo(bx,-s*4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bx,s*4); ctx.lineTo(bx,s*7); ctx.stroke();
+  }
+  // Chain harpoon mount on prow
+  ctx.fillStyle='#665533'; ctx.strokeStyle='#998844'; ctx.lineWidth=s*0.8;
+  ctx.beginPath(); ctx.rect(s*8,-s*2,s*6,s*4); ctx.fill(); ctx.stroke();
+  // Chain coils
+  ctx.strokeStyle='#bbaa66'; ctx.lineWidth=s*0.6;
+  ctx.beginPath(); ctx.arc(s*11,-s*3,s*2,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(s*11,s*3,s*2,0,Math.PI*2); ctx.stroke();
+  // Dark hold glow
+  const eg=ctx.createRadialGradient(-s*14,0,0,-s*14,0,s*6);
+  eg.addColorStop(0,'rgba(100,40,0,0.5)'); eg.addColorStop(1,'transparent');
+  ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(-s*14,0,s*6,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawPhlogMote(ctx,x,y,sz){
+  // Phlogiston Mote Swarm — cluster of tiny glowing embers, no solid form
+  ctx.save(); ctx.translate(x,y); const s=sz/20;
+  const motes=[
+    [0,0,s*4],[s*8,-s*3,s*2.5],[s*5,s*4,s*3],[-s*6,-s*2,s*3.5],
+    [-s*3,s*5,s*2],[s*12,s*1,s*2],[-s*10,s*2,s*2.5],[s*3,-s*6,s*2],
+  ];
+  motes.forEach(([mx,my,mr],i)=>{
+    const alpha = 0.5 + Math.sin(i * 1.3) * 0.3;
+    const col = i%3===0?'#ffcc00':i%3===1?'#ff8800':'#ffee44';
+    ctx.shadowColor=col; ctx.shadowBlur=12;
+    ctx.fillStyle=col;
+    ctx.globalAlpha=alpha;
+    ctx.beginPath(); ctx.arc(mx,my,mr,0,Math.PI*2); ctx.fill();
+  });
+  ctx.globalAlpha=1; ctx.shadowBlur=0;
+  ctx.restore();
+}
+
+function drawPhlogFlamewing(ctx,x,y,sz){
+  // Phlogiston Flamewing — winged fire creature, crystalline wings, burning core
+  ctx.save(); ctx.translate(x,y); const s=sz/20;
+  // Sleek body — teardrop
+  const bg=ctx.createRadialGradient(s*2,0,s,s*2,0,s*8);
+  bg.addColorStop(0,'#ff6600'); bg.addColorStop(1,'#661100');
+  ctx.fillStyle=bg;
+  ctx.beginPath(); ctx.ellipse(s*2,0,s*8,s*3.5,0,0,Math.PI*2); ctx.fill();
+  // Crystalline wings — sharp angular
+  ctx.fillStyle='rgba(255,140,50,0.5)'; ctx.strokeStyle='rgba(255,200,100,0.8)'; ctx.lineWidth=s*0.5;
+  [[1,-1],[1,1]].forEach(([_,ys])=>{
+    ctx.beginPath();
+    ctx.moveTo(s*4,0); ctx.lineTo(s*10,ys*s*14); ctx.lineTo(s*0,ys*s*8); ctx.lineTo(-s*8,ys*s*12);
+    ctx.lineTo(-s*10,0); ctx.closePath(); ctx.fill(); ctx.stroke();
+  });
+  // Burning core — hot white centre
+  ctx.shadowColor='#ffffff'; ctx.shadowBlur=20;
+  const core=ctx.createRadialGradient(s*2,0,0,s*2,0,s*3);
+  core.addColorStop(0,'rgba(255,255,220,0.9)'); core.addColorStop(1,'transparent');
+  ctx.fillStyle=core; ctx.beginPath(); ctx.arc(s*2,0,s*3,0,Math.PI*2); ctx.fill();
+  ctx.shadowBlur=0;
+  // Fire trail
+  const ft=ctx.createRadialGradient(-s*10,0,0,-s*10,0,s*7);
+  ft.addColorStop(0,'rgba(255,100,0,0.6)'); ft.addColorStop(1,'transparent');
+  ctx.fillStyle=ft; ctx.beginPath(); ctx.arc(-s*10,0,s*7,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawPhlogVinecrawler(ctx,x,y,sz){
+  // Phlogiston Vinecrawler — mass of glowing vines and tendrils, organic horror
+  ctx.save(); ctx.translate(x,y); const s=sz/20;
+  // Core mass — irregular blob
+  const bg=ctx.createRadialGradient(0,0,s,0,0,s*10);
+  bg.addColorStop(0,'#1a4a0a'); bg.addColorStop(1,'#0a2205');
+  ctx.fillStyle=bg;
+  ctx.beginPath();
+  ctx.moveTo(s*10,0); ctx.bezierCurveTo(s*8,-s*8,s*2,-s*10,-s*4,-s*8);
+  ctx.bezierCurveTo(-s*10,-s*6,-s*12,s*0,-s*10,s*7);
+  ctx.bezierCurveTo(-s*8,s*12,s*2,s*10,s*6,s*8);
+  ctx.bezierCurveTo(s*12,s*6,s*12,s*4,s*10,0);
+  ctx.closePath(); ctx.fill();
+  // Tendrils — 6 reaching arms
+  ctx.strokeStyle='#33bb22'; ctx.lineWidth=s*1.2;
+  const tendrils=[
+    [s*8,-s*6,s*14,-s*12,s*18,-s*8],
+    [s*4,-s*9,s*6,-s*16,s*12,-s*14],
+    [-s*8,-s*6,-s*14,-s*10,-s*18,-s*6],
+    [s*8,s*6,s*14,s*12,s*18,s*8],
+    [s*4,s*9,s*6,s*16,s*12,s*14],
+    [-s*8,s*6,-s*14,s*10,-s*18,s*6],
+  ];
+  tendrils.forEach(([x1,y1,x2,y2,x3,y3])=>{
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.quadraticCurveTo(x2,y2,x3,y3); ctx.stroke();
+    ctx.fillStyle='#44dd22'; ctx.beginPath(); ctx.arc(x3,y3,s*1.5,0,Math.PI*2); ctx.fill();
+  });
+  // Bioluminescent nodes
+  ctx.shadowColor='#66ff44'; ctx.shadowBlur=8;
+  ctx.fillStyle='rgba(100,255,60,0.7)';
+  [[0,0],[s*4,-s*3],[-s*4,s*3],[s*2,s*5]].forEach(([nx,ny])=>{
+    ctx.beginPath(); ctx.arc(nx,ny,s*1.2,0,Math.PI*2); ctx.fill();
+  });
+  ctx.shadowBlur=0;
+  ctx.restore();
+}
+
+
 function drawWarlordGrex(ctx,x,y,sz){
   ctx.save(); ctx.translate(x,y); const s=sz/20;
   // Massive Scro hull — wider and more brutal than scroBattle
@@ -8611,6 +9177,20 @@ function showLootOverlay(key, gold, items){
   else if(key==='frHorde')     _lF('frHorde',false,     ()=>drawFarRealmHorde(lc,90,55,32));
   else if(key==='thrikreen')   _lF('thrikreen',false,   ()=>drawThriKreen(lc,90,55,32));
   else if(key==='neogi')       _lF('neogi',false,       ()=>drawNeogi(lc,90,55,32));
+  else if(key==='goblin_cutter')      _lF('goblin_cutter',true,      ()=>drawGoblinCutter(lc,90,55,32));
+  else if(key==='goblin_rocketer')    _lF('goblin_rocketer',true,    ()=>drawGoblinRocketer(lc,90,55,32));
+  else if(key==='goblin_shaman_boat') _lF('goblin_shaman_boat',true, ()=>drawGoblinShaman(lc,90,55,32));
+  else if(key==='scro_patrol')        _lF('scro_patrol',true,        ()=>drawScroPatrol(lc,90,55,32));
+  else if(key==='scro_enforcer')      _lF('scro_enforcer',true,      ()=>drawScroEnforcer(lc,90,55,32));
+  else if(key==='scro_slaver')        _lF('scro_slaver',true,        ()=>drawScroSlaver(lc,90,55,32));
+  else if(key==='scro_patrol')    _lF('scro_patrol',true,    ()=>drawScroPatrol(lc,90,55,32));
+  else if(key==='scro_warship')   _lF('scro_warship',true,   ()=>drawScroWarship(lc,90,55,32));
+  else if(key==='scro_dreadnought') _lF('scro_dreadnought',true, ()=>drawScroDreadnought(lc,90,55,32));
+  else if(key==='phlog_jellyfish') _lF('phlog_jellyfish',false, ()=>drawPhlogJellyfish(lc,90,55,32));
+  else if(key==='void_shark')         _lF('void_shark',true,         ()=>drawVoidShark(lc,90,55,32));
+  else if(key==='phlog_mote')         _lF('phlog_mote',false,        ()=>drawPhlogMote(lc,90,55,32));
+  else if(key==='phlog_flamewing')    _lF('phlog_flamewing',false,   ()=>drawPhlogFlamewing(lc,90,55,32));
+  else if(key==='phlog_vinecrawler')  _lF('phlog_vinecrawler',false, ()=>drawPhlogVinecrawler(lc,90,55,32));
   else if(key==='wb_grex')     _lF('wb_grex',false,     ()=>drawWarlordGrex(lc,90,55,32));
   else if(key==='wb_admiral')  _lF('wb_admiral',false,  ()=>drawHollowAdmiral(lc,90,55,32));
   else if(key==='wb_clutch')   _lF('wb_clutch',false,   ()=>drawClutchMother(lc,90,55,32));
