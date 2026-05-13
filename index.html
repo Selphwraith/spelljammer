@@ -5056,8 +5056,8 @@ cv.addEventListener('mousemove',e=>{
   const _sx=(e.clientX-r.left)*(cv.width/r.width), _sy=(e.clientY-r.top)*(cv.height/r.height);
   const {x:mx,y:my}=screenToWorld(_sx,_sy);
 
-  // Track drag for pan suppression of click
-  if(G.view&&G.view._pan){
+  // Track drag for pan suppression of click — but not when any overlay is open
+  if(G.view&&G.view._pan&&!_anyOverlayOpen()){
     const dx=_sx-G.view._lastMx, dy=_sy-G.view._lastMy;
     G.view.panX+=dx; G.view.panY+=dy;
     G.view._lastMx=_sx; G.view._lastMy=_sy;
@@ -10362,6 +10362,7 @@ document.addEventListener('click', e=>{
   cv.addEventListener('touchstart', function(e){
     if(!isMobile()) return;
     e.preventDefault(); // stop scroll / zoom
+    if(_anyOverlayOpen()) return; // block map taps when any window is open
     const touch = e.touches[0];
     const r = cv.getBoundingClientRect();
     const _tsx = (touch.clientX - r.left) * (cv.width / r.width);
@@ -10436,6 +10437,7 @@ document.addEventListener('click', e=>{
 cv.addEventListener('wheel', e=>{
   e.preventDefault();
   if(!G.view) return;
+  if(_anyOverlayOpen()) return; // don't zoom when any window is open
   const r=cv.getBoundingClientRect();
   const sx=(e.clientX-r.left)*(cv.width/r.width);
   const sy=(e.clientY-r.top)*(cv.height/r.height);
@@ -10456,6 +10458,7 @@ cv.addEventListener('wheel', e=>{
 cv.addEventListener('mousedown', e=>{
   if(!G.view) return;
   if(e.button!==0 && e.button!==1) return;
+  if(_anyOverlayOpen()) return; // don't start pan when any window is open
   const r=cv.getBoundingClientRect();
   G.view._pan=true;
   G.view._didDrag=false;
@@ -10475,6 +10478,7 @@ window.addEventListener('mouseup', e=>{
   cv.addEventListener('touchstart', function(e){
     if(!G.view) return;
     if(e.touches.length!==1) return; // let pinch-zoom handle 2-finger
+    if(_anyOverlayOpen()) return; // don't start touch-pan when any window is open
     _tPanActive=true; _tDragDist=0;
     const r=cv.getBoundingClientRect();
     _tPanX=(e.touches[0].clientX-r.left)*(cv.width/r.width);
@@ -10482,6 +10486,7 @@ window.addEventListener('mouseup', e=>{
   },{passive:true});
   cv.addEventListener('touchmove', function(e){
     if(!G.view||!_tPanActive||e.touches.length!==1) return;
+    if(_anyOverlayOpen()){ _tPanActive=false; return; } // cancel pan mid-gesture if overlay opens
     e.preventDefault();
     const r=cv.getBoundingClientRect();
     const nx=(e.touches[0].clientX-r.left)*(cv.width/r.width);
@@ -10547,10 +10552,12 @@ window.addEventListener('keydown', e=>{
   let _pt=null; // previous touch pair distance
   cv.addEventListener('touchstart', e=>{
     if(!G.view||!isMobile()) return;
+    if(_anyOverlayOpen()){ _pt=null; return; } // block pinch when any window is open
     if(e.touches.length===2){ _pt=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); }
   },{passive:true});
   cv.addEventListener('touchmove', e=>{
     if(!G.view||!isMobile()) return;
+    if(_anyOverlayOpen()){ _pt=null; return; } // cancel pinch mid-gesture if overlay opens
     if(e.touches.length===2&&_pt!==null){
       e.preventDefault();
       const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
