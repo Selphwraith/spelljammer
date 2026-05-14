@@ -7407,21 +7407,183 @@ function tsRender(timestamp) {
     return !ev.triggered;
   });
 
+  // ── Flow direction for this lane ────────────────────────────────────────
+  // flow:  1 = river flows upward (same direction ship moves) = WITH flow
+  //        -1 = river flows upward but ship travels against it = AGAINST flow
+  //        0  = bidirectional / no dominant current
+  const laneFlow = TS.lane?.flow ?? 0;  // 1, -1, or 0
+
   // ── Draw your ship (centered, bobbing) ─────────────────────────────────
   const shipX = W / 2;
   const shipY = H * 0.55;
-  const bob   = Math.sin(TS.t * 1.4) * 5 * (1 + (tier - 1) * 0.4);  // more turbulence at higher tier
+  const bob   = Math.sin(TS.t * 1.4) * 5 * (1 + (tier - 1) * 0.4);
   const sway  = Math.sin(TS.t * 0.9) * 3 * (1 + (tier - 1) * 0.3);
-  const tilt  = Math.sin(TS.t * 1.1) * 0.04;
-
-  ctx.save();
-  ctx.save();
-  ctx.translate(shipX + sway, shipY + bob);
-  // Rotate ship to face UP — ships are drawn nose-right, so -90° points nose upward
-  ctx.rotate(-Math.PI / 2 + tilt);
+  const tilt  = Math.sin(TS.t * 1.1) * 0.04 + (laneFlow === -1 ? Math.sin(TS.t * 2.3) * 0.06 : 0);
 
   const sType = G.ship?.type || 'pinnace';
   const [sw, sh] = shipSz(sType, 100, 60);
+
+  // ── SCREEN-SPACE ship position (for effects drawn before ctx.rotate) ───
+  const sxScreen = shipX + sway;
+  const syScreen = shipY + bob;
+
+  // ── RIVER LANE — colored flow stream through the center of the channel ─
+  // Drawn first (behind everything). Color and direction based on lane tier + flow.
+  {
+    const riverColors = [
+      ['rgba(0,255,220,',   'rgba(0,180,255,'],   // tier 1
+      ['rgba(110,80,255,',  'rgba(180,0,255,'],    // tier 2
+      ['rgba(255,150,0,',   'rgba(255,60,0,'],     // tier 3
+      ['rgba(255,50,0,',    'rgba(200,0,80,'],     // tier 4
+      ['rgba(200,0,60,',    'rgba(120,0,180,'],    // tier 5
+    ];
+    const [rColA, rColB] = riverColors[Math.min(tier-1, 4)];
+    const riverW = W * 0.22;
+    const rg = ctx.createLinearGradient(W/2 - riverW, 0, W/2 + riverW, 0);
+    rg.addColorStop(0,   'rgba(0,0,0,0)');
+    rg.addColorStop(0.2, rColA + '0.07)');
+    rg.addColorStop(0.5, rColB + '0.14)');
+    rg.addColorStop(0.8, rColA + '0.07)');
+    rg.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = rg;
+    ctx.fillRect(W/2 - riverW, 0, riverW * 2, H);
+
+    // Animated streak lines flowing in the river's direction
+    // laneFlow === 1: streaks scroll upward (same as ship travel). -1: downward. 0: both.
+    const streakDirs = laneFlow === 0 ? [1, -1] : [laneFlow];
+    streakDirs.forEach(dir => {
+      for (let si = 0; si < 10; si++) {
+        const ss = si * 1.732 + dir * 0.3;
+        const sx2 = W/2 - riverW*0.85 + ((ss * 97.3) % 1) * riverW * 1.7;
+        const speed = (50 + ((ss * 41.7) % 1) * 80) * dir;
+        const rawY2 = ((ss * 83.1 - TS.t * speed) % H + H * 2) % H;
+        const sLen = 18 + ((ss * 29.1) % 1) * 45;
+        const sa2 = 0.25 + 0.35 * Math.abs(Math.sin(TS.t * 1.5 + ss));
+        const sg = ctx.createLinearGradient(sx2, rawY2, sx2, rawY2 + sLen * dir);
+        sg.addColorStop(0,   rColA + sa2.toFixed(2) + ')');
+        sg.addColorStop(0.5, rColB + (sa2*0.7).toFixed(2) + ')');
+        sg.addColorStop(1,   'rgba(0,0,0,0)');
+        ctx.strokeStyle = sg;
+        ctx.lineWidth = 1.2 + ((ss * 13.7) % 1) * 2.2;
+        ctx.beginPath(); ctx.moveTo(sx2, rawY2); ctx.lineTo(sx2, rawY2 + sLen * dir); ctx.stroke();
+      }
+    });
+  }
+
+  // ── AGAINST FLOW — bow resistance effect (drawn in world space, behind ship) ─
+  if (laneFlow === -1) {
+    // Curling color pressure wave pushing back at the bow (above the ship = toward y=0)
+    const bowY = syScreen - sh * 0.42;
+    const bowPulse = 0.6 + 0.4 * Math.sin(TS.t * 3.2);
+    for (let wi = 0; wi < 5; wi++) {
+      const wProgress = ((TS.t * 1.8 + wi * 0.22) % 1);
+      const wR = (12 + wi * 9) * bowPulse;
+      const wA = (0.55 - wProgress * 0.55) * (1 - wi * 0.12);
+      const wg = ctx.createRadialGradient(sxScreen, bowY, 0, sxScreen, bowY, wR);
+      wg.addColorStop(0,   `rgba(255,80,0,${wA})`);
+      wg.addColorStop(0.4, `rgba(255,160,0,${wA * 0.6})`);
+      wg.addColorStop(1,   'rgba(255,80,0,0)');
+      ctx.fillStyle = wg;
+      ctx.beginPath(); ctx.arc(sxScreen, bowY, wR, 0, Math.PI * 2); ctx.fill();
+    }
+    // Spray particles — small colored sparks thrown sideways from the bow
+    for (let pi = 0; pi < 8; pi++) {
+      const pt = (TS.t * 2.5 + pi * 0.4) % 1;
+      const side = pi % 2 === 0 ? 1 : -1;
+      const px2 = sxScreen + side * (pt * 38 + 6) + Math.sin(TS.t * 4 + pi) * 4;
+      const py2 = bowY - pt * 18 + Math.cos(TS.t * 3 + pi) * 5;
+      const pa = (1 - pt) * 0.8;
+      ctx.fillStyle = `rgba(255,${Math.floor(80 + pt*120)},0,${pa.toFixed(2)})`;
+      ctx.beginPath(); ctx.arc(px2, py2, 2.5 - pt*1.5, 0, Math.PI*2); ctx.fill();
+    }
+    // Shockwave arc across the bow
+    const arcA = 0.35 + 0.3 * Math.sin(TS.t * 2.8);
+    ctx.strokeStyle = `rgba(255,120,0,${arcA})`;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(sxScreen, bowY + 10, sw * 0.48, Math.PI * 1.15, Math.PI * 1.85);
+    ctx.stroke();
+    ctx.strokeStyle = `rgba(255,200,80,${arcA * 0.5})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(sxScreen, bowY + 10, sw * 0.38, Math.PI * 1.2, Math.PI * 1.8);
+    ctx.stroke();
+  }
+
+  // ── WITH FLOW — wide colorful wake behind ship ───────────────────────────
+  if (laneFlow === 1) {
+    const wakeY = syScreen + sh * 0.42; // stern = downward on screen
+    const wakeLen = H * 0.45;
+    const wakeColors = [
+      ['rgba(0,255,200,', 'rgba(0,150,255,'],
+      ['rgba(120,60,255,','rgba(200,0,255,'],
+      ['rgba(255,140,0,', 'rgba(255,60,0,'],
+      ['rgba(255,40,0,',  'rgba(200,0,60,'],
+      ['rgba(180,0,50,',  'rgba(100,0,150,'],
+    ];
+    const [wColA, wColB] = wakeColors[Math.min(tier-1, 4)];
+
+    // Central glowing wake ribbon
+    const wg = ctx.createLinearGradient(0, wakeY, 0, wakeY + wakeLen);
+    wg.addColorStop(0,   wColA + '0.55)');
+    wg.addColorStop(0.3, wColB + '0.35)');
+    wg.addColorStop(0.7, wColA + '0.15)');
+    wg.addColorStop(1,   'rgba(0,0,0,0)');
+    const wakeW = sw * 0.55;
+    ctx.fillStyle = wg;
+    ctx.beginPath();
+    ctx.moveTo(sxScreen - wakeW * 0.5, wakeY);
+    ctx.bezierCurveTo(sxScreen - wakeW, wakeY + wakeLen*0.3, sxScreen - wakeW*0.4, wakeY + wakeLen*0.7, sxScreen, wakeY + wakeLen);
+    ctx.bezierCurveTo(sxScreen + wakeW*0.4, wakeY + wakeLen*0.7, sxScreen + wakeW, wakeY + wakeLen*0.3, sxScreen + wakeW * 0.5, wakeY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Sparkling wake particles flowing downward (behind ship, with the current)
+    for (let wi = 0; wi < 14; wi++) {
+      const wt = (TS.t * 1.4 + wi * 0.09) % 1;
+      const wx2 = sxScreen + (Math.sin(wi * 2.3 + TS.t * 0.5) * wakeW * 0.8);
+      const wy2 = wakeY + wt * wakeLen * 0.85;
+      const wa = (1 - wt) * 0.7;
+      const wr2 = (2.5 - wt * 1.5) * (0.7 + 0.3 * Math.sin(TS.t * 4 + wi));
+      ctx.fillStyle = wi % 2 === 0 ? wColA + wa.toFixed(2) + ')' : wColB + wa.toFixed(2) + ')';
+      ctx.beginPath(); ctx.arc(wx2, wy2, Math.max(0.3, wr2), 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  // ── BIDIRECTIONAL — small neutral wake ──────────────────────────────────
+  if (laneFlow === 0) {
+    const wakeY = syScreen + sh * 0.42;
+    const wakeLen = H * 0.22;
+    const wg = ctx.createLinearGradient(0, wakeY, 0, wakeY + wakeLen);
+    wg.addColorStop(0,   col.particle + '0.30)');
+    wg.addColorStop(0.5, col.particle + '0.12)');
+    wg.addColorStop(1,   'rgba(0,0,0,0)');
+    const wakeW = sw * 0.38;
+    ctx.fillStyle = wg;
+    ctx.beginPath();
+    ctx.moveTo(sxScreen - wakeW * 0.45, wakeY);
+    ctx.bezierCurveTo(sxScreen - wakeW*0.8, wakeY + wakeLen*0.4, sxScreen - wakeW*0.3, wakeY+wakeLen*0.8, sxScreen, wakeY+wakeLen);
+    ctx.bezierCurveTo(sxScreen + wakeW*0.3, wakeY+wakeLen*0.8, sxScreen + wakeW*0.8, wakeY+wakeLen*0.4, sxScreen + wakeW*0.45, wakeY);
+    ctx.closePath();
+    ctx.fill();
+    // Small neutral sparkles
+    for (let wi = 0; wi < 7; wi++) {
+      const wt = (TS.t * 1.0 + wi * 0.15) % 1;
+      const wx2 = sxScreen + Math.sin(wi * 1.9 + TS.t * 0.4) * wakeW * 0.7;
+      const wy2 = wakeY + wt * wakeLen * 0.9;
+      const wa = (1 - wt) * 0.45;
+      ctx.fillStyle = col.particle + wa.toFixed(2) + ')';
+      ctx.beginPath(); ctx.arc(wx2, wy2, Math.max(0.3, 2 - wt), 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  // ── Ship body ────────────────────────────────────────────────────────────
+  ctx.save();
+  ctx.save();
+  ctx.translate(sxScreen, syScreen);
+  // Rotate ship to face UP — ships are drawn nose-right, so -90° points nose upward
+  ctx.rotate(-Math.PI / 2 + tilt);
+
   drawShipImg(sType, ctx, 0, 0, sw, sh, false, () => {
     if      (sType === 'pinnace') drawPinnace(ctx, 0, 0, 34, false);
     else if (sType === 'squid')   drawSquid(ctx, 0, 0, 34, false);
@@ -7432,7 +7594,7 @@ function tsRender(timestamp) {
   // Engine trail — fires from the STERN (negative X in ship space = below on screen after rotation)
   const trailLen = 40 + tier * 5;
   for (let i = 0; i < 5; i++) {
-    const tx = -sw * 0.4 - i * trailLen / 5;  // stern is at negative X in ship local space
+    const tx = -sw * 0.4 - i * trailLen / 5;
     const ta = (0.5 - i * 0.09) * 0.7;
     const tr = (4 - i * 0.6) * (0.7 + 0.3 * Math.sin(TS.t * 3 + i));
     const tg = ctx.createRadialGradient(tx, 0, 0, tx, 0, tr * 2);
