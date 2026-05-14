@@ -3206,37 +3206,44 @@ function currentHour() {
 function timeStr(h) { return String(h).padStart(2,'0') + ':00'; }
 function watchTimeStr() {
   if (!G.watch) return '';
-  // Use G.watch.totalHours for the base clock position
-  let totalH = G.watch.totalHours || 0;
-  // During travel, add fractional progress through the current 8-hr leg
-  if ((G.phase === 'traveling' || G.phase === 'map') && G.tvl?.steps > 0) {
-    const legFraction = Math.min(1, (G.tvl.cur || 0) / G.tvl.steps);
-    totalH = totalH + legFraction * LEG_HOURS;
-  }
-  // Day uses the canonical G.watch.day (already maintained by tickLeg/restAdvanceToMorning)
-  // Hour is computed mod-24 from totalH with 06:00 offset
-  const hour = Math.floor((6 + totalH) % 24);
+  const h = G.watch.totalHours || 0;
+  const hour = Math.floor((6 + h) % 24);
   return `Day ${G.watch.day} — ${timeStr(hour)}`;
 }
 
-// Live clock ticker — updates the HUD display every real second during travel
-// so the in-game hour visibly advances as the ship moves
+// Live clock ticker — advances the display hour smoothly based on real time elapsed
+// Each 8-hour leg takes watchMs real milliseconds, so 1 display hour = watchMs/8 ms
 let _clockTicker = null;
+let _clockLegStart = 0;   // real timestamp when current leg started
+let _clockLegHours = 0;   // totalHours value at start of current leg
+
 function startLiveClock() {
   if (_clockTicker) return;
+  _clockLegStart = performance.now();
+  _clockLegHours = G.watch?.totalHours || 0;
+
   _clockTicker = setInterval(() => {
-    if (G.phase === 'traveling') {
-      const hud = document.getElementById('watch-hud');
-      if (hud && hud.classList.contains('on')) {
-        document.getElementById('wh-day').textContent = watchTimeStr();
-      }
-    } else {
-      stopLiveClock();
-    }
+    if (G.phase !== 'traveling') { stopLiveClock(); return; }
+    const hud = document.getElementById('watch-hud');
+    if (!hud?.classList.contains('on')) return;
+
+    const watchMs = typeof getWatchRealMs === 'function' ? getWatchRealMs() : 6000;
+    const elapsed = performance.now() - _clockLegStart;
+    const hoursElapsed = Math.min(LEG_HOURS - 0.01, (elapsed / watchMs) * LEG_HOURS);
+    const totalH = _clockLegHours + hoursElapsed;
+    const hour = Math.floor((6 + totalH) % 24);
+    document.getElementById('wh-day').textContent = `Day ${G.watch.day} — ${timeStr(hour)}`;
   }, 1000);
 }
+
 function stopLiveClock() {
   if (_clockTicker) { clearInterval(_clockTicker); _clockTicker = null; }
+}
+
+// Call this when a new leg begins so the clock starts from the right base
+function resetLiveClock() {
+  _clockLegStart = performance.now();
+  _clockLegHours = G.watch?.totalHours || 0;
 }
 
 // Called once per completed leg (8 hours) — rest OR push
@@ -3511,7 +3518,7 @@ function doRest() {
         if (G._autoRest) _restAutoCountdown(resumeFn, 3);
       } else if (G.tvl?.prog < 100 && (G.tvl?.to || G.tvl?.toWp || G.tvl?.toFragSite)) {
         const dn = G.tvl.to ? G.spheres?.find(s=>s.id===G.tvl.to)?.n : (G.tvl.toWp?.n||G.tvl.toFragSite?.n||'destination');
-        const resumeFn2 = () => { G.phase='traveling'; startTravelHum(); G.tvl.timer=setInterval(travelTick,G.tvl.tickMs||100); tsOpen(getLane(G.tvl.from, G.tvl.to)); };
+        const resumeFn2 = () => { G.phase='traveling'; startTravelHum(); startLiveClock(); resetLiveClock(); G.tvl.timer=setInterval(travelTick,G.tvl.tickMs||100); tsOpen(getLane(G.tvl.from, G.tvl.to)); };
         showMsg('⚓ Rested — Ready to Sail', `${dn} awaits. Day ${G.watch.day}, 06:00.`,
           '⛵ Resume Course', resumeFn2);
         if (G._autoRest) _restAutoCountdown(resumeFn2, 3);
@@ -5767,7 +5774,7 @@ function startTravel(toId, _resumeWatchesLeft, _pausedPos, _pausedProg, _savedLa
   }
 
   G.tvl.timer = setInterval(travelTick, tickMs);
-  startTravelHum();
+  startTravelHum(); startLiveClock(); resetLiveClock();
   // Open the phlogiston travel sequence visual
   if (!_pausedProg) {
     tsOpen(lane);
@@ -5803,7 +5810,7 @@ function startWaypointTravel(wp){
   setTag(`Traveling → ${wp.n}`);
   snd('travel_begin', 0.7);
   addLog(`Setting course for waypoint ${wp.ico} ${wp.n}…`,'');
-  G.tvl.timer=setInterval(travelTick, wpTickMs); startTravelHum(); startLiveClock();
+  G.tvl.timer=setInterval(travelTick, wpTickMs); startTravelHum(); startLiveClock(); resetLiveClock();
 }
 
 function startFragSiteTravel(fs){
@@ -10104,7 +10111,7 @@ function endCbt(won){
     setTag(`Traveling → ${G.tvl.toFragSite.n}`);
     if(won) addLog('Enemy destroyed. Resuming course to '+G.tvl.toFragSite.n+'…','gd');
     document.getElementById('tvlbar').classList.add('on');
-    G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); startTravelHum(); startLiveClock();
+    G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); startTravelHum(); startLiveClock(); resetLiveClock();
     updateWatchHUD();
     tsOpen(G.tvl.lane);
     return;
@@ -10118,7 +10125,7 @@ function endCbt(won){
   G.phase='traveling'; setTag(`Traveling → ${G.spheres.find(s=>s.id===G.tvl.to)?.n||''}`);
   if(won)addLog('Resuming voyage.','');
   document.getElementById('tvlbar').classList.add('on');
-  G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); startTravelHum(); startLiveClock();
+  G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); startTravelHum(); startLiveClock(); resetLiveClock();
   updateWatchHUD();
   tsOpen(G.tvl.lane);
 }
