@@ -8160,18 +8160,16 @@ function tsRenderSphere(ctx, W, H, dt) {
   // then draw everything above that as "interior" and the arc itself as the wall.
   // ─────────────────────────────────────────────────────────────────────────
 
-  // Wall Y position: starts at top of screen, descends toward lower-quarter as you approach
-  // eased=0 → wallY = -H*0.05 (just above screen, barely visible)
-  // eased=1 → wallY = H*0.72  (72% down — sphere wall nearly fills screen, ship tip almost touching)
-  const wallY = H * (-0.05 + eased * 0.77);
+  // Wall Y position: starts above screen, descends until it nearly touches the ship bow.
+  // Ship bow tip is at roughly shipY - sh*0.45 ≈ H*0.55 - H*0.05 ≈ H*0.50
+  // At eased=1 we want wallY centre ≈ H*0.58 so the bow grazes the wall.
+  const wallY = H * (-0.05 + eased * 0.63);
 
-  // Curve: the wall bows slightly upward at the edges (sphere curving away)
-  // At center wallY, at edges wallY - curveDepth
-  // eased=0: barely curved. eased=1: strongly curved.
+  // Curve: bows upward at edges as sphere curves away
   const curveDepth = H * (0.02 + eased * 0.22);
 
-  // Interior region height — how tall the visible interior is above the wall
-  const interiorH = H * (0.08 + eased * 0.90); // grows from thin sliver to near-full screen
+  // Interior region height
+  const interiorH = H * (0.08 + eased * 0.90);
 
   // ── STEP 1: Draw interior (above the wall arc) ─────────────────────────
   // Build a clip path that is exactly the interior region:
@@ -8203,47 +8201,71 @@ function tsRenderSphere(ctx, W, H, dt) {
   ctx.fillRect(0, 0, W, H);
 
   // ── CRYSTAL SHELL HEXAGONAL PLATES ───────────────────────────────────────
-  // Large honeycomb facets visible on the sphere's crystal surface.
-  // Drawn OVER the space background but UNDER nebulae/stars/worlds so the
-  // interior shows through the shell — like looking through crystal panes.
+  // The sphere is a vast crystal structure — we're zooming into its surface.
+  // The hex grid is FIXED to the sphere: its origin is locked to the sphere's
+  // centre (screen centre, far above), and we zoom in as eased increases.
+  // This means the grid grows and the same plates stay in the same place —
+  // anchored to the sphere, not scrolling with the ship.
   {
-    // Hex grid parameters — large plates, not small honeycomb
-    const hexR   = Math.min(W, H) * (0.18 + eased * 0.12); // plate radius: grows as you approach
-    const hexW   = hexR * 2;
-    const hexH   = Math.sqrt(3) * hexR;
-    const cols   = Math.ceil(W  / (hexW * 0.75)) + 3;
-    const rows   = Math.ceil(H  / hexH) + 3;
+    // Sphere centre in screen space — always at horizontal centre, well above screen top.
+    // As eased→1 we're very close, so the centre appears far off the top of screen.
+    const sphereCX = W * 0.5;
+    const sphereCY = wallY - H * (1.5 + eased * 4.0); // recedes upward as we close in
 
-    // The grid drifts very slightly toward the camera as you approach (parallax)
-    const driftY = (eased * H * 0.12) % hexH;
-    const driftX = (eased * W * 0.04) % (hexW * 0.75);
+    // Sphere radius in screen space — grows as we approach
+    // When eased=0: sphere looks tiny/far. When eased=1: sphere is enormous.
+    const sphereScreenR = H * (0.3 + eased * 5.5);
 
-    // Opacity: barely visible far away, more defined up close — but always translucent
-    const shellAlpha = a * (0.04 + eased * 0.13);
-    const edgeAlpha  = a * (0.08 + eased * 0.22);
+    // Hex plate size in sphere surface units (0..1 of sphere radius)
+    // Large plates — about 1/6 of the sphere radius each
+    const hexSurfaceR = 0.165;
 
-    // Seed per-plate variation from its grid position
-    const hexSeed = (ci, ri) => ((ci * 7 + ri * 13) * 2654435761) >>> 0;
+    // Convert surface fraction to screen pixels
+    const hexR = sphereScreenR * hexSurfaceR;
+    const hexW = hexR * 2;
+    const hexH = Math.sqrt(3) * hexR;
+
+    // Grid origin — the hex grid tiles the sphere surface starting from sphere centre.
+    // We offset by sphere centre so the grid is anchored there.
+    const gridOriginX = sphereCX;
+    const gridOriginY = sphereCY;
+
+    const cols = Math.ceil(W  / (hexW * 0.75)) + 4;
+    const rows = Math.ceil((H + Math.abs(gridOriginY)) / hexH) + 4;
+
+    // Start indices so grid covers the screen, always centred on sphere
+    const startCI = Math.floor((-gridOriginX - hexW) / (hexW * 0.75)) - 1;
+    const startRI = Math.floor((-gridOriginY - hexH) / hexH) - 1;
+
+    // Visibility — much more opaque now so you can actually see the crystal
+    const shellAlpha = a * (0.10 + eased * 0.28); // plate fill
+    const edgeAlpha  = a * (0.28 + eased * 0.52); // edge lines — always clearly visible
+
+    const hexSeed = (ci, ri) => ((ci * 7919 + ri * 6271) * 2654435761) >>> 0;
 
     ctx.save();
-    for (let ri = -1; ri < rows; ri++) {
-      for (let ci = -2; ci < cols; ci++) {
-        // Offset every other column down by half a hex height (standard hex grid)
-        const cx2 = ci * hexW * 0.75 - driftX;
-        const cy2 = ri * hexH + (ci % 2 === 0 ? 0 : hexH * 0.5) - driftY;
+    for (let ri = startRI; ri < startRI + rows; ri++) {
+      for (let ci = startCI; ci < startCI + cols; ci++) {
+        // Screen position of this hex centre, anchored to sphere centre
+        const cx2 = gridOriginX + ci * hexW * 0.75;
+        const cy2 = gridOriginY + ri * hexH + (ci % 2 === 0 ? 0 : hexH * 0.5);
 
-        // Only draw if this hex is anywhere near the visible interior region
-        const topEdge = wallY - curveDepth - interiorH - hexR;
-        const botEdge = wallY + hexR;
-        if (cy2 < topEdge || cy2 > botEdge) continue;
+        // Cull: only draw hexes near the visible interior region
+        if (cx2 + hexR < -hexR || cx2 - hexR > W + hexR) continue;
+        if (cy2 + hexR < -hexR || cy2 - hexR > wallY + hexR) continue;
 
-        // Per-plate variation — slight tint, slight opacity shift
+        // Per-plate variation seeded by grid index — stable, doesn't flicker
         const seed  = hexSeed(ci, ri);
-        const tint  = (seed % 60) - 30;           // hue shift ±30° from base ice-blue
-        const opVar = ((seed >> 8) % 100) / 100;  // 0..1 opacity variation per plate
-        const thick = 0.6 + opVar * 0.6;          // some plates thicker crystal
+        const tint  = ((seed % 60) - 30);
+        const opVar = ((seed >> 8) % 100) / 100;
+        const thick = 1.2 + opVar * 1.4; // thicker lines so they read on mobile
 
-        // Hexagon path
+        // Distance from sphere centre — plates nearer the edge of the visible
+        // sphere get slightly more opaque (thicker crystal near the rim)
+        const distFrac = Math.min(1, Math.hypot(cx2 - sphereCX, cy2 - sphereCY) / sphereScreenR);
+        const rimBoost = 0.5 + distFrac * 0.8;
+
+        // Hex path
         ctx.beginPath();
         for (let v = 0; v < 6; v++) {
           const ang = (Math.PI / 3) * v - Math.PI / 6;
@@ -8253,28 +8275,27 @@ function tsRenderSphere(ctx, W, H, dt) {
         }
         ctx.closePath();
 
-        // Plate fill — very faint tinted glass, varied per plate
-        const plateA = shellAlpha * (0.4 + opVar * 0.6) * thick;
-        ctx.fillStyle = `hsla(${195 + tint},80%,78%,${plateA.toFixed(3)})`;
+        // Plate fill — glassy tinted crystal, variation per plate
+        const plateA = shellAlpha * (0.5 + opVar * 0.5) * rimBoost;
+        ctx.fillStyle = `hsla(${195 + tint},75%,82%,${Math.min(0.55, plateA).toFixed(3)})`;
         ctx.fill();
 
-        // Edge lines — slightly more opaque so the facet grid reads clearly
-        const edgeA = edgeAlpha * (0.5 + opVar * 0.5);
-        ctx.strokeStyle = `hsla(${200 + tint},90%,88%,${edgeA.toFixed(3)})`;
+        // Edge — bright, clearly visible crystal facet lines
+        const edgeA = Math.min(0.85, edgeAlpha * (0.6 + opVar * 0.4) * rimBoost);
+        ctx.strokeStyle = `hsla(${205 + tint},85%,92%,${edgeA.toFixed(3)})`;
         ctx.lineWidth = thick;
         ctx.stroke();
       }
     }
 
-    // Second pass: refraction highlight — a faint bright shimmer sweeps across
-    // the plates slowly, like light refracting through the crystal surface
-    const shimAngle  = t * 0.07; // very slow sweep
-    const shimX      = W * 0.5 + Math.cos(shimAngle) * W * 0.7;
-    const shimY      = (wallY - interiorH * 0.5) + Math.sin(shimAngle * 0.8) * interiorH * 0.4;
-    const shimR      = Math.min(W, H) * (0.5 + eased * 0.4);
-    const shimG      = ctx.createRadialGradient(shimX, shimY, 0, shimX, shimY, shimR);
-    shimG.addColorStop(0,   `rgba(200,230,255,${(a * 0.07).toFixed(3)})`);
-    shimG.addColorStop(0.4, `rgba(160,210,255,${(a * 0.04).toFixed(3)})`);
+    // Refraction sweep — slow moving highlight patch across the shell surface
+    const shimAngle = t * 0.05;
+    const shimX     = sphereCX + Math.cos(shimAngle) * sphereScreenR * 0.3;
+    const shimY     = sphereCY + sphereScreenR * 0.85 + Math.sin(shimAngle * 0.7) * sphereScreenR * 0.08;
+    const shimR     = hexR * 3.5;
+    const shimG     = ctx.createRadialGradient(shimX, shimY, 0, shimX, shimY, shimR);
+    shimG.addColorStop(0,   `rgba(220,240,255,${(a * 0.22).toFixed(3)})`);
+    shimG.addColorStop(0.5, `rgba(180,220,255,${(a * 0.10).toFixed(3)})`);
     shimG.addColorStop(1,   'rgba(0,0,0,0)');
     ctx.fillStyle = shimG;
     ctx.fillRect(0, 0, W, H);
