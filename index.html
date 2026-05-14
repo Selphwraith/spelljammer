@@ -5964,19 +5964,20 @@ function travelTick(){
       // Only show anchor/rest prompt every 2 legs (= 16 hours of travel)
       // After the first leg (8 hrs) continue silently; prompt fires at leg 2, 4, 6…
       if (G.tvl._legsThisSession % 2 !== 0) {
-        // Silent leg — tick time, log it, continue straight to next watch
-        tickLeg();
-        addLog(`🕐 8 hours underway — helmsman pushing on.`, '');
-        // Immediately start the next watch segment
+        // Silent leg — tick time forward (8 hrs) and continue to next watch automatically
+        advanceWatch(true); // silent=true skips the "06:00 — rested" log
+        addLog(`🕐 ${timeStr(currentHour())} — 8 hours underway, pushing on.`, '');
+
+        // Decrement watches and advance progress window for the next segment
+        G.tvl._watchesLeft = watchesRemaining - 1;
         const nextWatchPct = G.tvl._watchPct || (100 / totalWatches);
-        const nextProgEnd = Math.min(100, pausedProg + nextWatchPct);
+        G.tvl._progEnd = Math.min(100, pausedProg + nextWatchPct);
         G.tvl.prog = pausedProg;
         G.tvl.prevProg = pausedProg;
-        G.tvl._progEnd = nextProgEnd;
         G.tvl.cur = 0;
-        G.tvl._watchesLeft = watchesRemaining;
-        G.tvl.timer = setInterval(travelTick, G.tvl.tickMs || 100);
+        G.tvl.steps = Math.max(40, G.tvl.steps || 40);
         G.phase = 'traveling';
+        G.tvl.timer = setInterval(travelTick, G.tvl.tickMs || 100);
         return;
       }
 
