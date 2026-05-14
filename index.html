@@ -3299,7 +3299,8 @@ function watchExpiredMidJourney() {
   G.watch._pauseShown = true;
   clearInterval(G.tvl.timer);
   G.phase = 'map';
-  tickLeg();
+  tickLeg(); // first 8-hour leg
+  tickLeg(); // second 8-hour leg — 16 hours total before rest prompt
   stopTravelHum();
   tsClose(); // pause travel sequence — reopens when travel resumes
 
@@ -5964,9 +5965,9 @@ function travelTick(){
       // Only show anchor/rest prompt every 2 legs (= 16 hours of travel)
       // After the first leg (8 hrs) continue silently; prompt fires at leg 2, 4, 6…
       if (G.tvl._legsThisSession % 2 !== 0) {
-        // Silent leg — tick 8 hours forward and continue to next watch automatically
-        tickLeg(); // adds LEG_HOURS (8) to totalHours, increments day if midnight crossed
-        G.watch.legsPushed = (G.watch.legsPushed || 0) + 1; // track fatigue
+        // Silent first leg — advance progress window and restart without touching the clock.
+        // watchExpiredMidJourney will call tickLeg() when the SECOND leg (even) completes,
+        // accounting for both legs at once (2× LEG_HOURS = 16 hrs total).
         addLog(`🕐 ${timeStr(currentHour())} — 8 hours underway, pushing on.`, '');
 
         // Decrement watches and advance progress window for the next segment
@@ -10098,22 +10099,22 @@ function endCbt(won){
   if(G.tvl.toFragSite){
     G.phase='traveling';
     setTag(`Traveling → ${G.tvl.toFragSite.n}`);
-    /* title plays continuously */
     if(won) addLog('Enemy destroyed. Resuming course to '+G.tvl.toFragSite.n+'…','gd');
     document.getElementById('tvlbar').classList.add('on');
     G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); startTravelHum();
+    tsOpen(G.tvl.lane); // reopen travel sequence
     return;
   }
   if(!G.tvl.to){
-    G.phase='map'; setTag('Navigation'); updateUI(); /* title plays continuously */
+    G.phase='map'; setTag('Navigation'); updateUI();
     if(won) addLog('Enemy destroyed. Returning to navigation.','gd');
     return;
   }
   G.phase='traveling'; setTag(`Traveling → ${G.spheres.find(s=>s.id===G.tvl.to)?.n||''}`);
-  /* title plays continuously */
   if(won)addLog('Resuming voyage.','');
   document.getElementById('tvlbar').classList.add('on');
   G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); startTravelHum();
+  tsOpen(G.tvl.lane); // reopen travel sequence after combat
 }
 
 // ╔══════════════════════════════════════════════════════╗
