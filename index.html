@@ -7431,21 +7431,32 @@ function tsRender(timestamp) {
   // Drawn first (behind everything). Color and direction based on lane tier + flow.
   {
     const riverColors = [
-      ['rgba(0,255,220,',   'rgba(0,180,255,'],   // tier 1
-      ['rgba(110,80,255,',  'rgba(180,0,255,'],    // tier 2
-      ['rgba(255,150,0,',   'rgba(255,60,0,'],     // tier 3
-      ['rgba(255,50,0,',    'rgba(200,0,80,'],     // tier 4
-      ['rgba(200,0,60,',    'rgba(120,0,180,'],    // tier 5
+      ['rgba(0,255,220,',   'rgba(0,180,255,'],   // tier 1 — teal/cyan
+      ['rgba(110,80,255,',  'rgba(180,0,255,'],    // tier 2 — violet
+      ['rgba(255,150,0,',   'rgba(255,60,0,'],     // tier 3 — amber/fire
+      ['rgba(255,50,0,',    'rgba(200,0,80,'],     // tier 4 — red
+      ['rgba(200,0,60,',    'rgba(120,0,180,'],    // tier 5 — crimson/deep purple
     ];
     const [rColA, rColB] = riverColors[Math.min(tier-1, 4)];
     const riverW = W * 0.22;
+
+    // Base ambient fill — more opaque so it actually reads
     const rg = ctx.createLinearGradient(W/2 - riverW, 0, W/2 + riverW, 0);
     rg.addColorStop(0,   'rgba(0,0,0,0)');
-    rg.addColorStop(0.2, rColA + '0.07)');
-    rg.addColorStop(0.5, rColB + '0.14)');
-    rg.addColorStop(0.8, rColA + '0.07)');
+    rg.addColorStop(0.18, rColA + '0.18)');
+    rg.addColorStop(0.5,  rColB + '0.30)');
+    rg.addColorStop(0.82, rColA + '0.18)');
     rg.addColorStop(1,   'rgba(0,0,0,0)');
     ctx.fillStyle = rg;
+    ctx.fillRect(W/2 - riverW, 0, riverW * 2, H);
+
+    // Slow pulsing centre glow — breathes in and out
+    const pulse = 0.5 + 0.5 * Math.sin(TS.t * 1.1);
+    const pg = ctx.createRadialGradient(W/2, H*0.5, 0, W/2, H*0.5, riverW * 0.7);
+    pg.addColorStop(0,   rColB + (0.22 + pulse * 0.18).toFixed(2) + ')');
+    pg.addColorStop(0.6, rColA + '0.06)');
+    pg.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = pg;
     ctx.fillRect(W/2 - riverW, 0, riverW * 2, H);
 
     // Animated streak lines flowing in the river's direction
@@ -7513,11 +7524,11 @@ function tsRender(timestamp) {
   // ── WITH FLOW — narrow wavy colorful wake behind ship ───────────────────
   if (laneFlow === 1) {
     const wakeY  = syScreen + sh * 0.40;
-    const wakeLen = H * 0.28;  // shorter than before
-    const wakeW  = sw * 0.30;  // narrower than before
-    const waveAmp = wakeW * 0.55; // how far the ribbon snakes side to side
-    const waveFreq = 3.8;         // cycles along the ribbon length
-    const wavePhase = TS.t * 2.2; // animates the wave downstream
+    const wakeLen = H * 0.18;
+    const wakeW  = sw * 0.20;
+    const waveAmp = wakeW * 0.18; // very subtle undulation
+    const waveFreq = 2.8;
+    const wavePhase = TS.t * 1.4;
 
     const wakeColors = [
       ['rgba(0,255,200,', 'rgba(0,150,255,'],
@@ -7791,8 +7802,10 @@ function tsResolveEvent(ev) {
     if (alertEl) { alertEl.textContent = '📡 HAILING'; alertEl.className = 'show waypoint'; }
     setTimeout(() => {
       if (alertEl) alertEl.className = '';
-      // Travel sequence keeps running in background — roam overlay sits on top
-      // (no tsClose needed — roamContinue will restart travelTick and tsOpen)
+      // Pause the travel sequence render and silence the hum while hailing window is open
+      if (TS.animId) { cancelAnimationFrame(TS.animId); TS.animId = null; }
+      TS._pausedForRoam = true;
+      stopTravelHum();
       triggerRoamingEncounter(ev.factionId);
     }, 500);
   }
@@ -8188,6 +8201,86 @@ function tsRenderSphere(ctx, W, H, dt) {
   iGrad.addColorStop(1,   'rgba(0,0,8,0.80)');
   ctx.fillStyle = iGrad;
   ctx.fillRect(0, 0, W, H);
+
+  // ── CRYSTAL SHELL HEXAGONAL PLATES ───────────────────────────────────────
+  // Large honeycomb facets visible on the sphere's crystal surface.
+  // Drawn OVER the space background but UNDER nebulae/stars/worlds so the
+  // interior shows through the shell — like looking through crystal panes.
+  {
+    // Hex grid parameters — large plates, not small honeycomb
+    const hexR   = Math.min(W, H) * (0.18 + eased * 0.12); // plate radius: grows as you approach
+    const hexW   = hexR * 2;
+    const hexH   = Math.sqrt(3) * hexR;
+    const cols   = Math.ceil(W  / (hexW * 0.75)) + 3;
+    const rows   = Math.ceil(H  / hexH) + 3;
+
+    // The grid drifts very slightly toward the camera as you approach (parallax)
+    const driftY = (eased * H * 0.12) % hexH;
+    const driftX = (eased * W * 0.04) % (hexW * 0.75);
+
+    // Opacity: barely visible far away, more defined up close — but always translucent
+    const shellAlpha = a * (0.04 + eased * 0.13);
+    const edgeAlpha  = a * (0.08 + eased * 0.22);
+
+    // Seed per-plate variation from its grid position
+    const hexSeed = (ci, ri) => ((ci * 7 + ri * 13) * 2654435761) >>> 0;
+
+    ctx.save();
+    for (let ri = -1; ri < rows; ri++) {
+      for (let ci = -2; ci < cols; ci++) {
+        // Offset every other column down by half a hex height (standard hex grid)
+        const cx2 = ci * hexW * 0.75 - driftX;
+        const cy2 = ri * hexH + (ci % 2 === 0 ? 0 : hexH * 0.5) - driftY;
+
+        // Only draw if this hex is anywhere near the visible interior region
+        const topEdge = wallY - curveDepth - interiorH - hexR;
+        const botEdge = wallY + hexR;
+        if (cy2 < topEdge || cy2 > botEdge) continue;
+
+        // Per-plate variation — slight tint, slight opacity shift
+        const seed  = hexSeed(ci, ri);
+        const tint  = (seed % 60) - 30;           // hue shift ±30° from base ice-blue
+        const opVar = ((seed >> 8) % 100) / 100;  // 0..1 opacity variation per plate
+        const thick = 0.6 + opVar * 0.6;          // some plates thicker crystal
+
+        // Hexagon path
+        ctx.beginPath();
+        for (let v = 0; v < 6; v++) {
+          const ang = (Math.PI / 3) * v - Math.PI / 6;
+          const vx  = cx2 + hexR * Math.cos(ang);
+          const vy  = cy2 + hexR * Math.sin(ang);
+          if (v === 0) ctx.moveTo(vx, vy); else ctx.lineTo(vx, vy);
+        }
+        ctx.closePath();
+
+        // Plate fill — very faint tinted glass, varied per plate
+        const plateA = shellAlpha * (0.4 + opVar * 0.6) * thick;
+        ctx.fillStyle = `hsla(${195 + tint},80%,78%,${plateA.toFixed(3)})`;
+        ctx.fill();
+
+        // Edge lines — slightly more opaque so the facet grid reads clearly
+        const edgeA = edgeAlpha * (0.5 + opVar * 0.5);
+        ctx.strokeStyle = `hsla(${200 + tint},90%,88%,${edgeA.toFixed(3)})`;
+        ctx.lineWidth = thick;
+        ctx.stroke();
+      }
+    }
+
+    // Second pass: refraction highlight — a faint bright shimmer sweeps across
+    // the plates slowly, like light refracting through the crystal surface
+    const shimAngle  = t * 0.07; // very slow sweep
+    const shimX      = W * 0.5 + Math.cos(shimAngle) * W * 0.7;
+    const shimY      = (wallY - interiorH * 0.5) + Math.sin(shimAngle * 0.8) * interiorH * 0.4;
+    const shimR      = Math.min(W, H) * (0.5 + eased * 0.4);
+    const shimG      = ctx.createRadialGradient(shimX, shimY, 0, shimX, shimY, shimR);
+    shimG.addColorStop(0,   `rgba(200,230,255,${(a * 0.07).toFixed(3)})`);
+    shimG.addColorStop(0.4, `rgba(160,210,255,${(a * 0.04).toFixed(3)})`);
+    shimG.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = shimG;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.restore();
+  }
 
   // ── NEBULAE ──────────────────────────────────────────────────────────────
   ctx.globalAlpha = a;
@@ -12177,11 +12270,14 @@ function roamContinue(){
   if(G.phase==='traveling' && G.tvl){
     G.tvl.timer = setInterval(travelTick, G.tvl.tickMs||100);
     startLiveClock(); resetLiveClock();
-    // Reopen travel sequence if it was active
-    if (TS.active) {
-      // Already open — just restart the live clock
-    } else if (G.tvl.to || G.tvl.toFragSite) {
-      tsOpen(G.tvl.lane);
+    // Reopen travel sequence render if it was paused for the roam hail
+    if (TS._pausedForRoam) {
+      TS._pausedForRoam = false;
+      TS._lastTs = 0;
+      TS.animId = requestAnimationFrame(tsRender);
+      startTravelHum();
+    } else if (!TS.active) {
+      if (G.tvl.to || G.tvl.toFragSite) tsOpen(G.tvl.lane);
     }
   }
 }
