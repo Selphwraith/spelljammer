@@ -7510,10 +7510,15 @@ function tsRender(timestamp) {
     ctx.stroke();
   }
 
-  // ── WITH FLOW — wide colorful wake behind ship ───────────────────────────
+  // ── WITH FLOW — narrow wavy colorful wake behind ship ───────────────────
   if (laneFlow === 1) {
-    const wakeY = syScreen + sh * 0.42; // stern = downward on screen
-    const wakeLen = H * 0.45;
+    const wakeY  = syScreen + sh * 0.40;
+    const wakeLen = H * 0.28;  // shorter than before
+    const wakeW  = sw * 0.30;  // narrower than before
+    const waveAmp = wakeW * 0.55; // how far the ribbon snakes side to side
+    const waveFreq = 3.8;         // cycles along the ribbon length
+    const wavePhase = TS.t * 2.2; // animates the wave downstream
+
     const wakeColors = [
       ['rgba(0,255,200,', 'rgba(0,150,255,'],
       ['rgba(120,60,255,','rgba(200,0,255,'],
@@ -7523,28 +7528,42 @@ function tsRender(timestamp) {
     ];
     const [wColA, wColB] = wakeColors[Math.min(tier-1, 4)];
 
-    // Central glowing wake ribbon
-    const wg = ctx.createLinearGradient(0, wakeY, 0, wakeY + wakeLen);
-    wg.addColorStop(0,   wColA + '0.55)');
-    wg.addColorStop(0.3, wColB + '0.35)');
-    wg.addColorStop(0.7, wColA + '0.15)');
-    wg.addColorStop(1,   'rgba(0,0,0,0)');
-    const wakeW = sw * 0.55;
-    ctx.fillStyle = wg;
-    ctx.beginPath();
-    ctx.moveTo(sxScreen - wakeW * 0.5, wakeY);
-    ctx.bezierCurveTo(sxScreen - wakeW, wakeY + wakeLen*0.3, sxScreen - wakeW*0.4, wakeY + wakeLen*0.7, sxScreen, wakeY + wakeLen);
-    ctx.bezierCurveTo(sxScreen + wakeW*0.4, wakeY + wakeLen*0.7, sxScreen + wakeW, wakeY + wakeLen*0.3, sxScreen + wakeW * 0.5, wakeY);
-    ctx.closePath();
-    ctx.fill();
+    // Build wavy ribbon as a stroked polyline so it undulates
+    const steps = 22;
+    ctx.save();
+    ctx.lineJoin = 'round';
+    ctx.lineCap  = 'round';
+    for (let pass = 0; pass < 2; pass++) {
+      // pass 0 = soft wide glow, pass 1 = bright thin core
+      ctx.beginPath();
+      for (let s = 0; s <= steps; s++) {
+        const frac = s / steps;
+        const wy2  = wakeY + frac * wakeLen;
+        const wave = Math.sin(frac * waveFreq * Math.PI * 2 - wavePhase) * waveAmp * (1 - frac * 0.6);
+        const wx2  = sxScreen + wave;
+        if (s === 0) ctx.moveTo(wx2, wy2); else ctx.lineTo(wx2, wy2);
+      }
+      const alpha = pass === 0 ? 0.18 : 0.38;
+      const lw    = pass === 0 ? wakeW * 1.1 : wakeW * 0.28;
+      const wg = ctx.createLinearGradient(0, wakeY, 0, wakeY + wakeLen);
+      wg.addColorStop(0,   wColA + alpha.toFixed(2) + ')');
+      wg.addColorStop(0.4, wColB + (alpha * 0.75).toFixed(2) + ')');
+      wg.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.strokeStyle = wg;
+      ctx.lineWidth = lw;
+      ctx.stroke();
+    }
+    ctx.restore();
 
-    // Sparkling wake particles flowing downward (behind ship, with the current)
-    for (let wi = 0; wi < 14; wi++) {
-      const wt = (TS.t * 1.4 + wi * 0.09) % 1;
-      const wx2 = sxScreen + (Math.sin(wi * 2.3 + TS.t * 0.5) * wakeW * 0.8);
-      const wy2 = wakeY + wt * wakeLen * 0.85;
-      const wa = (1 - wt) * 0.7;
-      const wr2 = (2.5 - wt * 1.5) * (0.7 + 0.3 * Math.sin(TS.t * 4 + wi));
+    // Sparkling particles drifting along the wavy spine
+    for (let wi = 0; wi < 10; wi++) {
+      const wt   = (TS.t * 1.2 + wi * 0.11) % 1;
+      const frac = wt;
+      const wy2  = wakeY + frac * wakeLen;
+      const wave = Math.sin(frac * waveFreq * Math.PI * 2 - wavePhase) * waveAmp * (1 - frac * 0.6);
+      const wx2  = sxScreen + wave + Math.sin(wi * 1.7 + TS.t * 1.5) * wakeW * 0.35;
+      const wa   = (1 - wt) * 0.65;
+      const wr2  = (2.0 - wt * 1.2) * (0.6 + 0.4 * Math.sin(TS.t * 3.5 + wi));
       ctx.fillStyle = wi % 2 === 0 ? wColA + wa.toFixed(2) + ')' : wColB + wa.toFixed(2) + ')';
       ctx.beginPath(); ctx.arc(wx2, wy2, Math.max(0.3, wr2), 0, Math.PI*2); ctx.fill();
     }
