@@ -3975,7 +3975,7 @@ function toggleMute() {
   applyVolumes();
   _updateVolSliders();
   if (_VOL.master === 0) {
-    _stopLoop(); stopTitle(); stopTravelHum(); stopElderTheme();
+    _stopLoop(); stopTitle(); stopTravelHum(); stopElderTheme(); stopSphereAudio();
   } else {
     playTitle(); // resume from position — don't restart
     if (_gameActive && G?.phase === 'combat') {
@@ -4019,7 +4019,10 @@ const SOUND_DATA = {
   'caiphon_reveal': 'sounds/caiphon_reveal.mp3',
   'caiphon_theme': 'sounds/caiphon_theme.mp3',
 
-  // ── Special Ability Sounds ────────────────────────────────────────────────
+  // ── Crystal Sphere Approach ───────────────────────────────────────────────
+  // Two layered sounds — drop matching .mp3 files in sounds/
+  'sphere_drone':  'sounds/sphere_drone.mp3',   // low ambient drone — looping bass hum
+  'sphere_chime':  'sounds/sphere_chime.mp3',   // tingling chime shimmer — looping or long tail
   // Drop your .mp3 files in sounds/ matching these keys
   'ability_mind_blast':    'sounds/ability_mind_blast.mp3',    // Nautiloid / Illithid psionic blast
   'ability_web':           'sounds/ability_web.mp3',           // Neogi / spider web cannon
@@ -4223,7 +4226,53 @@ function stopTravelHum() {
   }
 }
 
-// ── Elder / Caiphon boss music ──────────────────────────────
+// ── Crystal Sphere Approach Audio ─────────────────────────────────────────
+// Two layered loops: a low ambient drone + a tingling chime shimmer.
+// Volume scales with _CS.alpha and approach progress — fades in, swells, stops on arrival.
+let _sphereDroneEl = null;
+let _sphereChimeEl = null;
+
+function startSphereAudio() {
+  stopSphereAudio();
+  if (_muted) return;
+  ['sphere_drone','sphere_chime'].forEach(key => {
+    if (!_SFX[key]) return;
+    try {
+      const a = _SFX[key].cloneNode();
+      a.loop = true; a.volume = 0;
+      a.play().catch(()=>{});
+      if (key === 'sphere_drone') _sphereDroneEl = a;
+      if (key === 'sphere_chime') _sphereChimeEl = a;
+    } catch(_) {}
+  });
+}
+
+function updateSphereAudioVolume() {
+  if (!_CS.active || _muted) return;
+  const p = Math.min(1, _CS.t / Math.max(1, _CS.duration));
+  const masterMod = (_VOL?.master||1) * (_VOL?.sfx||1);
+  // Drone builds steadily throughout
+  const dv = Math.min(1, _CS.alpha * (0.15 + p * 0.65) * masterMod);
+  // Chime fades in after first 20% of approach, peaks at 70%
+  const cv = Math.min(1, _CS.alpha * Math.max(0, (p - 0.2) / 0.5) * 0.55 * masterMod);
+  try { if (_sphereDroneEl) _sphereDroneEl.volume = dv; } catch(_) {}
+  try { if (_sphereChimeEl) _sphereChimeEl.volume = cv; } catch(_) {}
+}
+
+function stopSphereAudio() {
+  [_sphereDroneEl, _sphereChimeEl].forEach(el => {
+    if (!el) return;
+    try {
+      const step = (el.volume || 0.1) / 12;
+      const fade = setInterval(() => {
+        try { el.volume = Math.max(0, el.volume - step);
+          if (el.volume <= 0) { clearInterval(fade); el.pause(); }
+        } catch(_) { clearInterval(fade); }
+      }, 100);
+    } catch(_) {}
+  });
+  _sphereDroneEl = null; _sphereChimeEl = null;
+}
 let _elderThemeEl = null;
 
 function startElderTheme() {
@@ -6025,16 +6074,13 @@ function travelTick(){
   G.tvl.prog = Math.min(G.tvl.prog, segEnd);
   document.getElementById('tvlf').style.width = G.tvl.prog + '%';
 
-  // ── Crystal sphere approach — queue on final watch at 80% prog ──────────
-  // Fires for sphere destinations only (not waypoints — those are mid-void)
-  if (TS.active && !G.tvl._sphereQueued && G.tvl.to) {
-    const isLastWatch = G.tvl._watchesLeft <= 1;
-    const threshold = isLastWatch ? (segEnd - watchPct * 0.2) : 95; // 80% into last leg, or 95% if only 1 leg total
-    if (isLastWatch && G.tvl.prog >= threshold) {
-      G.tvl._sphereQueued = true;
-      const destName = G.spheres?.find(s => s.id === G.tvl.to)?.n || G.tvl.to;
-      tsQueueSphere(destName);
-    }
+  // ── Crystal sphere approach — queue at 75% progress toward destination ───
+  // Sphere wall grows for 18 real seconds regardless of how many watches remain.
+  // Only fires for sphere destinations (G.tvl.to set), not waypoints or frag sites.
+  if (TS.active && !G.tvl._sphereQueued && G.tvl.to && G.tvl.prog >= 75) {
+    G.tvl._sphereQueued = true;
+    const destName = G.spheres?.find(s => s.id === G.tvl.to)?.n || G.tvl.to;
+    tsQueueSphere(destName);
   }
   const lane = G.tvl.lane || getLane(G.tvl.from, G.tvl.to);
   const e1 = segStart + (segEnd - segStart) * 0.38;
@@ -7486,7 +7532,8 @@ function tsOpen(lane) {
   TS.skipBlocked = false;
   TS._spawnTimer = 0.3;
   TS._lastTs   = 0;
-  _CS.active   = false; // reset sphere approach on new travel segment
+  _CS.active = false; // reset sphere approach on new travel segment
+  stopSphereAudio();
 
   tsPreloadImgs();
 
@@ -7758,254 +7805,332 @@ function tsQueueSphere(name) {
   _CS.name     = name;
   _CS.t        = 0;
   _CS.alpha    = 0;
-  // Duration: sphere fills screen over the last 20% of travel
-  // We use wall-clock time rather than game time so it always looks good
-  // regardless of ship speed. 18 seconds = enough to be dramatic.
-  _CS.duration = 18;
+  _CS.duration = 18; // 18 real seconds of approach
 
-  // Generate a unique interior for this sphere — stable across frames
-  const seed = name.split('').reduce((a,c) => a + c.charCodeAt(0), 0);
+  // Seed the interior uniquely per sphere name
+  const seed = name.split('').reduce((a,c) => a + c.charCodeAt(0), 42);
   const rng = (s) => { const x = Math.sin(s * 9301 + 49297) * 233280; return x - Math.floor(x); };
 
-  _CS._stars = Array.from({length: 200}, (_, i) => ({
-    x: rng(seed + i * 3.7),
-    y: rng(seed + i * 5.1),
-    r: rng(seed + i * 2.3) * 1.8 + 0.3,
-    b: rng(seed + i * 7.9),  // brightness
-    tw: rng(seed + i * 11.3) * 3 + 1, // twinkle speed
-    tp: rng(seed + i * 13.7) * Math.PI * 2, // twinkle phase
+  // 300 stars — bright, plentiful, twinkling
+  _CS._stars = Array.from({length:300}, (_,i) => ({
+    x: rng(seed + i*3.1), y: rng(seed + i*5.3),
+    r: rng(seed + i*2.7) * 2.5 + 0.5,
+    b: rng(seed + i*7.1) * 0.7 + 0.3,
+    tw: rng(seed + i*11.3) * 4 + 0.5,
+    tp: rng(seed + i*13.7) * Math.PI * 2,
+    col: `hsl(${Math.floor(rng(seed+i*17)*60+180)},${Math.floor(rng(seed+i*19)*40+60)}%,${Math.floor(rng(seed+i*23)*30+70)}%)`,
   }));
 
-  _CS._nebulae = Array.from({length: 6}, (_, i) => ({
-    x: rng(seed + i * 17 + 100) * 0.8 + 0.1,
-    y: rng(seed + i * 19 + 200) * 0.8 + 0.1,
-    r: rng(seed + i * 23 + 300) * 0.25 + 0.08,
-    h: Math.floor(rng(seed + i * 31) * 360), // hue
-    a: rng(seed + i * 37) * 0.18 + 0.04,
+  // 8 large vivid nebulae — saturated, thick, opaque-ish
+  _CS._nebulae = Array.from({length:8}, (_,i) => ({
+    x: rng(seed+i*17+100), y: rng(seed+i*19+200),
+    r: rng(seed+i*23+300) * 0.32 + 0.14,
+    h: Math.floor(rng(seed+i*31)*360),
+    s: Math.floor(rng(seed+i*37)*40+60),  // 60-100% saturation
+    a: rng(seed+i*41)  * 0.35 + 0.18,    // 0.18-0.53 alpha — vivid
   }));
 
-  _CS._worlds = Array.from({length: 3 + Math.floor(rng(seed) * 4)}, (_, i) => ({
-    x: rng(seed + i * 41 + 400) * 0.7 + 0.15,
-    y: rng(seed + i * 43 + 500) * 0.7 + 0.15,
-    r: rng(seed + i * 47 + 600) * 0.035 + 0.012,
-    col: `hsl(${Math.floor(rng(seed + i * 53) * 360)},40%,50%)`,
-    ring: rng(seed + i * 59) > 0.6, // some have rings
-    ringAngle: rng(seed + i * 61) * 0.6 - 0.3,
+  // 4-8 worlds — large, detailed
+  _CS._worlds = Array.from({length: 4 + Math.floor(rng(seed)*5)}, (_,i) => ({
+    x: rng(seed+i*41+400), y: rng(seed+i*43+500),
+    r: rng(seed+i*47+600) * 0.055 + 0.025,  // bigger
+    h: Math.floor(rng(seed+i*53)*360),
+    s: Math.floor(rng(seed+i*57)*50+40),
+    ring: rng(seed+i*59) > 0.5,
+    ringAngle: rng(seed+i*61) * 0.8 - 0.4,
+    ringH: Math.floor(rng(seed+i*67)*360),
+    cloud: rng(seed+i*71) > 0.3,  // cloud bands
   }));
 
-  addLog(`📡 Crystal sphere wall detected ahead — ${name} approaching.`, '');
+  addLog(`✦ ${name} — crystal sphere wall ahead. Approach imminent.`, 'imp');
+  startSphereAudio();
 }
 
 function tsRenderSphere(ctx, W, H, dt) {
   if (!_CS.active) return;
 
-  _CS.t    += dt;
-  _CS.alpha = Math.min(1, _CS.t / 3); // 3-second fade in
+  _CS.t   += dt;
+  _CS.alpha = Math.min(1, _CS.t / 2);
+  if (_CS.t >= _CS.duration + 2) { _CS.active = false; stopSphereAudio(); return; }
+  updateSphereAudioVolume();
 
-  if (_CS.t >= _CS.duration) {
-    _CS.active = false; // sphere reached — arrival handles it
-    return;
-  }
+  const p     = Math.min(1, _CS.t / _CS.duration);
+  const eased = Math.pow(p, 0.55); // accelerates as you approach
 
-  // ── Approach progress: 0 = far away (small arc), 1 = filling screen ──
-  const p = Math.min(1, _CS.t / _CS.duration);
-  const eased = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; // ease-in-out quad
+  const a  = _CS.alpha;
+  const t  = _CS.t;
 
-  // The sphere is so vast that we only ever see a tiny arc of it.
-  // Its "centre" is far above the screen — the visible wall is the bottom edge.
-  // As we approach: radius shrinks (wall curves more), arc fills more of the screen.
+  // ─────────────────────────────────────────────────────────────────────────
+  // GEOMETRY: The sphere is so vast only the curved BOTTOM EDGE is visible.
+  // Think of it as a gigantic bowl seen from below — the rim sweeps left/right
+  // across the upper portion of your screen.
+  //
+  // We compute the SCREEN Y of the wall's lowest point (dead centre top-ish),
+  // then draw everything above that as "interior" and the arc itself as the wall.
+  // ─────────────────────────────────────────────────────────────────────────
 
-  const cx = W / 2;
-  // Sphere centre starts 8× screen height above, descends to 1.2× screen height
-  const cy = -H * (8 - eased * 6.8);
-  // Radius: starts huge (barely curved arc), grows slightly as we get closer
-  const sphereR = W * (12 - eased * 7); // 12W → 5W
+  // Wall Y position: starts at top of screen, descends toward upper-third as you approach
+  // eased=0 → wallY = -H*0.1 (just above screen, barely visible sliver)
+  // eased=1 → wallY = H*0.30  (30% down the screen — clear upper band)
+  const wallY = H * (-0.05 + eased * 0.35);
 
-  // ── How much of the arc is visible ───────────────────────────────────────
-  // At start: tiny sliver at top. At end: fills the top 70% of screen.
-  const arcHalfAngle = Math.PI * (0.04 + eased * 0.42); // 4% → 46% of circle
+  // Curve: the wall bows slightly upward at the edges (sphere curving away)
+  // At center wallY, at edges wallY - curveDepth
+  // eased=0: barely curved. eased=1: strongly curved.
+  const curveDepth = H * (0.02 + eased * 0.18);
 
-  // ── Interior clip region ──────────────────────────────────────────────────
+  // Interior region height — how tall the visible interior is above the wall
+  const interiorH = H * (0.08 + eased * 0.55); // grows from thin sliver to tall band
+
+  // ── STEP 1: Draw interior (above the wall arc) ─────────────────────────
+  // Build a clip path that is exactly the interior region:
+  // bottom edge = the wall curve, top = off-screen
   ctx.save();
-  ctx.globalAlpha = _CS.alpha;
-
-  // Clip to the sphere interior (arc area)
   ctx.beginPath();
-  ctx.arc(cx, cy, sphereR, Math.PI / 2 - arcHalfAngle, Math.PI / 2 + arcHalfAngle);
-  ctx.lineTo(cx, cy); // back to centre
+  // Wall curve: a gentle quadratic arc across the screen
+  // Left edge: (0, wallY - curveDepth)
+  // Centre:    (W/2, wallY)
+  // Right edge:(W, wallY - curveDepth)
+  ctx.moveTo(0, 0);
+  ctx.lineTo(W, 0);
+  ctx.lineTo(W, wallY - curveDepth);
+  ctx.quadraticCurveTo(W / 2, wallY + curveDepth * 0.3, 0, wallY - curveDepth);
   ctx.closePath();
   ctx.clip();
 
-  // ── Interior: deep space background ──────────────────────────────────────
-  const innerR = sphereR * 0.99;
-  const innerGrad = ctx.createRadialGradient(cx, cy, innerR * 0.2, cx, cy, innerR);
-  innerGrad.addColorStop(0, '#000005');
-  innerGrad.addColorStop(0.5, '#02000e');
-  innerGrad.addColorStop(1, '#060020');
-  ctx.fillStyle = innerGrad;
-  ctx.beginPath();
-  ctx.arc(cx, cy, sphereR, 0, Math.PI * 2);
-  ctx.fill();
+  // Deep space background — only inside the clip
+  ctx.fillStyle = '#00000c';
+  ctx.fillRect(0, 0, W, H);
 
-  // ── Interior: nebulae ─────────────────────────────────────────────────────
-  // Map nebula positions from [0,1] to sphere interior projected onto screen
-  const projW = sphereR * arcHalfAngle * 2 * 0.6;
-  const projH = sphereR * arcHalfAngle * 0.4;
-  const projCx = cx;
-  const projCy = cy + sphereR;
+  // Interior gradient — brighter near the wall, darker deep inside
+  const iGrad = ctx.createLinearGradient(0, wallY, 0, wallY - interiorH);
+  iGrad.addColorStop(0,   'rgba(30,8,80,0.95)');
+  iGrad.addColorStop(0.3, 'rgba(12,3,45,0.90)');
+  iGrad.addColorStop(0.7, 'rgba(4,0,20,0.85)');
+  iGrad.addColorStop(1,   'rgba(0,0,8,0.80)');
+  ctx.fillStyle = iGrad;
+  ctx.fillRect(0, 0, W, H);
 
-  _CS._nebulae.forEach(neb => {
-    const nx = projCx + (neb.x - 0.5) * projW;
-    const ny = projCy - neb.y * projH;
-    const nr = neb.r * Math.min(projW, projH);
-    const g = ctx.createRadialGradient(nx, ny, 0, nx, ny, nr);
-    g.addColorStop(0, `hsla(${neb.h},60%,40%,${neb.a * _CS.alpha})`);
-    g.addColorStop(1, 'transparent');
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.arc(nx, ny, nr, 0, Math.PI * 2); ctx.fill();
+  // ── NEBULAE ──────────────────────────────────────────────────────────────
+  ctx.globalAlpha = a;
+  _CS._nebulae.forEach((neb, i) => {
+    const nx = neb.x * W;
+    const ny = (wallY - curveDepth) - neb.y * interiorH;
+    const nr = neb.r * Math.min(W, interiorH);
+    const pulse = 1 + 0.07 * Math.sin(t * 0.4 + i * 1.3);
+
+    const g1 = ctx.createRadialGradient(nx, ny, 0, nx, ny, nr * pulse);
+    g1.addColorStop(0,   `hsla(${neb.h},${neb.s}%,65%,${neb.a * 1.5})`);
+    g1.addColorStop(0.3, `hsla(${neb.h},${neb.s}%,50%,${neb.a})`);
+    g1.addColorStop(0.7, `hsla(${(neb.h+50)%360},${neb.s}%,38%,${neb.a * 0.5})`);
+    g1.addColorStop(1,   'transparent');
+    ctx.fillStyle = g1;
+    ctx.beginPath(); ctx.arc(nx, ny, nr * pulse * 1.5, 0, Math.PI*2); ctx.fill();
+
+    // Bright core
+    const g2 = ctx.createRadialGradient(nx, ny, 0, nx, ny, nr * 0.25);
+    g2.addColorStop(0, `hsla(${neb.h},100%,85%,${neb.a * 0.8})`);
+    g2.addColorStop(1, 'transparent');
+    ctx.fillStyle = g2;
+    ctx.beginPath(); ctx.arc(nx, ny, nr * 0.35, 0, Math.PI*2); ctx.fill();
   });
 
-  // ── Interior: stars ───────────────────────────────────────────────────────
+  // ── STARS ─────────────────────────────────────────────────────────────────
   _CS._stars.forEach(s => {
-    const sx = projCx + (s.x - 0.5) * projW;
-    const sy = projCy - s.y * projH;
-    const twinkle = 0.4 + 0.6 * Math.sin(_CS.t * s.tw + s.tp);
-    const a = s.b * twinkle * 0.85;
-    ctx.fillStyle = `rgba(255,255,255,${a})`;
-    ctx.beginPath(); ctx.arc(sx, sy, s.r * (0.6 + eased * 0.4), 0, Math.PI * 2);
-    ctx.fill();
+    const sx = s.x * W;
+    const sy = (wallY - curveDepth) - s.y * interiorH;
+    const tw = 0.5 + 0.5 * Math.sin(t * s.tw + s.tp);
+    const sr = s.r * (0.5 + eased * 0.5) * (0.6 + 0.4 * tw);
+    const sa = s.b * tw * a;
+    if (sa < 0.05) return;
+    if (s.b > 0.65) {
+      ctx.globalAlpha = sa * 0.4;
+      ctx.strokeStyle = s.col;
+      ctx.lineWidth = 0.6;
+      ctx.beginPath(); ctx.moveTo(sx-sr*3,sy); ctx.lineTo(sx+sr*3,sy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx,sy-sr*3); ctx.lineTo(sx,sy+sr*3); ctx.stroke();
+    }
+    ctx.globalAlpha = sa;
+    ctx.fillStyle = s.col;
+    ctx.beginPath(); ctx.arc(sx, sy, Math.max(0.5, sr), 0, Math.PI*2); ctx.fill();
   });
+  ctx.globalAlpha = a;
 
-  // ── Interior: worlds ─────────────────────────────────────────────────────
+  // ── WORLDS ────────────────────────────────────────────────────────────────
   _CS._worlds.forEach(w => {
-    const wx = projCx + (w.x - 0.5) * projW;
-    const wy = projCy - w.y * projH;
-    const wr = w.r * Math.min(projW, projH) * (0.3 + eased * 0.7);
-    if (wr < 1) return;
-    // World body
-    ctx.fillStyle = w.col;
-    ctx.beginPath(); ctx.arc(wx, wy, wr, 0, Math.PI * 2); ctx.fill();
+    const wx = w.x * W;
+    const wy = (wallY - curveDepth) - w.y * interiorH;
+    const wr = w.r * Math.min(W, interiorH) * (0.15 + eased * 0.85);
+    if (wr < 3) return;
+
     // Atmosphere glow
-    const atm = ctx.createRadialGradient(wx, wy, wr * 0.7, wx, wy, wr * 1.6);
-    atm.addColorStop(0, w.col.replace('50%)', '70%,0.15)').replace('hsl(', 'hsla('));
-    atm.addColorStop(1, 'transparent');
-    ctx.fillStyle = atm;
-    ctx.beginPath(); ctx.arc(wx, wy, wr * 1.6, 0, Math.PI * 2); ctx.fill();
-    // Ring if applicable
+    const atmG = ctx.createRadialGradient(wx,wy,wr*0.8,wx,wy,wr*2.8);
+    atmG.addColorStop(0,  `hsla(${w.h},${w.s}%,65%,0.18)`);
+    atmG.addColorStop(0.5,`hsla(${w.h},${w.s}%,50%,0.08)`);
+    atmG.addColorStop(1,  'transparent');
+    ctx.fillStyle=atmG; ctx.beginPath(); ctx.arc(wx,wy,wr*2.8,0,Math.PI*2); ctx.fill();
+
+    // World body
+    const wG = ctx.createRadialGradient(wx-wr*0.3,wy-wr*0.25,0,wx,wy,wr);
+    wG.addColorStop(0,  `hsl(${w.h},${w.s}%,68%)`);
+    wG.addColorStop(0.5,`hsl(${w.h},${w.s}%,48%)`);
+    wG.addColorStop(1,  `hsl(${(w.h+30)%360},${w.s}%,22%)`);
+    ctx.fillStyle=wG; ctx.beginPath(); ctx.arc(wx,wy,wr,0,Math.PI*2); ctx.fill();
+
+    // Cloud bands
+    if (w.cloud) {
+      for (let c=0;c<3;c++) {
+        const cy2=wy-wr*0.4+c*wr*0.45;
+        ctx.strokeStyle=`rgba(255,255,255,0.12)`;
+        ctx.lineWidth=wr*0.22;
+        ctx.beginPath();
+        ctx.arc(wx,cy2,wr*1.01,Math.PI*1.1,Math.PI*1.9);
+        ctx.stroke();
+      }
+    }
+
+    // Rings
     if (w.ring) {
       ctx.save();
-      ctx.translate(wx, wy);
-      ctx.rotate(w.ringAngle);
-      ctx.scale(1, 0.25);
-      ctx.strokeStyle = w.col.replace('hsl(', 'hsla(').replace(')', ',0.45)');
-      ctx.lineWidth = wr * 0.5;
-      ctx.beginPath(); ctx.arc(0, 0, wr * 1.9, 0, Math.PI * 2); ctx.stroke();
+      ctx.translate(wx,wy); ctx.rotate(w.ringAngle); ctx.scale(1,0.2);
+      for (let ri=0;ri<2;ri++) {
+        const rr = wr*(2.0+ri*0.5);
+        ctx.strokeStyle=`hsla(${w.ringH},65%,72%,${0.7-ri*0.25})`;
+        ctx.lineWidth=wr*0.45;
+        ctx.beginPath(); ctx.arc(0,0,rr,0,Math.PI*2); ctx.stroke();
+      }
       ctx.restore();
     }
-    // Terminator shadow
-    ctx.fillStyle = 'rgba(0,0,8,0.55)';
-    ctx.beginPath();
-    ctx.arc(wx + wr * 0.3, wy - wr * 0.1, wr * 0.92, 0, Math.PI * 2);
-    ctx.fill();
+
+    // Night side
+    ctx.fillStyle='rgba(0,0,15,0.55)';
+    ctx.beginPath(); ctx.arc(wx+wr*0.35,wy,wr*0.97,0,Math.PI*2); ctx.fill();
   });
 
   ctx.restore(); // end interior clip
 
-  // ── Crystal wall itself ────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
+  // STEP 2: CRYSTAL WALL — the visible curved edge of the sphere shell
+  // This is the key visual: a bright opaque band stretching across the screen
+  // ─────────────────────────────────────────────────────────────────────────
   ctx.save();
-  ctx.globalAlpha = _CS.alpha;
+  ctx.globalAlpha = a;
 
-  // Wall thickness — increases as we approach
-  const wallThick = Math.max(4, W * (0.008 + eased * 0.04));
+  const wallThick = Math.max(8, H * (0.018 + eased * 0.045)); // 1.8% → 6.3% screen height
 
-  // Outer edge: glowing cyan-white rim
-  const outerGlow = ctx.createRadialGradient(cx, cy, sphereR - wallThick * 3, cx, cy, sphereR + wallThick * 2);
-  outerGlow.addColorStop(0, 'rgba(200,240,255,0.0)');
-  outerGlow.addColorStop(0.4, 'rgba(180,230,255,0.25)');
-  outerGlow.addColorStop(0.75, 'rgba(220,245,255,0.55)');
-  outerGlow.addColorStop(0.9, 'rgba(255,255,255,0.85)');
-  outerGlow.addColorStop(1, 'rgba(200,240,255,0.0)');
-
-  ctx.strokeStyle = outerGlow;
-  ctx.lineWidth = wallThick * 4;
-  ctx.beginPath();
-  ctx.arc(cx, cy, sphereR, Math.PI / 2 - arcHalfAngle - 0.01, Math.PI / 2 + arcHalfAngle + 0.01);
-  ctx.stroke();
-
-  // Main wall: thick translucent crystal band
-  // Multiple layered strokes for depth
-  const wallColors = [
-    { r: sphereR - wallThick * 0.5, lw: wallThick * 1.8, col: 'rgba(180,230,255,0.12)' },
-    { r: sphereR,                    lw: wallThick * 1.2, col: 'rgba(210,245,255,0.22)' },
-    { r: sphereR + wallThick * 0.3,  lw: wallThick * 0.8, col: 'rgba(240,255,255,0.35)' },
-    { r: sphereR + wallThick * 0.8,  lw: wallThick * 0.4, col: 'rgba(255,255,255,0.5)' },
-  ];
-  wallColors.forEach(wc => {
-    ctx.strokeStyle = wc.col;
-    ctx.lineWidth = wc.lw;
+  // Helper: draw the wall curve as a path
+  const wallCurve = () => {
     ctx.beginPath();
-    ctx.arc(cx, cy, wc.r, Math.PI / 2 - arcHalfAngle, Math.PI / 2 + arcHalfAngle);
-    ctx.stroke();
-  });
+    ctx.moveTo(0, wallY - curveDepth);
+    ctx.quadraticCurveTo(W / 2, wallY + curveDepth * 0.3, W, wallY - curveDepth);
+  };
 
-  // ── Inner surface shimmer: hexagonal crystal facets (implied) ──────────────
-  // Subtle caustic-light shimmer moving along the wall
-  const shimmer = 0.5 + 0.5 * Math.sin(_CS.t * 1.8);
-  const shimmerGrad = ctx.createLinearGradient(
-    cx + Math.cos(_CS.t * 0.4) * W * 0.3, cy,
-    cx - Math.cos(_CS.t * 0.4) * W * 0.3, cy
-  );
-  shimmerGrad.addColorStop(0, 'transparent');
-  shimmerGrad.addColorStop(0.3 + shimmer * 0.2, `rgba(200,240,255,${0.08 + shimmer * 0.12})`);
-  shimmerGrad.addColorStop(0.6, 'transparent');
-  ctx.strokeStyle = shimmerGrad;
-  ctx.lineWidth = wallThick * 2;
+  // Layer 1: deep outer glow below the wall (the crystal illuminates the space below)
+  ctx.save();
+  for (let gi=0; gi<5; gi++) {
+    const gy = wallY - curveDepth + wallThick * (0.5 + gi * 0.8);
+    ctx.strokeStyle = `rgba(140,210,255,${(0.18 - gi*0.03) * a})`;
+    ctx.lineWidth = wallThick * (2 - gi * 0.25);
+    ctx.beginPath();
+    ctx.moveTo(0, gy);
+    ctx.quadraticCurveTo(W/2, gy + curveDepth * 0.3 + gi*2, W, gy);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Layer 2: Main wall body — thick, opaque, icy blue-white
+  ctx.lineWidth = wallThick * 2.2;
+  ctx.strokeStyle = `rgba(215,240,255,${0.92 * a})`;
+  wallCurve(); ctx.stroke();
+
+  // Layer 3: bright top edge — pure white highlight
+  ctx.lineWidth = wallThick * 0.55;
+  ctx.strokeStyle = `rgba(255,255,255,${0.98 * a})`;
   ctx.beginPath();
-  ctx.arc(cx, cy, sphereR - wallThick * 0.2, Math.PI / 2 - arcHalfAngle + 0.05, Math.PI / 2 + arcHalfAngle - 0.05);
+  ctx.moveTo(0, wallY - curveDepth - wallThick * 0.6);
+  ctx.quadraticCurveTo(W/2, wallY + curveDepth*0.3 - wallThick*0.6, W, wallY - curveDepth - wallThick*0.6);
   ctx.stroke();
 
-  // ── Name text curved along the outer arc ──────────────────────────────────
-  const name = _CS.name.toUpperCase();
-  const textR = sphereR + wallThick * 3.5 + 8;
-  const textAlpha = Math.min(1, (_CS.t - 1) / 2) * _CS.alpha;
+  // Layer 4: inner face highlight (slightly below the top edge — the glass thickness)
+  ctx.lineWidth = wallThick * 0.35;
+  ctx.strokeStyle = `rgba(180,230,255,${0.75 * a})`;
+  ctx.beginPath();
+  ctx.moveTo(0, wallY - curveDepth + wallThick * 0.5);
+  ctx.quadraticCurveTo(W/2, wallY + curveDepth*0.3 + wallThick*0.5, W, wallY - curveDepth + wallThick*0.5);
+  ctx.stroke();
 
-  if (textAlpha > 0.01) {
-    ctx.font = `bold ${Math.max(10, Math.min(18, W * 0.025))}px 'Cinzel', serif`;
-    ctx.fillStyle = `rgba(200,240,255,${textAlpha * 0.9})`;
-    ctx.shadowColor = 'rgba(150,220,255,0.5)';
-    ctx.shadowBlur = 8;
-    ctx.textAlign = 'center';
+  // Layer 5: animated shimmer ripple along the wall surface
+  const shim = 0.5 + 0.5 * Math.sin(t * 2.5);
+  const shimX = W * (0.1 + shim * 0.8); // ripple moves left to right
+  const shimG = ctx.createLinearGradient(shimX - W*0.2, 0, shimX + W*0.2, 0);
+  shimG.addColorStop(0,   'transparent');
+  shimG.addColorStop(0.3, `rgba(255,255,255,${0.45 * a})`);
+  shimG.addColorStop(0.5, `rgba(220,245,255,${0.65 * a})`);
+  shimG.addColorStop(0.7, `rgba(255,255,255,${0.45 * a})`);
+  shimG.addColorStop(1,   'transparent');
+  ctx.lineWidth = wallThick * 1.1;
+  ctx.strokeStyle = shimG;
+  wallCurve(); ctx.stroke();
+
+  // ── SPHERE NAME curved along the wall ──────────────────────────────────
+  if (a > 0.15) {
+    const nameA = Math.min(1, (a - 0.15) / 0.4);
+    const name  = _CS.name.toUpperCase();
+    const fSize = Math.max(13, Math.min(24, W * 0.034));
+    ctx.font      = `bold ${fSize}px 'Cinzel', serif`;
+    ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
+    ctx.shadowColor  = 'rgba(180,230,255,0.9)';
+    ctx.shadowBlur   = 14;
 
-    // Measure total arc span needed for text
-    const totalChars = name.length;
-    const charSpacing = Math.min(0.022, arcHalfAngle * 1.6 / totalChars);
-    const textStartAngle = Math.PI / 2 - (totalChars / 2) * charSpacing;
+    // Draw name centered above the wall, following the curve
+    const letterSpacing = fSize * 1.15;
+    const totalW = name.length * letterSpacing;
+    const startX = W/2 - totalW/2 + letterSpacing/2;
 
-    for (let i = 0; i < totalChars; i++) {
-      const angle = textStartAngle + i * charSpacing;
-      const charX = cx + textR * Math.sin(angle);
-      const charY = cy + textR * Math.cos(angle);
-      ctx.save();
-      ctx.translate(charX, charY);
-      ctx.rotate(-angle + Math.PI); // face outward
-      ctx.fillText(name[i], 0, 0);
-      ctx.restore();
+    for (let i = 0; i < name.length; i++) {
+      const lx = startX + i * letterSpacing;
+      // Curve the Y position to follow the wall arc
+      const normX = (lx / W - 0.5) * 2; // -1 to +1
+      const curveOffset = curveDepth * normX * normX; // parabolic — matches the wall curve
+      const ly = wallY - curveDepth + curveOffset - wallThick * 2.8;
+      ctx.fillStyle = `rgba(220,245,255,${nameA * 0.97})`;
+      ctx.fillText(name[i], lx, ly);
+    }
+
+    // Subtitle: CRYSTAL SPHERE — smaller, below the name
+    if (nameA > 0.5) {
+      const subA = (nameA - 0.5) * 2;
+      const sFSize = Math.max(9, Math.min(14, W * 0.018));
+      ctx.font = `${sFSize}px 'Cinzel', serif`;
+      ctx.fillStyle = `rgba(150,210,255,${subA * 0.65})`;
+      ctx.shadowBlur = 6;
+      const sub = '— CRYSTAL SPHERE —';
+      const subLetter = sFSize * 0.75;
+      const subTotalW = sub.length * subLetter;
+      const subStartX = W/2 - subTotalW/2 + subLetter/2;
+      for (let i=0; i<sub.length; i++) {
+        const lx = subStartX + i * subLetter;
+        const normX = (lx/W - 0.5)*2;
+        const co = curveDepth * normX * normX;
+        const ly = wallY - curveDepth + co - wallThick * 1.2;
+        ctx.fillText(sub[i], lx, ly);
+      }
     }
     ctx.shadowBlur = 0;
   }
 
-  // ── Edge vignette: dark frame so sphere wall contrasts with phlogiston ────
-  // Very faint darkening at edges to separate the sphere wall from background
-  const vig = ctx.createRadialGradient(cx, H * 0.1, 0, cx, H * 0.1, W * 0.7);
-  vig.addColorStop(0, 'transparent');
-  vig.addColorStop(1, 'rgba(0,0,4,0.25)');
-  ctx.fillStyle = vig;
-  ctx.fillRect(0, 0, W, H);
+  // ── Soft vignette at sides to frame the wall ───────────────────────────
+  ['left','right'].forEach(side => {
+    const vg = ctx.createLinearGradient(side==='left'?0:W, 0, side==='left'?W*0.12:W*0.88, 0);
+    vg.addColorStop(0, `rgba(0,0,5,${0.5*a})`);
+    vg.addColorStop(1, 'transparent');
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, W, H);
+  });
 
   ctx.restore();
 }
-
 function buy(item){
   if(G.ship.gold<item.cost)return;
   // Hard guard: re-check ownership before any purchase goes through
@@ -11144,7 +11269,7 @@ function buildShipOverlay(){
 // ╚══════════════════════════════════════════════════════╝
 function doDefeat(){
   G.phase='defeat';
-  _stopLoop(); stopTitle(); stopTravelHum();
+  _stopLoop(); stopTitle(); stopTravelHum(); stopSphereAudio();
   snd('defeat', 1.0);
   document.getElementById('ov-combat').classList.remove('on');
   document.getElementById('tvlbar').classList.remove('on');
