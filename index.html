@@ -1789,7 +1789,7 @@ body {
       <div class="rest-star">✦</div>
     </div>
     <div class="rest-desc" id="rest-desc">The crew secures their stations. Eight hours of quiet in the Phlogiston.</div>
-    <div class="rest-complete" id="rest-complete">⚓ Helmsman Needs Rest</div>
+    <div class="rest-complete" id="rest-complete">⚓ Watch Complete</div>
   </div>
 </div>
 
@@ -3206,7 +3206,35 @@ function currentHour() {
 function timeStr(h) { return String(h).padStart(2,'0') + ':00'; }
 function watchTimeStr() {
   if (!G.watch) return '';
-  return `Day ${G.watch.day} — ${timeStr(currentHour())}`;
+  // During travel, interpolate the current hour within the active leg
+  let hours = G.watch.totalHours || 0;
+  if (G.phase === 'traveling' && G.tvl?.steps > 0) {
+    const legFraction = Math.min(1, (G.tvl.cur || 0) / G.tvl.steps);
+    hours = hours + legFraction * LEG_HOURS;
+  }
+  const day  = Math.floor(hours / 24) + 1;
+  const hour = (6 + hours) % 24;  // 06:00 = 0 total hours
+  return `Day ${day} — ${timeStr(Math.floor(hour))}`;
+}
+
+// Live clock ticker — updates the HUD display every real second during travel
+// so the in-game hour visibly advances as the ship moves
+let _clockTicker = null;
+function startLiveClock() {
+  if (_clockTicker) return;
+  _clockTicker = setInterval(() => {
+    if (G.phase === 'traveling') {
+      const hud = document.getElementById('watch-hud');
+      if (hud && hud.classList.contains('on')) {
+        document.getElementById('wh-day').textContent = watchTimeStr();
+      }
+    } else {
+      stopLiveClock();
+    }
+  }, 1000);
+}
+function stopLiveClock() {
+  if (_clockTicker) { clearInterval(_clockTicker); _clockTicker = null; }
 }
 
 // Called once per completed leg (8 hours) — rest OR push
@@ -3278,9 +3306,9 @@ function hasMovesRemaining() { return true; } // moves always available; fatigue
 // D&D fatigue: Fresh → Fatigued → Exhausted
 function fatigueLevel() {
   const pushed = G.watch?.legsPushed || 0;
-  if (pushed <= 1) return 0; // Fresh — up to 16 hrs travel
-  if (pushed === 2) return 2; // Fatigued — 24 hrs
-  return 3;                   // Exhausted — 32+ hrs
+  if (pushed === 0) return 0; // Fresh
+  if (pushed === 1) return 2; // Fatigued after 1 leg (8 hrs)
+  return 3;                   // Exhausted after 2 legs (16 hrs)
 }
 function fatigueName()        { return ['Fresh','','Fatigued','Exhausted'][fatigueLevel()]; }
 function fatigueMoveClass()   { return ['fresh','fresh','fatigued','exhausted'][fatigueLevel()]; }
@@ -3299,9 +3327,8 @@ function watchExpiredMidJourney() {
   G.watch._pauseShown = true;
   clearInterval(G.tvl.timer);
   G.phase = 'map';
-  tickLeg(); // first 8-hour leg
-  tickLeg(); // second 8-hour leg — 16 hours total before rest prompt
-  stopTravelHum();
+  tickLeg(); // 8 hours pass — day/air update if 06:00 crossed
+  stopTravelHum(); stopLiveClock();
   tsClose(); // pause travel sequence — reopens when travel resumes
 
   // Auto-rest: silently anchor without showing the popup
@@ -3321,11 +3348,11 @@ function watchExpiredMidJourney() {
   const pushNote = lvl === 0
     ? `
 
-Anchoring now means full rest and a fresh helmsman at dawn. The crew can safely push one more watch before fatigue sets in.`
+Anchoring now means full rest and a fresh helmsman at dawn. Pushing on risks fatigue.`
     : lvl === 2
     ? `
 
-⚠ FATIGUED — helmsman has been at the helm 24+ hours. Another push risks exhaustion and hull damage.`
+⚠ FATIGUED — helmsman is already compromised. Another push risks exhaustion and hull damage.`
     : `
 
 ⚠ EXHAUSTED — the helmsman is dangerously overextended. Hull damage likely if you push further.`;
@@ -3362,10 +3389,10 @@ Anchoring now means full rest and a fresh helmsman at dawn. The crew can safely 
   };
 
   showMsg(
-    `${icon} ${timeStr(hour)} — Helmsman Needs Rest`,
+    `${icon} ${timeStr(hour)} — Watch Complete`,
     `${destName} is ${pct}% of the way across.
 
-The helmsman has been manning the helm for 16 hours straight and needs relief. Anchor here for the night, or push on into exhaustion?${pushNote}`,
+The helmsman has completed an 8-hour watch. Anchor here for the night, or push on?${pushNote}`,
     lvl >= 2 ? '⚓ Anchor Now!' : '⚓ Anchor & Rest',
     anchorCb,
     lvl >= 2 ? '➤ Push On (Risky)' : '➤ Push On Through the Night',
@@ -3432,7 +3459,7 @@ function doRest() {
   const fatigLvl = fatigueLevel();
   const hour     = currentHour();
   const endHour  = 6; // always wake at 06:00
-  const titles = ['⚓ Anchoring for the Night','⚓ Making Fast — Helmsman Needs Rest','⚓ Emergency Anchor','⚠ Critical Rest'];
+  const titles = ['⚓ Anchoring for the Night','⚓ Making Fast — Watch Complete','⚓ Emergency Anchor','⚠ Critical Rest'];
   const descs  = [
     `${timeStr(hour)} — Helm secured. Rest until 06:00. The Phlogiston drifts past in silence.`,
     `${timeStr(hour)} — Fatigued helmsman. Anchoring now. Rest until 06:00.`,
@@ -5715,8 +5742,7 @@ function startTravel(toId, _resumeWatchesLeft, _pausedPos, _pausedProg, _savedLa
     _progEnd:       progEnd,
     _watchPct:      watchPct,
     _totalWatches:  totalWatches,
-    _legsThisSession: 0,  // reset each time travel starts or resumes — counts 8-hr legs
-  };
+    };
 
   document.getElementById('tvlbar').classList.add('on');
   document.getElementById('tvllabel').textContent =
@@ -5773,7 +5799,7 @@ function startWaypointTravel(wp){
   setTag(`Traveling → ${wp.n}`);
   snd('travel_begin', 0.7);
   addLog(`Setting course for waypoint ${wp.ico} ${wp.n}…`,'');
-  G.tvl.timer=setInterval(travelTick, wpTickMs); startTravelHum();
+  G.tvl.timer=setInterval(travelTick, wpTickMs); startTravelHum(); startLiveClock();
 }
 
 function startFragSiteTravel(fs){
@@ -5934,18 +5960,15 @@ function travelTick(){
       // ─ ARRIVED — tick the final leg (day/air via tickLeg inside advanceWatch) ─
       advanceWatch();
       document.getElementById('tvlbar').classList.remove('on');
-      tsClose(); // close travel sequence on arrival
+      tsClose(); stopLiveClock(); // close travel sequence on arrival
       if(G.tvl.toWp)          arriveAtWaypoint(G.tvl.toWp);
       else if(G.tvl.toFragSite) arriveAtFragSite(G.tvl.toFragSite);
       else                    arrive(G.tvl.to);
     } else {
-      // ─ MORE WATCHES NEEDED — count legs; only prompt after 2 (16 hrs) ─
+      // ─ MORE WATCHES NEEDED — stop and prompt after every leg ─
       const toId = G.tvl.to;
       const watchesRemaining = watchesLeft;
       const totalWatches = G.tvl._totalWatches || watchesLeft + 1;
-
-      // Track how many legs completed this travel session (resets on rest/depart)
-      G.tvl._legsThisSession = (G.tvl._legsThisSession || 0) + 1;
 
       // ── Save mid-lane position ──
       const W = cv.width, H = cv.height;
@@ -5959,31 +5982,8 @@ function travelTick(){
       const pausedProg = G.tvl.prog;
 
       G.ship.midLanePos = pausedPos;
-      G.tvl._pausedProg     = pausedProg;
+      G.tvl._pausedProg       = pausedProg;
       G.tvl._watchesRemaining = watchesRemaining;
-
-      // Only show anchor/rest prompt every 2 legs (= 16 hours of travel)
-      // After the first leg (8 hrs) continue silently; prompt fires at leg 2, 4, 6…
-      if (G.tvl._legsThisSession % 2 !== 0) {
-        // Silent first leg — advance progress window and restart without touching the clock.
-        // watchExpiredMidJourney will call tickLeg() when the SECOND leg (even) completes,
-        // accounting for both legs at once (2× LEG_HOURS = 16 hrs total).
-        addLog(`🕐 ${timeStr(currentHour())} — 8 hours underway, pushing on.`, '');
-
-        // Decrement watches and advance progress window for the next segment
-        G.tvl._watchesLeft = watchesRemaining - 1;
-        const nextWatchPct = G.tvl._watchPct || (100 / totalWatches);
-        G.tvl._progEnd = Math.min(100, pausedProg + nextWatchPct);
-        G.tvl.prog = pausedProg;
-        G.tvl.prevProg = pausedProg;
-        G.tvl.cur = 0;
-        G.tvl.steps = Math.max(40, G.tvl.steps || 40);
-        G.phase = 'traveling';
-        G.tvl.timer = setInterval(travelTick, G.tvl.tickMs || 100);
-        return;
-      }
-
-      // Even leg (16+ hours) — stop and prompt
       G.phase = 'map';
       document.getElementById('tvlbar').classList.remove('on');
       watchExpiredMidJourney();
@@ -7816,7 +7816,7 @@ function startCombat(key){
   if(key === 'elder'){ startElderCaiphonSequence(); return; }
 
   G.phase='combat'; setTag('COMBAT');
-  stopTravelHum(); // mute engine hum — combat music takes over
+  stopTravelHum(); stopLiveClock(); // mute engine hum — combat music takes over
   tsClose();       // close travel sequence — reopens when travel resumes
   document.getElementById('watch-hud')?.classList.remove('on'); // hide time HUD during combat
   const t=ENM[key];
@@ -10101,7 +10101,7 @@ function endCbt(won){
     setTag(`Traveling → ${G.tvl.toFragSite.n}`);
     if(won) addLog('Enemy destroyed. Resuming course to '+G.tvl.toFragSite.n+'…','gd');
     document.getElementById('tvlbar').classList.add('on');
-    G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); startTravelHum();
+    G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); startTravelHum(); startLiveClock();
     tsOpen(G.tvl.lane); // reopen travel sequence
     return;
   }
@@ -13270,7 +13270,7 @@ window.addEventListener('keydown', e=>{
     if(document.getElementById('ov-dockmaster')?.classList.contains('on')){
       e.preventDefault(); document.getElementById('dm-next-btn')?.click(); return;
     }
-    // Rest overlay — dismiss when "Helmsman Needs Rest" banner is showing
+    // Rest overlay — dismiss when "Watch Complete" banner is showing
     if(document.getElementById('rest-overlay')?.classList.contains('on')){
       const done=document.getElementById('rest-complete');
       if(done?.classList.contains('on')){ e.preventDefault(); done.click(); }
