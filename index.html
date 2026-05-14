@@ -1025,6 +1025,126 @@ body {
   50%    { box-shadow: 0 0 18px #ff442244; }
 }
 
+
+/* ══════════════════════════════════════════════════════════════════
+   COMBAT INVENTORY OVERLAY
+   ══════════════════════════════════════════════════════════════════ */
+#ov-cbt-inv {
+  position: fixed; inset: 0; z-index: 400;
+  display: none; align-items: center; justify-content: center;
+  background: rgba(2,0,8,0.88);
+  backdrop-filter: blur(3px);
+}
+#ov-cbt-inv.on { display: flex; }
+
+#cbt-inv-modal {
+  background: rgba(5,1,18,0.98); border: 1px solid #44228855;
+  border-radius: 10px; padding: 18px 18px 14px;
+  width: min(680px, 96vw); max-height: 86vh;
+  display: flex; flex-direction: column; gap: 12px;
+  box-shadow: 0 0 60px #22006644, inset 0 0 30px rgba(20,0,50,0.3);
+}
+
+/* Header row */
+#cbt-inv-header {
+  display: flex; align-items: center; gap: 10px;
+}
+#cbt-inv-title {
+  font-family:'Cinzel',serif; font-size:12px; color:#9966dd;
+  letter-spacing:2px; flex:1;
+}
+.cbt-inv-sort-btn {
+  font-family:'Cinzel',serif; font-size:9px; padding:4px 10px;
+  border:1px solid #44228844; border-radius:3px; cursor:pointer;
+  color:#664488; background:rgba(15,3,30,0.8); transition:all 0.15s;
+  letter-spacing:1px;
+}
+.cbt-inv-sort-btn:hover { border-color:#8844cc; color:#aa88dd; }
+.cbt-inv-sort-btn.active { border-color:#8844cc66; color:#cc99ff;
+  background:rgba(40,10,70,0.8); }
+#cbt-inv-close {
+  font-family:'Cinzel',serif; font-size:10px; padding:4px 12px;
+  border:1px solid #33112244; border-radius:3px; cursor:pointer;
+  color:#553355; background:none;
+}
+#cbt-inv-close:hover { border-color:#cc4466; color:#ff8899; }
+
+/* Section headers */
+.cbt-inv-section-hdr {
+  font-family:'Cinzel',serif; font-size:9px; letter-spacing:2px;
+  color:#442255; border-bottom:1px solid #22113322;
+  padding-bottom:5px; margin-bottom:6px; display:flex;
+  align-items:center; gap:8px;
+}
+.cbt-inv-section-hdr span.count {
+  font-size:8px; color:#331133;
+  background:rgba(40,0,60,0.5); padding:1px 6px; border-radius:2px;
+}
+
+/* Usable items section */
+#cbt-inv-usables-wrap {
+  flex-shrink: 0;
+}
+#cbt-inv-usables {
+  display: flex; flex-wrap: wrap; gap: 7px; min-height: 48px;
+}
+.cbt-inv-usable {
+  display: flex; flex-direction: column; align-items: center;
+  width: 76px; padding: 8px 6px 6px;
+  background: rgba(0,15,35,0.85); border: 1px solid #2244aa44;
+  border-radius: 5px; cursor: pointer; transition: all 0.15s;
+  position: relative; user-select: none;
+}
+.cbt-inv-usable:hover { border-color: #4488ff; background: rgba(0,25,55,0.95);
+  box-shadow: 0 0 10px #2244aa33; }
+.cbt-inv-usable.dragging { opacity:0.4; border-style:dashed; }
+.cbt-inv-usable.drag-over { border-color:#ffcc44; background:rgba(30,20,0,0.9); }
+.cbt-inv-usable.item-disable { border-color:#ffd70055; }
+.cbt-inv-usable.item-disable:hover { border-color:#ffd700; box-shadow:0 0 10px #ffd70033; }
+.cbt-u-ico { font-size: 22px; margin-bottom: 4px; }
+.cbt-u-name { font-family:'Cinzel',serif; font-size:8px; color:#88aadd;
+  text-align:center; line-height:1.3; }
+.cbt-u-desc { font-size:7px; color:#445566; text-align:center;
+  margin-top:2px; line-height:1.3; }
+.cbt-inv-usable .cbt-use-label {
+  position:absolute; bottom:2px; right:3px;
+  font-size:7px; color:#4488ff88; font-family:'Cinzel',serif;
+  letter-spacing:0.5px;
+}
+.cbt-inv-usable:hover .cbt-use-label { color:#88ccff; }
+.cbt-inv-empty-slot {
+  width:76px; height:72px; border:1px dashed #22113333;
+  border-radius:5px; display:flex; align-items:center; justify-content:center;
+  color:#221133; font-size:18px;
+}
+
+/* Cargo section */
+#cbt-inv-cargo-wrap {
+  flex: 1; overflow: hidden; display: flex; flex-direction: column;
+}
+#cbt-inv-cargo {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  overflow-y: auto; flex: 1; padding-right: 4px;
+  max-height: 200px;
+}
+.cbt-inv-cargo-item {
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 10px; width: calc(50% - 3px);
+  background: rgba(10,3,22,0.8); border: 1px solid #33115533;
+  border-radius: 4px; cursor: grab; transition: all 0.12s;
+  user-select: none;
+}
+.cbt-inv-cargo-item:hover { border-color:#664488; background:rgba(20,5,40,0.9); }
+.cbt-inv-cargo-item.dragging { opacity:0.4; border-style:dashed; cursor:grabbing; }
+.cbt-inv-cargo-item.drag-over { border-color:#ffcc44; }
+.cbt-c-ico { font-size:16px; flex-shrink:0; }
+.cbt-c-info { flex:1; min-width:0; }
+.cbt-c-name { font-family:'Cinzel',serif; font-size:9px; color:#aa88cc;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cbt-c-val  { font-size:8px; color:#664477; margin-top:1px; }
+.cbt-c-type { font-size:7px; color:#443355; letter-spacing:0.5px; text-transform:uppercase; }
+.cbt-inv-no-cargo { font-size:10px; color:#332233; font-style:italic; padding:8px 4px; }
+
 /* IEN QM shop within local quest */
 #lq-shop {
   position:absolute; top:50%; right:20px; transform:translateY(-50%);
@@ -1476,10 +1596,44 @@ body {
     <!-- Combat log — full width, always at the bottom -->
     <div class="clog" id="clog"></div>
 
-    <!-- Collapsible item inventory (shown during combat) -->
-    <div id="cbt-inv-panel">
-      <div class="cbt-inv-grid" id="cbt-inv-grid"></div>
+    <!-- Combat inventory overlay — opens from Items button -->
+    <div id="ov-cbt-inv">
+      <div id="cbt-inv-modal">
+
+        <!-- Header -->
+        <div id="cbt-inv-header">
+          <div id="cbt-inv-title">🎒 Ship's Hold</div>
+          <button class="cbt-inv-sort-btn active" id="sort-type"   onclick="cbtInvSort('type')">By Type</button>
+          <button class="cbt-inv-sort-btn"          id="sort-alpha" onclick="cbtInvSort('alpha')">A–Z</button>
+          <button class="cbt-inv-sort-btn"          id="sort-val"   onclick="cbtInvSort('val')">By Value</button>
+          <button id="cbt-inv-close" onclick="closeCbtInv()">✕ Close</button>
+        </div>
+
+        <!-- Usable items — top section -->
+        <div id="cbt-inv-usables-wrap">
+          <div class="cbt-inv-section-hdr">
+            ⚗ USABLE IN COMBAT
+            <span class="count" id="cbt-usable-count">0</span>
+            <span style="font-size:8px;color:#332244;margin-left:auto;">click to use · drag to reorder</span>
+          </div>
+          <div id="cbt-inv-usables"></div>
+        </div>
+
+        <!-- Cargo / trade goods — bottom section -->
+        <div id="cbt-inv-cargo-wrap">
+          <div class="cbt-inv-section-hdr">
+            📦 CARGO &amp; TRADE GOODS
+            <span class="count" id="cbt-cargo-count">0</span>
+            <span style="font-size:8px;color:#332244;margin-left:auto;">drag to reorder</span>
+          </div>
+          <div id="cbt-inv-cargo"></div>
+        </div>
+
+      </div>
     </div>
+
+    <!-- Legacy panel (kept for "enemy acting" message compatibility) -->
+    <div id="cbt-inv-panel" style="display:none;"></div>
 
     <!-- Legacy cacts kept for "enemy acting" message -->
     <div id="cacts" style="display:none;"></div>
@@ -7370,6 +7524,141 @@ function tsToggleSpeed() {
   }
 }
 
+
+// ╔══════════════════════════════════════════════════════════════════════╗
+// ║  COMBAT INVENTORY OVERLAY                                            ║
+// ╚══════════════════════════════════════════════════════════════════════╝
+
+let _cbtInvSort = 'type';   // current sort mode: 'type' | 'alpha' | 'val'
+let _cbtDragItem = null;    // uid of item being dragged
+let _cbtDragSection = null; // 'usable' | 'cargo'
+
+function openCbtInv() {
+  buildCbtInvOverlay();
+  document.getElementById('ov-cbt-inv').classList.add('on');
+}
+
+function closeCbtInv() {
+  document.getElementById('ov-cbt-inv').classList.remove('on');
+}
+
+function cbtInvSort(mode) {
+  _cbtInvSort = mode;
+  document.querySelectorAll('.cbt-inv-sort-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('sort-' + mode);
+  if (btn) btn.classList.add('active');
+  buildCbtInvOverlay();
+}
+
+function buildCbtInvOverlay() {
+  const inv = G.ship.inv || [];
+  const usables = inv.filter(i => i.type === 'usable');
+  const cargo   = inv.filter(i => i.type !== 'usable');
+
+  const sortFn = {
+    type:  (a, b) => (a.type||'').localeCompare(b.type||'') || (a.n||'').localeCompare(b.n||''),
+    alpha: (a, b) => (a.n||'').localeCompare(b.n||''),
+    val:   (a, b) => (b.val||0) - (a.val||0),
+  }[_cbtInvSort] || (() => 0);
+
+  usables.sort(sortFn);
+  cargo.sort(sortFn);
+
+  document.getElementById('cbt-usable-count').textContent = usables.length;
+  document.getElementById('cbt-cargo-count').textContent  = cargo.length;
+
+  // ── Usable items ──────────────────────────────────────────────────────
+  const usablesEl = document.getElementById('cbt-inv-usables');
+  usablesEl.innerHTML = '';
+  if (usables.length === 0) {
+    usablesEl.innerHTML = '<div class="cbt-inv-empty-slot">🎒</div><div style="font-size:10px;color:#332244;font-style:italic;align-self:center;padding-left:8px;">No usable items in hold.</div>';
+  } else {
+    usables.forEach(item => {
+      const isDisabler = item.use && item.use.startsWith('disable');
+      const el = document.createElement('div');
+      el.className = 'cbt-inv-usable' + (isDisabler ? ' item-disable' : '');
+      el.draggable = true;
+      el.dataset.uid = item.uid;
+      el.dataset.section = 'usable';
+      el.title = item.desc || '';
+      el.innerHTML = `
+        <div class="cbt-u-ico">${item.ico}</div>
+        <div class="cbt-u-name">${item.n}</div>
+        <div class="cbt-u-desc">${item.desc ? item.desc.split('.')[0] : ''}</div>
+        <span class="cbt-use-label">USE</span>`;
+
+      // Click to use
+      el.addEventListener('click', () => {
+        if (!G.cbt?.pTurn) return;
+        closeCbtInv();
+        doAction('item', 0, item.uid);
+      });
+
+      // Drag to reorder
+      _cbtAddDrag(el, 'usable');
+      usablesEl.appendChild(el);
+    });
+  }
+
+  // ── Cargo / trade items ───────────────────────────────────────────────
+  const cargoEl = document.getElementById('cbt-inv-cargo');
+  cargoEl.innerHTML = '';
+  if (cargo.length === 0) {
+    cargoEl.innerHTML = '<div class="cbt-inv-no-cargo">Hold is empty — no cargo or trade goods.</div>';
+  } else {
+    cargo.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'cbt-inv-cargo-item';
+      el.draggable = true;
+      el.dataset.uid = item.uid;
+      el.dataset.section = 'cargo';
+      el.innerHTML = `
+        <span class="cbt-c-ico">${item.ico}</span>
+        <div class="cbt-c-info">
+          <div class="cbt-c-name">${item.n}</div>
+          <div class="cbt-c-val">⚜ ${item.val || '—'}</div>
+          <div class="cbt-c-type">${item.type || 'trade'}</div>
+        </div>`;
+      _cbtAddDrag(el, 'cargo');
+      cargoEl.appendChild(el);
+    });
+  }
+}
+
+function _cbtAddDrag(el, section) {
+  el.addEventListener('dragstart', e => {
+    _cbtDragItem = el.dataset.uid;
+    _cbtDragSection = section;
+    el.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  el.addEventListener('dragend', () => {
+    el.classList.remove('dragging');
+    document.querySelectorAll('.drag-over').forEach(d => d.classList.remove('drag-over'));
+    _cbtDragItem = null;
+  });
+  el.addEventListener('dragover', e => {
+    e.preventDefault();
+    if (_cbtDragSection === section && _cbtDragItem !== el.dataset.uid) {
+      el.classList.add('drag-over');
+    }
+  });
+  el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+  el.addEventListener('drop', e => {
+    e.preventDefault();
+    el.classList.remove('drag-over');
+    if (_cbtDragSection !== section || !_cbtDragItem || _cbtDragItem === el.dataset.uid) return;
+    // Reorder in G.ship.inv
+    const inv = G.ship.inv;
+    const fromIdx = inv.findIndex(i => i.uid === _cbtDragItem);
+    const toIdx   = inv.findIndex(i => i.uid === el.dataset.uid);
+    if (fromIdx === -1 || toIdx === -1) return;
+    const [moved] = inv.splice(fromIdx, 1);
+    inv.splice(toIdx, 0, moved);
+    buildCbtInvOverlay();
+  });
+}
+
 function buy(item){
   if(G.ship.gold<item.cost)return;
   // Hard guard: re-check ownership before any purchase goes through
@@ -9078,36 +9367,16 @@ function buildCbtPanels() {
     rb.onclick = () => doAction('repair'); abilityRow.appendChild(rb);
   }
 
-  // ── Items toggle button ──────────────────────────────────
-  const usables = G.ship.inv.filter(i => i.type === 'usable');
-  const invPanel = document.getElementById('cbt-inv-panel');
-  const invGrid  = document.getElementById('cbt-inv-grid');
-
-  if (invGrid) {
-    invGrid.innerHTML = '';
-    if (usables.length === 0) {
-      invGrid.innerHTML = '<div class="cbt-inv-empty">No usable items in hold.</div>';
-    } else {
-      usables.forEach(item => {
-        const btn = document.createElement('button');
-        const isDisabler = item.use && item.use.startsWith('disable');
-        btn.className = 'cbt-inv-item' + (isDisabler ? ' item-disable' : '');
-        btn.innerHTML = `<span>${item.ico}</span><span class="cbt-inv-item-name">${item.n}</span>`;
-        btn.title = item.desc;
-        btn.onclick = () => { doAction('item', 0, item.uid); };
-        invGrid.appendChild(btn);
-      });
-    }
-  }
+  // ── Items button — opens overlay ─────────────────────────
+  const allInv = G.ship.inv || [];
+  const usables = allInv.filter(i => i.type === 'usable');
+  const totalItems = allInv.length;
 
   const itb = document.createElement('button');
   itb.id = 'cbt-inv-toggle';
   itb.className = 'btn' + (usables.length ? ' has-items' : ' no-items');
-  itb.innerHTML = `🎒 Items (${usables.length})`;
-  itb.onclick = () => {
-    if (invPanel) invPanel.classList.toggle('on');
-    itb.innerHTML = `🎒 Items (${usables.length}) ${invPanel?.classList.contains('on') ? '▲' : '▼'}`;
-  };
+  itb.innerHTML = `🎒 Items (${usables.length} usable${totalItems > usables.length ? `, ${totalItems - usables.length} cargo` : ''})`;
+  itb.onclick = () => openCbtInv();
   abilityRow.appendChild(itb);
 
   // ── Flee — always at the bottom ──────────────────────────
@@ -10103,6 +10372,7 @@ function cbtWin(){
 
 function endCbt(won){
   document.getElementById('ov-combat').classList.remove('on');
+  document.getElementById('ov-cbt-inv')?.classList.remove('on');
   const invPanel = document.getElementById('cbt-inv-panel');
   if (invPanel) invPanel.classList.remove('on');
   setAmbient('map');
@@ -10604,7 +10874,7 @@ The Far Realm still whispers at the edges of reality. Perhaps one day a new thre
   ), 800);
 }
 function restart(){
-  ['ov-travel-seq','ov-wpnpicker','ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay'].forEach(id=>{
+  ['ov-cbt-inv','ov-travel-seq','ov-wpnpicker','ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay'].forEach(id=>{
     const el=document.getElementById(id); if(el)el.classList.remove('on','active');
   });
   const _fr=document.getElementById('ov-faction-rep'); if(_fr) _fr.style.display='none';
@@ -11605,7 +11875,7 @@ function hideMainMenu() {
 function menuNewGame() {
   hideMainMenu(true); // keep title playing through cinematic
   // Full teardown so combat/port/loot overlays don't linger from an in-progress game
-  ['ov-travel-seq','ov-wpnpicker','ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay'].forEach(id=>{
+  ['ov-cbt-inv','ov-travel-seq','ov-wpnpicker','ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay'].forEach(id=>{
     const el=document.getElementById(id); if(el)el.classList.remove('on','active');
   });
   const _fr=document.getElementById('ov-faction-rep'); if(_fr) _fr.style.display='none';
@@ -11760,7 +12030,7 @@ function _applyLoad(save) {
     if (G.tvl && G.tvl.timer) clearInterval(G.tvl.timer);
     if (G.animId) cancelAnimationFrame(G.animId);
     _stopLoop();
-    ['ov-travel-seq','ov-wpnpicker','ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','ov-faction-rep','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay'].forEach(id=>{
+    ['ov-cbt-inv','ov-travel-seq','ov-wpnpicker','ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','ov-faction-rep','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay'].forEach(id=>{
       const el=document.getElementById(id); if(el)el.classList.remove('on','active');
     });
     G = {
@@ -13210,6 +13480,8 @@ window.addEventListener('keydown', e=>{
         close: ()=> roamContinue?.() },
       { check: ()=> { const el=document.getElementById('ov-faction-rep'); return el && el.style.display==='flex'; },
         close: ()=> closeFactionRep() },
+      { check: ()=> document.getElementById('ov-cbt-inv')?.classList.contains('on'),
+        close: ()=> closeCbtInv() },
       { check: ()=> document.getElementById('ov-wpnpicker')?.classList.contains('on'),
         close: ()=> wpnPickerCancel() },
       { check: ()=> document.getElementById('briefing-overlay') && !document.getElementById('briefing-overlay').classList.contains('hidden'),
