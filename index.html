@@ -7181,11 +7181,11 @@ function tsSpawnEvent(type, label, key) {
 
 // ── Lane atmosphere colors ────────────────────────────────────────────────
 const TS_LANE_COLS = [
-  { fog:'#0a2240', bank:'#0a3a5a', glow:'#44ffee', particle:'rgba(68,255,238,' },  // tier 1
-  { fog:'#0a1840', bank:'#0a2060', glow:'#4488ff', particle:'rgba(68,136,255,' },  // tier 2
-  { fog:'#201008', bank:'#3a1808', glow:'#ff8844', particle:'rgba(255,136,68,' },  // tier 3
-  { fog:'#280808', bank:'#3a0808', glow:'#ff4422', particle:'rgba(255,68,34,' },   // tier 4
-  { fog:'#1a0404', bank:'#2a0404', glow:'#cc2222', particle:'rgba(200,34,34,' },   // tier 5
+  { fog:'#050d22', bank:'#062848', glow:'#00ffe8', particle:'rgba(0,255,220,',   fog2:'#061a30', nebA:'rgba(0,180,255,', nebB:'rgba(80,0,200,' },  // tier 1 — teal/cyan
+  { fog:'#070828', bank:'#0d1260', glow:'#7755ff', particle:'rgba(110,80,255,',  fog2:'#0a083a', nebA:'rgba(80,0,255,',  nebB:'rgba(0,180,200,' },  // tier 2 — electric violet
+  { fog:'#180a02', bank:'#3a1400', glow:'#ff9900', particle:'rgba(255,150,0,',   fog2:'#221205', nebA:'rgba(255,80,0,',  nebB:'rgba(200,0,80,'  },  // tier 3 — amber/fire
+  { fog:'#1e0404', bank:'#440808', glow:'#ff3300', particle:'rgba(255,50,0,',    fog2:'#280505', nebA:'rgba(255,0,80,',  nebB:'rgba(120,0,0,'   },  // tier 4 — blood red
+  { fog:'#110003', bank:'#2a0008', glow:'#cc0044', particle:'rgba(200,0,60,',    fog2:'#1a0005', nebA:'rgba(180,0,40,',  nebB:'rgba(80,0,120,'  },  // tier 5 — deep crimson
 ];
 
 // ── Main render loop ──────────────────────────────────────────────────────
@@ -7208,48 +7208,145 @@ function tsRender(timestamp) {
   const tier = TS.lane?.d || 1;
   const col  = TS_LANE_COLS[Math.min(tier - 1, TS_LANE_COLS.length - 1)];
 
-  // ── Background: deep void ─────────────────────────────────────────────
+  // ── Background: deep void with radial depth ──────────────────────────
   ctx.fillStyle = col.fog;
   ctx.fillRect(0, 0, W, H);
+  // Radial centre glow — the river core is hotter/brighter
+  const bgGlow = ctx.createRadialGradient(W*0.5, H*0.5, 0, W*0.5, H*0.5, W*0.55);
+  bgGlow.addColorStop(0,   col.fog2 + 'ff');
+  bgGlow.addColorStop(0.5, col.fog  + '88');
+  bgGlow.addColorStop(1,   '#00000000');
+  ctx.fillStyle = bgGlow;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── Phlogiston nebula wisps drifting across the channel ─────────────
+  const nebScrollY = TS.t * 28;
+  for (let ni = 0; ni < 6; ni++) {
+    const ns = ni * 2.4 + 0.7;
+    const nx = W * (0.12 + ((ns * 113.7) % 0.76));
+    const rawNY = ((ns * 91.3 + nebScrollY * (0.12 + (ns % 0.2))) % H);
+    const ny = rawNY < 0 ? rawNY + H : rawNY;
+    const nr = W * (0.07 + (ns % 0.09));
+    const na = 0.04 + 0.07 * Math.abs(Math.sin(TS.t * 0.25 + ns));
+    const useB = ni % 2 === 0;
+    const nebG = ctx.createRadialGradient(nx, ny, 0, nx, ny, nr);
+    nebG.addColorStop(0,   (useB ? col.nebB : col.nebA) + (na * 2.2).toFixed(2) + ')');
+    nebG.addColorStop(0.5, (useB ? col.nebA : col.nebB) + na.toFixed(2) + ')');
+    nebG.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = nebG;
+    ctx.beginPath(); ctx.arc(nx, ny, nr, 0, Math.PI * 2); ctx.fill();
+  }
 
   // ── Phlogiston river banks (left/right gradient walls) ───────────────
-  const bankW = W * 0.18;
+  const bankW = W * 0.20;
   [[0, true], [W, false]].forEach(([bx, isLeft]) => {
     const gx = isLeft ? bx : bx - bankW;
     const g = ctx.createLinearGradient(isLeft ? gx : gx + bankW, 0,
                                        isLeft ? gx + bankW : gx, 0);
-    g.addColorStop(0, col.bank + 'ee');
-    g.addColorStop(0.6, col.bank + '66');
-    g.addColorStop(1, col.fog + '00');
+    g.addColorStop(0,   col.bank + 'ff');
+    g.addColorStop(0.4, col.bank + 'bb');
+    g.addColorStop(0.75,col.bank + '44');
+    g.addColorStop(1,   col.fog  + '00');
     ctx.fillStyle = g;
     ctx.fillRect(gx, 0, bankW, H);
 
-    // Bank edge glow
-    const ex = isLeft ? bx + bankW * 0.55 : bx - bankW * 0.55;
-    for (let i = 0; i < 3; i++) {
-      const ew = 2 + i * 2;
-      const ea = (0.15 - i * 0.04) * (0.6 + 0.4 * Math.sin(TS.t * 0.8 + i));
-      ctx.strokeStyle = col.glow + Math.round(ea * 255).toString(16).padStart(2,'0');
+    // Bright inner bank edge — triple glow line
+    const ex = isLeft ? bx + bankW * 0.52 : bx - bankW * 0.52;
+    for (let i = 0; i < 5; i++) {
+      const ew = 1.5 + i * 2.5;
+      const ea = (0.28 - i * 0.05) * (0.65 + 0.35 * Math.sin(TS.t * 1.1 + i * 0.7));
+      ctx.strokeStyle = col.glow + Math.round(Math.max(0, ea) * 255).toString(16).padStart(2,'0');
       ctx.lineWidth = ew;
       ctx.beginPath(); ctx.moveTo(ex, 0); ctx.lineTo(ex, H); ctx.stroke();
     }
+
+    // Animated energy ripple along bank edge
+    const ripX = isLeft ? bx + bankW * 0.48 : bx - bankW * 0.48;
+    for (let ri = 0; ri < 4; ri++) {
+      const ry = (TS.t * 90 * (isLeft ? 1 : -1) + ri * H / 4) % H;
+      const ra = 0.55 * Math.abs(Math.sin(TS.t * 2.2 + ri * 1.4));
+      const ripG = ctx.createRadialGradient(ripX, ry, 0, ripX, ry, bankW * 0.3);
+      ripG.addColorStop(0, col.glow + Math.round(ra * 200).toString(16).padStart(2,'0'));
+      ripG.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = ripG;
+      ctx.beginPath(); ctx.arc(ripX, ry, bankW * 0.3, 0, Math.PI * 2); ctx.fill();
+    }
   });
 
-  // ── Scrolling flow particles along the river channel ─────────────────
+  // ── Background star field — tiny, drifting ────────────────────────────
+  const starScroll = TS.t * 15;
+  for (let si = 0; si < 55; si++) {
+    const ss = si * 1.414 + 0.3;
+    const sx = W * ((ss * 79.3) % 1);
+    const rawSY = ((ss * 53.1 + starScroll * (0.05 + (ss % 0.08))) % H);
+    const sy = rawSY < 0 ? rawSY + H : rawSY;
+    const sa = 0.15 + 0.35 * Math.abs(Math.sin(TS.t * 1.8 + ss));
+    const sr = 0.5 + 1.2 * ((ss * 31.7) % 1);
+    ctx.fillStyle = `rgba(255,255,255,${sa.toFixed(2)})`;
+    ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // ── Scrolling flow particles along the river channel — rich & varied ─
   const scrollAmt = (TS.scrollY += TS.scrollSpeed * dt);
   const channelX = W * 0.18, channelW = W * 0.64;
-  for (let i = 0; i < 14; i++) {
+
+  // Large slow background streaks
+  for (let i = 0; i < 8; i++) {
+    const seed = i * 3.141;
+    const px = channelX + ((seed * 89.3) % 1) * channelW;
+    const rawY = ((seed * 47.7 + scrollAmt * 0.18) % H);
+    const py = rawY < 0 ? rawY + H : rawY;
+    const a = 0.04 + 0.06 * Math.abs(Math.sin(TS.t * 0.5 + seed));
+    const r = 12 + 18 * ((seed * 17.3) % 1);
+    const g2 = ctx.createRadialGradient(px, py, 0, px, py, r);
+    g2.addColorStop(0, col.nebA + (a * 1.8).toFixed(2) + ')');
+    g2.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g2;
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Medium bright particles
+  for (let i = 0; i < 22; i++) {
     const seed = i * 1.618;
     const px = channelX + (((seed * 137.5) % 1)) * channelW;
-    const rawY = ((seed * 73.1 + scrollAmt * 0.4) % H);
+    const rawY = ((seed * 73.1 + scrollAmt * 0.45) % H);
     const py = rawY < 0 ? rawY + H : rawY;
-    const a = 0.08 + 0.12 * Math.abs(Math.sin(TS.t * 1.1 + seed));
-    const r = 1.5 + 2 * Math.abs(Math.sin(TS.t * 0.7 + seed * 0.5));
-    const grad = ctx.createRadialGradient(px, py, 0, px, py, r * 2.5);
-    grad.addColorStop(0, col.particle + (a * 2).toFixed(2) + ')');
-    grad.addColorStop(1, col.particle + '0)');
+    const a = 0.18 + 0.28 * Math.abs(Math.sin(TS.t * 1.3 + seed));
+    const r = 2.5 + 4.5 * Math.abs(Math.sin(TS.t * 0.9 + seed * 0.5));
+    const grad = ctx.createRadialGradient(px, py, 0, px, py, r * 2.8);
+    grad.addColorStop(0,   col.particle + Math.min(1, a * 2.5).toFixed(2) + ')');
+    grad.addColorStop(0.4, col.particle + a.toFixed(2) + ')');
+    grad.addColorStop(1,   col.particle + '0)');
     ctx.fillStyle = grad;
-    ctx.beginPath(); ctx.arc(px, py, r * 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px, py, r * 2.8, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Small bright sparks — fastest layer
+  for (let i = 0; i < 30; i++) {
+    const seed = i * 0.937 + 0.5;
+    const px = channelX + ((seed * 173.1) % 1) * channelW;
+    const rawY = ((seed * 61.3 + scrollAmt * 0.75) % H);
+    const py = rawY < 0 ? rawY + H : rawY;
+    const a = 0.5 + 0.5 * Math.abs(Math.sin(TS.t * 3.1 + seed * 2));
+    const r = 0.8 + 1.8 * ((seed * 41.3) % 1);
+    ctx.fillStyle = col.particle + a.toFixed(2) + ')';
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill();
+    // Tiny horizontal streak for speed blur
+    ctx.strokeStyle = col.particle + (a * 0.4).toFixed(2) + ')';
+    ctx.lineWidth = r * 0.6;
+    ctx.beginPath(); ctx.moveTo(px - r * 3, py); ctx.lineTo(px + r, py); ctx.stroke();
+  }
+
+  // Occasional bright flare burst
+  if (Math.sin(TS.t * 0.7) > 0.93) {
+    const fx = channelX + ((Math.sin(TS.t * 3.1) * 0.5 + 0.5)) * channelW;
+    const fy = H * (0.2 + (Math.cos(TS.t * 2.3) * 0.5 + 0.5) * 0.6);
+    const fg = ctx.createRadialGradient(fx, fy, 0, fx, fy, 40);
+    fg.addColorStop(0, col.glow + 'cc');
+    fg.addColorStop(0.3, col.particle + '55)');
+    fg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = fg;
+    ctx.beginPath(); ctx.arc(fx, fy, 40, 0, Math.PI * 2); ctx.fill();
   }
 
   // ── Spawn timer for scene objects ────────────────────────────────────
@@ -7869,18 +7966,18 @@ function tsRenderSphere(ctx, W, H, dt) {
   // then draw everything above that as "interior" and the arc itself as the wall.
   // ─────────────────────────────────────────────────────────────────────────
 
-  // Wall Y position: starts at top of screen, descends toward upper-third as you approach
-  // eased=0 → wallY = -H*0.1 (just above screen, barely visible sliver)
-  // eased=1 → wallY = H*0.30  (30% down the screen — clear upper band)
-  const wallY = H * (-0.05 + eased * 0.35);
+  // Wall Y position: starts at top of screen, descends toward lower-quarter as you approach
+  // eased=0 → wallY = -H*0.05 (just above screen, barely visible)
+  // eased=1 → wallY = H*0.72  (72% down — sphere wall nearly fills screen, ship tip almost touching)
+  const wallY = H * (-0.05 + eased * 0.77);
 
   // Curve: the wall bows slightly upward at the edges (sphere curving away)
   // At center wallY, at edges wallY - curveDepth
   // eased=0: barely curved. eased=1: strongly curved.
-  const curveDepth = H * (0.02 + eased * 0.18);
+  const curveDepth = H * (0.02 + eased * 0.22);
 
   // Interior region height — how tall the visible interior is above the wall
-  const interiorH = H * (0.08 + eased * 0.55); // grows from thin sliver to tall band
+  const interiorH = H * (0.08 + eased * 0.90); // grows from thin sliver to near-full screen
 
   // ── STEP 1: Draw interior (above the wall arc) ─────────────────────────
   // Build a clip path that is exactly the interior region:
