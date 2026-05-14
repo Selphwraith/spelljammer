@@ -5964,8 +5964,9 @@ function travelTick(){
       // Only show anchor/rest prompt every 2 legs (= 16 hours of travel)
       // After the first leg (8 hrs) continue silently; prompt fires at leg 2, 4, 6…
       if (G.tvl._legsThisSession % 2 !== 0) {
-        // Silent leg — tick time forward (8 hrs) and continue to next watch automatically
-        advanceWatch(true); // silent=true skips the "06:00 — rested" log
+        // Silent leg — tick 8 hours forward and continue to next watch automatically
+        tickLeg(); // adds LEG_HOURS (8) to totalHours, increments day if midnight crossed
+        G.watch.legsPushed = (G.watch.legsPushed || 0) + 1; // track fatigue
         addLog(`🕐 ${timeStr(currentHour())} — 8 hours underway, pushing on.`, '');
 
         // Decrement watches and advance progress window for the next segment
