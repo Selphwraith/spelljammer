@@ -3463,30 +3463,61 @@ function doRest() {
       updateWatchHUD(); updateUI(); _writeAutoSave();
 
       if (G._resumeTravel) {
-        // Capture a LOCAL copy now — prevents clobbering by any async map clicks
-        // that slip through between rest end and the player clicking Resume.
         const rt = G._resumeTravel;
         G._resumeTravel = null;
-        G._restResumeBackup = rt; // keep a backup in case of dismiss/overwrite
-        // Ensure ship stays at mid-lane position while prompt is shown
+        G._restResumeBackup = rt;
         if (rt.pausedPos) G.ship.midLanePos = rt.pausedPos;
         const dn = G.spheres?.find(s=>s.id===rt.toId)?.n || rt.toId;
+        const resumeFn = () => {
+          G._restResumeBackup = null;
+          startTravel(rt.toId, rt.watchesRemaining, rt.pausedPos, rt.pausedProg, rt.laneOrigin);
+        };
         showMsg('⚓ Rested — Ready to Sail',
           `Day ${G.watch.day}, 06:00. ${dn} — ${rt.watchesRemaining} leg${rt.watchesRemaining>1?'s':''} remaining.`,
-          '⛵ Resume Course', () => {
-            G._restResumeBackup = null;
-            startTravel(rt.toId, rt.watchesRemaining, rt.pausedPos, rt.pausedProg, rt.laneOrigin);
-          });
+          '⛵ Resume Course', resumeFn);
+        // Auto-resume countdown — only when auto-rest is enabled
+        if (G._autoRest) _restAutoCountdown(resumeFn, 3);
       } else if (G.tvl?.prog < 100 && (G.tvl?.to || G.tvl?.toWp || G.tvl?.toFragSite)) {
         const dn = G.tvl.to ? G.spheres?.find(s=>s.id===G.tvl.to)?.n : (G.tvl.toWp?.n||G.tvl.toFragSite?.n||'destination');
+        const resumeFn2 = () => { G.phase='traveling'; startTravelHum(); G.tvl.timer=setInterval(travelTick,G.tvl.tickMs||100); tsOpen(getLane(G.tvl.from, G.tvl.to)); };
         showMsg('⚓ Rested — Ready to Sail', `${dn} awaits. Day ${G.watch.day}, 06:00.`,
-          '⛵ Resume Course', () => { G.phase='traveling'; startTravelHum(); G.tvl.timer=setInterval(travelTick,G.tvl.tickMs||100); });
+          '⛵ Resume Course', resumeFn2);
+        if (G._autoRest) _restAutoCountdown(resumeFn2, 3);
       }
     }, 800);
   }, 2000);
 }
 
 // Update Watch HUD
+// Auto-resume countdown — ticks down in the Resume button, fires callback when done.
+// Cancels silently if the msgbox is dismissed before countdown reaches zero.
+let _restCountdownTimer = null;
+function _restAutoCountdown(cb, seconds) {
+  if (_restCountdownTimer) clearInterval(_restCountdownTimer);
+  let remaining = seconds;
+  const btn = document.getElementById('msgbtn');
+  if (!btn) { cb(); return; }
+
+  const orig = btn.textContent;
+  btn.textContent = `⛵ Resume Course (${remaining})`;
+
+  _restCountdownTimer = setInterval(() => {
+    remaining--;
+    const b = document.getElementById('msgbtn');
+    // If msgbox was closed or button replaced, abort
+    if (!b || !document.getElementById('msgbox')?.classList.contains('on')) {
+      clearInterval(_restCountdownTimer); _restCountdownTimer = null; return;
+    }
+    if (remaining > 0) {
+      b.textContent = `⛵ Resume Course (${remaining})`;
+    } else {
+      clearInterval(_restCountdownTimer); _restCountdownTimer = null;
+      b.textContent = orig;
+      b.click(); // fires dismissMsg which runs the callback
+    }
+  }, 1000);
+}
+
 function updateWatchHUD() {
   if (!G.watch) return;
   const hud = document.getElementById('watch-hud');
@@ -10695,6 +10726,7 @@ function showMsg(title,body,btn,cb,btn2,cb2){
   }
 }
 function dismissMsg(){
+  if (_restCountdownTimer) { clearInterval(_restCountdownTimer); _restCountdownTimer = null; }
   document.getElementById('msgbox').classList.remove('on');
   document.getElementById('msgbtn2').style.display='none';
   if(G._msgCb){const cb=G._msgCb;G._msgCb=null;cb();}
