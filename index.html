@@ -3206,15 +3206,17 @@ function currentHour() {
 function timeStr(h) { return String(h).padStart(2,'0') + ':00'; }
 function watchTimeStr() {
   if (!G.watch) return '';
-  // During travel, interpolate the current hour within the active leg
-  let hours = G.watch.totalHours || 0;
-  if (G.phase === 'traveling' && G.tvl?.steps > 0) {
+  // Use G.watch.totalHours for the base clock position
+  let totalH = G.watch.totalHours || 0;
+  // During travel, add fractional progress through the current 8-hr leg
+  if ((G.phase === 'traveling' || G.phase === 'map') && G.tvl?.steps > 0) {
     const legFraction = Math.min(1, (G.tvl.cur || 0) / G.tvl.steps);
-    hours = hours + legFraction * LEG_HOURS;
+    totalH = totalH + legFraction * LEG_HOURS;
   }
-  const day  = Math.floor(hours / 24) + 1;
-  const hour = (6 + hours) % 24;  // 06:00 = 0 total hours
-  return `Day ${day} — ${timeStr(Math.floor(hour))}`;
+  // Day uses the canonical G.watch.day (already maintained by tickLeg/restAdvanceToMorning)
+  // Hour is computed mod-24 from totalH with 06:00 offset
+  const hour = Math.floor((6 + totalH) % 24);
+  return `Day ${G.watch.day} — ${timeStr(hour)}`;
 }
 
 // Live clock ticker — updates the HUD display every real second during travel
@@ -3326,9 +3328,11 @@ function watchExpiredMidJourney() {
   if (!G.watch || G.watch._pauseShown) return;
   G.watch._pauseShown = true;
   clearInterval(G.tvl.timer);
+  stopLiveClock(); // stop dynamic clock before ticking leg
+  if (G.tvl) { G.tvl.cur = 0; G.tvl.steps = 0; } // freeze interpolation at segment start
   G.phase = 'map';
-  tickLeg(); // 8 hours pass — day/air update if 06:00 crossed
-  stopTravelHum(); stopLiveClock();
+  tickLeg();
+  stopTravelHum();
   tsClose(); // pause travel sequence — reopens when travel resumes
 
   // Auto-rest: silently anchor without showing the popup
@@ -10094,27 +10098,29 @@ function endCbt(won){
   document.getElementById('ov-combat').classList.remove('on');
   const invPanel = document.getElementById('cbt-inv-panel');
   if (invPanel) invPanel.classList.remove('on');
-  updateWatchHUD();
-  setAmbient('map'); // stops combat loop, restores + resumes title
+  setAmbient('map');
   if(G.tvl.toFragSite){
     G.phase='traveling';
     setTag(`Traveling → ${G.tvl.toFragSite.n}`);
     if(won) addLog('Enemy destroyed. Resuming course to '+G.tvl.toFragSite.n+'…','gd');
     document.getElementById('tvlbar').classList.add('on');
     G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); startTravelHum(); startLiveClock();
-    tsOpen(G.tvl.lane); // reopen travel sequence
+    updateWatchHUD();
+    tsOpen(G.tvl.lane);
     return;
   }
   if(!G.tvl.to){
     G.phase='map'; setTag('Navigation'); updateUI();
+    updateWatchHUD();
     if(won) addLog('Enemy destroyed. Returning to navigation.','gd');
     return;
   }
   G.phase='traveling'; setTag(`Traveling → ${G.spheres.find(s=>s.id===G.tvl.to)?.n||''}`);
   if(won)addLog('Resuming voyage.','');
   document.getElementById('tvlbar').classList.add('on');
-  G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); startTravelHum();
-  tsOpen(G.tvl.lane); // reopen travel sequence after combat
+  G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); startTravelHum(); startLiveClock();
+  updateWatchHUD();
+  tsOpen(G.tvl.lane);
 }
 
 // ╔══════════════════════════════════════════════════════╗
