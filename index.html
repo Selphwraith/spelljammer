@@ -3365,48 +3365,56 @@ function watchTimeStr() {
   return `Day ${G.watch.day} — ${timeStr(hour)}`;
 }
 
-// Live clock ticker — advances the display hour smoothly based on real time elapsed
-// Each 8-hour leg takes watchMs real milliseconds, so 1 display hour = watchMs/8 ms
-let _clockTicker = null;
-let _clockLegStart = 0;   // real timestamp when current leg started
-let _clockLegHours = 0;   // totalHours value at start of current leg
+// Live clock — reads G.tvl.cur/steps for the current leg fraction.
+// A high-water mark prevents the display from going backward during encounters.
+let _clockTicker   = null;
+let _clockHWM      = 0;   // high-water mark: furthest legFrac seen this leg (0–1)
+let _clockBaseH    = 0;   // G.watch.totalHours at leg start
+// compat stubs
+let _clockLegStart = 0;
+let _clockLegHours = 0;
 
 function startLiveClock() {
-  if (_clockTicker) return;
+  stopLiveClock();
+  _clockHWM   = 0;
+  _clockBaseH = G.watch?.totalHours || 0;
   _clockLegStart = performance.now();
-  _clockLegHours = G.watch?.totalHours || 0;
+  _clockLegHours = _clockBaseH;
 
   _clockTicker = setInterval(() => {
     if (G.phase !== 'traveling') { stopLiveClock(); return; }
     const hud = document.getElementById('watch-hud');
     if (!hud?.classList.contains('on')) return;
 
-    let hour;
-    // Only interpolate while travelTick timer is actively running
-    // When stopped (event approaching, waystation popup pending), show static ticked time
-    if (G.tvl?.timer) {
-      const watchMs = typeof getWatchRealMs === 'function' ? getWatchRealMs() : 6000;
-      const elapsed = performance.now() - _clockLegStart;
-      const hoursElapsed = Math.min(LEG_HOURS - 0.01, (elapsed / watchMs) * LEG_HOURS);
-      const totalH = _clockLegHours + hoursElapsed;
-      hour = Math.floor((6 + totalH) % 24);
-    } else {
-      // travelTick stopped — show exact ticked time, no interpolation
-      hour = Math.floor((6 + (G.watch?.totalHours || 0)) % 24);
+    // Current leg fraction from travelTick counters
+    let legFrac = 0;
+    if (G.tvl?.steps > 0) {
+      legFrac = Math.min(1, (G.tvl.cur || 0) / G.tvl.steps);
     }
+    // Never go backward — use high-water mark
+    if (legFrac > _clockHWM) _clockHWM = legFrac;
+
+    const totalH = _clockBaseH + _clockHWM * LEG_HOURS;
+    const hour   = Math.floor((6 + totalH) % 24);
     document.getElementById('wh-day').textContent = `Day ${G.watch.day} — ${timeStr(hour)}`;
-  }, 1000);
+  }, 500);
 }
 
 function stopLiveClock() {
   if (_clockTicker) { clearInterval(_clockTicker); _clockTicker = null; }
 }
 
-// Call this when a new leg begins so the clock starts from the right base
 function resetLiveClock() {
+  // Called at start of a fresh leg — reset HWM and base
+  _clockHWM   = 0;
+  _clockBaseH = G.watch?.totalHours || 0;
   _clockLegStart = performance.now();
-  _clockLegHours = G.watch?.totalHours || 0;
+  _clockLegHours = _clockBaseH;
 }
+
+// Compat stubs — no longer needed but called from various places
+function pauseLiveClock()  {}
+function resumeLiveClock() {}
 
 // Called once per completed leg (8 hours) — rest OR push
 // Adds 8 hours; if we cross a 24-hr mark, a new day fires
@@ -3496,9 +3504,9 @@ function consumeMove() {
 function watchExpiredMidJourney() {
   if (!G.watch || G.watch._pauseShown) return;
   G.watch._pauseShown = true;
-  clearInterval(G.tvl.timer);
-  stopLiveClock(); // stop dynamic clock before ticking leg
-  if (G.tvl) { G.tvl.cur = 0; G.tvl.steps = 0; } // freeze interpolation at segment start
+  clearInterval(G.tvl.timer); G.tvl.timer = null;
+  stopLiveClock();
+  if (G.tvl) { G.tvl.cur = 0; G.tvl.steps = 0; }
   G.phase = 'map';
   tickLeg();
   stopTravelHum();
@@ -4471,6 +4479,27 @@ function initGame() {
   if(G.tvl&&G.tvl.timer) clearInterval(G.tvl.timer);
   if(G.animId) cancelAnimationFrame(G.animId);
   _stopLoop();
+
+  // ── Global travel watchdog — polls every 5s ──────────────────────────────
+  // If travel is active but G.tvl.timer is null (cleared by encounter that
+  // never resolved) AND no TS event is pending, restart the tick automatically.
+  if (!window._travelWatchdog) {
+    window._travelWatchdog = setInterval(() => {
+      if (G.phase !== 'traveling' || !G.tvl) return;
+      if (G.tvl.timer) return; // timer running fine
+      // Check if any TS event is still in flight
+      const hasActiveEvent = TS.events && TS.events.length > 0 && TS.events.some(e => !e.triggered);
+      if (hasActiveEvent) return; // event still approaching — give it time
+      // Check roam overlay is not open
+      const roamOpen = document.getElementById('ov-roam')?.style.display !== 'none';
+      if (roamOpen) return;
+      // Stuck — restart
+      addLog('⚙ Voyage resuming…', '');
+      G.tvl.timer = setInterval(travelTick, G.tvl.tickMs || 100);
+      if (TS.active && !TS.animId) TS.animId = requestAnimationFrame(tsRender);
+      resumeLiveClock();
+    }, 5000);
+  }
 
   G = {
     phase:'map',
@@ -6058,7 +6087,7 @@ function startFragSiteTravel(fs){
 }
 
 function travelTick(){
-  if(G.phase!=='traveling'){ clearInterval(G.tvl.timer); return; }
+  if(G.phase!=='traveling'){ clearInterval(G.tvl?.timer); return; }
   G.tvl.prevProg = G.tvl.prog;
   G.tvl.lastTickTime = performance.now();
   G.tvl.cur++;
@@ -6101,12 +6130,19 @@ function travelTick(){
       G.tvl[key] = true;
       const chance = (lane.rate || 0.200) * (fatigueLevel() >= 2 ? 1.3 : 1.0);
       if(Math.random() < chance){
-        clearInterval(G.tvl.timer);
+        clearInterval(G.tvl.timer); G.tvl.timer = null;
         const enemyKey = (lane.pool||['nautiloid','neogi'])[Math.floor(Math.random()*(lane.pool||['nautiloid','neogi']).length)];
         // Show enemy approaching in travel sequence before triggering combat
         if (TS.active) {
           tsQueueEnemy(enemyKey);
-          // Don't call startCombat yet — tsResolveEvent handles it when enemy reaches ship
+          pauseLiveClock(); // freeze clock during enemy approach
+          // Safety: if enemy hasn't triggered within 12s, restart travel anyway
+          setTimeout(() => {
+            if (G.phase === 'traveling' && G.tvl && !G.tvl.timer) {
+              G.tvl.timer = setInterval(travelTick, G.tvl.tickMs || 100);
+              resumeLiveClock();
+            }
+          }, 12000);
           return;
         }
         startCombat(enemyKey);
@@ -6175,15 +6211,23 @@ function travelTick(){
     const factionId = SPHERE_FACTION[G.tvl.to||''] || SPHERE_FACTION[G.tvl.from||''];
     if(factionId && FACTIONS[factionId]){
       if((G.rep[factionId]||0) <= -50){
-        clearInterval(G.tvl.timer);
+        clearInterval(G.tvl.timer); G.tvl.timer = null;
         stopLiveClock();
         addLog(`⚠ ${FACTIONS[factionId].n} forces intercept your vessel — HOSTILE!`,'dmg');
         startCombat(FACTIONS[factionId].shipKey); return;
       } else {
-        clearInterval(G.tvl.timer);
-        stopLiveClock();
+        clearInterval(G.tvl.timer); G.tvl.timer = null;
+        pauseLiveClock(); // freeze clock — don't stopLiveClock, just pause it
         if (TS.active) {
           tsQueueRoam(factionId);
+          // Safety: if roam panel never opens, resume after 15s
+          setTimeout(() => {
+            if (G.phase === 'traveling' && G.tvl && !G.tvl.timer) {
+              addLog('Vessel veered off — continuing voyage.', '');
+              G.tvl.timer = setInterval(travelTick, G.tvl.tickMs || 100);
+              resumeLiveClock();
+            }
+          }, 15000);
           return;
         }
         triggerRoamingEncounter(factionId); return;
@@ -7400,14 +7444,13 @@ function tsRender(timestamp) {
     ev.alpha = Math.min(1, ev.alpha + dt * 1.2);
 
     if (ev.type === 'enemy') {
-      // Move diagonally: sweep toward ship position
-      // vx controls horizontal direction, vy tracks vertical descent
-      const speed = TS.scrollSpeed * 1.1;
+      // Move diagonally toward ship at a steady readable speed (px/s)
+      const speed = 90; // px per second — slow enough to see clearly
       const dx = shipCX - ev.x;
       const dy = shipCY - ev.y;
       const dist = Math.max(1, Math.sqrt(dx*dx + dy*dy));
-      ev.x += (dx / dist) * speed * dt * 60;
-      ev.y += (dy / dist) * speed * dt * 60;
+      ev.x += (dx / dist) * speed * dt;
+      ev.y += (dy / dist) * speed * dt;
 
       // Trigger when close enough to ship
       if (!ev.triggered && Math.abs(ev.x - shipCX) < 55 && Math.abs(ev.y - shipCY) < 55) {
@@ -7897,17 +7940,16 @@ function tsClose() {
 
 // Queue an enemy approach event (called from travelTick intercept)
 function tsQueueEnemy(enemyKey) {
-  // Pick a random side to ambush from — left or right edge
+  const cv = document.getElementById('ts-canvas');
+  const cW = cv ? cv.width  : 400;
+  const cH = cv ? cv.height : 700;
   const fromLeft = Math.random() < 0.5;
   const ev = {
     type: 'enemy', key: enemyKey,
     label: ENM[enemyKey]?.name || 'Unknown',
-    // Start off-screen to one side, vertically near the ship
-    x:  fromLeft ? -120 : W + 120,
-    y:  H * 0.18 + Math.random() * H * 0.15, // appear in upper portion
-    vx: fromLeft ? 1 : -1, // direction of travel: +1 = rightward (left ambush), -1 = leftward
-    alpha: 0,
-    triggered: false,
+    x:  fromLeft ? -120 : cW + 120,
+    y:  cH * 0.18 + Math.random() * cH * 0.15,
+    alpha: 0, triggered: false,
     _fromLeft: fromLeft,
   };
   TS.events.push(ev);
@@ -7920,11 +7962,13 @@ function tsQueueEnemy(enemyKey) {
 function tsQueueRoam(factionId) {
   const fac = FACTIONS[factionId];
   const shipKey = fac?.shipKey || 'corsair';
+  const _cv2 = document.getElementById('ts-canvas');
+  const _cW2 = _cv2 ? _cv2.width : 400;
   TS.events.push({
     type: 'roam', key: shipKey, factionId,
     label: (fac?.n || 'Vessel') + ' HAILS',
     col: fac?.col || '#88ccff',
-    x: W / 2 + (Math.random() - 0.5) * 60,
+    x: _cW2 / 2 + (Math.random() - 0.5) * 60,
     y: -90, alpha: 0, triggered: false,
   });
   const alertEl = document.getElementById('ts-alert');
@@ -7934,10 +7978,12 @@ function tsQueueRoam(factionId) {
 
 // Queue a waypoint approach event (called from travelTick intercept)
 function tsQueueWaypoint(ws) {
+  const _cv3 = document.getElementById('ts-canvas');
+  const _cW3 = _cv3 ? _cv3.width : 400;
   TS.events.push({
     type: 'waypoint', key: ws.id,
     label: ws.n, icon: ws.ico, ws,
-    x: W / 2,
+    x: _cW3 / 2,
     y: -90, alpha: 0, triggered: false,
   });
   const alertEl = document.getElementById('ts-alert');
@@ -12236,7 +12282,7 @@ function roamContinue(){
   // Resume travel
   if(G.phase==='traveling' && G.tvl){
     G.tvl.timer = setInterval(travelTick, G.tvl.tickMs||100);
-    startLiveClock(); resetLiveClock();
+    resumeLiveClock(); // resume from where we paused — don't restart
     // Reopen travel sequence render if it was paused for the roam hail
     if (TS._pausedForRoam) {
       TS._pausedForRoam = false;
