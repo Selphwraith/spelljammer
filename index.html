@@ -9291,8 +9291,14 @@ function confirmGuardianFight(){
 function dismissGuardian(){
   document.getElementById('ov-guardian').classList.remove('on');
   _pendingGuardianSite = null;
-  /* title plays continuously */ // back to calm
+  /* title plays continuously */
   addLog('You withdraw from the site. The guardian watches as you depart.','');
+  // If we came from local space, reopen it
+  if(_lsPendingReturn) {
+    _lsPendingReturn = false;
+    _lsPendingFragment = null;
+    setTimeout(() => openLocalSpace(), 400);
+  }
 }
 
 function startCombat(key){
@@ -12488,12 +12494,12 @@ function roamAttack(){
 }
 function roamTrade(){
   const fac = FACTIONS[_roamFactionId];
-  // Build persistent session stock with purchase tracking + 3-day restock
+  // Build persistent session stock with purchase tracking + 30-day restock
   if(!G._roamStock || G._roamStock.factionId !== _roamFactionId) {
     const baseStock = ROAM_SHOP[_roamFactionId] || [];
     const lastTrade = G._roamLastTrade?.[_roamFactionId] || 0;
     const dayNow = G.watch?.day || 1;
-    const needsRestock = (dayNow - lastTrade) >= 3;
+    const needsRestock = (dayNow - lastTrade) >= 30;
     G._roamStock = {
       factionId: _roamFactionId,
       items: baseStock.map(s => ({
@@ -13212,6 +13218,13 @@ function _buildSaveEntry(slot, name) {
       ship: G.ship, spheres: G.spheres, frags: G.frags,
       clues: [...G.clues], fragsCollected: [...G.fragsCollected],
       localQuests: G.localQuests || {},
+      lsQmStock: G._lsQmStock || null,
+      lsState: (typeof LS !== 'undefined' && document.getElementById('ov-localspace')?.classList.contains('on')) ? {
+        inLocalSpace: true,
+        px: LS.px, py: LS.py, pAngle: LS.pAngle,
+        // Save minimal enemy state so world feels continuous on reload
+        enemies: (LS.enemies||[]).map(e => ({ key:e.key, x:e.x, y:e.y, angle:e.angle })),
+      } : { inLocalSpace: false },
       rep: G.rep || {}, quests: G.quests || [], completedQuests: [...(G.completedQuests||[])],
       postVictory: G.postVictory || false, breachEntered: G.breachEntered || false,
       worldBossDefeated: [...(G.worldBossDefeated||[])],
@@ -13245,10 +13258,9 @@ function _applyLoad(save) {
     ['ov-cbt-inv','ov-travel-seq','ov-wpnpicker','ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','ov-localspace','ov-faction-rep','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay'].forEach(id=>{
       const el=document.getElementById(id); if(el)el.classList.remove('on','active');
     });
-    // Reset local space engine state
+    // Reset local space engine state — position/world restored below after state is loaded
     if(typeof LS !== 'undefined') {
       if(LS.animId){ cancelAnimationFrame(LS.animId); LS.animId = null; }
-      LS._firstEntry = true;
       LS.dockOpen = false;
       LS.interactOpen = false;
       LS.keys = {};
@@ -13292,6 +13304,37 @@ function _applyLoad(save) {
     const PC = ['rgba(255,90,0,','rgba(255,40,100,','rgba(150,30,255,','rgba(30,80,255,','rgba(30,230,200,','rgba(255,190,0,'];
     for (let i = 0; i < 55; i++) G.phlo.push({ x:Math.random(),y:Math.random(),vx:(Math.random()-.5)*0.0006,vy:(Math.random()-.5)*0.0006,sz:Math.random()*90+35,col:PC[i%PC.length],a:Math.random()*0.10+0.03,da:(Math.random()-.5)*0.0008 });
     G.localQuests = state.localQuests || {};
+    G._lsQmStock  = state.lsQmStock  || null;
+    // ── Restore local space position if saved inside it ────────
+    const savedLs = state.lsState;
+    if(savedLs?.inLocalSpace) {
+      // Pre-configure LS so openLocalSpace restores position rather than spawning fresh
+      LS._firstEntry = false;  // world already initialized — keep it
+      LS.px = savedLs.px ?? (LS.W * 0.5 + 280);
+      LS.py = savedLs.py ?? (LS.H * 0.5);
+      LS.pAngle = savedLs.pAngle ?? -Math.PI * 0.75;
+      LS.pvx = 0; LS.pvy = 0;
+      LS.pTargetX = null; LS.pTargetY = null;
+      // Restore enemies if saved, otherwise let the world keep its existing enemies
+      if(savedLs.enemies?.length) {
+        LS.enemies = savedLs.enemies.map(e => ({
+          key: e.key, x: e.x, y: e.y, angle: e.angle,
+          vx:0, vy:0, speed: 60+Math.random()*40,
+          state:'wander', wanderAngle: Math.random()*Math.PI*2, wanderTimer:0,
+          visionRange:220, visionCone:Math.PI*0.45, aggroRange:140, alertTimer:0,
+          uid: Math.random().toString(36).slice(2), _blinkT: Math.random()*Math.PI*2,
+        }));
+      }
+      // Make sure stars and pois exist (in case LS was never opened before this save)
+      if(!LS.stars?.length) {
+        LS.stars = [];
+        for(let i=0;i<320;i++) LS.stars.push({x:Math.random()*LS.W,y:Math.random()*LS.H,r:Math.random()*1.4+0.3,b:Math.random(),twk:Math.random()*Math.PI*2,spd:Math.random()*0.005+0.001});
+      }
+      if(!LS.pois?.length) { LS.pois = _lsDefinePois(); _lsInitPatrolBases(); }
+    } else {
+      // Not in local space — reset so next visit starts fresh
+      if(typeof LS !== 'undefined') LS._firstEntry = true;
+    }
     // ── Migration: old saves won't have sigTier ─────────────
     if (G.ship.sigTier === undefined) {
       G.ship.sigTier = SIG_ABILITY[G.ship.type] ? 1 : null;
@@ -13302,6 +13345,10 @@ function _applyLoad(save) {
     setTimeout(() => playTitle(), 200); // ensure title playing
     hideSaveOverlay(); hideLoad(); hideMainMenu();
     addLog(`Voyage restored — ${save.shipName} at ${save.loc}. Welcome back, Captain.`, 'imp');
+    // Reopen local space if that's where the save happened
+    if(savedLs?.inLocalSpace) {
+      setTimeout(() => openLocalSpace(), 150);
+    }
   } catch(e) {
     addLog('Load failed — save data may be corrupted.', '');
   }
@@ -13572,13 +13619,13 @@ const LOCAL_QUEST_DATA = {
     qmStock: {
       flavor: 'Field-authorized IEN materiel. Realmspace station allocation.',
       items: [
-        { type:'supply', ico:'🔧', name:'Emergency Hull Patch', desc:'Restores 40 hull points', cost:55, act:'hull40' },
-        { type:'supply', ico:'💨', name:'Compressed Air Cylinder', desc:'Restores full air supply', cost:40, act:'air' },
-        { type:'supply', ico:'👥', name:'IEN Crew Transfer', desc:'Assigns 4 trained crew from station reserves', cost:60, act:'crew4' },
-        { type:'usable', ico:'🩹', name:"Alchemist's Mend", desc:'Use in combat: Restores 20 hull + 1 crew', cost:80, itemKey:'almend' },
-        { type:'upgrade', ico:'🛡', name:'Ablative Hull Plating', desc:'+50 max hull points (IEN grade)', cost:110, act:'upg', upg:'plating' },
-        { type:'upgrade', ico:'⚡', name:'Speed Engine Mk.II', desc:'+2 spelljamming speed', cost:85, act:'upg', upg:'engine' },
-        { type:'wpn', ico:'⚔', name:'Heavy Ballista Mk.II', desc:'Improved ballista — higher damage per shot (IEN issue)', cost:95, wk:'hball' },
+        { type:'supply', ico:'🔧', name:'Emergency Hull Patch', desc:'Restores 40 hull points', cost:55, act:'hull40', qty:8 },
+        { type:'supply', ico:'💨', name:'Compressed Air Cylinder', desc:'Restores full air supply', cost:40, act:'air', qty:6 },
+        { type:'supply', ico:'👥', name:'IEN Crew Transfer', desc:'Assigns 4 trained crew from station reserves', cost:60, act:'crew4', qty:5 },
+        { type:'usable', ico:'🩹', name:"Alchemist's Mend", desc:'Use in combat: Restores 20 hull + 1 crew', cost:80, itemKey:'almend', qty:4 },
+        { type:'upgrade', ico:'🛡', name:'Ablative Hull Plating', desc:'+50 max hull points (IEN grade)', cost:110, act:'upg', upg:'plating', qty:1 },
+        { type:'upgrade', ico:'⚡', name:'Speed Engine Mk.II', desc:'+2 spelljamming speed', cost:85, act:'upg', upg:'engine', qty:1 },
+        { type:'wpn', ico:'⚔', name:'Heavy Ballista Mk.II', desc:'Improved ballista — higher damage per shot (IEN issue)', cost:95, wk:'hball', qty:2 },
       ]
     }
   },
@@ -14167,59 +14214,155 @@ function _lsBuildCargoGrid() {
   });
 }
 
+function _lsGetQmStock() {
+  const stock = LOCAL_QUEST_DATA.realm?.qmStock;
+  if(!stock) return [];
+  const dayNow = G.watch?.day || 1;
+  const RESTOCK_DAYS = 30;
+
+  // Initialize or restock
+  if(!G._lsQmStock || (dayNow - (G._lsQmStock.lastRestockDay||0)) >= RESTOCK_DAYS) {
+    G._lsQmStock = {
+      lastRestockDay: dayNow,
+      remaining: {}
+    };
+    stock.items.forEach((item, i) => {
+      G._lsQmStock.remaining[i] = item.qty ?? 1;
+    });
+  }
+  return stock.items.map((item, i) => ({
+    ...item,
+    _idx: i,
+    remaining: G._lsQmStock.remaining[i] ?? (item.qty ?? 1)
+  }));
+}
+
 function _lsBuildQmShop() {
   const grid = document.getElementById('ls-dock-shop-grid');
   if(!grid) return;
   grid.innerHTML = '';
-  const stock = LOCAL_QUEST_DATA.realm?.qmStock;
-  if(!stock) return;
-  stock.items.forEach(item => {
+
+  const items = _lsGetQmStock();
+  const dayNow = G.watch?.day || 1;
+  const daysUntilRestock = 30 - ((dayNow - (G._lsQmStock?.lastRestockDay||0)) % 30);
+
+  // Restock banner
+  const banner = document.createElement('div');
+  banner.style.cssText = 'font-size:0.563em;color:#334455;font-style:italic;margin-bottom:4px;';
+  banner.textContent = `Restocks in ${daysUntilRestock} day${daysUntilRestock!==1?'s':''}`;
+  grid.appendChild(banner);
+
+  let anyVisible = false;
+
+  items.forEach(item => {
+    // Always-hide: upgrades already owned, weapons already equipped or have better
     if(item.act === 'upg' && G.ship.upgrades.includes(item.upg)) return;
     const wKey = item.wk || (item.act === 'wpn' ? item.wpnKey : null);
     if(wKey && G.ship.wpns.includes(wKey)) return;
     if(wKey && wpnHasBetter(wKey, G.ship.wpns)) return;
-    if(item.act === 'hull40' && G.ship.hull >= G.ship.maxHull) return;
-    if(item.act === 'air'    && G.ship.air  >= (G.ship.maxAir||12)) return;
-    if(item.act === 'crew4'  && G.ship.crew >= G.ship.maxCrew) return;
-    const canAfford = G.ship.gold >= item.cost;
+
+    anyVisible = true;
+    const soldOut    = item.remaining <= 0;
+    const canAfford  = G.ship.gold >= item.cost;
+    const isUpgrade  = item.act === 'upg';
+    const isWpn      = !!wKey;
+    // Max qty a player can select: capped by remaining stock
+    // Upgrades and weapons are always qty 1; supplies/usables can be multi
+    const maxSel = (isUpgrade || isWpn) ? 1 : Math.min(item.remaining, 9);
+
     const row = document.createElement('div');
-    row.className = 'ls-dock-row';
-    row.style.cssText = 'padding:4px 6px;border-radius:4px;background:rgba(10,5,30,0.6);border:1px solid #33224433;';
-    if(!canAfford) row.style.opacity = '0.45';
-    row.innerHTML = `<span style="font-size:0.625em;color:#8899bb;">${item.ico} ${item.name}</span>
-      <button class="btn" style="font-size:0.563em;padding:3px 8px;" ${!canAfford?'disabled':''}>⚜ ${item.cost}g</button>`;
-    if(canAfford) {
-      row.querySelector('button').onclick = () => {
-        if(G.ship.gold < item.cost) return;
-        if(item.wk && WPN[item.wk]) {
+    row.style.cssText = `display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:4px;
+      background:rgba(10,5,30,0.6);border:1px solid ${soldOut?'#33224422':'#33224433'};
+      opacity:${soldOut||!canAfford ? '0.45' : '1'};`;
+
+    // Item name + desc
+    const info = document.createElement('div');
+    info.style.cssText = 'flex:1;min-width:0;';
+    info.innerHTML = `<div style="font-size:0.625em;color:${soldOut?'#554455':'#8899bb'};">${item.ico} ${item.name}${soldOut?' <span style="color:#553344;font-size:0.85em;">[SOLD OUT]</span>':''}</div>
+      <div style="font-size:0.5em;color:#445566;margin-top:1px;">${item.desc}</div>`;
+    row.appendChild(info);
+
+    // Stock badge
+    if(!soldOut) {
+      const stk = document.createElement('span');
+      stk.style.cssText = 'font-size:0.5em;color:#334455;white-space:nowrap;flex-shrink:0;';
+      stk.textContent = `[${item.remaining}]`;
+      row.appendChild(stk);
+    }
+
+    // Qty selector (only for multi-qty non-upgrade non-weapon items)
+    let qtyEl = null;
+    if(!soldOut && maxSel > 1) {
+      qtyEl = document.createElement('select');
+      qtyEl.style.cssText = 'font-size:0.563em;background:#080018;color:#ffcc66;border:1px solid #553322;border-radius:2px;padding:1px 2px;width:32px;flex-shrink:0;';
+      for(let q=1; q<=maxSel; q++) {
+        const opt = document.createElement('option');
+        opt.value = q; opt.textContent = q;
+        qtyEl.appendChild(opt);
+      }
+      row.appendChild(qtyEl);
+    }
+
+    // Price + buy button
+    const buyBtn = document.createElement('button');
+    buyBtn.className = 'btn';
+    buyBtn.style.cssText = 'font-size:0.563em;padding:3px 8px;flex-shrink:0;white-space:nowrap;';
+    buyBtn.textContent = `⚜ ${item.cost}g`;
+    buyBtn.disabled = soldOut || !canAfford;
+    if(!soldOut && canAfford) {
+      buyBtn.onclick = () => {
+        const qty = qtyEl ? (parseInt(qtyEl.value)||1) : 1;
+        const totalCost = item.cost * qty;
+        if(G.ship.gold < totalCost) return;
+
+        // Weapons go through slot picker
+        if(wKey && WPN[wKey]) {
           wpnPickerOpen({...item, act:'wpn'}, 'ls');
+          // Deduct stock after picker resolves — handled in wpnPickerConfirm
+          LS._pendingWpnStockIdx = item._idx;
           return;
         }
-        G.ship.gold -= item.cost;
+
+        G.ship.gold -= totalCost;
+        // Update persistent stock
+        G._lsQmStock.remaining[item._idx] = Math.max(0, (G._lsQmStock.remaining[item._idx]||0) - qty);
+
         let msg = '';
-        if(item.act==='hull40')   { G.ship.hull=Math.min(G.ship.maxHull,G.ship.hull+40); msg='Hull patched (+40).'; snd('repair_hull',0.7); }
-        else if(item.act==='air') { G.ship.air=G.ship.maxAir||12; msg='Air restored.'; }
-        else if(item.act==='crew4'){G.ship.crew=Math.min(G.ship.maxCrew,G.ship.crew+4); msg='+4 crew.'; }
-        else if(item.act==='upg') {
-          if(!G.ship.upgrades.includes(item.upg)){
-            G.ship.upgrades.push(item.upg);
-            if(item.upg==='plating'){G.ship.maxHull+=50;G.ship.hull+=50;}
-            if(item.upg==='engine'){G.ship.speed+=2;}
-            if(item.upg==='quarters'){G.ship.maxCrew+=8;G.ship.crew=G.ship.maxCrew;}
-            if(item.upg==='recycler'){G.ship.maxAir=(G.ship.maxAir||12)*2;G.ship.air=G.ship.maxAir;}
-            msg=item.name+' installed!'; snd('ship_upgrade',0.85);
+        for(let q=0; q<qty; q++) {
+          if(item.act==='hull40')    { G.ship.hull=Math.min(G.ship.maxHull,G.ship.hull+40); msg=`Hull patched (+${40*qty}).`; if(q===0)snd('repair_hull',0.7); }
+          else if(item.act==='air')  { G.ship.air=G.ship.maxAir||12; msg='Air restored.'; break; }
+          else if(item.act==='crew4'){ G.ship.crew=Math.min(G.ship.maxCrew,G.ship.crew+(4*qty)); msg=`+${4*qty} crew.`; break; }
+          else if(item.act==='upg')  {
+            if(!G.ship.upgrades.includes(item.upg)){
+              G.ship.upgrades.push(item.upg);
+              if(item.upg==='plating'){G.ship.maxHull+=50;G.ship.hull+=50;}
+              if(item.upg==='engine'){G.ship.speed+=2;}
+              if(item.upg==='quarters'){G.ship.maxCrew+=8;G.ship.crew=G.ship.maxCrew;}
+              if(item.upg==='recycler'){G.ship.maxAir=(G.ship.maxAir||12)*2;G.ship.air=G.ship.maxAir;}
+              msg=item.name+' installed!'; snd('ship_upgrade',0.85);
+            }
+            break;
+          } else if(item.itemKey) {
+            const itData=ITEMS[item.itemKey]||LQ_SPECIAL_ITEMS[item.itemKey];
+            if(itData){G.ship.inv.push({...itData,uid:uid()});}
+            msg=`${qty > 1 ? qty+'× ' : ''}${item.name} added to hold.`;
           }
-        } else if(item.itemKey) {
-          const itData = ITEMS[item.itemKey]||LQ_SPECIAL_ITEMS[item.itemKey];
-          if(itData){G.ship.inv.push({...itData,uid:uid()});msg=item.name+' added to hold.';}
         }
         snd('purchase',0.7);
         addLog('QM: '+msg,'gd');
         updateUI(); _lsRefreshDock();
       };
     }
+    row.appendChild(buyBtn);
     grid.appendChild(row);
   });
+
+  if(!anyVisible) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'font-size:0.625em;color:#443355;font-style:italic;text-align:center;padding:6px 0;';
+    empty.textContent = 'Nothing available — check back after restock.';
+    grid.appendChild(empty);
+  }
 }
 
 // ── HUD / LOG ──────────────────────────────────────────────────────────────
@@ -14541,27 +14684,45 @@ function _lsShowInteract(poi) {
     }
 
   } else if(poi.type === 'fragment') {
-    const fs = G.fragSites?.find(f=>f.sphere==='realm')||null;
-    if(fs && !fs.found) {
+    const fs = FRAGMENT_SITES.find(f=>f.sphere==='realm') || null;
+    const alreadyCollected = fs && G.fragsCollected && G.fragsCollected.has(fs.id);
+
+    if(!fs) {
       document.getElementById('ls-interact-prompt').textContent =
-        "A fragment of the Astral Chart pulses faintly — power signatures detected. This is what you came for.";
-      const collectBtn = document.createElement('button');
-      collectBtn.className='btn'; collectBtn.style.color='#ffdd44';
-      collectBtn.textContent='🔮 Investigate';
-      collectBtn.onclick = () => {
-        // Trigger the guardian fight then fragment pickup
+        "Fragment site — no data found in the Astral Chart records.";
+
+    } else if(alreadyCollected) {
+      document.getElementById('ls-interact-prompt').textContent =
+        "Fragment already recovered. The site is silent — the energy signature is gone.";
+
+    } else {
+      const guardian = FRAG_GUARDIANS[fs.guardianKey];
+      document.getElementById('ls-interact-prompt').textContent =
+        `The Flotsam Field crackles with hostile energy. A guardian vessel — ${guardian?.name || 'unknown'} — blocks access to the Fragment.`;
+      const fightBtn = document.createElement('button');
+      fightBtn.className='btn'; fightBtn.style.color='#ffdd44';
+      fightBtn.textContent='⚔ Engage Guardian';
+      fightBtn.onclick = () => {
         panel.classList.remove('on');
-        _lsLog('⚔ Fragment Guardian detected!','danger');
-        setTimeout(()=>{
+        _lsLog('⚔ Fragment Guardian closing in!','danger');
+        setTimeout(() => {
+          // Hide LS overlay, run the proper guardian confirm dialog
           document.getElementById('ov-localspace').classList.remove('on');
-          G.phase='map'; _lsPendingReturn=true; _lsPendingFragment=fs;
-          startCombat(fs.guardianKey||'fg_realm');
+          if(LS.animId){ cancelAnimationFrame(LS.animId); LS.animId=null; }
+          _lsPendingReturn = true;
+          _lsPendingFragment = fs;
+          // Use the existing guardian confirm overlay (shows ship art + lore)
+          G.phase = 'map';
+          showGuardianConfirm(fs);
         }, 600);
       };
-      btns.appendChild(collectBtn);
-    } else {
-      document.getElementById('ls-interact-prompt').textContent =
-        fs?.found ? "Fragment recovered — the Astral Chart slot is empty." : "Fragment site — no data.";
+      btns.appendChild(fightBtn);
+
+      const retreatBtn = document.createElement('button');
+      retreatBtn.className='btn'; retreatBtn.style.cssText='color:#886655;border-color:#44221133;';
+      retreatBtn.textContent='← Retreat';
+      retreatBtn.onclick = () => { panel.classList.remove('on'); LS.interactOpen=false; LS.nearPoi=null; };
+      btns.appendChild(retreatBtn);
     }
 
   } else if(poi.type === 'hazard_zone') {
@@ -14768,7 +14929,7 @@ function _lsRender(cx, W, H, dt) {
     // NPC POIs — draw as a ship using npc_ship PNG (unique per NPC via slow rotation)
     if(p.type==='npc') {
       // Slowly drift-rotate so each NPC faces a slightly different direction
-      const npcAngle = (p.patrolAngle || 0) + Math.PI * 0.5;
+      const npcAngle = (p.patrolAngle || 0);
       cx.save(); cx.translate(p.x, p.y); cx.rotate(npcAngle);
       cx.shadowColor=p.col; cx.shadowBlur=10;
       drawShipImg('npc_ship', cx, 0, 0, 28, 18, false, () => {
@@ -14849,7 +15010,7 @@ function _lsRender(cx, W, H, dt) {
     }
 
     // Ship body — use actual PNG, fall back to procedural silhouette
-    cx.save(); cx.translate(e.x,e.y); cx.rotate(e.angle+Math.PI/2);
+    cx.save(); cx.translate(e.x,e.y); cx.rotate(e.angle);
     cx.globalAlpha=blinkAlpha;
     cx.shadowColor=isChasing?'#ff4422':ec; cx.shadowBlur=isChasing?16:8;
     const _lsEw=32, _lsEh=20;
@@ -14879,21 +15040,23 @@ function _lsRender(cx, W, H, dt) {
   cx.globalAlpha=1;
 
   // ── Player ship ──
-  cx.save(); cx.translate(LS.px, LS.py); cx.rotate(LS.pAngle + Math.PI/2);
+  // PNGs are drawn nose-right. pAngle is the movement direction in standard coords.
+  // So rotate by pAngle directly — no offset needed.
+  cx.save(); cx.translate(LS.px, LS.py); cx.rotate(LS.pAngle);
   cx.shadowColor='#88aaff'; cx.shadowBlur=18;
   const [_lsPw, _lsPh] = shipSz(G.ship.type, 36, 22);
   drawShipImg(G.ship.type, cx, 0, 0, _lsPw, _lsPh, false, () => {
-    // Procedural fallback — matches the ship class shape
+    // Procedural fallbacks — all drawn nose-right (pointing +X)
     cx.fillStyle='#aaccff';
     if(G.ship.type==='pinnace'){
-      cx.beginPath(); cx.moveTo(0,-14); cx.lineTo(-6,9); cx.lineTo(0,4); cx.lineTo(6,9); cx.closePath(); cx.fill();
+      cx.beginPath(); cx.moveTo(14,0); cx.lineTo(-9,-6); cx.lineTo(-4,0); cx.lineTo(-9,6); cx.closePath(); cx.fill();
     } else if(G.ship.type==='squid'){
-      cx.beginPath(); cx.moveTo(0,-17); cx.lineTo(-9,10); cx.lineTo(-3,5); cx.lineTo(0,12); cx.lineTo(3,5); cx.lineTo(9,10); cx.closePath(); cx.fill();
+      cx.beginPath(); cx.moveTo(17,0); cx.lineTo(-10,-9); cx.lineTo(-5,-3); cx.lineTo(-12,0); cx.lineTo(-5,3); cx.lineTo(-10,9); cx.closePath(); cx.fill();
       cx.strokeStyle='#ccddff44'; cx.lineWidth=1; cx.stroke();
     } else if(G.ship.type==='hammer'){
-      cx.fillRect(-14,-4,28,8); cx.beginPath(); cx.moveTo(0,-18); cx.lineTo(-5,0); cx.lineTo(5,0); cx.closePath(); cx.fill();
+      cx.fillRect(-4,-14,8,28); cx.beginPath(); cx.moveTo(18,0); cx.lineTo(0,-5); cx.lineTo(0,5); cx.closePath(); cx.fill();
     } else {
-      cx.beginPath(); cx.moveTo(0,-20); cx.lineTo(-12,12); cx.lineTo(-5,7); cx.lineTo(0,14); cx.lineTo(5,7); cx.lineTo(12,12); cx.closePath(); cx.fill();
+      cx.beginPath(); cx.moveTo(20,0); cx.lineTo(-12,-12); cx.lineTo(-7,-5); cx.lineTo(-14,0); cx.lineTo(-7,5); cx.lineTo(-12,12); cx.closePath(); cx.fill();
       cx.strokeStyle='#ccddff44'; cx.lineWidth=1; cx.stroke();
     }
   });
@@ -14927,31 +15090,31 @@ function _lsEnemyColor(key) {
 }
 
 function _lsDrawShipSilhouette(ctx, key) {
-  // Simple silhouette shapes per enemy type — top-down, nose up
+  // All shapes drawn nose-right (+X direction) to match PNG orientation
   if(key==='neogi') {
     ctx.beginPath();
-    ctx.moveTo(0,-12); ctx.lineTo(-9,5); ctx.lineTo(-4,2); ctx.lineTo(0,8);
-    ctx.lineTo(4,2); ctx.lineTo(9,5); ctx.closePath(); ctx.fill();
+    ctx.moveTo(12,0); ctx.lineTo(-5,-9); ctx.lineTo(-2,-4); ctx.lineTo(-8,0);
+    ctx.lineTo(-2,4); ctx.lineTo(-5,9); ctx.closePath(); ctx.fill();
     // Spider legs
     ctx.strokeStyle=ctx.fillStyle; ctx.lineWidth=1;
     for(let i=-1;i<=1;i+=2){
-      ctx.beginPath(); ctx.moveTo(i*4,0); ctx.lineTo(i*14,-4); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(i*5,4); ctx.lineTo(i*14,4);  ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0,i*4); ctx.lineTo(-4,i*14); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(4,i*5); ctx.lineTo(4,i*14); ctx.stroke();
     }
   } else if(key==='nautiloid') {
     ctx.beginPath();
-    ctx.ellipse(0,0,6,13,0,0,Math.PI*2); ctx.fill();
+    ctx.ellipse(0,0,13,6,0,0,Math.PI*2); ctx.fill();
     ctx.beginPath();
-    ctx.moveTo(-10,3); ctx.quadraticCurveTo(0,-8,10,3);
-    ctx.quadraticCurveTo(0,12,-10,3); ctx.fill();
+    ctx.moveTo(3,-10); ctx.quadraticCurveTo(-8,0,3,10);
+    ctx.quadraticCurveTo(12,0,3,-10); ctx.fill();
   } else if(key==='blackfleet') {
     ctx.beginPath();
-    ctx.moveTo(0,-14); ctx.lineTo(-10,8); ctx.lineTo(-4,4); ctx.lineTo(0,10);
-    ctx.lineTo(4,4); ctx.lineTo(10,8); ctx.closePath(); ctx.fill();
+    ctx.moveTo(14,0); ctx.lineTo(-8,-10); ctx.lineTo(-4,-4); ctx.lineTo(-10,0);
+    ctx.lineTo(-4,4); ctx.lineTo(-8,10); ctx.closePath(); ctx.fill();
   } else {
-    // Generic ship silhouette
+    // Generic nose-right silhouette
     ctx.beginPath();
-    ctx.moveTo(0,-11); ctx.lineTo(-6,7); ctx.lineTo(0,3); ctx.lineTo(6,7);
+    ctx.moveTo(11,0); ctx.lineTo(-7,-6); ctx.lineTo(-3,0); ctx.lineTo(-7,6);
     ctx.closePath(); ctx.fill();
   }
 }
@@ -15084,17 +15247,10 @@ function _lsCheckReturnAfterCombat() {
     _lsPendingReturn = false;
     // Track kill for local quest
     if(G.cbt?.enemy?._key) lqTrackKill(G.cbt.enemy._key);
-    // Check fragment pending
-    if(_lsPendingFragment) {
-      const fs = _lsPendingFragment; _lsPendingFragment = null;
-      setTimeout(() => {
-        if(!fs.found) {
-          arriveAtFragSite(fs);
-        }
-        setTimeout(() => openLocalSpace(), 800);
-      }, 400);
-      return;
-    }
+    // Fragment fight: G._pendingFragSite was set by startFragmentFight and the
+    // fragment award/message is handled by the existing win condition code.
+    // _lsPendingFragment just signals we came from LS — clear it and reopen.
+    _lsPendingFragment = null;
     setTimeout(() => openLocalSpace(), 600);
   }
 }
