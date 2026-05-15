@@ -6074,13 +6074,23 @@ function travelTick(){
   G.tvl.prog = Math.min(G.tvl.prog, segEnd);
   document.getElementById('tvlf').style.width = G.tvl.prog + '%';
 
-  // ── Crystal sphere approach — queue at 75% progress toward destination ───
-  // Sphere wall grows for 18 real seconds regardless of how many watches remain.
-  // Only fires for sphere destinations (G.tvl.to set), not waypoints or frag sites.
-  if (TS.active && !G.tvl._sphereQueued && G.tvl.to && G.tvl.prog >= 75) {
+  // ── Crystal sphere approach — only queue on the FINAL watch leg ──────────
+  // _watchesLeft === 0 means this is the last leg before arrival.
+  // We trigger at 60% through that final leg's segment.
+  const _onFinalWatch = (G.tvl._watchesLeft || 0) === 0;
+  if (!G.tvl._sphereQueued && G.tvl.to && _onFinalWatch && G.tvl.prog >= 60) {
     G.tvl._sphereQueued = true;
     const destName = G.spheres?.find(s => s.id === G.tvl.to)?.n || G.tvl.to;
-    tsQueueSphere(destName);
+    addLog(`✦ ${destName} — crystal sphere wall ahead. Approach imminent.`, 'imp');
+    // Calculate how many real-time seconds remain from this point to arrival.
+    // Remaining progress = (segEnd - prog). Each step = tickMs ms.
+    // stepsRemaining ≈ (remaining%) / (watchPct / steps) = remaining * steps / watchPct
+    const segEnd       = G.tvl._progEnd || 100;
+    const remaining    = Math.max(segEnd - G.tvl.prog, 5);
+    const watchPct     = G.tvl._watchPct || 100;
+    const stepsLeft    = Math.round((remaining / watchPct) * (G.tvl.steps || 40));
+    const secsLeft     = Math.max(4, (stepsLeft * (G.tvl.tickMs || 150)) / 1000);
+    tsQueueSphere(destName, secsLeft);
   }
   const lane = G.tvl.lane || getLane(G.tvl.from, G.tvl.to);
   const e1 = segStart + (segEnd - segStart) * 0.38;
@@ -7823,8 +7833,15 @@ function tsOpen(lane) {
   TS.skipBlocked = false;
   TS._spawnTimer = 0.3;
   TS._lastTs   = 0;
-  _CS.active = false; // reset sphere approach on new travel segment
-  stopSphereAudio();
+  // Reset sphere state on fresh journey (prog near start), but NOT on mid-journey
+  // resumes (roamContinue, watch transitions) so approach animations survive pauses.
+  const _isResume = G.tvl?.prog > 5 && _CS.active;
+  if (!_isResume) {
+    _CS.active = false;
+    _CS.t      = 0;
+    _CS.alpha  = 0;
+    stopSphereAudio();
+  }
 
   tsPreloadImgs();
 
@@ -7846,6 +7863,11 @@ function tsClose() {
   TS.active = false;
   if (TS.animId) { cancelAnimationFrame(TS.animId); TS.animId = null; }
   TS._lastTs = 0;
+  // Kill any active sphere approach
+  _CS.active = false;
+  _CS.t = 0;
+  _CS.alpha = 0;
+  stopSphereAudio();
   const ov = document.getElementById('ov-travel-seq');
   ov.classList.remove('on');
   document.getElementById('ts-speed-btn').classList.remove('fast');
@@ -8091,12 +8113,13 @@ const _CS = {
   _worlds:  [],      // faint world silhouettes
 };
 
-function tsQueueSphere(name) {
+function tsQueueSphere(name, durationSecs) {
   _CS.active   = true;
   _CS.name     = name;
   _CS.t        = 0;
   _CS.alpha    = 0;
-  _CS.duration = 18; // 18 real seconds of approach
+  // Use provided duration (matched to remaining travel time), minimum 4s, max 60s
+  _CS.duration = Math.min(60, Math.max(4, durationSecs || 8));
 
   // Seed the interior uniquely per sphere name
   const seed = name.split('').reduce((a,c) => a + c.charCodeAt(0), 42);
@@ -8133,387 +8156,262 @@ function tsQueueSphere(name) {
     cloud: rng(seed+i*71) > 0.3,  // cloud bands
   }));
 
-  addLog(`✦ ${name} — crystal sphere wall ahead. Approach imminent.`, 'imp');
   startSphereAudio();
 }
 
 function tsRenderSphere(ctx, W, H, dt) {
   if (!_CS.active) return;
+  if (!TS.active) return; // travel sequence overlay must be open to draw
 
-  _CS.t   += dt;
-  _CS.alpha = Math.min(1, _CS.t / 2);
-  if (_CS.t >= _CS.duration + 2) { _CS.active = false; stopSphereAudio(); return; }
+  _CS.t += dt;
+  // Cap eased at 1 — sphere holds at full size until travel ends (tsClose resets _CS.active)
   updateSphereAudioVolume();
 
   const p     = Math.min(1, _CS.t / _CS.duration);
-  const eased = Math.pow(p, 0.55); // accelerates as you approach
+  const eased = p; // pure linear — constant speed, no acceleration
+  const t     = _CS.t;
 
-  const a  = _CS.alpha;
-  const t  = _CS.t;
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // GEOMETRY: The sphere is so vast only the curved BOTTOM EDGE is visible.
-  // Think of it as a gigantic bowl seen from below — the rim sweeps left/right
-  // across the upper portion of your screen.
-  //
-  // We compute the SCREEN Y of the wall's lowest point (dead centre top-ish),
-  // then draw everything above that as "interior" and the arc itself as the wall.
-  // ─────────────────────────────────────────────────────────────────────────
-
-  // Wall Y: starts above screen, ends right at the ship's bow tip.
-  // Ship is at H*0.55, bow tip (nose up, rotated -90°) is at shipY - sw*0.5.
-  // We compute a target wallY that lands exactly on that tip at eased=1.
-  // sw comes from shipSz(type, 100, 60) — biggest ship (manow) = 250px wide → tip at H*0.55-125.
-  // We use a generous target so any ship class grazes the wall.
+  // ── GEOMETRY ───────────────────────────────────────────────────────────────
   const _csShipType = G.ship?.type || 'pinnace';
   const [_csSW] = shipSz(_csShipType, 100, 60);
-  const bowTipY  = H * 0.55 - _csSW * 0.52; // bow tip in screen px
-  // wallY at eased=1 should equal bowTipY. At eased=0 it starts just above screen.
-  const wallY = H * (-0.05) + eased * (bowTipY + H * 0.05);
+  // bowTipY: where the ship's nose is in screen pixels
+  const bowTipY = H * 0.55 - _csSW * 0.52;
+  // At eased=1 push wall slightly PAST bowTipY so ship actually touches it
+  const wallTarget = bowTipY + H * 0.04;
+  const wallMidY = -H * 0.20 + eased * (wallTarget + H * 0.20);
 
-  // Curve: bows upward at edges as sphere curves away
-  const curveDepth = H * (0.02 + eased * 0.22);
+  // Don't draw until the wall centre is on screen — but keep ticking time
+  if (wallMidY < 0) return;
 
-  // Interior region height
-  const interiorH = H * (0.08 + eased * 0.90);
+  // Fade in over 2s from first appearance
+  _CS.alpha = Math.min(1, (_CS.alpha || 0) + dt / 2);
+  const a = _CS.alpha;
 
-  // ── STEP 1: Draw interior (above the wall arc) ─────────────────────────
-  // Build a clip path that is exactly the interior region:
-  // bottom edge = the wall curve, top = off-screen
+  // Curvature: tiny fixed bow — the sphere is so vast it looks nearly flat.
+  // Kept small so edges never go above-screen and create a U-shape.
+  const curveAmt = H * 0.025;
+
+  // wallY(sx) — edges bow slightly upward (smaller Y = higher on screen)
+  const wallY = (sx) => {
+    const normX = (sx / W - 0.5) * 2;
+    return wallMidY - curveAmt * normX * normX;
+  };
+
+  const interiorH = Math.max(0, wallMidY);
+
+  // ── INTERIOR CLIP ─────────────────────────────────────────────────────────
   ctx.save();
   ctx.beginPath();
-  // Wall curve: a gentle quadratic arc across the screen
-  // Left edge: (0, wallY - curveDepth)
-  // Centre:    (W/2, wallY)
-  // Right edge:(W, wallY - curveDepth)
   ctx.moveTo(0, 0);
   ctx.lineTo(W, 0);
-  ctx.lineTo(W, wallY - curveDepth);
-  ctx.quadraticCurveTo(W / 2, wallY + curveDepth * 0.3, 0, wallY - curveDepth);
+  ctx.lineTo(W, wallY(W));
+  for (let s = 40; s >= 0; s--) {
+    const sx = (s / 40) * W;
+    ctx.lineTo(sx, wallY(sx));
+  }
   ctx.closePath();
   ctx.clip();
 
-  // Deep space background — only inside the clip
-  ctx.fillStyle = '#00000c';
+  // Deep space void
+  ctx.fillStyle = '#00000a';
   ctx.fillRect(0, 0, W, H);
 
-  // Interior gradient — brighter near the wall, darker deep inside
-  const iGrad = ctx.createLinearGradient(0, wallY, 0, wallY - interiorH);
-  iGrad.addColorStop(0,   'rgba(30,8,80,0.95)');
-  iGrad.addColorStop(0.3, 'rgba(12,3,45,0.90)');
-  iGrad.addColorStop(0.7, 'rgba(4,0,20,0.85)');
-  iGrad.addColorStop(1,   'rgba(0,0,8,0.80)');
-  ctx.fillStyle = iGrad;
-  ctx.fillRect(0, 0, W, H);
-
-  // ── CRYSTAL SHELL HEXAGONAL PLATES ───────────────────────────────────────
-  // The sphere is a vast crystal structure — we're zooming into its surface.
-  // The hex grid is FIXED to the sphere: its origin is locked to the sphere's
-  // centre (screen centre, far above), and we zoom in as eased increases.
-  // This means the grid grows and the same plates stay in the same place —
-  // anchored to the sphere, not scrolling with the ship.
-  {
-    // Sphere centre in screen space — always at horizontal centre, well above screen top.
-    // As eased→1 we're very close, so the centre appears far off the top of screen.
-    const sphereCX = W * 0.5;
-    const sphereCY = wallY - H * (1.5 + eased * 4.0); // recedes upward as we close in
-
-    // Sphere radius in screen space — grows as we approach
-    // When eased=0: sphere looks tiny/far. When eased=1: sphere is enormous.
-    const sphereScreenR = H * (0.3 + eased * 5.5);
-
-    // Hex plate size in sphere surface units (0..1 of sphere radius)
-    // Large plates — about 1/6 of the sphere radius each
-    const hexSurfaceR = 0.165;
-
-    // Convert surface fraction to screen pixels
-    const hexR = sphereScreenR * hexSurfaceR;
-    const hexW = hexR * 2;
-    const hexH = Math.sqrt(3) * hexR;
-
-    // Grid origin — the hex grid tiles the sphere surface starting from sphere centre.
-    // We offset by sphere centre so the grid is anchored there.
-    const gridOriginX = sphereCX;
-    const gridOriginY = sphereCY;
-
-    const cols = Math.ceil(W  / (hexW * 0.75)) + 4;
-    const rows = Math.ceil((H + Math.abs(gridOriginY)) / hexH) + 4;
-
-    // Start indices so grid covers the screen, always centred on sphere
-    const startCI = Math.floor((-gridOriginX - hexW) / (hexW * 0.75)) - 1;
-    const startRI = Math.floor((-gridOriginY - hexH) / hexH) - 1;
-
-    // Visibility — much more opaque now so you can actually see the crystal
-    const shellAlpha = a * (0.10 + eased * 0.28); // plate fill
-    const edgeAlpha  = a * (0.28 + eased * 0.52); // edge lines — always clearly visible
-
-    const hexSeed = (ci, ri) => ((ci * 7919 + ri * 6271) * 2654435761) >>> 0;
-
-    ctx.save();
-    for (let ri = startRI; ri < startRI + rows; ri++) {
-      for (let ci = startCI; ci < startCI + cols; ci++) {
-        // Screen position of this hex centre, anchored to sphere centre
-        const cx2 = gridOriginX + ci * hexW * 0.75;
-        const cy2 = gridOriginY + ri * hexH + (ci % 2 === 0 ? 0 : hexH * 0.5);
-
-        // Cull: only draw hexes near the visible interior region
-        if (cx2 + hexR < -hexR || cx2 - hexR > W + hexR) continue;
-        if (cy2 + hexR < -hexR || cy2 - hexR > wallY + hexR) continue;
-
-        // Per-plate variation seeded by grid index — stable, doesn't flicker
-        const seed  = hexSeed(ci, ri);
-        const tint  = ((seed % 60) - 30);
-        const opVar = ((seed >> 8) % 100) / 100;
-        const thick = 1.2 + opVar * 1.4; // thicker lines so they read on mobile
-
-        // Distance from sphere centre — plates nearer the edge of the visible
-        // sphere get slightly more opaque (thicker crystal near the rim)
-        const distFrac = Math.min(1, Math.hypot(cx2 - sphereCX, cy2 - sphereCY) / sphereScreenR);
-        const rimBoost = 0.5 + distFrac * 0.8;
-
-        // Hex path
-        ctx.beginPath();
-        for (let v = 0; v < 6; v++) {
-          const ang = (Math.PI / 3) * v - Math.PI / 6;
-          const vx  = cx2 + hexR * Math.cos(ang);
-          const vy  = cy2 + hexR * Math.sin(ang);
-          if (v === 0) ctx.moveTo(vx, vy); else ctx.lineTo(vx, vy);
-        }
-        ctx.closePath();
-
-        // Plate fill — glassy tinted crystal, variation per plate
-        const plateA = shellAlpha * (0.5 + opVar * 0.5) * rimBoost;
-        ctx.fillStyle = `hsla(${195 + tint},75%,82%,${Math.min(0.55, plateA).toFixed(3)})`;
-        ctx.fill();
-
-        // Edge — bright, clearly visible crystal facet lines
-        const edgeA = Math.min(0.85, edgeAlpha * (0.6 + opVar * 0.4) * rimBoost);
-        ctx.strokeStyle = `hsla(${205 + tint},85%,92%,${edgeA.toFixed(3)})`;
-        ctx.lineWidth = thick;
-        ctx.stroke();
-      }
-    }
-
-    // Refraction sweep — slow moving highlight patch across the shell surface
-    const shimAngle = t * 0.05;
-    const shimX     = sphereCX + Math.cos(shimAngle) * sphereScreenR * 0.3;
-    const shimY     = sphereCY + sphereScreenR * 0.85 + Math.sin(shimAngle * 0.7) * sphereScreenR * 0.08;
-    const shimR     = hexR * 3.5;
-    const shimG     = ctx.createRadialGradient(shimX, shimY, 0, shimX, shimY, shimR);
-    shimG.addColorStop(0,   `rgba(220,240,255,${(a * 0.22).toFixed(3)})`);
-    shimG.addColorStop(0.5, `rgba(180,220,255,${(a * 0.10).toFixed(3)})`);
-    shimG.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = shimG;
+  if (interiorH > 2) {
+    const iGrad = ctx.createLinearGradient(0, wallMidY, 0, 0);
+    iGrad.addColorStop(0,   'rgba(25,5,70,0.98)');
+    iGrad.addColorStop(0.2, 'rgba(10,2,40,0.95)');
+    iGrad.addColorStop(0.6, 'rgba(3,0,18,0.92)');
+    iGrad.addColorStop(1,   'rgba(0,0,6,0.90)');
+    ctx.fillStyle = iGrad;
     ctx.fillRect(0, 0, W, H);
-
-    ctx.restore();
   }
 
-  // ── NEBULAE ──────────────────────────────────────────────────────────────
+  // ── CRYSTALLINE HAZE — frosted glass effect near the wall ─────────────────
+  const hazeA = a * (0.10 + eased * 0.16);
+  for (let hi = 0; hi < 5; hi++) {
+    const hx  = W * (0.1 + hi * 0.2);
+    const hy  = wallY(hx) - interiorH * (0.02 + hi * 0.04);
+    const hr  = Math.min(W, interiorH + 1) * (0.25 + (hi % 3) * 0.12);
+    const hue = 195 + (hi * 17) % 40;
+    const hg  = ctx.createRadialGradient(hx, hy, 0, hx, hy, hr);
+    hg.addColorStop(0,   'hsla(' + hue + ',60%,75%,' + (hazeA * 0.9).toFixed(3) + ')');
+    hg.addColorStop(0.4, 'hsla(' + hue + ',50%,60%,' + (hazeA * 0.4).toFixed(3) + ')');
+    hg.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = hg;
+    ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Slow refraction shimmer sweeping across
+  const shimAngle = t * 0.04;
+  const shimX = W * (0.5 + Math.cos(shimAngle) * 0.3);
+  const shimY = wallY(shimX) - interiorH * 0.08;
+  const shimR = W * 0.35;
+  const shimG = ctx.createRadialGradient(shimX, shimY, 0, shimX, shimY, shimR);
+  shimG.addColorStop(0,   'rgba(210,235,255,' + (a * 0.13).toFixed(3) + ')');
+  shimG.addColorStop(0.4, 'rgba(170,215,255,' + (a * 0.05).toFixed(3) + ')');
+  shimG.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = shimG;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── NEBULAE ────────────────────────────────────────────────────────────────
   ctx.globalAlpha = a;
   _CS._nebulae.forEach((neb, i) => {
     const nx = neb.x * W;
-    const ny = (wallY - curveDepth) - neb.y * interiorH;
-    const nr = neb.r * Math.min(W, interiorH);
+    const ny = wallY(nx) - curveAmt - neb.y * interiorH;
+    const nr = neb.r * Math.min(W, interiorH + 1);
     const pulse = 1 + 0.07 * Math.sin(t * 0.4 + i * 1.3);
-
     const g1 = ctx.createRadialGradient(nx, ny, 0, nx, ny, nr * pulse);
-    g1.addColorStop(0,   `hsla(${neb.h},${neb.s}%,65%,${neb.a * 1.5})`);
-    g1.addColorStop(0.3, `hsla(${neb.h},${neb.s}%,50%,${neb.a})`);
-    g1.addColorStop(0.7, `hsla(${(neb.h+50)%360},${neb.s}%,38%,${neb.a * 0.5})`);
+    g1.addColorStop(0,   'hsla(' + neb.h + ',' + neb.s + '%,65%,' + (neb.a * 1.5) + ')');
+    g1.addColorStop(0.3, 'hsla(' + neb.h + ',' + neb.s + '%,50%,' + neb.a + ')');
+    g1.addColorStop(0.7, 'hsla(' + ((neb.h+50)%360) + ',' + neb.s + '%,38%,' + (neb.a * 0.5) + ')');
     g1.addColorStop(1,   'transparent');
-    ctx.fillStyle = g1;
-    ctx.beginPath(); ctx.arc(nx, ny, nr * pulse * 1.5, 0, Math.PI*2); ctx.fill();
-
-    // Bright core
+    ctx.fillStyle = g1; ctx.beginPath(); ctx.arc(nx, ny, nr*pulse*1.5, 0, Math.PI*2); ctx.fill();
     const g2 = ctx.createRadialGradient(nx, ny, 0, nx, ny, nr * 0.25);
-    g2.addColorStop(0, `hsla(${neb.h},100%,85%,${neb.a * 0.8})`);
+    g2.addColorStop(0, 'hsla(' + neb.h + ',100%,85%,' + (neb.a * 0.8) + ')');
     g2.addColorStop(1, 'transparent');
-    ctx.fillStyle = g2;
-    ctx.beginPath(); ctx.arc(nx, ny, nr * 0.35, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(nx, ny, nr*0.35, 0, Math.PI*2); ctx.fill();
   });
 
-  // ── STARS ─────────────────────────────────────────────────────────────────
+  // ── STARS ──────────────────────────────────────────────────────────────────
   _CS._stars.forEach(s => {
     const sx = s.x * W;
-    const sy = (wallY - curveDepth) - s.y * interiorH;
+    const sy = wallY(sx) - curveAmt - s.y * interiorH;
     const tw = 0.5 + 0.5 * Math.sin(t * s.tw + s.tp);
     const sr = s.r * (0.5 + eased * 0.5) * (0.6 + 0.4 * tw);
     const sa = s.b * tw * a;
     if (sa < 0.05) return;
     if (s.b > 0.65) {
       ctx.globalAlpha = sa * 0.4;
-      ctx.strokeStyle = s.col;
-      ctx.lineWidth = 0.6;
+      ctx.strokeStyle = s.col; ctx.lineWidth = 0.6;
       ctx.beginPath(); ctx.moveTo(sx-sr*3,sy); ctx.lineTo(sx+sr*3,sy); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(sx,sy-sr*3); ctx.lineTo(sx,sy+sr*3); ctx.stroke();
     }
     ctx.globalAlpha = sa;
     ctx.fillStyle = s.col;
-    ctx.beginPath(); ctx.arc(sx, sy, Math.max(0.5, sr), 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(sx, sy, Math.max(0.5,sr), 0, Math.PI*2); ctx.fill();
   });
   ctx.globalAlpha = a;
 
-  // ── WORLDS ────────────────────────────────────────────────────────────────
+  // ── WORLDS ─────────────────────────────────────────────────────────────────
   _CS._worlds.forEach(w => {
     const wx = w.x * W;
-    const wy = (wallY - curveDepth) - w.y * interiorH;
-    const wr = w.r * Math.min(W, interiorH) * (0.15 + eased * 0.85);
+    const wy = wallY(wx) - curveAmt - w.y * interiorH;
+    const wr = w.r * Math.min(W, interiorH + 1) * (0.15 + eased * 0.85);
     if (wr < 3) return;
-
-    // Atmosphere glow
     const atmG = ctx.createRadialGradient(wx,wy,wr*0.8,wx,wy,wr*2.8);
-    atmG.addColorStop(0,  `hsla(${w.h},${w.s}%,65%,0.18)`);
-    atmG.addColorStop(0.5,`hsla(${w.h},${w.s}%,50%,0.08)`);
+    atmG.addColorStop(0,  'hsla(' + w.h + ',' + w.s + '%,65%,0.18)');
+    atmG.addColorStop(0.5,'hsla(' + w.h + ',' + w.s + '%,50%,0.08)');
     atmG.addColorStop(1,  'transparent');
-    ctx.fillStyle=atmG; ctx.beginPath(); ctx.arc(wx,wy,wr*2.8,0,Math.PI*2); ctx.fill();
-
-    // World body
+    ctx.fillStyle = atmG; ctx.beginPath(); ctx.arc(wx,wy,wr*2.8,0,Math.PI*2); ctx.fill();
     const wG = ctx.createRadialGradient(wx-wr*0.3,wy-wr*0.25,0,wx,wy,wr);
-    wG.addColorStop(0,  `hsl(${w.h},${w.s}%,68%)`);
-    wG.addColorStop(0.5,`hsl(${w.h},${w.s}%,48%)`);
-    wG.addColorStop(1,  `hsl(${(w.h+30)%360},${w.s}%,22%)`);
-    ctx.fillStyle=wG; ctx.beginPath(); ctx.arc(wx,wy,wr,0,Math.PI*2); ctx.fill();
-
-    // Cloud bands
+    wG.addColorStop(0,  'hsl(' + w.h + ',' + w.s + '%,68%)');
+    wG.addColorStop(0.5,'hsl(' + w.h + ',' + w.s + '%,48%)');
+    wG.addColorStop(1,  'hsl(' + ((w.h+30)%360) + ',' + w.s + '%,22%)');
+    ctx.fillStyle = wG; ctx.beginPath(); ctx.arc(wx,wy,wr,0,Math.PI*2); ctx.fill();
     if (w.cloud) {
-      for (let c=0;c<3;c++) {
-        const cy2=wy-wr*0.4+c*wr*0.45;
-        ctx.strokeStyle=`rgba(255,255,255,0.12)`;
-        ctx.lineWidth=wr*0.22;
-        ctx.beginPath();
-        ctx.arc(wx,cy2,wr*1.01,Math.PI*1.1,Math.PI*1.9);
-        ctx.stroke();
+      for (let c = 0; c < 3; c++) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = wr*0.22;
+        ctx.beginPath(); ctx.arc(wx,wy-wr*0.4+c*wr*0.45,wr*1.01,Math.PI*1.1,Math.PI*1.9); ctx.stroke();
       }
     }
-
-    // Rings
     if (w.ring) {
-      ctx.save();
-      ctx.translate(wx,wy); ctx.rotate(w.ringAngle); ctx.scale(1,0.2);
-      for (let ri=0;ri<2;ri++) {
-        const rr = wr*(2.0+ri*0.5);
-        ctx.strokeStyle=`hsla(${w.ringH},65%,72%,${0.7-ri*0.25})`;
-        ctx.lineWidth=wr*0.45;
-        ctx.beginPath(); ctx.arc(0,0,rr,0,Math.PI*2); ctx.stroke();
+      ctx.save(); ctx.translate(wx,wy); ctx.rotate(w.ringAngle); ctx.scale(1,0.2);
+      for (let ri = 0; ri < 2; ri++) {
+        ctx.strokeStyle = 'hsla(' + w.ringH + ',65%,72%,' + (0.7-ri*0.25) + ')';
+        ctx.lineWidth = wr * 0.45;
+        ctx.beginPath(); ctx.arc(0,0,wr*(2+ri*0.5),0,Math.PI*2); ctx.stroke();
       }
       ctx.restore();
     }
-
-    // Night side
-    ctx.fillStyle='rgba(0,0,15,0.55)';
+    ctx.fillStyle = 'rgba(0,0,15,0.55)';
     ctx.beginPath(); ctx.arc(wx+wr*0.35,wy,wr*0.97,0,Math.PI*2); ctx.fill();
   });
 
   ctx.restore(); // end interior clip
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // STEP 2: CRYSTAL WALL — the visible curved edge of the sphere shell
-  // This is the key visual: a bright opaque band stretching across the screen
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── COVER FLOW BELOW WALL — fill with lane fog color, not black ───────────
+  // Retrieve the current lane fog color so it blends seamlessly with the lane.
+  {
+    const _tier = TS.lane?.d || 1;
+    const _col  = TS_LANE_COLS[Math.min(_tier - 1, TS_LANE_COLS.length - 1)];
+    ctx.globalAlpha = a;
+    ctx.fillStyle = _col.fog;
+    ctx.beginPath();
+    // Trace along the wall arc then close down to the screen bottom
+    for (let s = 0; s <= 50; s++) {
+      const sx = (s / 50) * W;
+      if (s === 0) ctx.moveTo(sx, wallY(sx)); else ctx.lineTo(sx, wallY(sx));
+    }
+    ctx.lineTo(W, H + 2); ctx.lineTo(0, H + 2); ctx.closePath();
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // ── WALL ARC ───────────────────────────────────────────────────────────────
   ctx.save();
   ctx.globalAlpha = a;
 
-  const wallThick = Math.max(3, H * (0.006 + eased * 0.016)); // 0.6% → 2.2% screen height (less than half of before)
+  const wallThick = Math.max(2, H * (0.004 + eased * 0.012));
 
-  // Helper: draw the wall curve as a path
-  const wallCurve = () => {
+  // Extend slightly past both edges so the line never falls short on any device
+  const drawWallArc = () => {
     ctx.beginPath();
-    ctx.moveTo(0, wallY - curveDepth);
-    ctx.quadraticCurveTo(W / 2, wallY + curveDepth * 0.3, W, wallY - curveDepth);
+    ctx.moveTo(-2, wallY(0));
+    for (let s = 0; s <= 50; s++) {
+      const sx = (s / 50) * W;
+      ctx.lineTo(sx, wallY(sx));
+    }
+    ctx.lineTo(W + 2, wallY(W));
   };
 
-  // Layer 1: single soft outer glow (was 5 passes — now 2)
-  ctx.save();
-  for (let gi = 0; gi < 2; gi++) {
-    const gy = wallY - curveDepth + wallThick * (0.5 + gi * 1.2);
-    ctx.strokeStyle = `rgba(140,210,255,${(0.12 - gi * 0.05) * a})`;
-    ctx.lineWidth = wallThick * (2.5 - gi * 0.8);
-    ctx.beginPath();
-    ctx.moveTo(0, gy);
-    ctx.quadraticCurveTo(W/2, gy + curveDepth * 0.3 + gi, W, gy);
-    ctx.stroke();
-  }
-  ctx.restore();
+  ctx.strokeStyle = 'rgba(140,210,255,' + (0.10*a).toFixed(3) + ')'; ctx.lineWidth = wallThick*3.5; drawWallArc(); ctx.stroke();
+  ctx.strokeStyle = 'rgba(180,225,255,' + (0.18*a).toFixed(3) + ')'; ctx.lineWidth = wallThick*1.8; drawWallArc(); ctx.stroke();
+  ctx.strokeStyle = 'rgba(215,240,255,' + (0.90*a).toFixed(3) + ')'; ctx.lineWidth = wallThick*1.2; drawWallArc(); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,' + (0.95*a).toFixed(3) + ')'; ctx.lineWidth = wallThick*0.4; drawWallArc(); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,' + ((0.5+0.5*Math.sin(t*2.5))*0.25*a).toFixed(3) + ')'; ctx.lineWidth = wallThick*0.7; drawWallArc(); ctx.stroke();
 
-  // Layer 2: Main wall body — crisp, icy blue-white
-  ctx.lineWidth = wallThick * 2.0;
-  ctx.strokeStyle = `rgba(215,240,255,${0.90 * a})`;
-  wallCurve(); ctx.stroke();
-
-  // Layer 3: bright top edge — pure white highlight
-  ctx.lineWidth = wallThick * 0.5;
-  ctx.strokeStyle = `rgba(255,255,255,${0.95 * a})`;
-  ctx.beginPath();
-  ctx.moveTo(0, wallY - curveDepth - wallThick * 0.5);
-  ctx.quadraticCurveTo(W/2, wallY + curveDepth*0.3 - wallThick*0.5, W, wallY - curveDepth - wallThick*0.5);
-  ctx.stroke();
-
-  // Layer 4: shimmer — single pass, no gradient (was expensive linear gradient stroke)
-  const shim = 0.5 + 0.5 * Math.sin(t * 2.5);
-  ctx.lineWidth = wallThick * 0.8;
-  ctx.strokeStyle = `rgba(255,255,255,${shim * 0.3 * a})`;
-  wallCurve(); ctx.stroke();
-
-  // ── SPHERE NAME curved along the wall ──────────────────────────────────
-  if (a > 0.15) {
-    const nameA = Math.min(1, (a - 0.15) / 0.4);
+  // ── SPHERE NAME ────────────────────────────────────────────────────────────
+  if (a > 0.3 && interiorH > 20) {
+    const nameA = Math.min(1, (a - 0.3) / 0.4);
     const name  = _CS.name.toUpperCase();
     const fSize = Math.max(13, Math.min(24, W * 0.034));
-    ctx.font      = `bold ${fSize}px 'Cinzel', serif`;
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowColor  = 'rgba(180,230,255,0.9)';
-    ctx.shadowBlur   = 14;
-
-    // Draw name centered above the wall, following the curve
-    const letterSpacing = fSize * 1.15;
-    const totalW = name.length * letterSpacing;
-    const startX = W/2 - totalW/2 + letterSpacing/2;
-
+    ctx.font = 'bold ' + fSize + 'px \'Cinzel\',serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(180,230,255,0.9)'; ctx.shadowBlur = 14;
+    const lSp  = fSize * 1.15;
+    const sx0  = W/2 - (name.length * lSp)/2 + lSp/2;
     for (let i = 0; i < name.length; i++) {
-      const lx = startX + i * letterSpacing;
-      // Curve the Y position to follow the wall arc
-      const normX = (lx / W - 0.5) * 2; // -1 to +1
-      const curveOffset = curveDepth * normX * normX; // parabolic — matches the wall curve
-      const ly = wallY - curveDepth + curveOffset - wallThick * 2.8;
-      ctx.fillStyle = `rgba(220,245,255,${nameA * 0.97})`;
-      ctx.fillText(name[i], lx, ly);
+      const lx = sx0 + i * lSp;
+      ctx.fillStyle = 'rgba(220,245,255,' + (nameA * 0.97).toFixed(3) + ')';
+      ctx.fillText(name[i], lx, wallY(lx) - wallThick * 3.5);
     }
-
-    // Subtitle: CRYSTAL SPHERE — smaller, below the name
     if (nameA > 0.5) {
-      const subA = (nameA - 0.5) * 2;
+      const sub   = '-- CRYSTAL SPHERE --';
       const sFSize = Math.max(9, Math.min(14, W * 0.018));
-      ctx.font = `${sFSize}px 'Cinzel', serif`;
-      ctx.fillStyle = `rgba(150,210,255,${subA * 0.65})`;
+      ctx.font     = sFSize + 'px \'Cinzel\',serif';
+      ctx.fillStyle = 'rgba(150,210,255,' + ((nameA-0.5)*2*0.65).toFixed(3) + ')';
       ctx.shadowBlur = 6;
-      const sub = '— CRYSTAL SPHERE —';
-      const subLetter = sFSize * 0.75;
-      const subTotalW = sub.length * subLetter;
-      const subStartX = W/2 - subTotalW/2 + subLetter/2;
-      for (let i=0; i<sub.length; i++) {
-        const lx = subStartX + i * subLetter;
-        const normX = (lx/W - 0.5)*2;
-        const co = curveDepth * normX * normX;
-        const ly = wallY - curveDepth + co - wallThick * 1.2;
-        ctx.fillText(sub[i], lx, ly);
+      const sLsp  = sFSize * 0.75;
+      const ssx0  = W/2 - (sub.length * sLsp)/2 + sLsp/2;
+      for (let i = 0; i < sub.length; i++) {
+        const lx = ssx0 + i * sLsp;
+        ctx.fillText(sub[i], lx, wallY(lx) - wallThick * 1.5);
       }
     }
     ctx.shadowBlur = 0;
   }
 
-  // ── Soft vignette at sides to frame the wall ───────────────────────────
+  // Side vignette
   ['left','right'].forEach(side => {
     const vg = ctx.createLinearGradient(side==='left'?0:W, 0, side==='left'?W*0.12:W*0.88, 0);
-    vg.addColorStop(0, `rgba(0,0,5,${0.5*a})`);
+    vg.addColorStop(0, 'rgba(0,0,5,' + (0.5*a).toFixed(3) + ')');
     vg.addColorStop(1, 'transparent');
-    ctx.fillStyle = vg;
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
   });
 
   ctx.restore();
 }
+
 function buy(item){
   if(G.ship.gold<item.cost)return;
   // Hard guard: re-check ownership before any purchase goes through
@@ -12115,10 +12013,12 @@ const ROAM_SHOP = {
 };
 
 let _roamFactionId = null;
+let _roamMissionOffered = false; // prevents re-offering missions on repeat hails
 let _roamPhase = 'choice'; // 'choice' | 'result'
 
 function triggerRoamingEncounter(factionId){
   _roamFactionId = factionId;
+  _roamMissionOffered = false;
   _roamPhase = 'choice';
   const fac = FACTIONS[factionId];
   const rep = G.rep[factionId]||0;
@@ -12132,6 +12032,9 @@ function triggerRoamingEncounter(factionId){
   document.getElementById('roam-body').textContent = `A ${fac.shipName} drops from void-shadow across your lane. Its weapons are not yet hot. Your move, Captain.`;
   document.getElementById('roam-result').style.display='none';
   document.getElementById('roam-continue-btn').style.display='none';
+  // Reset hail button — may have been disabled by a previous encounter
+  const hailBtn = document.getElementById('roam-hail-btn');
+  if (hailBtn) { hailBtn.disabled = false; hailBtn.style.opacity = '1'; hailBtn.style.cursor = 'pointer'; }
   // Show/hide trade and hail based on rep
   addLog(`📡 ${fac.n} vessel hails your comet on the approach lane.`,'');
   snd('sphere_click', 0.5);
@@ -12252,9 +12155,15 @@ function roamHail(){
   document.getElementById('roam-continue-btn').style.display='block';
   addLog(`Hailed ${fac.n} vessel. Reputation improved slightly.`,'');
   snd('port_dock', 0.5);
-  // Check for available quest — offer it directly here
-  const availQ = G.quests.find(q=>q.faction===_roamFactionId&&q.state==='inactive');
+
+  // Disable the hail button so the player can't hail again and farm missions
+  const hailBtn = document.getElementById('roam-hail-btn');
+  if (hailBtn) { hailBtn.disabled = true; hailBtn.style.opacity = '0.4'; hailBtn.style.cursor = 'default'; }
+
+  // Only offer a mission once per encounter — _roamMissionOffered guards this
+  const availQ = !_roamMissionOffered && G.quests.find(q=>q.faction===_roamFactionId&&q.state==='inactive');
   if(availQ){
+    _roamMissionOffered = true;
     const pickupSphere = G.spheres.find(s=>s.id===availQ.pickup);
     const turninSphere = G.spheres.find(s=>s.id===availQ.turnin);
     resEl.innerHTML = `<div style="margin-bottom:6px;color:#88aaff;">Diplomatic contact made. The ${fac.short} vessel stands down.</div>
@@ -12293,6 +12202,7 @@ function roamAcceptQuest(questId){
 function roamContinue(){
   document.getElementById('ov-roam').style.display='none';
   _roamFactionId = null;
+  _roamMissionOffered = false;
   // Resume travel
   if(G.phase==='traveling' && G.tvl){
     G.tvl.timer = setInterval(travelTick, G.tvl.tickMs||100);
@@ -15056,7 +14966,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <!-- ═══ ROAMING ENCOUNTER ═══ -->
 <div id="ov-roam" style="display:none;position:fixed;inset:0;z-index:6000;background:rgba(0,0,8,0.88);display:none;align-items:center;justify-content:center;">
-  <div style="background:rgba(5,0,18,0.98);border:1px solid #44118877;border-radius:8px;padding:24px 28px;max-width:460px;width:92%;box-shadow:0 0 60px #22006633;display:flex;flex-direction:column;gap:14px;">
+  <div style="background:rgba(5,0,18,0.98);border:1px solid #44118877;border-radius:8px;padding:24px 28px;max-width:460px;width:92%;box-shadow:0 0 60px #22006633;display:flex;flex-direction:column;gap:14px;position:relative;">
+    <button onclick="roamContinue()" title="Dismiss" style="position:absolute;top:10px;right:12px;background:none;border:none;color:#554466;font-size:18px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:3px;" onmouseover="this.style.color='#9977cc'" onmouseout="this.style.color='#554466'">✕</button>
     <div id="roam-faction-bar" style="display:flex;align-items:center;gap:10px;">
       <div id="roam-faction-dot" style="width:10px;height:10px;border-radius:50%;background:#4488ff;flex-shrink:0;"></div>
       <div id="roam-faction-name" style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:#8899cc;"></div>
@@ -15067,7 +14978,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
       <button onclick="roamAttack()" style="flex:1;min-width:100px;background:rgba(60,5,5,0.8);border:1px solid #aa222255;color:#ff8888;font-family:'Cinzel',serif;font-size:11px;padding:9px 12px;cursor:pointer;border-radius:4px;">⚔ Attack</button>
       <button onclick="roamTrade()" style="flex:1;min-width:100px;background:rgba(30,20,5,0.8);border:1px solid #aa882255;color:#ffcc66;font-family:'Cinzel',serif;font-size:11px;padding:9px 12px;cursor:pointer;border-radius:4px;">📦 Trade</button>
-      <button onclick="roamHail()" style="flex:1;min-width:100px;background:rgba(5,20,40,0.8);border:1px solid #2255aa55;color:#88aaff;font-family:'Cinzel',serif;font-size:11px;padding:9px 12px;cursor:pointer;border-radius:4px;">📡 Hail</button>
+      <button id="roam-hail-btn" onclick="roamHail()" style="flex:1;min-width:100px;background:rgba(5,20,40,0.8);border:1px solid #2255aa55;color:#88aaff;font-family:'Cinzel',serif;font-size:11px;padding:9px 12px;cursor:pointer;border-radius:4px;">📡 Hail</button>
     </div>
     <div id="roam-result" style="display:none;font-size:12px;color:#88cc88;padding:8px 12px;background:rgba(0,30,0,0.4);border-radius:4px;border:1px solid #22442233;"></div>
     <button id="roam-continue-btn" onclick="roamContinue()" style="display:none;background:rgba(10,5,30,0.9);border:1px solid #44228855;color:#9977cc;font-family:'Cinzel',serif;font-size:11px;padding:8px 20px;cursor:pointer;border-radius:4px;align-self:flex-end;">Continue Voyage →</button>
