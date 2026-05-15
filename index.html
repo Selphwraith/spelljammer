@@ -970,7 +970,39 @@ body {
   pointer-events:none;
 }
 
-/* ── WEAPON SLOT PICKER OVERLAY ───────────────────────────────── */
+/* ── NPC Hail dialog ── */
+#ls-npc-dialog {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  background:rgba(4,0,18,0.97); border:1px solid #4488ff44;
+  border-radius:10px; padding:18px 20px 16px;
+  display:none; flex-direction:column; gap:10px;
+  width:320px; max-width:92vw; max-height:82vh; overflow-y:auto;
+  box-shadow:0 0 50px #4488ff18; z-index:25;
+}
+#ls-npc-dialog.on { display:flex; }
+#ls-npc-dialog-header { display:flex; align-items:center; gap:12px; }
+#ls-npc-dialog-portrait {
+  width:44px; height:44px; border-radius:50%;
+  border:2px solid #44118866; display:flex; align-items:center;
+  justify-content:center; font-size:1.375em; flex-shrink:0;
+}
+#ls-npc-dialog-name { font-family:'Cinzel',serif; font-size:0.75em; color:#ccaaff; letter-spacing:1px; }
+#ls-npc-dialog-role { font-size:0.563em; color:#554477; letter-spacing:1px; margin-top:2px; }
+#ls-npc-dialog-sep { width:100%; height:1px; background:linear-gradient(90deg,transparent,#44118844,transparent); }
+#ls-npc-dialog-greet { font-size:0.688em; color:#bbaadd; line-height:1.65; font-style:italic; }
+#ls-npc-dialog-quest { display:none; flex-direction:column; gap:6px; }
+#ls-npc-dialog-quest.on { display:flex; }
+.ls-npc-qtitle { font-family:'Cinzel',serif; font-size:0.688em; color:#ffcc66; letter-spacing:1px; }
+.ls-npc-qdesc  { font-size:0.625em; color:#9988bb; line-height:1.5; }
+.ls-npc-qreward { font-size:0.625em; color:#44ffcc; }
+.ls-npc-qstatus { font-size:0.563em; letter-spacing:1px; padding:2px 8px; border-radius:2px; display:inline-block; }
+.ls-npc-qstatus.avail  { background:#0a2200; color:#66dd44; border:1px solid #33661133; }
+.ls-npc-qstatus.active { background:#1a1000; color:#ffaa33; border:1px solid #664400; }
+.ls-npc-qstatus.done   { background:#001a22; color:#33ccff; border:1px solid #004466; }
+#ls-npc-dialog-btns { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+#ls-npc-dialog-btns .btn { font-size:0.688em; padding:6px 12px; }
+
+/* ── NPC Hail dialog ── */
 #ov-wpnpicker {
   position:fixed; inset:0; z-index:300;
   display:none; align-items:center; justify-content:center;
@@ -2109,10 +2141,28 @@ body {
       <div class="ls-dock-section" style="margin-top:6px;">🛒 IEN QUARTERMASTER</div>
       <div id="ls-dock-shop-grid" style="display:flex;flex-direction:column;gap:6px;margin-top:2px;"></div>
 
+      <div class="ls-dock-section" style="margin-top:6px;">💰 SELL CARGO</div>
+      <div id="ls-dock-cargo-grid" style="display:flex;flex-direction:column;gap:5px;margin-top:2px;"></div>
+
       <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap;">
         <button class="btn" style="font-size:0.688em;" onclick="closeLsDock()">⬅ Return to Space</button>
         <button class="btn" style="font-size:0.688em;color:#ff4444;border-color:#44001133;" onclick="lsDockDepart()">⛵ Depart Realmspace</button>
       </div>
+    </div>
+
+    <!-- NPC Hail dialog — self-contained inside local space -->
+    <div id="ls-npc-dialog">
+      <div id="ls-npc-dialog-header">
+        <div id="ls-npc-dialog-portrait">🧑‍✈️</div>
+        <div>
+          <div id="ls-npc-dialog-name"></div>
+          <div id="ls-npc-dialog-role"></div>
+        </div>
+      </div>
+      <div id="ls-npc-dialog-sep"></div>
+      <div id="ls-npc-dialog-greet"></div>
+      <div id="ls-npc-dialog-quest"></div>
+      <div id="ls-npc-dialog-btns"></div>
     </div>
 
     <!-- Mobile virtual joystick -->
@@ -4338,6 +4388,7 @@ const SHIP_IMAGE_DATA = {
   'wb_admiral':   'images/ship_wb_admiral.png',
   'wb_clutch':    'images/ship_wb_clutch.png',
   'wb_murmur':    'images/ship_wb_murmur.png',
+  'npc_ship':     'images/ship_npc.png',
 };
 const _SHIP_IMG = {};
 const _SHIP_IMG_FAILED = new Set();
@@ -13190,8 +13241,23 @@ function _applyLoad(save) {
     if (G.tvl && G.tvl.timer) clearInterval(G.tvl.timer);
     if (G.animId) cancelAnimationFrame(G.animId);
     _stopLoop();
-    ['ov-cbt-inv','ov-travel-seq','ov-wpnpicker','ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','ov-faction-rep','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay'].forEach(id=>{
+    // Close all overlays including local space
+    ['ov-cbt-inv','ov-travel-seq','ov-wpnpicker','ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','ov-localspace','ov-faction-rep','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay'].forEach(id=>{
       const el=document.getElementById(id); if(el)el.classList.remove('on','active');
+    });
+    // Reset local space engine state
+    if(typeof LS !== 'undefined') {
+      if(LS.animId){ cancelAnimationFrame(LS.animId); LS.animId = null; }
+      LS._firstEntry = true;
+      LS.dockOpen = false;
+      LS.interactOpen = false;
+      LS.keys = {};
+    }
+    if(typeof _lsPendingReturn !== 'undefined') _lsPendingReturn = false;
+    if(typeof _lsPendingFragment !== 'undefined') _lsPendingFragment = null;
+    // Close LS sub-panels
+    ['ls-dock-panel','ls-npc-dialog','ls-interact-panel'].forEach(id=>{
+      const el=document.getElementById(id); if(el)el.classList.remove('on');
     });
     G = {
       phase: 'map',
@@ -13982,6 +14048,7 @@ function closeLsOverlay() {
   document.getElementById('ov-localspace').classList.remove('on');
   document.getElementById('ls-interact-panel').classList.remove('on');
   document.getElementById('ls-dock-panel').classList.remove('on');
+  document.getElementById('ls-npc-dialog')?.classList.remove('on');
   if(LS.animId) { cancelAnimationFrame(LS.animId); LS.animId = null; }
   LS.keys = {};
   // Keep LS._firstEntry = false so world persists between visits this session
@@ -14047,6 +14114,57 @@ function _lsRefreshDock() {
   if(cBtn) cBtn.disabled = G.ship.crew >= G.ship.maxCrew || G.ship.gold < 60;
   // Build QM shop grid
   _lsBuildQmShop();
+  // Build cargo sell grid
+  _lsBuildCargoGrid();
+}
+
+function _lsBuildCargoGrid() {
+  const grid = document.getElementById('ls-dock-cargo-grid');
+  if(!grid) return;
+  grid.innerHTML = '';
+
+  const sellable = G.ship.inv.filter(i =>
+    ['trade','component','artifact'].includes(i.type)
+  );
+
+  if(sellable.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'font-size:0.625em;color:#443355;font-style:italic;text-align:center;padding:6px 0;';
+    empty.textContent = 'No trade goods in hold.';
+    grid.appendChild(empty);
+    return;
+  }
+
+  // Sell All button
+  const total = sellable.reduce((a,i) => a + (i.val||0), 0);
+  const allRow = document.createElement('div');
+  allRow.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-radius:4px;background:rgba(10,30,10,0.6);border:1px solid #33664433;';
+  allRow.innerHTML = `<span style="font-size:0.625em;color:#44ee88;">💰 Sell All (${sellable.length} items)</span>
+    <button class="btn" style="font-size:0.563em;padding:3px 10px;border-color:#33664455;color:#44ee88;">⚜ ${total}g</button>`;
+  allRow.querySelector('button').onclick = () => {
+    G.ship.inv = G.ship.inv.filter(i => !['trade','component','artifact'].includes(i.type));
+    G.ship.gold += total;
+    snd('purchase', 0.7);
+    addLog(`Sold all cargo at Selûne's Tear for ${total} gold.`, 'gd');
+    updateUI(); _lsRefreshDock();
+  };
+  grid.appendChild(allRow);
+
+  // Individual items
+  sellable.forEach(item => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:4px 8px;border-radius:4px;background:rgba(8,4,20,0.5);border:1px solid #33224433;';
+    row.innerHTML = `<span style="font-size:0.625em;color:#8899bb;">${item.ico||'📦'} ${item.n}</span>
+      <button class="btn" style="font-size:0.563em;padding:3px 8px;">⚜ ${item.val||0}g</button>`;
+    row.querySelector('button').onclick = () => {
+      G.ship.gold += item.val || 0;
+      G.ship.inv = G.ship.inv.filter(i => i.uid !== item.uid);
+      snd('purchase', 0.6);
+      addLog(`Sold ${item.n} for ${item.val} gold.`, 'gd');
+      updateUI(); _lsRefreshDock();
+    };
+    grid.appendChild(row);
+  });
 }
 
 function _lsBuildQmShop() {
@@ -14459,17 +14577,104 @@ function _lsShowInteract(poi) {
   LS.interactOpen = true;
 }
 
-// ── NPC CARD (inline, reuses LQ card logic) ───────────────────────────────
+// ── NPC HAIL DIALOG — self-contained inside ov-localspace ────────────────
 function _lsOpenNpcCard(npc) {
-  // Reuse the existing LQ card overlay — it sits on top of LS
-  showLqCard(npc);
-  // Make the lq-card visible on top of LS overlay
-  document.getElementById('lq-card').style.zIndex = '70';
+  ensureLqState();
+  const dlg = document.getElementById('ls-npc-dialog');
+
+  document.getElementById('ls-npc-dialog-portrait').textContent = npc.portrait || '🧑‍✈️';
+  document.getElementById('ls-npc-dialog-portrait').style.borderColor = (npc.color||'#4488ff') + '88';
+  document.getElementById('ls-npc-dialog-name').textContent = npc.name;
+  document.getElementById('ls-npc-dialog-role').textContent = npc.role;
+  document.getElementById('ls-npc-dialog-greet').textContent = npc.greet;
+
+  // Quest block
+  const qBlock = document.getElementById('ls-npc-dialog-quest');
+  const quest = npc.quests?.find(q => (G.localQuests[q.id]||'available') !== 'rewarded');
+  if(quest) {
+    const status = G.localQuests[quest.id] || 'available';
+    const statusLabel = status==='active' ? 'IN PROGRESS' : status==='rewarded' ? 'COMPLETE' : 'AVAILABLE';
+    const statusCls   = status==='active' ? 'active' : status==='rewarded' ? 'done' : 'avail';
+    qBlock.innerHTML = `
+      <div class="ls-npc-qtitle">${quest.title}</div>
+      <div style="width:100%;height:1px;background:linear-gradient(90deg,transparent,#44118844,transparent);"></div>
+      <div class="ls-npc-qdesc">${status==='active' ? quest.task : quest.desc}</div>
+      <div class="ls-npc-qreward">Reward: ${quest.reward}</div>
+      <div><span class="ls-npc-qstatus ${statusCls}">${statusLabel}</span></div>`;
+    qBlock.classList.add('on');
+  } else {
+    qBlock.innerHTML = '';
+    qBlock.classList.remove('on');
+    // Append "all done" line to greet
+    document.getElementById('ls-npc-dialog-greet').textContent =
+      npc.greet + ' (All tasks complete — thank you, Captain.)';
+  }
+
+  // Buttons
+  const btnRow = document.getElementById('ls-npc-dialog-btns');
+  btnRow.innerHTML = '';
+
+  if(quest) {
+    const status = G.localQuests[quest.id] || 'available';
+    if(status === 'available') {
+      const acc = document.createElement('button');
+      acc.className='btn'; acc.textContent='✔ Accept Quest';
+      acc.style.cssText='border-color:#33664455;color:#44bb88;';
+      acc.onclick = () => {
+        G.localQuests[quest.id] = 'active';
+        if(quest.trigger) quest.trigger(G);
+        addLog('Quest accepted: ' + quest.title + '. ' + quest.task, 'imp');
+        _lsLog('Quest accepted: ' + quest.title, '');
+        _lsOpenNpcCard(npc); // refresh
+      };
+      btnRow.appendChild(acc);
+    } else if(status === 'active' && quest.check(G)) {
+      const turn = document.createElement('button');
+      turn.className='btn'; turn.textContent='⭐ Turn In Quest';
+      turn.style.cssText='border-color:#664400;color:#ffaa33;';
+      turn.onclick = () => {
+        G.localQuests[quest.id] = 'rewarded';
+        quest.rewardFn(G);
+        updateUI(); _lsUpdateHud();
+        _lsLog('✓ Quest complete: ' + quest.title, '');
+        _lsOpenNpcCard(npc); // refresh
+      };
+      btnRow.appendChild(turn);
+    } else if(status === 'active') {
+      const prog = document.createElement('div');
+      prog.style.cssText='font-size:0.563em;color:#665533;font-style:italic;';
+      prog.textContent = 'In progress — ' + quest.checkDesc;
+      btnRow.appendChild(prog);
+    }
+  }
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className='btn'; closeBtn.textContent='✕ Close';
+  closeBtn.style.cssText='border-color:#33224455;color:#554477;';
+  closeBtn.onclick = () => {
+    dlg.classList.remove('on');
+    LS.interactOpen = false;
+  };
+  btnRow.appendChild(closeBtn);
+
+  dlg.classList.add('on');
 }
 
 function _lsOpenQmCard(npc) {
-  showLqShop(npc);
-  document.getElementById('lq-shop').style.zIndex = '70';
+  // QM opens the dock panel directly — it's already in the station
+  // If already docked, just scroll to the QM section
+  if(document.getElementById('ls-dock-panel').classList.contains('on')) return;
+  // Otherwise open dock + scroll to shop
+  LS.dockOpen = true;
+  LS.pTargetX = null; LS.pTargetY = null;
+  document.getElementById('ls-interact-panel').classList.remove('on');
+  _lsRefreshDock();
+  document.getElementById('ls-dock-panel').classList.add('on');
+  // Scroll to QM section
+  setTimeout(() => {
+    const shopGrid = document.getElementById('ls-dock-shop-grid');
+    if(shopGrid) shopGrid.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }, 100);
 }
 
 // ── ENEMY SPAWN TICK ───────────────────────────────────────────────────────
@@ -14546,7 +14751,7 @@ function _lsRender(cx, W, H, dt) {
 
   // ── POI icons ──
   LS.pois.filter(p=>p.type!=='hazard_zone'&&p.type!=='patrol_zone').forEach(p=>{
-    // Orbit ring / glow
+    // Glow halo
     const grd = cx.createRadialGradient(p.x,p.y,0,p.x,p.y,38);
     grd.addColorStop(0,hexA(p.col,'33')); grd.addColorStop(1,'transparent');
     cx.fillStyle=grd; cx.beginPath(); cx.arc(p.x,p.y,38,0,Math.PI*2); cx.fill();
@@ -14554,22 +14759,71 @@ function _lsRender(cx, W, H, dt) {
     // Pulse ring for dock and fragment
     if(p.type==='dock'||p.type==='fragment') {
       const pulse = 0.5+0.5*Math.sin(LS.t*1.5+(p.type==='fragment'?1.2:0));
-      cx.strokeStyle=p.col+(Math.floor(55+pulse*100).toString(16).padStart(2,'0'));
+      cx.strokeStyle=hexA(p.col, Math.floor(55+pulse*100).toString(16).padStart(2,'0'));
       cx.lineWidth=1.5; cx.setLineDash([4,6]);
       cx.beginPath(); cx.arc(p.x,p.y,p.r+8+pulse*6,0,Math.PI*2); cx.stroke();
       cx.setLineDash([]);
     }
 
-    // Label
+    // NPC POIs — draw as a ship using npc_ship PNG (unique per NPC via slow rotation)
+    if(p.type==='npc') {
+      // Slowly drift-rotate so each NPC faces a slightly different direction
+      const npcAngle = (p.patrolAngle || 0) + Math.PI * 0.5;
+      cx.save(); cx.translate(p.x, p.y); cx.rotate(npcAngle);
+      cx.shadowColor=p.col; cx.shadowBlur=10;
+      drawShipImg('npc_ship', cx, 0, 0, 28, 18, false, () => {
+        // Fallback: a distinct IEN-style corvette shape
+        cx.fillStyle=p.col;
+        cx.beginPath();
+        cx.moveTo(0,-13); cx.lineTo(-5,4); cx.lineTo(-9,8);
+        cx.lineTo(0,5); cx.lineTo(9,8); cx.lineTo(5,4); cx.closePath();
+        cx.fill();
+        // Wing struts
+        cx.strokeStyle=p.col; cx.lineWidth=1;
+        cx.beginPath(); cx.moveTo(-3,0); cx.lineTo(-11,2); cx.stroke();
+        cx.beginPath(); cx.moveTo(3,0);  cx.lineTo(11,2);  cx.stroke();
+      });
+      cx.shadowBlur=0; cx.restore();
+    } else if(p.type==='dock') {
+      // Station — draw as a distinct structure (cross/ring shape)
+      cx.save(); cx.translate(p.x, p.y); cx.rotate(LS.t * 0.08);
+      cx.strokeStyle=p.col; cx.lineWidth=2;
+      cx.beginPath(); cx.arc(0,0,16,0,Math.PI*2); cx.stroke();
+      cx.strokeStyle=hexA(p.col,'88'); cx.lineWidth=1.5;
+      for(let a=0;a<4;a++){
+        const ra=a*Math.PI/2;
+        cx.beginPath(); cx.moveTo(Math.cos(ra)*16,Math.sin(ra)*16);
+        cx.lineTo(Math.cos(ra)*26,Math.sin(ra)*26); cx.stroke();
+      }
+      cx.fillStyle=hexA(p.col,'44');
+      cx.beginPath(); cx.arc(0,0,8,0,Math.PI*2); cx.fill();
+      cx.restore();
+      // Anchor icon at center
+      cx.font='13px Arial'; cx.textAlign='center'; cx.textBaseline='middle';
+      cx.fillText('⚓', p.x, p.y);
+      cx.textBaseline='alphabetic';
+    } else if(p.type==='fragment') {
+      // Pulsing crystal
+      const fpulse = 0.5+0.5*Math.sin(LS.t*2.2);
+      cx.save(); cx.translate(p.x,p.y); cx.rotate(LS.t*0.4);
+      cx.fillStyle=p.col; cx.globalAlpha=0.7+0.3*fpulse;
+      cx.beginPath();
+      cx.moveTo(0,-14); cx.lineTo(5,-3); cx.lineTo(14,0);
+      cx.lineTo(5,3);   cx.lineTo(0,14); cx.lineTo(-5,3);
+      cx.lineTo(-14,0); cx.lineTo(-5,-3); cx.closePath();
+      cx.fill(); cx.globalAlpha=1; cx.restore();
+    } else {
+      // Generic fallback icon
+      cx.font='22px Arial'; cx.textAlign='center'; cx.textBaseline='middle';
+      cx.fillText(p.icon, p.x, p.y);
+      cx.textBaseline='alphabetic';
+    }
+
+    // Label and role text below
     cx.font='bold 11px "Cinzel",serif'; cx.textAlign='center'; cx.fillStyle=p.col;
     cx.fillText(p.label, p.x, p.y+p.r+16);
     cx.font='9px "Crimson Text",serif'; cx.fillStyle=hexA(p.col,'88');
     cx.fillText(p.role, p.x, p.y+p.r+28);
-
-    // Icon
-    cx.font='22px Arial'; cx.textAlign='center'; cx.textBaseline='middle';
-    cx.fillText(p.icon, p.x, p.y);
-    cx.textBaseline='alphabetic';
   });
 
   // ── Enemy ships ──
@@ -14594,12 +14848,15 @@ function _lsRender(cx, W, H, dt) {
       cx.restore();
     }
 
-    // Ship body
+    // Ship body — use actual PNG, fall back to procedural silhouette
     cx.save(); cx.translate(e.x,e.y); cx.rotate(e.angle+Math.PI/2);
     cx.globalAlpha=blinkAlpha;
-    cx.fillStyle=isChasing?'#ff6644':ec;
-    cx.shadowColor=ec; cx.shadowBlur=isChasing?16:8;
-    _lsDrawShipSilhouette(cx, e.key);
+    cx.shadowColor=isChasing?'#ff4422':ec; cx.shadowBlur=isChasing?16:8;
+    const _lsEw=32, _lsEh=20;
+    drawShipImg(e.key, cx, 0, 0, _lsEw, _lsEh, false, () => {
+      cx.fillStyle=isChasing?'#ff6644':ec;
+      _lsDrawShipSilhouette(cx, e.key);
+    });
     cx.shadowBlur=0; cx.restore(); cx.globalAlpha=1;
 
     // Enemy label
@@ -14622,11 +14879,24 @@ function _lsRender(cx, W, H, dt) {
   cx.globalAlpha=1;
 
   // ── Player ship ──
-  cx.save(); cx.translate(LS.px, LS.py); cx.rotate(LS.pAngle+Math.PI/2);
+  cx.save(); cx.translate(LS.px, LS.py); cx.rotate(LS.pAngle + Math.PI/2);
   cx.shadowColor='#88aaff'; cx.shadowBlur=18;
-  cx.fillStyle='#aaccff';
-  cx.beginPath(); cx.moveTo(0,-14); cx.lineTo(-7,10); cx.lineTo(0,5); cx.lineTo(7,10); cx.closePath(); cx.fill();
-  cx.strokeStyle='#ffffff44'; cx.lineWidth=1; cx.stroke();
+  const [_lsPw, _lsPh] = shipSz(G.ship.type, 36, 22);
+  drawShipImg(G.ship.type, cx, 0, 0, _lsPw, _lsPh, false, () => {
+    // Procedural fallback — matches the ship class shape
+    cx.fillStyle='#aaccff';
+    if(G.ship.type==='pinnace'){
+      cx.beginPath(); cx.moveTo(0,-14); cx.lineTo(-6,9); cx.lineTo(0,4); cx.lineTo(6,9); cx.closePath(); cx.fill();
+    } else if(G.ship.type==='squid'){
+      cx.beginPath(); cx.moveTo(0,-17); cx.lineTo(-9,10); cx.lineTo(-3,5); cx.lineTo(0,12); cx.lineTo(3,5); cx.lineTo(9,10); cx.closePath(); cx.fill();
+      cx.strokeStyle='#ccddff44'; cx.lineWidth=1; cx.stroke();
+    } else if(G.ship.type==='hammer'){
+      cx.fillRect(-14,-4,28,8); cx.beginPath(); cx.moveTo(0,-18); cx.lineTo(-5,0); cx.lineTo(5,0); cx.closePath(); cx.fill();
+    } else {
+      cx.beginPath(); cx.moveTo(0,-20); cx.lineTo(-12,12); cx.lineTo(-5,7); cx.lineTo(0,14); cx.lineTo(5,7); cx.lineTo(12,12); cx.closePath(); cx.fill();
+      cx.strokeStyle='#ccddff44'; cx.lineWidth=1; cx.stroke();
+    }
+  });
   cx.shadowBlur=0;
   cx.restore();
 
@@ -14735,6 +15005,11 @@ document.addEventListener('keydown', e => {
   LS.keys[e.key] = true;
   // Escape — close interaction panel or exit
   if(e.key === 'Escape') {
+    // Close NPC dialog first if open
+    const dlg = document.getElementById('ls-npc-dialog');
+    if(dlg && dlg.classList.contains('on')) {
+      dlg.classList.remove('on'); LS.interactOpen = false; return;
+    }
     if(LS.interactOpen) {
       document.getElementById('ls-interact-panel').classList.remove('on');
       LS.interactOpen=false; LS.nearPoi=null;
