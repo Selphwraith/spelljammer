@@ -845,6 +845,131 @@ body {
 }
 #lq-close:hover { border-color:#9966dd; color:#ddbbff; }
 
+/* ══════════════════════════════════════════════════════════════════
+   LOCAL SPACE — WASD/Click top-down exploration overlay (Realmspace)
+   ══════════════════════════════════════════════════════════════════ */
+#ov-localspace {
+  position: absolute; top:0; left:0; right:0; bottom:0;
+  display: none; z-index: 65;
+  background: #020010;
+  overflow: hidden;
+  pointer-events: none;
+}
+#ov-localspace.on { display: block; pointer-events: all; touch-action: none; }
+#ls-canvas { position:absolute; inset:0; width:100%; height:100%; display:block; z-index:1; cursor:crosshair; }
+
+/* ── HUD elements ── */
+#ls-hud {
+  position:absolute; top:0; left:0; right:0;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 14px; z-index:10; pointer-events:none;
+  background:linear-gradient(180deg,rgba(2,0,16,0.85) 0%,transparent 100%);
+}
+#ls-hud-title {
+  font-family:'Cinzel',serif; font-size:0.875em; color:#4488ff;
+  letter-spacing:2px; text-shadow:0 0 20px #4488ff66;
+}
+#ls-hud-stats {
+  display:flex; gap:16px; font-size:0.688em; color:#6677aa;
+}
+#ls-hud-stats span { color:#aabbdd; }
+
+/* ── Minimap ── */
+#ls-minimap {
+  position:absolute; bottom:48px; right:14px;
+  width:110px; height:110px; border-radius:50%;
+  border:1px solid #4488ff33; background:rgba(2,0,16,0.75);
+  overflow:hidden; z-index:10; pointer-events:none;
+  box-shadow:0 0 20px #4488ff22;
+}
+#ls-minimap canvas { width:100%; height:100%; }
+
+/* ── Log strip ── */
+#ls-log-strip {
+  position:absolute; bottom:8px; left:50%; transform:translateX(-50%);
+  background:rgba(5,0,15,0.88); border:1px solid #33005533; border-radius:4px;
+  padding:5px 18px; font-size:0.688em; color:#7766aa; font-style:italic;
+  pointer-events:none; max-width:560px; text-align:center; z-index:10;
+  transition: color 0.4s;
+}
+#ls-log-strip.alert { color:#ffaa33; }
+#ls-log-strip.danger { color:#ff4444; }
+
+/* ── Controls hint ── */
+#ls-controls-hint {
+  position:absolute; bottom:48px; left:14px; z-index:10;
+  font-size:0.563em; color:#332255; line-height:1.7;
+  pointer-events:none;
+}
+
+/* ── Close/Exit button ── */
+#ls-close {
+  position:absolute; top:10px; right:14px; background:none;
+  border:1px solid #44006644; border-radius:3px; color:#6655aa;
+  font-size:0.75em; padding:4px 10px; cursor:pointer;
+  font-family:'Cinzel',serif; letter-spacing:1px; z-index:20;
+}
+#ls-close:hover { border-color:#9966dd; color:#ddbbff; }
+
+/* ── NPC interaction panel (floats over canvas when near NPC) ── */
+#ls-interact-panel {
+  position:absolute; bottom:60px; left:50%; transform:translateX(-50%);
+  background:rgba(6,0,20,0.96); border:1px solid #4488ff55;
+  border-radius:8px; padding:14px 18px 12px;
+  display:none; flex-direction:column; gap:8px;
+  min-width:280px; max-width:380px;
+  box-shadow:0 0 40px #4488ff22; z-index:15;
+}
+#ls-interact-panel.on { display:flex; }
+#ls-interact-name {
+  font-family:'Cinzel',serif; font-size:0.75em; color:#aabbff; letter-spacing:1px;
+}
+#ls-interact-role { font-size:0.625em; color:#445577; letter-spacing:1px; }
+#ls-interact-prompt {
+  font-size:0.688em; color:#8899bb; font-style:italic; line-height:1.5;
+}
+#ls-interact-btns { display:flex; gap:8px; flex-wrap:wrap; margin-top:2px; }
+#ls-interact-btns .btn { font-size:0.688em; padding:5px 12px; }
+
+/* ── Dock panel (full port replacement inside local space) ── */
+#ls-dock-panel {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  background:rgba(4,0,16,0.98); border:1px solid #4488ff44;
+  border-radius:10px; padding:20px 22px 18px;
+  display:none; flex-direction:column; gap:12px;
+  width:340px; max-height:85vh; overflow-y:auto;
+  box-shadow:0 0 60px #4488ff22; z-index:20;
+}
+#ls-dock-panel.on { display:flex; }
+#ls-dock-title {
+  font-family:'Cinzel',serif; font-size:0.875em; color:#4488ff;
+  letter-spacing:2px; text-align:center;
+}
+.ls-dock-section { font-size:0.625em; color:#334466; letter-spacing:2px; margin-top:4px; }
+.ls-dock-row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.ls-dock-label { font-size:0.688em; color:#6677aa; }
+.ls-dock-val { font-size:0.688em; color:#aabbdd; }
+.ls-dock-btn { font-size:0.688em; padding:5px 12px; }
+
+/* ── Virtual joystick (mobile) ── */
+#ls-joystick-zone {
+  position:absolute; bottom:60px; left:20px;
+  width:100px; height:100px; z-index:12;
+  display:none; /* shown on touch devices */
+  touch-action:none;
+}
+#ls-joystick-base {
+  width:100px; height:100px; border-radius:50%;
+  background:rgba(68,136,255,0.08); border:1px solid #4488ff33;
+}
+#ls-joystick-knob {
+  position:absolute; top:50%; left:50%;
+  width:36px; height:36px; border-radius:50%;
+  background:rgba(68,136,255,0.25); border:1px solid #4488ff66;
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+}
+
 /* ── WEAPON SLOT PICKER OVERLAY ───────────────────────────────── */
 #ov-wpnpicker {
   position:fixed; inset:0; z-index:300;
@@ -1900,6 +2025,101 @@ body {
       <div class="lq-sep"></div>
       <div class="lq-shop-grid" id="lq-qm-grid"></div>
       <button class="btn" onclick="lqBack()" style="margin-top:6px;font-size:11px;">← Back</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════
+       LOCAL SPACE — Realmspace WASD/Click top-down exploration
+       ════════════════════════════════════════════════════════ -->
+  <div id="ov-localspace">
+    <canvas id="ls-canvas"></canvas>
+
+    <!-- HUD top bar -->
+    <div id="ls-hud">
+      <div id="ls-hud-title">🔭 REALMSPACE — Local Space</div>
+      <div id="ls-hud-stats">
+        Hull: <span id="ls-hud-hull">—</span> &nbsp;
+        Crew: <span id="ls-hud-crew">—</span> &nbsp;
+        ⚜ <span id="ls-hud-gold">—</span>
+      </div>
+    </div>
+
+    <!-- Controls hint bottom-left -->
+    <div id="ls-controls-hint">
+      WASD / Arrow keys — move<br>
+      Click — set destination<br>
+      Approach an icon to interact
+    </div>
+
+    <!-- Minimap bottom-right -->
+    <div id="ls-minimap"><canvas id="ls-minimap-canvas"></canvas></div>
+
+    <!-- Log strip bottom-center -->
+    <div id="ls-log-strip">Entering local space — navigate to a point of interest.</div>
+
+    <!-- Exit button -->
+    <button id="ls-close" onclick="closeLsOverlay()">⛵ Return to Chart</button>
+
+    <!-- NPC / POI interaction panel (slides up when in range) -->
+    <div id="ls-interact-panel">
+      <div>
+        <div id="ls-interact-name"></div>
+        <div id="ls-interact-role"></div>
+      </div>
+      <div id="ls-interact-prompt"></div>
+      <div id="ls-interact-btns"></div>
+    </div>
+
+    <!-- Dock panel (replaces port overlay inside local space) -->
+    <div id="ls-dock-panel">
+      <div id="ls-dock-title">⚓ SELÛNE'S TEAR STATION</div>
+
+      <div class="ls-dock-section">⛵ SHIP STATUS</div>
+      <div class="ls-dock-row">
+        <span class="ls-dock-label">Hull</span>
+        <span class="ls-dock-val" id="ls-dock-hull">—/—</span>
+      </div>
+      <div class="ls-dock-row">
+        <span class="ls-dock-label">Crew</span>
+        <span class="ls-dock-val" id="ls-dock-crew">—/—</span>
+      </div>
+      <div class="ls-dock-row">
+        <span class="ls-dock-label">Air Supply</span>
+        <span class="ls-dock-val" id="ls-dock-air">— days</span>
+      </div>
+      <div class="ls-dock-row">
+        <span class="ls-dock-label">Gold</span>
+        <span class="ls-dock-val">⚜ <span id="ls-dock-gold">—</span></span>
+      </div>
+
+      <div class="ls-dock-section" style="margin-top:6px;">🔧 SERVICES</div>
+      <div class="ls-dock-row">
+        <span class="ls-dock-label">Hull Repair (+40)</span>
+        <button class="btn ls-dock-btn" id="ls-svc-hull" onclick="lsDockService('hull')">⚜ 50g</button>
+      </div>
+      <div class="ls-dock-row">
+        <span class="ls-dock-label">Air Resupply (full)</span>
+        <button class="btn ls-dock-btn" id="ls-svc-air" onclick="lsDockService('air')">⚜ 40g</button>
+      </div>
+      <div class="ls-dock-row">
+        <span class="ls-dock-label">Crew Hire (+4)</span>
+        <button class="btn ls-dock-btn" id="ls-svc-crew" onclick="lsDockService('crew')">⚜ 60g</button>
+      </div>
+
+      <div class="ls-dock-section" style="margin-top:6px;">🛒 IEN QUARTERMASTER</div>
+      <div id="ls-dock-shop-grid" style="display:flex;flex-direction:column;gap:6px;margin-top:2px;"></div>
+
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap;">
+        <button class="btn" style="font-size:0.688em;" onclick="closeLsDock()">⬅ Return to Space</button>
+        <button class="btn" style="font-size:0.688em;color:#ff4444;border-color:#44001133;" onclick="lsDockDepart()">⛵ Depart Realmspace</button>
+      </div>
+    </div>
+
+    <!-- Mobile virtual joystick -->
+    <div id="ls-joystick-zone">
+      <div id="ls-joystick-base">
+        <div id="ls-joystick-knob"></div>
+      </div>
     </div>
   </div>
 
@@ -3138,6 +3358,19 @@ const SPHERES = [
 function laneKey(a, b) { return a + '->' + b; }
 const LANE_DANGER_COLORS = ['','#44ee88','#ddcc22','#ff8844','#ff4422','#cc22ff'];
 
+// ── hexA: convert #rrggbb + 2-char hex-alpha to valid rgba() ─────────────
+// Canvas does NOT support 8-digit hex (#rrggbbaa). Use this everywhere.
+// hexA('#ff8844', 'cc')  →  'rgba(255,136,68,0.80)'
+// hexA('#ff8844', '00')  →  'rgba(255,136,68,0)'
+function hexA(hex, alphaHex) {
+  const h = hex.replace('#','');
+  const r = parseInt(h.slice(0,2),16);
+  const g = parseInt(h.slice(2,4),16);
+  const b = parseInt(h.slice(4,6),16);
+  const a = (parseInt(alphaHex,16)/255).toFixed(3);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
 // ── Phlogiston Flow system ────────────────────────────────────
 // flow:  +1 = travelling WITH the current (faster, ×0.60 tick interval)
 //        -1 = travelling AGAINST the current (slower, ×1.60 tick interval)
@@ -3290,7 +3523,7 @@ const DAY_START_HOUR = 6;
 
 // Base real-time per leg at speed 4 (base ship)
 // Speed upgrades halve this: speed 6 = 75%, speed 8 = 50%, speed 10 = 40%
-const WATCH_REAL_MS_BASE = 6000; // 6 real seconds at base speed
+const WATCH_REAL_MS_BASE = 24000; // 24 real seconds per watch (8 hours × 3s/hour) at base speed
 
 // Compute actual WATCH_REAL_MS based on ship speed
 function getWatchRealMs() {
@@ -3335,13 +3568,11 @@ function laneWatchCost(lane, ship) {
   return Math.max(1, cost - speedBonus);
 }
 
-// Animation: base 6 seconds per leg at speed 4
-// Higher speed = faster animation within each leg = ship visually zips across
-// BUT leg count still controls how many DAYS pass — unchanged by this
-// Speed 4 = 6s/leg, Speed 6 = 4.5s, Speed 8 = 3s (visually 2× faster), Speed 10 = 2.4s
+// Animation: 24 seconds per watch at base speed 4 (8 hours × 3 real seconds per hour)
+// Higher speed = faster animation — speed 6 = ~18s, speed 8 = ~12s, speed 10 = ~9.6s
 function getWatchRealMs() {
   const speed = G?.ship?.speed || 4;
-  return Math.max(1500, Math.round(6000 * (4 / speed)));
+  return Math.max(6000, Math.round(24000 * (4 / speed)));
 }
 
 function calcMoveBudget() { return 1; }
@@ -4731,9 +4962,9 @@ function _lpDraw(cx, t) {
 
       // Glow halo
       const grad = cx.createRadialGradient(px, py, 0, px, py, r);
-      grad.addColorStop(0, col + 'cc');
-      grad.addColorStop(0.5, col + '44');
-      grad.addColorStop(1, col + '00');
+      grad.addColorStop(0, hexA(col, 'cc'));
+      grad.addColorStop(0.5, hexA(col, '44'));
+      grad.addColorStop(1, hexA(col, '00'));
       cx.globalAlpha = flicker * 0.7;
       cx.fillStyle = grad;
       cx.beginPath(); cx.arc(px, py, r, 0, Math.PI * 2); cx.fill();
@@ -4833,12 +5064,12 @@ function renderLoop(ts=0) {
     cx.globalAlpha=1;
     const r=8;
     const bg=cx.createRadialGradient(mx,my,0,mx,my,r);
-    bg.addColorStop(0,col+'88'); bg.addColorStop(1,col+'00');
+    bg.addColorStop(0,hexA(col,'88')); bg.addColorStop(1,hexA(col,'00'));
     cx.fillStyle=bg; cx.beginPath(); cx.arc(mx,my,r,0,Math.PI*2); cx.fill();
     cx.fillStyle=col; cx.font='bold 9px "Cinzel",serif'; cx.textAlign='center'; cx.textBaseline='middle';
     cx.fillText(lane.warzone?'⚔':lane.d, mx, my);
     if(lane.warzone){
-      cx.font='7px Arial'; cx.fillStyle=col+'cc';
+      cx.font='7px Arial'; cx.fillStyle=hexA(col,'cc');
       cx.fillText('WAR',mx,my+10);
     }
   });
@@ -5049,7 +5280,7 @@ function renderLoop(ts=0) {
     cx.save(); cx.globalAlpha=(locked||!reachable)?0.30:1;
     cx.strokeStyle=isCur?'#fff':sph.c; cx.lineWidth=isCur?2:1.5;
     cx.beginPath(); cx.arc(p.x,p.y,R,0,Math.PI*2); cx.stroke();
-    cx.fillStyle=sph.c+'22'; cx.fill();
+    cx.fillStyle=hexA(sph.c,'22'); cx.fill();
     cx.fillStyle=locked?'#333':sph.c;
     cx.beginPath(); cx.arc(p.x-1,p.y+2,R*.55,0,Math.PI*2); cx.fill();
     // Clue indicator — show ✦ if clue obtained but fragment not yet collected
@@ -6324,6 +6555,15 @@ function arrive(id){
     }
   }
   addLog(`Click the sphere again to dock at ${sph.n}.`,'');
+  // ── REALMSPACE: open Local Space instead of normal port flow ──
+  if(id === 'realm') {
+    checkQuestTurnin(id);
+    setTag('Navigation'); updateUI();
+    ensureLqState();
+    setTimeout(() => openLocalSpace(), 400);
+    _writeAutoSave();
+    return;
+  }
   checkQuestTurnin(id);
   setTag('Navigation'); updateUI();
   // Local quest: engine field test tracking + button update
@@ -6345,6 +6585,8 @@ _writeAutoSave();
 let _portSphere=null;
 function enterPort(sph){
   if(sph.boss)return;
+  // ── REALMSPACE: redirect to Local Space overlay ──────────
+  if(sph.id === 'realm') { openLocalSpace(); return; }
   // ── Shothothug confrontation at Baresun ───────────────
   if(sph.id === 'baresun' && G.shothothuqUnlocked && !(G.worldBossDefeated && G.worldBossDefeated.has('shothothug'))){
     addLog('⬡ The Baresun scar screams. Something vast is coming through.','dmg');
@@ -7230,7 +7472,62 @@ function tsSpawnObject(cv, forced) {
 
 // ── Spawn a queued event object (enemy ship or waypoint beacon) ──────────
 function tsSpawnEvent(type, label, key) {
-  TS.events.push({ type, label, key, y: -120, alpha: 0, triggered: false });
+  if (type === 'enemy') {
+    // Roll a spawn scenario — enemies come from varied directions
+    // W and H aren't available here so we use fractions; resolved in tsRender via ev.xFrac/yFrac
+    const scenario = Math.random();
+    let xFrac, yFrac, approachSpeed, fromBehind;
+
+    if (scenario < 0.20) {
+      // From behind (bottom of screen, catching up) — feels like an ambush
+      xFrac    = 0.35 + Math.random() * 0.30;   // slightly off-center
+      yFrac    = 0.85 + Math.random() * 0.10;   // below the ship
+      approachSpeed = 110 + Math.random() * 50; // faster — they're chasing
+      fromBehind = true;
+    } else if (scenario < 0.40) {
+      // Far left — sweeping in from the left edge
+      xFrac    = -0.05 + Math.random() * 0.15;
+      yFrac    = 0.05 + Math.random() * 0.35;
+      approachSpeed = 75 + Math.random() * 40;
+      fromBehind = false;
+    } else if (scenario < 0.60) {
+      // Far right — sweeping in from the right edge
+      xFrac    = 0.90 + Math.random() * 0.15;
+      yFrac    = 0.05 + Math.random() * 0.35;
+      approachSpeed = 75 + Math.random() * 40;
+      fromBehind = false;
+    } else if (scenario < 0.75) {
+      // Slightly left of center — standard but offset
+      xFrac    = 0.20 + Math.random() * 0.20;
+      yFrac    = -0.12;
+      approachSpeed = 80 + Math.random() * 30;
+      fromBehind = false;
+    } else if (scenario < 0.90) {
+      // Slightly right of center
+      xFrac    = 0.60 + Math.random() * 0.20;
+      yFrac    = -0.12;
+      approachSpeed = 80 + Math.random() * 30;
+      fromBehind = false;
+    } else {
+      // Dead ahead — classic intercept
+      xFrac    = 0.42 + Math.random() * 0.16;
+      yFrac    = -0.14;
+      approachSpeed = 90 + Math.random() * 20;
+      fromBehind = false;
+    }
+
+    TS.events.push({
+      type, label, key,
+      xFrac, yFrac,
+      x: null, y: null,   // resolved on first render frame when W/H are known
+      approachSpeed,
+      fromBehind,
+      alpha: 0, triggered: false
+    });
+  } else {
+    // Waypoints and roam events — top-center descent as before
+    TS.events.push({ type, label, key, y: -120, alpha: 0, triggered: false });
+  }
 }
 
 // ── Lane atmosphere colors ────────────────────────────────────────────────
@@ -7267,9 +7564,9 @@ function tsRender(timestamp) {
   ctx.fillRect(0, 0, W, H);
   // Radial centre glow — the river core is hotter/brighter
   const bgGlow = ctx.createRadialGradient(W*0.5, H*0.5, 0, W*0.5, H*0.5, W*0.55);
-  bgGlow.addColorStop(0,   col.fog2 + 'ff');
-  bgGlow.addColorStop(0.5, col.fog  + '88');
-  bgGlow.addColorStop(1,   '#00000000');
+  bgGlow.addColorStop(0,   hexA(col.fog2, 'ff'));
+  bgGlow.addColorStop(0.5, hexA(col.fog,  '88'));
+  bgGlow.addColorStop(1,   'rgba(0,0,0,0)');
   ctx.fillStyle = bgGlow;
   ctx.fillRect(0, 0, W, H);
 
@@ -7297,10 +7594,10 @@ function tsRender(timestamp) {
     const gx = isLeft ? bx : bx - bankW;
     const g = ctx.createLinearGradient(isLeft ? gx : gx + bankW, 0,
                                        isLeft ? gx + bankW : gx, 0);
-    g.addColorStop(0,   col.bank + 'ff');
-    g.addColorStop(0.4, col.bank + 'bb');
-    g.addColorStop(0.75,col.bank + '44');
-    g.addColorStop(1,   col.fog  + '00');
+    g.addColorStop(0,   hexA(col.bank, 'ff'));
+    g.addColorStop(0.4, hexA(col.bank, 'bb'));
+    g.addColorStop(0.75,hexA(col.bank, '44'));
+    g.addColorStop(1,   hexA(col.fog,  '00'));
     ctx.fillStyle = g;
     ctx.fillRect(gx, 0, bankW, H);
 
@@ -7309,7 +7606,7 @@ function tsRender(timestamp) {
     for (let i = 0; i < 5; i++) {
       const ew = 1.5 + i * 2.5;
       const ea = (0.28 - i * 0.05) * (0.65 + 0.35 * Math.sin(TS.t * 1.1 + i * 0.7));
-      ctx.strokeStyle = col.glow + Math.round(Math.max(0, ea) * 255).toString(16).padStart(2,'0');
+      ctx.strokeStyle = hexA(col.glow, Math.round(Math.max(0, ea) * 255).toString(16).padStart(2,'0'));
       ctx.lineWidth = ew;
       ctx.beginPath(); ctx.moveTo(ex, 0); ctx.lineTo(ex, H); ctx.stroke();
     }
@@ -7396,7 +7693,7 @@ function tsRender(timestamp) {
     const fx = channelX + ((Math.sin(TS.t * 3.1) * 0.5 + 0.5)) * channelW;
     const fy = H * (0.2 + (Math.cos(TS.t * 2.3) * 0.5 + 0.5) * 0.6);
     const fg = ctx.createRadialGradient(fx, fy, 0, fx, fy, 40);
-    fg.addColorStop(0, col.glow + 'cc');
+    fg.addColorStop(0, hexA(col.glow, 'cc'));
     fg.addColorStop(0.3, col.particle + '55)');
     fg.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = fg;
@@ -7444,8 +7741,14 @@ function tsRender(timestamp) {
     ev.alpha = Math.min(1, ev.alpha + dt * 1.2);
 
     if (ev.type === 'enemy') {
-      // Move diagonally toward ship at a steady readable speed (px/s)
-      const speed = 90; // px per second — slow enough to see clearly
+      // Resolve fractional spawn coords on first frame (W/H now known)
+      if (ev.x === null) {
+        ev.x = W * ev.xFrac;
+        ev.y = H * ev.yFrac;
+      }
+
+      // Move toward ship at this enemy's individual approach speed
+      const speed = ev.approachSpeed || 90;
       const dx = shipCX - ev.x;
       const dy = shipCY - ev.y;
       const dist = Math.max(1, Math.sqrt(dx*dx + dy*dy));
@@ -7721,7 +8024,7 @@ function tsRender(timestamp) {
 
 // ── Fallback procedural draw when PNG is missing ──────────────────────────
 function tsFallbackDraw(ctx, key, w, h, glowCol) {
-  ctx.strokeStyle = glowCol + '55';
+  ctx.strokeStyle = hexA(glowCol, '55');
   ctx.lineWidth = 1.5;
   if (key.includes('asteroid') || key.includes('boulder')) {
     ctx.fillStyle = '#1a1a2a'; ctx.beginPath();
@@ -7731,7 +8034,7 @@ function tsFallbackDraw(ctx, key, w, h, glowCol) {
     ctx.beginPath(); ctx.ellipse(-w*0.1, -h*0.05, w*0.1, h*0.09, 0, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.ellipse(w*0.12, h*0.1, w*0.07, h*0.06, 0, 0, Math.PI*2); ctx.fill();
   } else if (key.includes('crystal') || key.includes('spire')) {
-    ctx.fillStyle = glowCol + '22';
+    ctx.fillStyle = hexA(glowCol, '22');
     ctx.beginPath(); ctx.moveTo(0,-h*0.45); ctx.lineTo(w*0.15,h*0.3);
     ctx.lineTo(-w*0.15,h*0.3); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(w*0.12,-h*0.25); ctx.lineTo(w*0.25,h*0.3);
@@ -7746,12 +8049,12 @@ function tsFallbackDraw(ctx, key, w, h, glowCol) {
     ctx.beginPath(); ctx.moveTo(-w*0.2,-h*0.08); ctx.lineTo(-w*0.05,h*0.06); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(w*0.1,-h*0.04); ctx.lineTo(w*0.25,h*0.1); ctx.stroke();
   } else if (key.includes('jellyfish') || key.includes('mote')) {
-    ctx.fillStyle = glowCol + '18';
+    ctx.fillStyle = hexA(glowCol, '18');
     const rg = ctx.createRadialGradient(0, 0, 0, 0, 0, w*0.35);
-    rg.addColorStop(0, glowCol + '44'); rg.addColorStop(1, 'transparent');
+    rg.addColorStop(0, hexA(glowCol, '44')); rg.addColorStop(1, 'transparent');
     ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(0, 0, w*0.35, 0, Math.PI*2); ctx.fill();
     // Tentacles
-    ctx.strokeStyle = glowCol + '33'; ctx.lineWidth = 1;
+    ctx.strokeStyle = hexA(glowCol, '33'); ctx.lineWidth = 1;
     for (let i = 0; i < 5; i++) {
       const a = (i/5)*Math.PI*2; const r = w*0.3;
       ctx.beginPath(); ctx.moveTo(Math.cos(a)*r*0.5, Math.sin(a)*r*0.5);
@@ -7759,7 +8062,7 @@ function tsFallbackDraw(ctx, key, w, h, glowCol) {
     }
   } else if (key.includes('eddy') || key.includes('phlog')) {
     const rg = ctx.createRadialGradient(0, 0, 0, 0, 0, w*0.4);
-    rg.addColorStop(0, glowCol + '33'); rg.addColorStop(1, 'transparent');
+    rg.addColorStop(0, hexA(glowCol, '33')); rg.addColorStop(1, 'transparent');
     ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(0, 0, w*0.4, 0, Math.PI*2); ctx.fill();
   } else if (key.includes('beacon') || key.includes('marker') || key.includes('buoy')) {
     ctx.fillStyle = '#223344';
@@ -7781,20 +8084,21 @@ function tsDrawEvent(ctx, ev, W, H) {
   if (ev.type === 'enemy') {
     const shipCX = W / 2;
     const shipCY = H * 0.55;
-    // Angle toward ship centre
+    // Angle toward ship centre — works for all spawn directions
     const angle = Math.atan2(shipCY - ev.y, shipCX - ev.x);
     ctx.save();
     ctx.translate(ev.x, ev.y);
-    // Ships are drawn nose-right so rotate by angle directly
     ctx.rotate(angle);
     const [ew, eh] = [80, 50];
     ctx.shadowColor = '#ff4422'; ctx.shadowBlur = 20;
     drawShipImg(ev.key, ctx, 0, 0, ew, eh, false, () => drawCorsairSloop(ctx, 0, 0, 22, false));
     ctx.shadowBlur = 0;
     ctx.restore();
-    // Label in screen space
+    // Label — offset perpendicular to approach direction so it doesn't overlap ship
+    const labelOffX =  Math.sin(angle) * 48;
+    const labelOffY = -Math.cos(angle) * 48;
     ctx.save();
-    ctx.translate(ev.x, ev.y - 42);
+    ctx.translate(ev.x + labelOffX, ev.y + labelOffY);
     ctx.fillStyle = '#ff4422cc';
     ctx.font = `bold 11px 'Cinzel', serif`;
     ctx.textAlign = 'center';
@@ -7832,7 +8136,7 @@ function tsDrawEvent(ctx, ev, W, H) {
     ctx.restore();
     ctx.save();
     ctx.translate(rx, ev.y + 52);
-    ctx.fillStyle = (ev.col || '#88ccff') + 'cc';
+    ctx.fillStyle = hexA(ev.col || '#88ccff', 'cc');
     ctx.font = `bold 11px 'Cinzel', serif`;
     ctx.textAlign = 'center';
     ctx.fillText(ev.label || '📡 HAILING', 0, 0);
@@ -11219,6 +11523,7 @@ function endCbt(won){
     G.phase='map'; setTag('Navigation'); updateUI();
     updateWatchHUD();
     if(won) addLog('Enemy destroyed. Returning to navigation.','gd');
+    _lsCheckReturnAfterCombat();
     return;
   }
   G.phase='traveling'; setTag(`Traveling → ${G.spheres.find(s=>s.id===G.tvl.to)?.n||''}`);
@@ -11338,6 +11643,7 @@ function claimLoot(){
     G.ship.atFragSite = wonSite || null;
     G.phase='map'; setTag('Navigation'); updateUI();
     /* title plays continuously */
+    _lsCheckReturnAfterCombat();
     return;
   }
   endCbt(true);
@@ -11703,13 +12009,16 @@ The Far Realm still whispers at the edges of reality. Perhaps one day a new thre
   ), 800);
 }
 function restart(){
-  ['ov-cbt-inv','ov-travel-seq','ov-wpnpicker','ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay'].forEach(id=>{
+  ['ov-cbt-inv','ov-travel-seq','ov-wpnpicker','ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','ov-localspace','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay'].forEach(id=>{
     const el=document.getElementById(id); if(el)el.classList.remove('on','active');
   });
   const _fr=document.getElementById('ov-faction-rep'); if(_fr) _fr.style.display='none';
   document.getElementById('clog').innerHTML='';
   if(G.tvl&&G.tvl.timer)clearInterval(G.tvl.timer);
   if(G.animId)cancelAnimationFrame(G.animId);
+  // Reset local space state
+  if(LS.animId){ cancelAnimationFrame(LS.animId); LS.animId=null; }
+  LS._firstEntry=true; _lsPendingReturn=false; _lsPendingFragment=null;
   initGame();
 }
 
@@ -11729,7 +12038,7 @@ function _anyOverlayOpen() {
   const onOverlays = [
     'ov-port','ov-waypoint','ov-wpnpicker','ov-inv','ov-wpn','ov-shp',
     'ov-qlog','ov-journal','ov-loot','ov-dockmaster','ov-combat',
-    'ov-localquest','ov-faction-rep','msgbox','rest-overlay',
+    'ov-localquest','ov-localspace','ov-faction-rep','msgbox','rest-overlay',
   ];
   for (const id of onOverlays) {
     const el = document.getElementById(id);
@@ -12726,7 +13035,7 @@ function hideMainMenu() {
 function menuNewGame() {
   hideMainMenu(true); // keep title playing through cinematic
   // Full teardown so combat/port/loot overlays don't linger from an in-progress game
-  ['ov-cbt-inv','ov-travel-seq','ov-wpnpicker','ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay'].forEach(id=>{
+  ['ov-cbt-inv','ov-travel-seq','ov-wpnpicker','ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','ov-localspace','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay'].forEach(id=>{
     const el=document.getElementById(id); if(el)el.classList.remove('on','active');
   });
   const _fr=document.getElementById('ov-faction-rep'); if(_fr) _fr.style.display='none';
@@ -13453,6 +13762,1068 @@ let LQ = {
   stars: []
 };
 
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║  LOCAL SPACE — REALMSPACE WASD/CLICK TOP-DOWN EXPLORATION ENGINE        ║
+// ║  Triggered on arrival at Realmspace. Replaces the port overlay.         ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+
+const LS = {
+  // canvas / animation
+  canvas: null, ctx: null, mmCanvas: null, mmCtx: null,
+  animId: null, t: 0, lastTs: 0,
+
+  // world dimensions (virtual units)
+  W: 2400, H: 2400,
+
+  // player ship state
+  px: 1200, py: 1200,       // position in world coords
+  pvx: 0, pvy: 0,           // velocity
+  pAngle: -Math.PI/2,       // facing angle (radians)
+  pSpeed: 140,              // pixels/sec max speed
+  pAccel: 220,              // acceleration
+  pFriction: 0.88,          // per-frame friction multiplier
+  pTargetX: null, pTargetY: null,  // click-to-move target
+
+  // input
+  keys: {},
+
+  // stars (background)
+  stars: [],
+
+  // Points of Interest
+  pois: [],
+
+  // Enemies (wandering AI ships)
+  enemies: [],
+
+  // Particles (engine trails, hits)
+  particles: [],
+
+  // active NPC/POI interaction
+  nearPoi: null,
+  interactOpen: false,
+  dockOpen: false,
+
+  // encounter throttle
+  lastEncounterTime: 0,
+  ENCOUNTER_COOLDOWN: 8000,  // ms between forced encounters
+
+  // spawn timers
+  _enemySpawnTimer: 0,
+  _enemySpawnInterval: 22,   // seconds between new enemy spawns
+
+  // joystick state (mobile)
+  joystickActive: false,
+  joystickX: 0, joystickY: 0,
+
+  // camera (keeps player centered)
+  camX: 0, camY: 0,
+
+  // reveal flag
+  _firstEntry: true,
+};
+
+// ── POINTS OF INTEREST ────────────────────────────────────────────────────
+// Each POI: { id, label, role, x, y, r (interaction radius), col, icon, type }
+// Types: 'dock'|'npc'|'fragment'|'hazard_zone'|'patrol'
+function _lsDefinePois() {
+  const W = LS.W, H = LS.H;
+  return [
+    // Selûne's Tear Station — center-safe zone, the dock
+    {
+      id:'dock', label:"Selûne's Tear Station", role:'IEN Docking Ring · Air · Hull · Crew · QM',
+      x: W*0.50, y: H*0.50, r: 70, col:'#4488ff', icon:'⚓', type:'dock',
+      safeRadius: 320,   // no enemies spawn within this radius of the station
+    },
+    // Ensign Lirith Vaen — patrol route NPC, mid-ring
+    {
+      id:'npc_lirith', label:'Ensign Lirith Vaen', role:'IEN Scout Corvette — Quest',
+      x: W*0.38, y: H*0.35, r: 48, col:'#66aaff', icon:'🛸', type:'npc',
+      npcId: 'realm_scout',
+      patrol: true, patrolR: 120, patrolSpeed: 0.28, patrolAngle: 0,
+    },
+    // Merchant Tomas Wrenfold — inner ring
+    {
+      id:'npc_merchant', label:'Tomas Wrenfold', role:'Licensed Merchant — Quest',
+      x: W*0.62, y: H*0.38, r: 48, col:'#ffcc66', icon:'🧑‍💼', type:'npc',
+      npcId: 'realm_merchant',
+      patrol: true, patrolR: 90, patrolSpeed: 0.22, patrolAngle: 1.4,
+    },
+    // Archivist Pell Dusan — inner ring
+    {
+      id:'npc_sage', label:'Archivist Pell Dusan', role:'Toril Academy — Quest',
+      x: W*0.60, y: H*0.62, r: 48, col:'#cc88ff', icon:'📚', type:'npc',
+      npcId: 'realm_sage',
+      patrol: false,
+    },
+    // Commander Aeva Thessan — mid ring
+    {
+      id:'npc_commander', label:'Cmdr. Aeva Thessan', role:'IEN Strike Wing — Quest',
+      x: W*0.38, y: H*0.63, r: 48, col:'#44ffcc', icon:'🎖️', type:'npc',
+      npcId: 'realm_ien_officer',
+      patrol: true, patrolR: 100, patrolSpeed: 0.18, patrolAngle: 3.2,
+    },
+    // Fragment Orbit Site — outer edge, guarded
+    {
+      id:'fragment', label:'Fragment Orbit — The Flotsam Field', role:'Astral Chart Fragment Site',
+      x: W*0.18, y: H*0.22, r: 55, col:'#ffdd44', icon:'🔮', type:'fragment',
+    },
+    // Neogi Disruption Zone — outer ring, high danger
+    {
+      id:'hazard_neogi', label:'Neogi Disruption Zone', role:'⚠ High Enemy Activity',
+      x: W*0.80, y: H*0.20, r: 180, col:'#ff4444', icon:'⚠', type:'hazard_zone',
+      enemyKey: 'neogi', spawnRate: 0.6,
+    },
+    // Patrol Lane — low danger middle band
+    {
+      id:'patrol_lane', label:'IEN Patrol Corridor', role:'Occasional enemy contact',
+      x: W*0.50, y: H*0.25, r: 140, col:'#44ffcc', icon:'', type:'patrol_zone',
+      enemyKey: 'corsair', spawnRate: 0.25,
+    },
+  ];
+}
+
+// ── ENEMY AI SHIPS ────────────────────────────────────────────────────────
+function _lsSpawnEnemy(key, wx, wy) {
+  const e = {
+    key,
+    x: wx, y: wy,
+    vx: 0, vy: 0,
+    angle: Math.random() * Math.PI * 2,
+    speed: 60 + Math.random() * 40,
+    state: 'wander',     // 'wander'|'chase'|'flee'
+    wanderAngle: Math.random() * Math.PI * 2,
+    wanderTimer: 0,
+    visionRange: 220,    // how far they can see
+    visionCone: Math.PI * 0.45,  // half-angle of vision cone
+    aggroRange: 140,     // once inside this they stay aggroed regardless of cone
+    alertTimer: 0,
+    uid: Math.random().toString(36).slice(2),
+    // for drawing
+    _blinkT: Math.random() * Math.PI * 2,
+  };
+  LS.enemies.push(e);
+}
+
+function _lsSpawnInitialEnemies() {
+  const W = LS.W, H = LS.H;
+  // A few neogi near the hazard zone
+  _lsSpawnEnemy('neogi',  W*0.82, H*0.18);
+  _lsSpawnEnemy('neogi',  W*0.76, H*0.24);
+  // A corsair on the patrol lane
+  _lsSpawnEnemy('corsair', W*0.50, H*0.22);
+  // A nautiloid on the outer arc near the fragment
+  _lsSpawnEnemy('nautiloid', W*0.22, H*0.28);
+  // Random goblin on far side
+  _lsSpawnEnemy('goblin_cutter', W*0.72, H*0.75);
+}
+
+// ── OPEN / CLOSE ──────────────────────────────────────────────────────────
+function openLocalSpace() {
+  ensureLqState();
+  snd('sphere_arrive', 0.5);
+
+  // Initialize world on first entry
+  if(LS._firstEntry) {
+    LS._firstEntry = false;
+    LS.px = LS.W * 0.50 + 280;
+    LS.py = LS.H * 0.50;
+    LS.pvx = 0; LS.pvy = 0;
+    LS.pAngle = -Math.PI * 0.75;
+    LS.pTargetX = null; LS.pTargetY = null;
+    LS.stars = [];
+    for(let i=0; i<320; i++)
+      LS.stars.push({
+        x: Math.random()*LS.W, y: Math.random()*LS.H,
+        r: Math.random()*1.4+0.3, b: Math.random(),
+        twk: Math.random()*Math.PI*2, spd: Math.random()*0.005+0.001
+      });
+    LS.pois    = _lsDefinePois();
+    LS.enemies = [];
+    LS.particles = [];
+    _lsInitPatrolBases();
+    _lsSpawnInitialEnemies();
+    LS.lastEncounterTime = 0;
+    LS._enemySpawnTimer = 0;
+  }
+
+  // Reset per-session transient state
+  LS.keys = {};
+  LS.nearPoi = null;
+  LS.interactOpen = false;
+  LS.dockOpen = false;
+
+  document.getElementById('ov-localspace').classList.add('on');
+  document.getElementById('ls-interact-panel').classList.remove('on');
+  document.getElementById('ls-dock-panel').classList.remove('on');
+  _lsUpdateHud();
+  _lsLog('Navigate to a point of interest. WASD or click to move.');
+
+  // Check touch device for joystick
+  if('ontouchstart' in window) {
+    document.getElementById('ls-joystick-zone').style.display = 'block';
+  }
+
+  LS.canvas   = document.getElementById('ls-canvas');
+  LS.ctx      = LS.canvas.getContext('2d');
+  LS.mmCanvas = document.getElementById('ls-minimap-canvas');
+  LS.mmCtx    = LS.mmCanvas.getContext('2d');
+
+  if(LS.animId) cancelAnimationFrame(LS.animId);
+  LS.lastTs = 0;
+  LS.animId = requestAnimationFrame(_lsLoop);
+
+  // Hide sidebar Local Quest button for realm (LS replaces it)
+  const sLqBtn = document.getElementById('sidebar-lq-btn');
+  if(sLqBtn) sLqBtn.style.display = 'none';
+}
+
+function closeLsOverlay() {
+  document.getElementById('ov-localspace').classList.remove('on');
+  document.getElementById('ls-interact-panel').classList.remove('on');
+  document.getElementById('ls-dock-panel').classList.remove('on');
+  if(LS.animId) { cancelAnimationFrame(LS.animId); LS.animId = null; }
+  LS.keys = {};
+  // Keep LS._firstEntry = false so world persists between visits this session
+  setTag('Navigation'); updateUI();
+}
+
+function closeLsDock() {
+  document.getElementById('ls-dock-panel').classList.remove('on');
+  LS.dockOpen = false;
+  _lsLog('Departed station. Safe travels, Captain.');
+}
+
+function lsDockDepart() {
+  closeLsDock();
+  closeLsOverlay();
+  // Ensure player is at realm on the map
+  G.ship.loc = 'realm';
+  G.phase = 'map';
+  updateUI();
+  addLog('Departed Realmspace local space.','');
+}
+
+// ── DOCK SERVICES ─────────────────────────────────────────────────────────
+function lsDockService(type) {
+  if(type === 'hull') {
+    if(G.ship.hull >= G.ship.maxHull) { _lsLog('Hull is already at full integrity.'); return; }
+    if(G.ship.gold < 50) { _lsLog('Not enough gold for hull repair (50g).'); return; }
+    G.ship.gold -= 50;
+    G.ship.hull = Math.min(G.ship.maxHull, G.ship.hull + 40);
+    snd('repair_hull', 0.7); snd('purchase', 0.6);
+    addLog('Hull patched at Selûne\'s Tear (+40 HP).','gd');
+  } else if(type === 'air') {
+    if(G.ship.air >= (G.ship.maxAir||12)) { _lsLog('Air supply already full.'); return; }
+    if(G.ship.gold < 40) { _lsLog('Not enough gold for air resupply (40g).'); return; }
+    G.ship.gold -= 40;
+    G.ship.air = G.ship.maxAir || 12;
+    snd('purchase', 0.6);
+    addLog('Air supply restored at Selûne\'s Tear.','gd');
+  } else if(type === 'crew') {
+    if(G.ship.crew >= G.ship.maxCrew) { _lsLog('Crew already at full complement.'); return; }
+    if(G.ship.gold < 60) { _lsLog('Not enough gold for crew hire (60g).'); return; }
+    G.ship.gold -= 60;
+    G.ship.crew = Math.min(G.ship.maxCrew, G.ship.crew + 4);
+    snd('purchase', 0.6);
+    addLog('+4 IEN crew assigned at Selûne\'s Tear.','gd');
+  }
+  updateUI();
+  _lsRefreshDock();
+  _lsUpdateHud();
+}
+
+function _lsRefreshDock() {
+  document.getElementById('ls-dock-hull').textContent = G.ship.hull+'/'+G.ship.maxHull;
+  document.getElementById('ls-dock-crew').textContent = G.ship.crew+'/'+G.ship.maxCrew;
+  document.getElementById('ls-dock-air').textContent  = (G.ship.air||0)+' days';
+  document.getElementById('ls-dock-gold').textContent = G.ship.gold;
+  // Disable buttons when already full / can't afford
+  const hBtn = document.getElementById('ls-svc-hull');
+  const aBtn = document.getElementById('ls-svc-air');
+  const cBtn = document.getElementById('ls-svc-crew');
+  if(hBtn) hBtn.disabled = G.ship.hull >= G.ship.maxHull || G.ship.gold < 50;
+  if(aBtn) aBtn.disabled = G.ship.air  >= (G.ship.maxAir||12) || G.ship.gold < 40;
+  if(cBtn) cBtn.disabled = G.ship.crew >= G.ship.maxCrew || G.ship.gold < 60;
+  // Build QM shop grid
+  _lsBuildQmShop();
+}
+
+function _lsBuildQmShop() {
+  const grid = document.getElementById('ls-dock-shop-grid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  const stock = LOCAL_QUEST_DATA.realm?.qmStock;
+  if(!stock) return;
+  stock.items.forEach(item => {
+    if(item.act === 'upg' && G.ship.upgrades.includes(item.upg)) return;
+    const wKey = item.wk || (item.act === 'wpn' ? item.wpnKey : null);
+    if(wKey && G.ship.wpns.includes(wKey)) return;
+    if(wKey && wpnHasBetter(wKey, G.ship.wpns)) return;
+    if(item.act === 'hull40' && G.ship.hull >= G.ship.maxHull) return;
+    if(item.act === 'air'    && G.ship.air  >= (G.ship.maxAir||12)) return;
+    if(item.act === 'crew4'  && G.ship.crew >= G.ship.maxCrew) return;
+    const canAfford = G.ship.gold >= item.cost;
+    const row = document.createElement('div');
+    row.className = 'ls-dock-row';
+    row.style.cssText = 'padding:4px 6px;border-radius:4px;background:rgba(10,5,30,0.6);border:1px solid #33224433;';
+    if(!canAfford) row.style.opacity = '0.45';
+    row.innerHTML = `<span style="font-size:0.625em;color:#8899bb;">${item.ico} ${item.name}</span>
+      <button class="btn" style="font-size:0.563em;padding:3px 8px;" ${!canAfford?'disabled':''}>⚜ ${item.cost}g</button>`;
+    if(canAfford) {
+      row.querySelector('button').onclick = () => {
+        if(G.ship.gold < item.cost) return;
+        if(item.wk && WPN[item.wk]) {
+          wpnPickerOpen({...item, act:'wpn'}, 'ls');
+          return;
+        }
+        G.ship.gold -= item.cost;
+        let msg = '';
+        if(item.act==='hull40')   { G.ship.hull=Math.min(G.ship.maxHull,G.ship.hull+40); msg='Hull patched (+40).'; snd('repair_hull',0.7); }
+        else if(item.act==='air') { G.ship.air=G.ship.maxAir||12; msg='Air restored.'; }
+        else if(item.act==='crew4'){G.ship.crew=Math.min(G.ship.maxCrew,G.ship.crew+4); msg='+4 crew.'; }
+        else if(item.act==='upg') {
+          if(!G.ship.upgrades.includes(item.upg)){
+            G.ship.upgrades.push(item.upg);
+            if(item.upg==='plating'){G.ship.maxHull+=50;G.ship.hull+=50;}
+            if(item.upg==='engine'){G.ship.speed+=2;}
+            if(item.upg==='quarters'){G.ship.maxCrew+=8;G.ship.crew=G.ship.maxCrew;}
+            if(item.upg==='recycler'){G.ship.maxAir=(G.ship.maxAir||12)*2;G.ship.air=G.ship.maxAir;}
+            msg=item.name+' installed!'; snd('ship_upgrade',0.85);
+          }
+        } else if(item.itemKey) {
+          const itData = ITEMS[item.itemKey]||LQ_SPECIAL_ITEMS[item.itemKey];
+          if(itData){G.ship.inv.push({...itData,uid:uid()});msg=item.name+' added to hold.';}
+        }
+        snd('purchase',0.7);
+        addLog('QM: '+msg,'gd');
+        updateUI(); _lsRefreshDock();
+      };
+    }
+    grid.appendChild(row);
+  });
+}
+
+// ── HUD / LOG ──────────────────────────────────────────────────────────────
+function _lsUpdateHud() {
+  const hh = document.getElementById('ls-hud-hull');
+  const hc = document.getElementById('ls-hud-crew');
+  const hg = document.getElementById('ls-hud-gold');
+  if(hh) hh.textContent = G.ship.hull+'/'+G.ship.maxHull;
+  if(hc) hc.textContent = G.ship.crew+'/'+G.ship.maxCrew;
+  if(hg) hg.textContent = G.ship.gold;
+}
+
+let _lsLogTimer = null;
+function _lsLog(msg, cls='') {
+  const el = document.getElementById('ls-log-strip');
+  if(!el) return;
+  el.textContent = msg;
+  el.className = cls ? cls : '';
+  clearTimeout(_lsLogTimer);
+  if(msg) _lsLogTimer = setTimeout(()=>{ if(el.textContent===msg) el.textContent='Navigate to a point of interest.'; el.className=''; }, 6000);
+}
+
+// ── MAIN LOOP ─────────────────────────────────────────────────────────────
+function _lsLoop(ts) {
+  LS.animId = requestAnimationFrame(_lsLoop);
+  const dt = Math.min((ts - (LS.lastTs||ts)) / 1000, 0.05);
+  LS.lastTs = ts;
+  LS.t = ts / 1000;
+
+  if(!LS.dockOpen) {
+    _lsUpdatePlayer(dt);
+    _lsUpdateEnemies(dt);
+    _lsUpdateParticles(dt);
+    _lsCheckProximity();
+    _lsEnemySpawnTick(dt);
+  }
+
+  const cv = LS.canvas;
+  cv.width  = cv.parentElement.clientWidth;
+  cv.height = cv.parentElement.clientHeight;
+  const cW = cv.width, cH = cv.height;
+
+  // Camera — keep player centered
+  LS.camX = LS.px - cW/2;
+  LS.camY = LS.py - cH/2;
+
+  _lsRender(LS.ctx, cW, cH, dt);
+  _lsRenderMinimap();
+
+  // Patrol POI position update
+  LS.pois.forEach(p => {
+    if(p.patrol) {
+      p.patrolAngle = (p.patrolAngle + p.patrolSpeed * dt) % (Math.PI*2);
+      p.x = p._baseX + Math.cos(p.patrolAngle) * p.patrolR;
+      p.y = p._baseY + Math.sin(p.patrolAngle) * p.patrolR;
+    }
+  });
+}
+
+// ── PLAYER MOVEMENT ───────────────────────────────────────────────────────
+function _lsUpdatePlayer(dt) {
+  let ax = 0, ay = 0;
+  const K = LS.keys;
+  const j = LS.joystickActive;
+
+  if(K['w']||K['W']||K['ArrowUp'])    ay -= 1;
+  if(K['s']||K['S']||K['ArrowDown'])  ay += 1;
+  if(K['a']||K['A']||K['ArrowLeft'])  ax -= 1;
+  if(K['d']||K['D']||K['ArrowRight']) ax += 1;
+
+  if(j) { ax += LS.joystickX; ay += LS.joystickY; }
+
+  // Normalize diagonal
+  const mag = Math.sqrt(ax*ax+ay*ay);
+  if(mag > 1) { ax/=mag; ay/=mag; }
+
+  const hasInput = (mag > 0.05);
+
+  if(hasInput) {
+    // Cancel click-to-move when WASD pressed
+    LS.pTargetX = null; LS.pTargetY = null;
+    LS.pvx += ax * LS.pAccel * dt;
+    LS.pvy += ay * LS.pAccel * dt;
+    // Face direction of movement
+    LS.pAngle = Math.atan2(ay, ax);
+  }
+
+  // Click-to-move autopilot
+  if(!hasInput && LS.pTargetX !== null) {
+    const tdx = LS.pTargetX - LS.px;
+    const tdy = LS.pTargetY - LS.py;
+    const td  = Math.sqrt(tdx*tdx+tdy*tdy);
+    if(td < 12) {
+      LS.pTargetX = null; LS.pTargetY = null;
+      LS.pvx *= 0.6; LS.pvy *= 0.6;
+    } else {
+      const speed = Math.min(LS.pSpeed, td * 4);
+      LS.pvx += (tdx/td) * speed * dt * 3;
+      LS.pvy += (tdy/td) * speed * dt * 3;
+      LS.pAngle = Math.atan2(tdy, tdx);
+    }
+  }
+
+  // Speed cap
+  const spd = Math.sqrt(LS.pvx*LS.pvx+LS.pvy*LS.pvy);
+  if(spd > LS.pSpeed) { const s=LS.pSpeed/spd; LS.pvx*=s; LS.pvy*=s; }
+
+  // Friction
+  LS.pvx *= Math.pow(LS.pFriction, dt*60);
+  LS.pvy *= Math.pow(LS.pFriction, dt*60);
+
+  LS.px += LS.pvx * dt;
+  LS.py += LS.pvy * dt;
+
+  // Boundary clamp (sphere wall)
+  const margin = 80;
+  LS.px = Math.max(margin, Math.min(LS.W-margin, LS.px));
+  LS.py = Math.max(margin, Math.min(LS.H-margin, LS.py));
+
+  // Engine trail particles
+  if(spd > 8) {
+    const trailAngle = LS.pAngle + Math.PI + (Math.random()-0.5)*0.3;
+    LS.particles.push({
+      x: LS.px + Math.cos(trailAngle)*12,
+      y: LS.py + Math.sin(trailAngle)*12,
+      vx: Math.cos(trailAngle)*(20+Math.random()*15),
+      vy: Math.sin(trailAngle)*(20+Math.random()*15),
+      life:1, maxLife:0.55+Math.random()*0.25, r:2.5+Math.random()*2,
+      col:`rgba(${120+Math.floor(Math.random()*80)},80,255,`
+    });
+  }
+}
+
+// ── ENEMY AI UPDATE ───────────────────────────────────────────────────────
+function _lsUpdateEnemies(dt) {
+  const now = performance.now();
+  LS.enemies.forEach(e => {
+    e._blinkT = (e._blinkT||0) + dt;
+
+    const dx = LS.px - e.x;
+    const dy = LS.py - e.y;
+    const dist = Math.sqrt(dx*dx+dy*dy);
+
+    // Vision cone check
+    let canSee = dist < e.aggroRange; // always see if very close
+    if(!canSee && dist < e.visionRange) {
+      // Check if player is inside the vision cone in front of enemy
+      const toPlayerAngle = Math.atan2(dy, dx);
+      let angleDiff = toPlayerAngle - e.angle;
+      while(angleDiff > Math.PI)  angleDiff -= Math.PI*2;
+      while(angleDiff < -Math.PI) angleDiff += Math.PI*2;
+      canSee = Math.abs(angleDiff) < e.visionCone;
+    }
+
+    if(canSee) {
+      e.state = 'chase';
+      e.alertTimer = 2.0; // stay aggroed for 2s after losing sight
+    } else if(e.alertTimer > 0) {
+      e.alertTimer -= dt;
+      if(e.alertTimer <= 0) e.state = 'wander';
+    } else {
+      e.state = 'wander';
+    }
+
+    if(e.state === 'chase') {
+      // Accelerate toward player
+      if(dist > 1) {
+        e.vx += (dx/dist) * e.speed * dt * 2.5;
+        e.vy += (dy/dist) * e.speed * dt * 2.5;
+      }
+      const spd = Math.sqrt(e.vx*e.vx+e.vy*e.vy);
+      if(spd > e.speed) { e.vx*=e.speed/spd; e.vy*=e.speed/spd; }
+      e.angle = Math.atan2(dy, dx);
+
+      // Trigger combat when very close
+      if(dist < 48 && (now - LS.lastEncounterTime) > LS.ENCOUNTER_COOLDOWN) {
+        LS.lastEncounterTime = now;
+        _lsTriggerCombat(e);
+        return;
+      }
+    } else {
+      // Wander
+      e.wanderTimer -= dt;
+      if(e.wanderTimer <= 0) {
+        e.wanderAngle = Math.random() * Math.PI*2;
+        e.wanderTimer = 2 + Math.random()*3;
+        e.angle = e.wanderAngle;
+      }
+      e.vx += Math.cos(e.wanderAngle) * e.speed * 0.3 * dt;
+      e.vy += Math.sin(e.wanderAngle) * e.speed * 0.3 * dt;
+      const spd = Math.sqrt(e.vx*e.vx+e.vy*e.vy);
+      const maxWander = e.speed * 0.5;
+      if(spd > maxWander) { e.vx*=maxWander/spd; e.vy*=maxWander/spd; }
+      // Friction when wandering
+      e.vx *= Math.pow(0.92, dt*60);
+      e.vy *= Math.pow(0.92, dt*60);
+      e.angle = Math.atan2(e.vy||0.001, e.vx||0.001);
+    }
+
+    e.x += e.vx * dt;
+    e.y += e.vy * dt;
+
+    // Keep enemies inside world bounds
+    const em = 100;
+    if(e.x < em)        { e.x=em; e.vx=Math.abs(e.vx); e.wanderAngle=0; }
+    if(e.x > LS.W-em)   { e.x=LS.W-em; e.vx=-Math.abs(e.vx); e.wanderAngle=Math.PI; }
+    if(e.y < em)        { e.y=em; e.vy=Math.abs(e.vy); e.wanderAngle=Math.PI/2; }
+    if(e.y > LS.H-em)   { e.y=LS.H-em; e.vy=-Math.abs(e.vy); e.wanderAngle=-Math.PI/2; }
+
+    // Keep enemies away from station safe zone
+    const dock = LS.pois.find(p=>p.id==='dock');
+    if(dock) {
+      const ddx = e.x-dock.x, ddy = e.y-dock.y;
+      const dd = Math.sqrt(ddx*ddx+ddy*ddy);
+      if(dd < dock.safeRadius) {
+        const push = dock.safeRadius - dd + 10;
+        e.x += (ddx/dd)*push; e.y += (ddy/dd)*push;
+        e.vx += (ddx/dd)*50; e.vy += (ddy/dd)*50;
+      }
+    }
+  });
+}
+
+function _lsTriggerCombat(enemy) {
+  // Remove from local space enemies list
+  LS.enemies = LS.enemies.filter(e => e.uid !== enemy.uid);
+  // Flash alert on log
+  _lsLog('⚔ INTERCEPT — BATTLE STATIONS!', 'danger');
+  // Brief delay then open combat
+  setTimeout(() => {
+    // Pause LS loop but keep overlay hidden behind combat
+    document.getElementById('ov-localspace').classList.remove('on');
+    G.phase = 'map'; // startCombat needs phase=map or combat
+    // After combat, re-open local space
+    _lsPendingReturn = true;
+    startCombat(enemy.key);
+  }, 600);
+}
+
+// Flag so we re-open LS after combat ends when coming from LS
+let _lsPendingReturn = false;
+
+// ── PARTICLE UPDATE ───────────────────────────────────────────────────────
+function _lsUpdateParticles(dt) {
+  LS.particles = LS.particles.filter(p => {
+    p.x += p.vx*dt; p.y += p.vy*dt;
+    p.vx *= 0.90; p.vy *= 0.90;
+    p.life -= dt / p.maxLife;
+    return p.life > 0;
+  });
+}
+
+// ── PROXIMITY CHECK ───────────────────────────────────────────────────────
+function _lsCheckProximity() {
+  if(LS.dockOpen) return;
+  let closest = null, closestDist = Infinity;
+  LS.pois.forEach(p => {
+    const dx = LS.px-p.x, dy = LS.py-p.y;
+    const d = Math.sqrt(dx*dx+dy*dy);
+    if(d < p.r + 30 && d < closestDist) { closest=p; closestDist=d; }
+  });
+
+  if(closest !== LS.nearPoi) {
+    LS.nearPoi = closest;
+    if(closest) {
+      _lsShowInteract(closest);
+    } else {
+      document.getElementById('ls-interact-panel').classList.remove('on');
+      LS.interactOpen = false;
+    }
+  }
+}
+
+// ── INTERACTION PANEL ─────────────────────────────────────────────────────
+function _lsShowInteract(poi) {
+  const panel = document.getElementById('ls-interact-panel');
+  document.getElementById('ls-interact-name').textContent = poi.label;
+  document.getElementById('ls-interact-role').textContent = poi.role;
+  const btns = document.getElementById('ls-interact-btns');
+  btns.innerHTML = '';
+
+  if(poi.type === 'dock') {
+    document.getElementById('ls-interact-prompt').textContent =
+      "Selûne's Tear Station — IEN docking ring. Hull, air, crew and quartermaster supplies available.";
+    const dockBtn = document.createElement('button');
+    dockBtn.className='btn'; dockBtn.textContent='⚓ Dock';
+    dockBtn.onclick = () => {
+      _lsLog('Docked at Selûne\'s Tear Station.','');
+      LS.dockOpen = true;
+      LS.pTargetX = null; LS.pTargetY = null;
+      panel.classList.remove('on');
+      _lsRefreshDock();
+      document.getElementById('ls-dock-panel').classList.add('on');
+    };
+    btns.appendChild(dockBtn);
+
+  } else if(poi.type === 'npc') {
+    const npcData = LOCAL_QUEST_DATA.realm?.npcs.find(n=>n.id===poi.npcId);
+    if(npcData) {
+      document.getElementById('ls-interact-prompt').textContent =
+        npcData.greet.slice(0, 100) + (npcData.greet.length>100?'…':'');
+      const hailBtn = document.createElement('button');
+      hailBtn.className='btn'; hailBtn.textContent='📡 Hail';
+      hailBtn.onclick = () => {
+        // Open the NPC card from the LQ system but inside LS context
+        ensureLqState();
+        LQ.sphere = 'realm'; LQ.data = LOCAL_QUEST_DATA.realm;
+        panel.classList.remove('on');
+        if(npcData.shop) {
+          LQ.selectedNpc = npcData;
+          // Open QM shop in a LS-friendly way
+          _lsOpenQmCard(npcData);
+        } else {
+          LQ.selectedNpc = npcData;
+          _lsOpenNpcCard(npcData);
+        }
+      };
+      btns.appendChild(hailBtn);
+    }
+
+  } else if(poi.type === 'fragment') {
+    const fs = G.fragSites?.find(f=>f.sphere==='realm')||null;
+    if(fs && !fs.found) {
+      document.getElementById('ls-interact-prompt').textContent =
+        "A fragment of the Astral Chart pulses faintly — power signatures detected. This is what you came for.";
+      const collectBtn = document.createElement('button');
+      collectBtn.className='btn'; collectBtn.style.color='#ffdd44';
+      collectBtn.textContent='🔮 Investigate';
+      collectBtn.onclick = () => {
+        // Trigger the guardian fight then fragment pickup
+        panel.classList.remove('on');
+        _lsLog('⚔ Fragment Guardian detected!','danger');
+        setTimeout(()=>{
+          document.getElementById('ov-localspace').classList.remove('on');
+          G.phase='map'; _lsPendingReturn=true; _lsPendingFragment=fs;
+          startCombat(fs.guardianKey||'fg_realm');
+        }, 600);
+      };
+      btns.appendChild(collectBtn);
+    } else {
+      document.getElementById('ls-interact-prompt').textContent =
+        fs?.found ? "Fragment recovered — the Astral Chart slot is empty." : "Fragment site — no data.";
+    }
+
+  } else if(poi.type === 'hazard_zone') {
+    document.getElementById('ls-interact-prompt').textContent =
+      "⚠ Neogi disruption field — enemy activity is heavy. Proceed with caution.";
+    const closeBtn = document.createElement('button');
+    closeBtn.className='btn'; closeBtn.textContent='⚠ Acknowledged';
+    closeBtn.onclick = () => panel.classList.remove('on');
+    btns.appendChild(closeBtn);
+  }
+
+  panel.classList.add('on');
+  LS.interactOpen = true;
+}
+
+// ── NPC CARD (inline, reuses LQ card logic) ───────────────────────────────
+function _lsOpenNpcCard(npc) {
+  // Reuse the existing LQ card overlay — it sits on top of LS
+  showLqCard(npc);
+  // Make the lq-card visible on top of LS overlay
+  document.getElementById('lq-card').style.zIndex = '70';
+}
+
+function _lsOpenQmCard(npc) {
+  showLqShop(npc);
+  document.getElementById('lq-shop').style.zIndex = '70';
+}
+
+// ── ENEMY SPAWN TICK ───────────────────────────────────────────────────────
+let _lsPendingFragment = null;
+
+function _lsEnemySpawnTick(dt) {
+  LS._enemySpawnTimer += dt;
+  if(LS._enemySpawnTimer < LS._enemySpawnInterval) return;
+  LS._enemySpawnTimer = 0;
+
+  // Don't overcrowd
+  if(LS.enemies.length >= 8) return;
+
+  // Spawn on world edge, far from player
+  const angle = Math.random() * Math.PI*2;
+  const sr = Math.min(LS.W, LS.H) * 0.48;
+  const sx = LS.W/2 + Math.cos(angle)*sr;
+  const sy = LS.H/2 + Math.sin(angle)*sr;
+  const dx = LS.px-sx, dy = LS.py-sy;
+  if(Math.sqrt(dx*dx+dy*dy) < 400) return; // too close to player
+
+  // Weighted enemy selection for Realmspace
+  const pool = ['neogi','corsair','nautiloid','goblin_cutter','blackfleet'];
+  const weights = [0.35, 0.25, 0.20, 0.12, 0.08];
+  let r = Math.random(), key = pool[0];
+  for(let i=0; i<pool.length; i++) { r-=weights[i]; if(r<=0){key=pool[i];break;} }
+  _lsSpawnEnemy(key, sx, sy);
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────
+function _lsRender(cx, W, H, dt) {
+  cx.clearRect(0,0,W,H);
+
+  // Background — deep space gradient
+  cx.fillStyle='#020010'; cx.fillRect(0,0,W,H);
+  // Nebula tint for Realmspace (blue)
+  const nb = cx.createRadialGradient(W*0.5,H*0.5,0,W*0.5,H*0.5,W*0.65);
+  nb.addColorStop(0,'rgba(20,40,120,0.18)'); nb.addColorStop(1,'transparent');
+  cx.fillStyle=nb; cx.fillRect(0,0,W,H);
+
+  cx.save();
+  cx.translate(-LS.camX, -LS.camY);
+
+  // ── Sphere wall boundary ──
+  const bR = Math.min(LS.W, LS.H)*0.498;
+  const wallGrd = cx.createRadialGradient(LS.W/2,LS.H/2,bR*0.88,LS.W/2,LS.H/2,bR);
+  wallGrd.addColorStop(0,'transparent');
+  wallGrd.addColorStop(0.6,'rgba(30,60,180,0.08)');
+  wallGrd.addColorStop(1,'rgba(40,80,220,0.35)');
+  cx.fillStyle=wallGrd;
+  cx.beginPath(); cx.arc(LS.W/2,LS.H/2,bR,0,Math.PI*2); cx.fill();
+  cx.strokeStyle='#4466cc44'; cx.lineWidth=2;
+  cx.beginPath(); cx.arc(LS.W/2,LS.H/2,bR,0,Math.PI*2); cx.stroke();
+
+  // ── Stars ──
+  LS.stars.forEach(s => {
+    const tw = 0.5+0.5*Math.sin(LS.t*s.spd*6+s.twk);
+    cx.globalAlpha = 0.1+0.7*tw*s.b;
+    cx.fillStyle='#fff';
+    cx.beginPath(); cx.arc(s.x,s.y,s.r*(0.7+0.3*tw),0,Math.PI*2); cx.fill();
+  });
+  cx.globalAlpha=1;
+
+  // ── Hazard zone shading ──
+  LS.pois.filter(p=>p.type==='hazard_zone'||p.type==='patrol_zone').forEach(p=>{
+    const g = cx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);
+    // Convert #rrggbb to rgba() — Canvas doesn't support 8-digit hex
+    const hex = p.col.replace('#','');
+    const r=parseInt(hex.slice(0,2),16), gv=parseInt(hex.slice(2,4),16), b=parseInt(hex.slice(4,6),16);
+    g.addColorStop(0,`rgba(${r},${gv},${b},0.13)`);
+    g.addColorStop(1,'transparent');
+    cx.fillStyle=g; cx.beginPath(); cx.arc(p.x,p.y,p.r,0,Math.PI*2); cx.fill();
+  });
+
+  // ── POI icons ──
+  LS.pois.filter(p=>p.type!=='hazard_zone'&&p.type!=='patrol_zone').forEach(p=>{
+    // Orbit ring / glow
+    const grd = cx.createRadialGradient(p.x,p.y,0,p.x,p.y,38);
+    grd.addColorStop(0,hexA(p.col,'33')); grd.addColorStop(1,'transparent');
+    cx.fillStyle=grd; cx.beginPath(); cx.arc(p.x,p.y,38,0,Math.PI*2); cx.fill();
+
+    // Pulse ring for dock and fragment
+    if(p.type==='dock'||p.type==='fragment') {
+      const pulse = 0.5+0.5*Math.sin(LS.t*1.5+(p.type==='fragment'?1.2:0));
+      cx.strokeStyle=p.col+(Math.floor(55+pulse*100).toString(16).padStart(2,'0'));
+      cx.lineWidth=1.5; cx.setLineDash([4,6]);
+      cx.beginPath(); cx.arc(p.x,p.y,p.r+8+pulse*6,0,Math.PI*2); cx.stroke();
+      cx.setLineDash([]);
+    }
+
+    // Label
+    cx.font='bold 11px "Cinzel",serif'; cx.textAlign='center'; cx.fillStyle=p.col;
+    cx.fillText(p.label, p.x, p.y+p.r+16);
+    cx.font='9px "Crimson Text",serif'; cx.fillStyle=hexA(p.col,'88');
+    cx.fillText(p.role, p.x, p.y+p.r+28);
+
+    // Icon
+    cx.font='22px Arial'; cx.textAlign='center'; cx.textBaseline='middle';
+    cx.fillText(p.icon, p.x, p.y);
+    cx.textBaseline='alphabetic';
+  });
+
+  // ── Enemy ships ──
+  LS.enemies.forEach(e => {
+    const isChasing = e.state==='chase';
+    const ec = _lsEnemyColor(e.key);
+    const blinkAlpha = isChasing ? (0.6+0.4*Math.sin(LS.t*5+e._blinkT)) : 1;
+
+    // Vision cone
+    if(!isChasing) {
+      cx.save(); cx.globalAlpha=0.08;
+      cx.fillStyle=ec;
+      cx.beginPath();
+      cx.moveTo(e.x,e.y);
+      cx.arc(e.x,e.y,e.visionRange,e.angle-e.visionCone,e.angle+e.visionCone);
+      cx.closePath(); cx.fill(); cx.restore();
+    } else {
+      // Aggro alert ring
+      cx.save(); cx.globalAlpha = 0.3+0.3*Math.sin(LS.t*6);
+      cx.strokeStyle='#ff4444'; cx.lineWidth=2;
+      cx.beginPath(); cx.arc(e.x,e.y,22,0,Math.PI*2); cx.stroke();
+      cx.restore();
+    }
+
+    // Ship body
+    cx.save(); cx.translate(e.x,e.y); cx.rotate(e.angle+Math.PI/2);
+    cx.globalAlpha=blinkAlpha;
+    cx.fillStyle=isChasing?'#ff6644':ec;
+    cx.shadowColor=ec; cx.shadowBlur=isChasing?16:8;
+    _lsDrawShipSilhouette(cx, e.key);
+    cx.shadowBlur=0; cx.restore(); cx.globalAlpha=1;
+
+    // Enemy label
+    cx.font='8px "Cinzel",serif'; cx.textAlign='center';
+    cx.fillStyle=isChasing?'#ff8866':hexA(ec,'cc');
+    const eName = ENM[e.key]?.name || e.key;
+    cx.fillText(eName.split(' ').slice(0,2).join(' '), e.x, e.y-20);
+    if(isChasing) {
+      cx.font='bold 9px Arial'; cx.fillStyle='#ff4444';
+      cx.fillText('⚔', e.x, e.y-30);
+    }
+  });
+
+  // ── Particles ──
+  LS.particles.forEach(p => {
+    cx.globalAlpha=Math.max(0,p.life)*0.7;
+    cx.fillStyle=p.col+(Math.floor(p.life*200).toString(16).padStart(2,'0'))+')';
+    cx.beginPath(); cx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2); cx.fill();
+  });
+  cx.globalAlpha=1;
+
+  // ── Player ship ──
+  cx.save(); cx.translate(LS.px, LS.py); cx.rotate(LS.pAngle+Math.PI/2);
+  cx.shadowColor='#88aaff'; cx.shadowBlur=18;
+  cx.fillStyle='#aaccff';
+  cx.beginPath(); cx.moveTo(0,-14); cx.lineTo(-7,10); cx.lineTo(0,5); cx.lineTo(7,10); cx.closePath(); cx.fill();
+  cx.strokeStyle='#ffffff44'; cx.lineWidth=1; cx.stroke();
+  cx.shadowBlur=0;
+  cx.restore();
+
+  // Click-to-move target indicator
+  if(LS.pTargetX !== null) {
+    const pulse = 0.5+0.5*Math.sin(LS.t*8);
+    cx.strokeStyle=`rgba(100,180,255,${0.3+0.4*pulse})`;
+    cx.lineWidth=1.5; cx.setLineDash([3,5]);
+    cx.beginPath(); cx.arc(LS.pTargetX,LS.pTargetY,8+pulse*4,0,Math.PI*2); cx.stroke();
+    cx.setLineDash([]);
+    // Line from player to target
+    cx.strokeStyle='rgba(80,140,220,0.18)'; cx.lineWidth=1;
+    cx.setLineDash([4,8]);
+    cx.beginPath(); cx.moveTo(LS.px,LS.py); cx.lineTo(LS.pTargetX,LS.pTargetY); cx.stroke();
+    cx.setLineDash([]);
+  }
+
+  cx.restore(); // end world transform
+}
+
+function _lsEnemyColor(key) {
+  const map = {
+    neogi:'#ff4466', nautiloid:'#aa44ff', corsair:'#ff8833',
+    blackfleet:'#cc2200', goblin_cutter:'#88cc22', scro_patrol:'#cc6600',
+    phlog_mote:'#ffcc00', phlog_flamewing:'#ff4400',
+  };
+  return map[key] || '#aaaaaa';
+}
+
+function _lsDrawShipSilhouette(ctx, key) {
+  // Simple silhouette shapes per enemy type — top-down, nose up
+  if(key==='neogi') {
+    ctx.beginPath();
+    ctx.moveTo(0,-12); ctx.lineTo(-9,5); ctx.lineTo(-4,2); ctx.lineTo(0,8);
+    ctx.lineTo(4,2); ctx.lineTo(9,5); ctx.closePath(); ctx.fill();
+    // Spider legs
+    ctx.strokeStyle=ctx.fillStyle; ctx.lineWidth=1;
+    for(let i=-1;i<=1;i+=2){
+      ctx.beginPath(); ctx.moveTo(i*4,0); ctx.lineTo(i*14,-4); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(i*5,4); ctx.lineTo(i*14,4);  ctx.stroke();
+    }
+  } else if(key==='nautiloid') {
+    ctx.beginPath();
+    ctx.ellipse(0,0,6,13,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-10,3); ctx.quadraticCurveTo(0,-8,10,3);
+    ctx.quadraticCurveTo(0,12,-10,3); ctx.fill();
+  } else if(key==='blackfleet') {
+    ctx.beginPath();
+    ctx.moveTo(0,-14); ctx.lineTo(-10,8); ctx.lineTo(-4,4); ctx.lineTo(0,10);
+    ctx.lineTo(4,4); ctx.lineTo(10,8); ctx.closePath(); ctx.fill();
+  } else {
+    // Generic ship silhouette
+    ctx.beginPath();
+    ctx.moveTo(0,-11); ctx.lineTo(-6,7); ctx.lineTo(0,3); ctx.lineTo(6,7);
+    ctx.closePath(); ctx.fill();
+  }
+}
+
+// ── MINIMAP RENDER ────────────────────────────────────────────────────────
+function _lsRenderMinimap() {
+  const mc = LS.mmCanvas;
+  if(!mc) return;
+  mc.width = 110; mc.height = 110;
+  const mx = LS.mmCtx;
+  const scale = 110 / Math.max(LS.W, LS.H);
+  const ox = (110 - LS.W*scale)/2;
+  const oy = (110 - LS.H*scale)/2;
+
+  mx.clearRect(0,0,110,110);
+  mx.fillStyle='rgba(2,0,16,0.7)'; mx.fillRect(0,0,110,110);
+
+  // Sphere boundary
+  mx.strokeStyle='#4466cc33'; mx.lineWidth=1;
+  mx.beginPath(); mx.arc(55,55,53,0,Math.PI*2); mx.stroke();
+
+  // Hazard zones
+  LS.pois.filter(p=>p.type==='hazard_zone').forEach(p=>{
+    mx.fillStyle='#ff333322';
+    mx.beginPath(); mx.arc(ox+p.x*scale,oy+p.y*scale,p.r*scale,0,Math.PI*2); mx.fill();
+  });
+
+  // POIs
+  LS.pois.filter(p=>p.type!=='hazard_zone'&&p.type!=='patrol_zone').forEach(p=>{
+    mx.fillStyle=p.col;
+    mx.beginPath(); mx.arc(ox+p.x*scale,oy+p.y*scale,3,0,Math.PI*2); mx.fill();
+  });
+
+  // Enemies
+  LS.enemies.forEach(e=>{
+    mx.fillStyle=_lsEnemyColor(e.key);
+    mx.beginPath(); mx.arc(ox+e.x*scale,oy+e.y*scale,2,0,Math.PI*2); mx.fill();
+  });
+
+  // Player
+  mx.fillStyle='#aaccff';
+  mx.beginPath(); mx.arc(ox+LS.px*scale,oy+LS.py*scale,3.5,0,Math.PI*2); mx.fill();
+  mx.strokeStyle='#ffffff55'; mx.lineWidth=1;
+  mx.beginPath(); mx.arc(ox+LS.px*scale,oy+LS.py*scale,3.5,0,Math.PI*2); mx.stroke();
+}
+
+// ── KEYBOARD INPUT ────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if(!document.getElementById('ov-localspace')?.classList.contains('on')) return;
+  if(LS.dockOpen) return;
+  LS.keys[e.key] = true;
+  // Escape — close interaction panel or exit
+  if(e.key === 'Escape') {
+    if(LS.interactOpen) {
+      document.getElementById('ls-interact-panel').classList.remove('on');
+      LS.interactOpen=false; LS.nearPoi=null;
+    }
+  }
+  e.stopPropagation();
+});
+document.addEventListener('keyup', e => {
+  if(!document.getElementById('ov-localspace')?.classList.contains('on')) return;
+  delete LS.keys[e.key];
+});
+
+// ── CLICK-TO-MOVE ON CANVAS ───────────────────────────────────────────────
+document.getElementById('ls-canvas').addEventListener('click', e => {
+  if(!document.getElementById('ov-localspace')?.classList.contains('on')) return;
+  if(LS.dockOpen || LS.interactOpen) return;
+  const rect = LS.canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (LS.canvas.width / rect.width);
+  const my = (e.clientY - rect.top)  * (LS.canvas.height / rect.height);
+  // Convert screen to world coords
+  LS.pTargetX = mx + LS.camX;
+  LS.pTargetY = my + LS.camY;
+});
+
+// ── MOBILE JOYSTICK ───────────────────────────────────────────────────────
+(function() {
+  const zone  = document.getElementById('ls-joystick-zone');
+  const knob  = document.getElementById('ls-joystick-knob');
+  if(!zone||!knob) return;
+  let startX=0, startY=0, _active=false;
+  const R=32;
+  zone.addEventListener('touchstart', e=>{
+    e.preventDefault(); _active=true; LS.joystickActive=true;
+    const t=e.touches[0];
+    const rect=zone.getBoundingClientRect();
+    startX=rect.left+50; startY=rect.top+50;
+    _updateKnob(t.clientX,t.clientY);
+  },{passive:false});
+  zone.addEventListener('touchmove', e=>{
+    e.preventDefault(); if(!_active) return;
+    _updateKnob(e.touches[0].clientX, e.touches[0].clientY);
+  },{passive:false});
+  zone.addEventListener('touchend', ()=>{
+    _active=false; LS.joystickActive=false; LS.joystickX=0; LS.joystickY=0;
+    knob.style.transform='translate(-50%,-50%)';
+  });
+  function _updateKnob(cx,cy){
+    let dx=cx-startX, dy=cy-startY;
+    const d=Math.sqrt(dx*dx+dy*dy);
+    if(d>R){ dx*=R/d; dy*=R/d; }
+    knob.style.transform=`translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+    LS.joystickX = dx/R; LS.joystickY = dy/R;
+    if(d>4) LS.pAngle = Math.atan2(dy,dx);
+  }
+})();
+
+// ── PATROL POI BASE POSITIONS (initialize before first loop) ──────────────
+// Must run after _lsDefinePois sets up the pois array
+function _lsInitPatrolBases() {
+  LS.pois.forEach(p => {
+    if(p.patrol) { p._baseX = p.x; p._baseY = p.y; }
+  });
+}
+
+// ── POST-COMBAT RETURN HOOK ───────────────────────────────────────────────
+// We patch into the existing combat end flow so that when _lsPendingReturn is
+// set we re-open the LS overlay instead of going to map.
+// We do this by wrapping the existing combatVictory / combatDefeat exit points.
+const _lsOrigCombatWinCleanup = typeof _combatWinCleanup === 'function' ? _combatWinCleanup : null;
+function _lsCheckReturnAfterCombat() {
+  if(_lsPendingReturn) {
+    _lsPendingReturn = false;
+    // Track kill for local quest
+    if(G.cbt?.enemy?._key) lqTrackKill(G.cbt.enemy._key);
+    // Check fragment pending
+    if(_lsPendingFragment) {
+      const fs = _lsPendingFragment; _lsPendingFragment = null;
+      setTimeout(() => {
+        if(!fs.found) {
+          arriveAtFragSite(fs);
+        }
+        setTimeout(() => openLocalSpace(), 800);
+      }, 400);
+      return;
+    }
+    setTimeout(() => openLocalSpace(), 600);
+  }
+}
+
 function openLocalQuest() {
   const sphereId = G.ship.loc;
   const data = LOCAL_QUEST_DATA[sphereId];
@@ -13575,27 +14946,27 @@ function lqRenderLoop(ts=0) {
 
   // Sphere glow
   const grd = cx.createRadialGradient(cx_, cy_, 0, cx_, cy_, sphR*2.2);
-  grd.addColorStop(0, col + '33'); grd.addColorStop(1, 'transparent');
+  grd.addColorStop(0, hexA(col, '33')); grd.addColorStop(1, 'transparent');
   cx.fillStyle = grd; cx.beginPath(); cx.arc(cx_, cy_, sphR*2.2, 0, Math.PI*2); cx.fill();
 
   // Sphere body
   const sg = cx.createRadialGradient(cx_-sphR*0.25, cy_-sphR*0.25, sphR*0.1, cx_, cy_, sphR);
-  sg.addColorStop(0, col + 'cc'); sg.addColorStop(0.5, col + '66'); sg.addColorStop(1, col + '22');
+  sg.addColorStop(0, hexA(col, 'cc')); sg.addColorStop(0.5, hexA(col, '66')); sg.addColorStop(1, hexA(col, '22'));
   cx.fillStyle = sg; cx.beginPath(); cx.arc(cx_, cy_, sphR, 0, Math.PI*2); cx.fill();
 
   // Sphere border
-  cx.strokeStyle = col + 'aa'; cx.lineWidth = 1.5; cx.globalAlpha = 0.6;
+  cx.strokeStyle = hexA(col, 'aa'); cx.lineWidth = 1.5; cx.globalAlpha = 0.6;
   cx.beginPath(); cx.arc(cx_, cy_, sphR, 0, Math.PI*2); cx.stroke();
   cx.globalAlpha = 1;
 
   // Sphere label
   cx.font = 'bold 11px "Cinzel",serif'; cx.textAlign = 'center'; cx.fillStyle = col;
   cx.fillText(G.spheres.find(s=>s.id===LQ.sphere)?.n || LQ.sphere, cx_, cy_ + sphR + 16);
-  cx.font = '9px "Crimson Text",serif'; cx.fillStyle = col + '88';
+  cx.font = '9px "Crimson Text",serif'; cx.fillStyle = hexA(col, '88');
   cx.fillText('Quest Hub', cx_, cy_ + sphR + 28);
 
   // Orbit ring
-  cx.strokeStyle = col + '22'; cx.lineWidth = 1; cx.setLineDash([4,8]);
+  cx.strokeStyle = hexA(col, '22'); cx.lineWidth = 1; cx.setLineDash([4,8]);
   LQ.data.npcs.forEach((_, i) => {
     const orbitR = LQ.npcOrbits[i] * Math.min(W,H);
     cx.beginPath(); cx.arc(cx_, cy_, orbitR, 0, Math.PI*2); cx.stroke();
@@ -13615,7 +14986,7 @@ function lqRenderLoop(ts=0) {
     // Glow
     const ng = cx.createRadialGradient(nx,ny,0,nx,ny,22);
     const nc = isSelected ? '#ffffaa' : (questStatus==='done'?'#44ffcc':(questStatus==='active'?'#ffaa33':npc.color));
-    ng.addColorStop(0, nc+'44'); ng.addColorStop(1, 'transparent');
+    ng.addColorStop(0, hexA(nc,'44')); ng.addColorStop(1, 'transparent');
     cx.fillStyle = ng; cx.beginPath(); cx.arc(nx,ny,22,0,Math.PI*2); cx.fill();
 
     // Ship hull
@@ -13644,7 +15015,7 @@ function lqRenderLoop(ts=0) {
 
     // NPC label
     cx.font = '9px "Cinzel",serif'; cx.textAlign='center'; cx.textBaseline='alphabetic';
-    cx.fillStyle = nc + 'cc';
+    cx.fillStyle = hexA(nc, 'cc');
     cx.fillText(npc.name.split(' ')[0] + ' ' + (npc.name.split(' ')[1]||''), nx, ny+24);
 
     // Store screen position for click detection
@@ -13654,7 +15025,7 @@ function lqRenderLoop(ts=0) {
   // Connection lines to selected NPC
   if(LQ.selectedNpc) {
     const npc = LQ.selectedNpc;
-    cx.strokeStyle = npc.color + '44'; cx.lineWidth=1; cx.setLineDash([5,8]);
+    cx.strokeStyle = hexA(npc.color, '44'); cx.lineWidth=1; cx.setLineDash([5,8]);
     cx.beginPath(); cx.moveTo(cx_,cy_); cx.lineTo(npc._sx||cx_+200, npc._sy||cy_); cx.stroke();
     cx.setLineDash([]);
   }
@@ -14361,6 +15732,8 @@ window.addEventListener('keydown', e=>{
         close: ()=> closeOverlay('journal') },
       { check: ()=> { const el=document.getElementById('ov-localquest'); return el&&(el.classList.contains('on')); },
         close: ()=> lqBack() },
+      { check: ()=> { const el=document.getElementById('ov-localspace'); return el&&(el.classList.contains('on')); },
+        close: ()=> closeLsOverlay() },
       { check: ()=> document.getElementById('ov-waypoint')?.classList.contains('on'),
         close: ()=> departWaypoint?.() },
       { check: ()=> document.getElementById('ov-port')?.classList.contains('on'),
