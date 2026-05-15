@@ -8160,10 +8160,16 @@ function tsRenderSphere(ctx, W, H, dt) {
   // then draw everything above that as "interior" and the arc itself as the wall.
   // ─────────────────────────────────────────────────────────────────────────
 
-  // Wall Y position: starts above screen, descends until it nearly touches the ship bow.
-  // Ship bow tip is at roughly shipY - sh*0.45 ≈ H*0.55 - H*0.05 ≈ H*0.50
-  // At eased=1 we want wallY centre ≈ H*0.58 so the bow grazes the wall.
-  const wallY = H * (-0.05 + eased * 0.63);
+  // Wall Y: starts above screen, ends right at the ship's bow tip.
+  // Ship is at H*0.55, bow tip (nose up, rotated -90°) is at shipY - sw*0.5.
+  // We compute a target wallY that lands exactly on that tip at eased=1.
+  // sw comes from shipSz(type, 100, 60) — biggest ship (manow) = 250px wide → tip at H*0.55-125.
+  // We use a generous target so any ship class grazes the wall.
+  const _csShipType = G.ship?.type || 'pinnace';
+  const [_csSW] = shipSz(_csShipType, 100, 60);
+  const bowTipY  = H * 0.55 - _csSW * 0.52; // bow tip in screen px
+  // wallY at eased=1 should equal bowTipY. At eased=0 it starts just above screen.
+  const wallY = H * (-0.05) + eased * (bowTipY + H * 0.05);
 
   // Curve: bows upward at edges as sphere curves away
   const curveDepth = H * (0.02 + eased * 0.22);
