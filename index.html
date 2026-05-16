@@ -560,32 +560,50 @@ body {
 }
 
 @media (max-width: 700px) {
-  /* Watch HUD — compact and bottom-center on mobile */
+  /* Watch HUD — compact pill at top-right on mobile, out of the way */
   #watch-hud {
-    top: auto;
-    bottom: 54px;
-    left: 50%;
-    transform: translateX(-50%);
-    min-width: 0;
-    width: auto;
-    padding: 3px 10px;
-    gap: 2px;
-    font-size: 0.5em;
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    left: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    min-width: 0 !important;
+    width: auto !important;
+    max-width: 180px;
+    padding: 3px 8px !important;
+    gap: 1px !important;
+    font-size: 0.5em !important;
+    z-index: 54;
   }
-  .wh-pip { width: 7px; height: 7px; }
-  .wh-row { gap: 5px; }
+  .wh-pip { width: 6px !important; height: 6px !important; }
+  .wh-row { gap: 4px !important; }
   /* ── Layout skeleton ───────────────────────────────────── */
   body {
     grid-template-columns: 1fr;
     grid-template-rows: 44px 36px 1fr 48px;
     grid-template-areas: "hdr" "mhud" "main" "log";
     overflow: hidden;
-    font-size: calc(17px * var(--fs));  /* slightly larger base on mobile */
+    font-size: calc(17px * var(--fs));
   }
-  #sidebar { display: none; }
-  #mobile-hud { display: flex; grid-area: mhud; height: 36px; }
+  #sidebar {
+    display: none;
+    position: absolute;
+    width: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  #main {
+    grid-area: main;
+    width: 100%;
+    height: 100%;
+  }
+  #gc {
+    width: 100% !important;
+    height: 100% !important;
+  }
 
-  /* ── Header — hide logo, buttons fill full width ─── */
+  #mobile-hud { display: flex; grid-area: mhud; height: 36px; }
   #header { padding: 0 6px; justify-content: flex-start; gap: 4px; }
   #header h1 { display: none; }
   #header > div { gap: 4px; flex: 1; }
@@ -1499,7 +1517,7 @@ body {
   position:absolute; top:10px; left:50%; transform:translateX(-50%);
   background:rgba(4,0,14,0.94); border:1px solid #44118866; border-radius:6px;
   padding:6px 14px; display:none; flex-direction:column; align-items:center; gap:3px;
-  z-index:55; min-width:210px; pointer-events:none;
+  z-index:55; min-width:210px; max-width:320px; width:fit-content; pointer-events:none;
 }
 #watch-hud.on { display:flex; }
 #watch-hud.hidden-by-overlay { display:none !important; }
@@ -4944,12 +4962,11 @@ function initGame() {
   ensureLqState(); updateUI(); updateFragUI();
   // ── Set mobile-appropriate initial zoom ──────────────────────────────────
   if(window.innerWidth <= 700) {
-    // Calculate zoom so the chart fills ~90% of the shorter screen dimension
-    // Chart is drawn across the full canvas; zoom 1 = canvas pixels = CSS pixels
-    // Smaller screens need less zoom to see the full chart
     const mz = Math.max(0.55, Math.min(0.75, window.innerWidth / 600));
     G.view.zoom   = mz;
     G.view.follow = true;
+    G.view.panX   = 0;
+    G.view.panY   = 0;
   }
   // ── Initialize watch budget (no lane yet — use open drift defaults)
   G.watch.moveBudget = calcMoveBudget({ flow: 0 }, G.ship);
