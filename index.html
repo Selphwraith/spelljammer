@@ -2178,8 +2178,8 @@ body {
 
   <!-- END SCREENS -->
   <div class="endscr" id="scr-defeat">
-    <div class="etitle d">☠ Ship Destroyed ☠</div>
-    <div class="etext">Your vessel splinters in the void. The Elder Brain's laughter echoes across the Phlogiston.</div>
+    <div class="etitle d" id="defeat-title">☠ Ship Destroyed ☠</div>
+    <div class="etext" id="defeat-msg">Your vessel splinters in the void.</div>
     <button class="btn dmg" onclick="restart()">Try Again</button>
   </div>
   <div class="endscr" id="scr-win">
@@ -3715,7 +3715,7 @@ function tickLeg() {
     G.watch.day++;
     G.travelDays = (G.travelDays || 0) + 1;
     G.ship.air   = Math.max(0, G.ship.air - 1);
-    if (G.ship.air <= 0) { updateUI(); doDefeat(); return; }
+    if (G.ship.air <= 0) { updateUI(); doDefeat('air'); return; }
     addLog(`06:00 — Day ${G.watch.day}. Air: ${G.ship.air} days remaining.`, '');
   }
   updateUI();
@@ -3746,7 +3746,7 @@ function restAdvanceToMorning() {
     G.watch.day++;
     G.travelDays = (G.travelDays || 0) + 1;
     G.ship.air   = Math.max(0, G.ship.air - 1);
-    if (G.ship.air <= 0) { updateUI(); doDefeat(); return; }
+    if (G.ship.air <= 0) { updateUI(); doDefeat('air'); return; }
   }
   updateUI();
   updateWatchHUD();
@@ -6495,7 +6495,7 @@ function travelTick(){
   // ── Roaming faction encounter (once per watch segment) ────
   // Low rate — NPCs are rare encounters, not constant interruptions
   const roamKey = `_roam${Math.round(segEnd)}`;
-  if(!G.tvl[roamKey] && G.tvl.prog > segStart + (segEnd-segStart)*0.5 && Math.random() < 0.006){
+  if(!G.tvl[roamKey] && G.tvl.prog > segStart + (segEnd-segStart)*0.5 && Math.random() < 0.0015){
     G.tvl[roamKey] = true;
     const factionId = SPHERE_FACTION[G.tvl.to||''] || SPHERE_FACTION[G.tvl.from||''];
     if(factionId && FACTIONS[factionId]){
@@ -6530,7 +6530,7 @@ function travelTick(){
   if(fatigueLevel()>=3 && G.tvl.cur % Math.max(1,Math.floor(G.tvl.steps/3))===0){
     const dmg=Math.ceil(Math.random()*3); G.ship.hull=Math.max(0,G.ship.hull-dmg);
     addLog(`⚠ Exhausted crew — navigation error! Hull −${dmg}.`,'dmg'); updateUI();
-    if(G.ship.hull<=0){clearInterval(G.tvl.timer);doDefeat();return;}
+    if(G.ship.hull<=0){clearInterval(G.tvl.timer);doDefeat('hull_travel');return;}
   }
 
   // ── Watch segment complete ─────────────────────────────────
@@ -7586,8 +7586,50 @@ function tsSpawnEvent(type, label, key) {
       alpha: 0, triggered: false
     });
   } else {
-    // Waypoints and roam events — top-center descent as before
-    TS.events.push({ type, label, key, y: -120, alpha: 0, triggered: false });
+    // Waypoints and roam events — varied approach directions, same as enemies
+    const sc = Math.random();
+    let xFrac, yFrac, approachSpeed;
+    if (sc < 0.20) {
+      // From behind — following the ship
+      xFrac = 0.38 + Math.random() * 0.24;
+      yFrac = 0.82 + Math.random() * 0.12;
+      approachSpeed = 95 + Math.random() * 35;
+    } else if (sc < 0.38) {
+      // Far left edge
+      xFrac = -0.04 + Math.random() * 0.12;
+      yFrac = 0.08 + Math.random() * 0.30;
+      approachSpeed = 70 + Math.random() * 35;
+    } else if (sc < 0.56) {
+      // Far right edge
+      xFrac = 0.92 + Math.random() * 0.12;
+      yFrac = 0.08 + Math.random() * 0.30;
+      approachSpeed = 70 + Math.random() * 35;
+    } else if (sc < 0.70) {
+      // Slightly left ahead
+      xFrac = 0.18 + Math.random() * 0.22;
+      yFrac = -0.10;
+      approachSpeed = 75 + Math.random() * 30;
+    } else if (sc < 0.85) {
+      // Slightly right ahead
+      xFrac = 0.60 + Math.random() * 0.22;
+      yFrac = -0.10;
+      approachSpeed = 75 + Math.random() * 30;
+    } else {
+      // Dead ahead
+      xFrac = 0.43 + Math.random() * 0.14;
+      yFrac = -0.13;
+      approachSpeed = 85 + Math.random() * 25;
+    }
+    TS.events.push({
+      type, label, key,
+      xFrac, yFrac,
+      x: null, y: null,
+      approachSpeed,
+      alpha: 0, triggered: false,
+      // carry extra fields roam events need
+      factionId: key?.factionId || null,
+      ws: key?.ws || null,
+    });
   }
 }
 
@@ -7822,10 +7864,37 @@ function tsRender(timestamp) {
         tsResolveEvent(ev);
         return false;
       }
-    } else {
-      // Waypoints and roam ships descend straight down from top as before
-      ev.y += TS.scrollSpeed * 0.9 * dt;
-      if (!ev.triggered && ev.y >= H * 0.52) {
+    } else if (ev.type === 'roam') {
+      // Roam ships approach from their spawn direction toward the player
+      if (ev.x === null) {
+        ev.x = W * ev.xFrac;
+        ev.y = H * ev.yFrac;
+      }
+      const speed = ev.approachSpeed || 75;
+      const dx = shipCX - ev.x;
+      const dy = shipCY - ev.y;
+      const dist = Math.max(1, Math.sqrt(dx*dx + dy*dy));
+      ev.x += (dx / dist) * speed * dt;
+      ev.y += (dy / dist) * speed * dt;
+      if (!ev.triggered && Math.abs(ev.x - shipCX) < 65 && Math.abs(ev.y - shipCY) < 65) {
+        ev.triggered = true;
+        tsResolveEvent(ev);
+        return false;
+      }
+    } else if (ev.type === 'waypoint') {
+      // Waypoints are fixed objects in space — they don't move.
+      // They start small and ahead, scale up as the ship "flies toward" them,
+      // and trigger when they've grown large enough to fill the approach zone.
+      if (ev.x === null) {
+        ev.x = W * (ev.xFrac ?? 0.5);
+        ev.y = H * (ev.yFrac ?? -0.14);
+        ev._scale = 0.08;   // start tiny — far away
+      }
+      // Scale up over time (ship is flying toward it)
+      ev._scale = Math.min(1, (ev._scale || 0.08) + dt * 0.28);
+      // Also drift the Y slowly downward as it "passes" into view
+      ev.y += 55 * dt;
+      if (!ev.triggered && ev._scale >= 0.92) {
         ev.triggered = true;
         tsResolveEvent(ev);
         return false;
@@ -8166,37 +8235,61 @@ function tsDrawEvent(ctx, ev, W, H) {
     ctx.fillText(ev.label || '⚠ ENEMY SIGHTED', 0, 0);
     ctx.restore();
   } else if (ev.type === 'waypoint') {
+    const scale = ev._scale || 0.1;
     ctx.save();
-    ctx.translate(ev.x ?? W / 2, ev.y);
-    const pulse = 1 + 0.12 * Math.sin(TS.t * 3);
+    ctx.translate(ev.x ?? W/2, ev.y ?? H*0.3);
+    ctx.scale(scale, scale);
+    const pulse = 1 + 0.10 * Math.sin(TS.t * 2.5);
     ctx.scale(pulse, pulse);
-    // Glow halo
-    const rg = ctx.createRadialGradient(0, 0, 0, 0, 0, 45);
-    rg.addColorStop(0, 'rgba(68,136,255,0.4)'); rg.addColorStop(1, 'transparent');
-    ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(0, 0, 45, 0, Math.PI*2); ctx.fill();
-    // Icon circle
-    ctx.fillStyle = 'rgba(10,25,60,0.9)';
-    ctx.strokeStyle = '#4488ff88'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(0, 0, 24, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-    ctx.font = '22px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    // Glow halo — bigger as it gets closer
+    const rg = ctx.createRadialGradient(0, 0, 0, 0, 0, 60);
+    rg.addColorStop(0, 'rgba(68,136,255,0.45)'); rg.addColorStop(1, 'transparent');
+    ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(0, 0, 60, 0, Math.PI*2); ctx.fill();
+    // Station body
+    ctx.fillStyle = 'rgba(8,18,50,0.95)';
+    ctx.strokeStyle = '#4488ffaa'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(0, 0, 28, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    // Slow station rotation
+    ctx.rotate(TS.t * 0.15);
+    ctx.strokeStyle = '#4488ff66'; ctx.lineWidth = 2;
+    for(let a=0; a<4; a++){
+      const ra = a * Math.PI/2;
+      ctx.beginPath(); ctx.moveTo(Math.cos(ra)*28, Math.sin(ra)*28);
+      ctx.lineTo(Math.cos(ra)*42, Math.sin(ra)*42); ctx.stroke();
+    }
+    ctx.rotate(-TS.t * 0.15);
+    // Icon
+    ctx.font = '26px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(ev.icon || '📡', 0, 1);
     ctx.textBaseline = 'alphabetic';
-    ctx.font = `bold 10px 'Cinzel', serif`; ctx.fillStyle = '#88ccff';
-    ctx.fillText(ev.label, 0, 38);
+    // Label — only show when large enough to read
+    if(scale > 0.4) {
+      ctx.font = `bold ${Math.round(11/scale)}px 'Cinzel', serif`;
+      ctx.globalAlpha = Math.min(1, (scale - 0.4) * 4);
+      ctx.fillStyle = '#88ccff';
+      ctx.fillText(ev.label, 0, 46);
+    }
     ctx.restore();
   } else if (ev.type === 'roam') {
-    // Friendly faction ship descends from ahead — pulls alongside to hail
-    const rx = ev.x ?? W / 2;
+    const shipCX = W / 2;
+    const shipCY = H * 0.55;
+    const rx = ev.x ?? W/2;
+    const ry = ev.y ?? -90;
+    // Face toward the player ship from whatever direction it came from
+    const roamAngle = Math.atan2(shipCY - ry, shipCX - rx);
     ctx.save();
-    ctx.translate(rx, ev.y);
-    ctx.rotate(Math.PI / 2); // nose down toward player
+    ctx.translate(rx, ry);
+    ctx.rotate(roamAngle);
     const [ew, eh] = [75, 48];
     ctx.shadowColor = ev.col || '#88ccff'; ctx.shadowBlur = 16;
     drawShipImg(ev.key, ctx, 0, 0, ew, eh, false, () => drawCorsairSloop(ctx, 0, 0, 20, false));
     ctx.shadowBlur = 0;
     ctx.restore();
+    // Label offset perpendicular to approach
+    const roamLX = rx + Math.sin(roamAngle) * 52;
+    const roamLY = ry - Math.cos(roamAngle) * 52;
     ctx.save();
-    ctx.translate(rx, ev.y + 52);
+    ctx.translate(roamLX, roamLY);
     ctx.fillStyle = hexA(ev.col || '#88ccff', 'cc');
     ctx.font = `bold 11px 'Cinzel', serif`;
     ctx.textAlign = 'center';
@@ -8323,33 +8416,30 @@ function tsQueueEnemy(enemyKey) {
   setTimeout(() => { if (alertEl && alertEl.textContent === '⚠ ENEMY APPROACHING') alertEl.className = ''; }, 2500);
 }
 
-// Queue a roaming friendly encounter — ship descends from top like an enemy but in faction color
+// Queue a roaming friendly encounter — varied approach direction like enemies
 function tsQueueRoam(factionId) {
   const fac = FACTIONS[factionId];
   const shipKey = fac?.shipKey || 'corsair';
-  const _cv2 = document.getElementById('ts-canvas');
-  const _cW2 = _cv2 ? _cv2.width : 400;
-  TS.events.push({
-    type: 'roam', key: shipKey, factionId,
-    label: (fac?.n || 'Vessel') + ' HAILS',
-    col: fac?.col || '#88ccff',
-    x: _cW2 / 2 + (Math.random() - 0.5) * 60,
-    y: -90, alpha: 0, triggered: false,
-  });
+  // Use tsSpawnEvent for direction variety, then patch in roam-specific fields
+  tsSpawnEvent('roam', (fac?.n || 'Vessel') + ' HAILS', shipKey);
+  const ev = TS.events[TS.events.length - 1];
+  ev.factionId = factionId;
+  ev.col = fac?.col || '#88ccff';
   const alertEl = document.getElementById('ts-alert');
   if (alertEl) { alertEl.textContent = `📡 ${fac?.n || 'VESSEL'} HAILING`; alertEl.className = 'show waypoint'; }
   setTimeout(() => { if (alertEl) alertEl.className = ''; }, 2200);
 }
 
-// Queue a waypoint approach event (called from travelTick intercept)
+// Queue a waypoint approach event — always dead ahead, it's a fixed station
 function tsQueueWaypoint(ws) {
-  const _cv3 = document.getElementById('ts-canvas');
-  const _cW3 = _cv3 ? _cv3.width : 400;
   TS.events.push({
     type: 'waypoint', key: ws.id,
     label: ws.n, icon: ws.ico, ws,
-    x: _cW3 / 2,
-    y: -90, alpha: 0, triggered: false,
+    xFrac: 0.46 + Math.random() * 0.08,  // near-center with tiny variance
+    yFrac: -0.14,
+    x: null, y: null,
+    approachSpeed: 70,
+    alpha: 0, triggered: false,
   });
   const alertEl = document.getElementById('ts-alert');
   if (alertEl) { alertEl.textContent = '📡 WAYSTATION AHEAD'; alertEl.className = 'show waypoint'; }
@@ -11091,7 +11181,7 @@ async function doAction(type, idx, itemUid) {
         }
 
         if(checkEnemyDead(tData.cdRounds)){ return; }
-        if(G.ship.hull <= 0){ updateCbtUI(); doDefeat(); return; }
+        if(G.ship.hull <= 0){ updateCbtUI(); doDefeat('hull_combat'); return; }
 
       } else if (G.ship.type === 'manow') {
         // ── Starfire Broadside / Coordinated Barrage / Elven Battle Formation ──
@@ -11269,7 +11359,7 @@ async function enemyTurn() {
         }
         updateCbtUI();
         await sleep(400);
-        if(s.hull <= 0){ await sleep(300); doDefeat(); return; }
+        if(s.hull <= 0){ await sleep(300); doDefeat('hull_combat'); return; }
       } else if(healDef.fx === 'buff'){
         if(healDef.buffStat === 'resist'){
           e._buffResist = healDef.buffAmt; e._buffResistTurns = healDef.buffTurns;
@@ -11345,7 +11435,7 @@ async function enemyTurn() {
         triggerAnim(pCV(), 'anim-shake');
         updateCbtUI();
         await sleep(500);
-        if (G.ship.crew <= 0) { cLog(`☠ Your entire crew has been lost! The ship drifts without a helm.`, 'dmg'); await sleep(700); doDefeat(); return; }
+        if (G.ship.crew <= 0) { cLog(`☠ Your entire crew has been lost! The ship drifts without a helm.`, 'dmg'); await sleep(700); doDefeat('crew'); return; }
         cLog(`⚠ Crew reduced to ${G.ship.crew}! Enemy presses ${stolen} captured hands into service.`, 'dmg');
         break;
       }
@@ -11357,7 +11447,7 @@ async function enemyTurn() {
           if(!G._godMode) G.ship.hull -= fin;
           triggerAnim(pCV(), 'anim-shake'); snd('ram_hit', 0.9); floatDmg(pCV(), fin, false);
           cLog(`Eye ray barrage: ${fin} hull damage!`, 'dmg'); G.cbt.pStat = 'normal'; updateCbtUI(); await sleep(550);
-          if (G.ship.hull <= 0) { doDefeat(); return; }
+          if (G.ship.hull <= 0) { doDefeat('hull_combat'); return; }
         }
         break;
       }
@@ -11366,7 +11456,7 @@ async function enemyTurn() {
         if(!G._godMode) G.ship.hull -= fin;
         triggerAnim(pCV(), 'anim-shake'); snd('ram_hit', 0.85); floatDmg(pCV(), G._godMode?0:fin, false);
         cLog(G._godMode?'Flanking ram: GODMODE':`Flanking ram: ${fin} hull damage!`, 'dmg'); updateCbtUI(); await sleep(550);
-        if (G.ship.hull <= 0) { doDefeat(); return; }
+        if (G.ship.hull <= 0) { doDefeat('hull_combat'); return; }
         break;
       }
     }
@@ -11418,7 +11508,7 @@ async function enemyTurn() {
         cLog(G._godMode?`${e.name} — ${w.n}: GODMODE`:`${e.name} — ${w.n}: ${dmg} damage!${res>0?` [${res} resisted]`:''} ${w.txt}`,'dmg');
 
         // Crew loss
-        if(w.crew){ G.ship.crew=Math.max(0,G.ship.crew-w.crew); floatText(pCV(), `👥 -${w.crew} CREW`, '#ff8844', 55); if(G.ship.crew<=0){cLog('☠ Entire crew lost!','dmg');updateCbtUI();await sleep(800);doDefeat();return;} cLog(`⚠ ${w.crew} crew lost! (${G.ship.crew} remaining)`,'dmg'); }
+        if(w.crew){ G.ship.crew=Math.max(0,G.ship.crew-w.crew); floatText(pCV(), `👥 -${w.crew} CREW`, '#ff8844', 55); if(G.ship.crew<=0){cLog('☠ Entire crew lost!','dmg');updateCbtUI();await sleep(800);doDefeat('crew');return;} cLog(`⚠ ${w.crew} crew lost! (${G.ship.crew} remaining)`,'dmg'); }
 
         // maxhullshred — permanently reduces player max hull (Beholder Disintegration, Elder Void Pulse)
         // Can only be repaired by a Void Welder item or at a Structural Drydock port facility
@@ -11473,7 +11563,7 @@ async function enemyTurn() {
         if(w.ramping){ G.cbt.rageStacks=(G.cbt.rageStacks||0)+1; const bonus=G.cbt.rageStacks*2; if(!G._godMode){G.ship.hull-=bonus; floatDmg(pCV(),bonus,false,'RAGE ESCALATES');} cLog(`🔥 Rage Canon escalating — stack ${G.cbt.rageStacks}, +${bonus} bonus damage!`,'dmg'); }
 
         updateCbtUI(); await sleep(550);
-        if(G.ship.hull<=0){doDefeat();return;}
+        if(G.ship.hull<=0){doDefeat('hull_combat');return;}
       }
       // Set enemy weapon cooldown
       G.cbt.eCds[i] = w.cd || 0;
@@ -11485,7 +11575,7 @@ async function enemyTurn() {
       triggerAnim(pCV(),'anim-shake'); snd('player_hit',0.7); floatDmg(pCV(),G._godMode?0:dmg,false);
       cLog(`${e.name} scrambles desperately — glancing blow: ${dmg} damage!`,'dmg');
       updateCbtUI(); await sleep(500);
-      if(G.ship.hull<=0){doDefeat();return;}
+      if(G.ship.hull<=0){doDefeat('hull_combat');return;}
     }
     // Reset rage if Scro weapon NOT the one that fired (no active rage weapon)
     if(!available.some(({w})=>w.special==='rage')) G.cbt.rageStacks=0;
@@ -11997,15 +12087,65 @@ function buildShipOverlay(){
 // ╔══════════════════════════════════════════════════════╗
 // ║  GAME END                                            ║
 // ╚══════════════════════════════════════════════════════╝
-function doDefeat(){
+function doDefeat(cause){
   G.phase='defeat';
   _stopLoop(); stopTitle(); stopTravelHum(); stopSphereAudio();
   snd('defeat', 1.0);
   document.getElementById('ov-combat').classList.remove('on');
   document.getElementById('tvlbar').classList.remove('on');
+
+  // ── Cause-specific defeat messages ───────────────────────────────────────
+  const _loc = G.spheres?.find(s=>s.id===G.ship?.loc)?.n || 'the Phlogiston';
+  const _enemy = G.cbt?.enemy?.name || 'the enemy';
+
+  const DEFEAT_MSGS = {
+    hull_combat: {
+      title: '☠ Vessel Destroyed ☠',
+      msgs: [
+        `${_enemy} lands the killing blow. ${G.ship.name} splits apart — hull, helm, and all hands lost to the void. The last thing your crew sees is the stars.`,
+        `The final salvo tears through the hull. Fires race through every compartment. ${G.ship.name} is ash and splinters before the echo fades.`,
+        `${_enemy} doesn't stop firing until there's nothing left. ${G.ship.name} breaks apart in silence, tumbling into the dark between the spheres.`,
+        `No shields, no hull, no options. ${G.ship.name} is gone — another wreck drifting in the Phlogiston.`,
+      ]
+    },
+    hull_travel: {
+      title: '☠ Lost in Transit ☠',
+      msgs: [
+        `The damage was too severe. ${G.ship.name} finally gives out mid-journey — the hull fails silently, and the Phlogiston claims her.`,
+        `Exhaustion and accumulated damage take their toll. ${G.ship.name} breaks apart somewhere between ${_loc} and nowhere. No beacon. No survivors.`,
+        `The structural damage was never repaired. Mid-lane, the keel snaps. ${G.ship.name} is swallowed by the phlogiston mists without a sound.`,
+      ]
+    },
+    crew: {
+      title: '☠ Last Crew Member Lost ☠',
+      msgs: [
+        `The last of your crew falls. ${G.ship.name} drifts on — lights on, helm locked, utterly silent. A ghost ship. No one left to steer her home.`,
+        `Without a living hand aboard, the spelljamming helm goes dark. ${G.ship.name} coasts into the void, her course set for nowhere. The stars don't mourn.`,
+        `The crew is gone. ${G.ship.name} sails on unmanned — a hollow shell crossing the Phlogiston with no destination and no purpose. Eventually, she'll stop.`,
+        `Every soul aboard is lost. The ship continues — but there's no one left to call it a voyage. ${G.ship.name} becomes another legend. The kind no one survives to tell.`,
+      ]
+    },
+    air: {
+      title: '☠ Air Supply Exhausted ☠',
+      msgs: [
+        `The last breathable air is gone. The crew slips away quietly — one by one, in the dark, far from any sphere. ${G.ship.name} sails on, empty.`,
+        `The air ran out somewhere between the stars. No warning klaxon — just the silence that comes after. ${G.ship.name} drifts on, perfectly intact, perfectly still.`,
+        `The hold runs dry. Lungs burn. The helmsman slumps last. ${G.ship.name} crosses the Phlogiston without a course, without a crew, without a sound.`,
+        `You pushed too far without resupplying. The crew suffocates quietly. ${G.ship.name} becomes a tomb — sealed, drifting, unreachable.`,
+      ]
+    },
+  };
+
+  const causeData = DEFEAT_MSGS[cause] || DEFEAT_MSGS.hull_combat;
+  const msgArr = causeData.msgs;
+  const chosenMsg = msgArr[Math.floor(Math.random() * msgArr.length)];
+
+  document.getElementById('defeat-title').textContent = causeData.title;
+  document.getElementById('defeat-msg').textContent   = chosenMsg;
+
   document.getElementById('scr-defeat').classList.add('on');
-  if(G.tvl.timer)clearInterval(G.tvl.timer);
-  if(G.animId)cancelAnimationFrame(G.animId);
+  if(G.tvl.timer) clearInterval(G.tvl.timer);
+  if(G.animId) cancelAnimationFrame(G.animId);
 }
 function doVictory(){
   G.phase='victory';
