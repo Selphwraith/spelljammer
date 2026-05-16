@@ -3046,7 +3046,7 @@ const FINAL_BOSS = {
 
 // ── FACTIONS ──────────────────────────────────────────────
 const FACTIONS = {
-  ien:      { n:'International Earth Federation',   short:'IEF',      col:'#4488ff', start:60,  spheres:['realm','hero'],            shipKey:'Drift Corsair',    shipName:'IEF Patrol Frigate'    },
+  ien:      { n:'International Earth Federation',   short:'IEF',      col:'#4488ff', start:60,  spheres:['realm','hero'],            shipKey:'githyanki',    shipName:'IEF Patrol Frigate'    },
   merchant: { n:'Merchant Consortium',   short:'Merchants', col:'#ffaa22', start:20,  spheres:['cluster','grey'],          shipKey:'corsair',     shipName:'Consortium Trader'     },
   trull:     { n:'Trull Trull Commander',        short:'Trull',      col:'#aa6600', start:-20, spheres:['ashmar_deep','nullen'],         shipKey:'trullBattle',  shipName:'Trull Patrol Cruiser'   },
   vodoni:   { n:'Trull Advance Empire',         short:'Trull Advance',    col:'#cc2200', start:-10, spheres:['vodoni','ashmar'],       shipKey:'vodoniPatrol',shipName:'Trull Advance Warship'        },
@@ -3581,12 +3581,12 @@ const LANES_DIR = {
   'grey->realm':   { d:2, label:'Inner Sphere Route (Inner Arc)',     lore:'The Arcane Inner Flow carries you inward toward Fentheris System. Corsairs and harvester slavers ride the same current.', pool:['corsair','plunderer','trull_warship','trull_slaver','harvester','phlog_jellyfish','phlog_flamewing','phlog_vinecrawler'],                rate:0.240, warzone:false, flow:+1, flowName:'Arcane Inner Flow' },
 
   // REALM ↔ CLUSTER  (War zone — crossflow, no major river eases this crossing)
-  'realm->cluster':{ d:3, label:'⚔ ILLITHID/GITH WAR ZONE',          lore:'The ancient war rages here. No flow river crosses this zone — both factions attack any vessel.',             pool:['shell_drifter','shell_drifter','Drift Corsair','Drift Corsair','shell_drifter'], rate:0.460, warzone:true,  flow:0, flowName:null },
-  'cluster->realm':{ d:3, label:'⚔ ILLITHID/GITH WAR ZONE',          lore:'The ancient war rages here. No flow river crosses this zone — both factions attack any vessel.',             pool:['shell_drifter','shell_drifter','Drift Corsair','Drift Corsair','shell_drifter'], rate:0.460, warzone:true,  flow:0, flowName:null },
+  'realm->cluster':{ d:3, label:'⚔ ILLITHID/GITH WAR ZONE',          lore:'The ancient war rages here. No flow river crosses this zone — both factions attack any vessel.',             pool:['nautiloid','nautiloid','githyanki','githyanki','nautiloid'], rate:0.460, warzone:true,  flow:0, flowName:null },
+  'cluster->realm':{ d:3, label:'⚔ ILLITHID/GITH WAR ZONE',          lore:'The ancient war rages here. No flow river crosses this zone — both factions attack any vessel.',             pool:['nautiloid','nautiloid','githyanki','githyanki','nautiloid'], rate:0.460, warzone:true,  flow:0, flowName:null },
 
   // REALM ↔ HERO   (Radiant Triangle Flow: realm→hero WITH flow clockwise)
-  'realm->hero':   { d:3, label:'Long Void Crossing (Radiant Triangle)', lore:'The Radiant Triangle Flow sweeps you toward Thyss. Black Fleet patrols ride the same current.',      pool:['blackfleet','blackfleet','Drift Corsair','plunderer'],    rate:0.300, warzone:false, flow:+1, flowName:'Radiant Triangle Flow' },
-  'hero->realm':   { d:3, label:'Long Void Crossing (Radiant Triangle)', lore:'You fight the Radiant Triangle Flow heading back toward Fentheris System. Drift Corsair raiders exploit the delay.', pool:['blackfleet','blackfleet','Drift Corsair','plunderer'],   rate:0.300, warzone:false, flow:-1, flowName:'Radiant Triangle Flow' },
+  'realm->hero':   { d:3, label:'Long Void Crossing (Radiant Triangle)', lore:'The Radiant Triangle Flow sweeps you toward Thyss. Black Fleet patrols ride the same current.',      pool:['blackfleet','blackfleet','githyanki','plunderer'],    rate:0.300, warzone:false, flow:+1, flowName:'Radiant Triangle Flow' },
+  'hero->realm':   { d:3, label:'Long Void Crossing (Radiant Triangle)', lore:'You fight the Radiant Triangle Flow heading back toward Fentheris System. Drift Corsair raiders exploit the delay.', pool:['blackfleet','blackfleet','githyanki','plunderer'],   rate:0.300, warzone:false, flow:-1, flowName:'Radiant Triangle Flow' },
 
   // GREY ↔ CLUSTER  (crossflow — no major river)
   'grey->cluster': { d:2, label:'Salvage Passage',                    lore:'Crossflow region — no major river aids this route. Plunderer fleets pick over old wrecks.',                 pool:['plunderer','trull_warship','harvester','void_shark'],     rate:0.250, warzone:false, flow:0,  flowName:null },
@@ -3597,40 +3597,40 @@ const LANES_DIR = {
   'krynn->grey':   { d:3, label:'Dragon Passage (Mystara Flow)',       lore:'You fight the Mystara Flow heading back toward Korreth. Drift Corsair warbands ambush those slowed by it.',  pool:['plunderer','trull_warship','trull_dreadnought','blackfleet','harvester'],            rate:0.320, warzone:false, flow:-1, flowName:'Mystara Flow' },
 
   // GREY ↔ DARK    (Pillar Flow: grey→dark WITH flow into the deep void)
-  'grey->dark':    { d:4, label:'Void Crossing (Pillar Flow)',         lore:'The Pillar Flow drags you down into the deep void toward Serath. Leviathans follow the same current.',   pool:['leviathan','Sentinel Drone','blackfleet'],                  rate:0.400, warzone:false, flow:+1, flowName:'Pillar Flow' },
-  'dark->grey':    { d:4, label:'Void Crossing (Pillar Flow)',         lore:'You fight the Pillar Flow surging upward out of Serath. Sentinel Drones nest in the churn and turbulence.',    pool:['leviathan','Sentinel Drone','blackfleet'],                  rate:0.400, warzone:false, flow:-1, flowName:'Pillar Flow' },
+  'grey->dark':    { d:4, label:'Void Crossing (Pillar Flow)',         lore:'The Pillar Flow drags you down into the deep void toward Serath. Leviathans follow the same current.',   pool:['leviathan','beholder','blackfleet'],                  rate:0.400, warzone:false, flow:+1, flowName:'Pillar Flow' },
+  'dark->grey':    { d:4, label:'Void Crossing (Pillar Flow)',         lore:'You fight the Pillar Flow surging upward out of Serath. Sentinel Drones nest in the churn and turbulence.',    pool:['leviathan','beholder','blackfleet'],                  rate:0.400, warzone:false, flow:-1, flowName:'Pillar Flow' },
 
   // KRYNN ↔ HERO   (Radiant Triangle Flow: hero→krynn WITH flow clockwise)
-  'hero->krynn':   { d:3, label:'Twin-Sun Approach (Radiant Triangle)', lore:'The Radiant Triangle Flow sweeps you onward toward Vael. Elite pirates ride the same river.',       pool:['blackfleet','blackfleet','Sentinel Drone','Drift Corsair'],     rate:0.340, warzone:false, flow:+1, flowName:'Radiant Triangle Flow' },
-  'krynn->hero':   { d:3, label:'Twin-Sun Approach (Radiant Triangle)', lore:'You fight the Radiant Triangle Flow heading back toward Thyss. Sentinel Drone tyrants exploit the turbulence.', pool:['blackfleet','blackfleet','Sentinel Drone','Drift Corsair'],  rate:0.340, warzone:false, flow:-1, flowName:'Radiant Triangle Flow' },
+  'hero->krynn':   { d:3, label:'Twin-Sun Approach (Radiant Triangle)', lore:'The Radiant Triangle Flow sweeps you onward toward Vael. Elite pirates ride the same river.',       pool:['blackfleet','blackfleet','beholder','githyanki'],     rate:0.340, warzone:false, flow:+1, flowName:'Radiant Triangle Flow' },
+  'krynn->hero':   { d:3, label:'Twin-Sun Approach (Radiant Triangle)', lore:'You fight the Radiant Triangle Flow heading back toward Thyss. Sentinel Drone tyrants exploit the turbulence.', pool:['blackfleet','blackfleet','beholder','githyanki'],  rate:0.340, warzone:false, flow:-1, flowName:'Radiant Triangle Flow' },
 
   // KRYNN ↔ DARK   (crossflow — no major river)
-  'krynn->dark':   { d:4, label:'Shadow Approach',                    lore:'Crossflow region. Drift Corsair and leviathans contest this lawless stretch of void.',                           pool:['leviathan','Sentinel Drone','Drift Corsair'],                   rate:0.380, warzone:false, flow:0,  flowName:null },
-  'dark->krynn':   { d:4, label:'Shadow Approach',                    lore:'Crossflow region. Sentinel Drone tyrants nest along the turbulent approach to Vael.',                        pool:['leviathan','Sentinel Drone','Drift Corsair'],                   rate:0.380, warzone:false, flow:0,  flowName:null },
+  'krynn->dark':   { d:4, label:'Shadow Approach',                    lore:'Crossflow region. Drift Corsair and leviathans contest this lawless stretch of void.',                           pool:['leviathan','beholder','githyanki'],                   rate:0.380, warzone:false, flow:0,  flowName:null },
+  'dark->krynn':   { d:4, label:'Shadow Approach',                    lore:'Crossflow region. Sentinel Drone tyrants nest along the turbulent approach to Vael.',                        pool:['leviathan','beholder','githyanki'],                   rate:0.380, warzone:false, flow:0,  flowName:null },
 
   // CLUSTER ↔ HERO  (crossflow)
-  'cluster->hero': { d:3, label:"Relic Hunters' Route",               lore:'Crossflow region. Black Fleet Reavers hunt for pre-Sundering artifacts in the debris fields.',              pool:['blackfleet','trull_dreadnought','Drift Corsair','shell_drifter','harvester'], rate:0.330, warzone:false, flow:0,  flowName:null },
-  'hero->cluster': { d:3, label:"Relic Hunters' Route",               lore:'Crossflow region. Drift Corsair raiders and shell_drifters actively hunt returning relic-laden vessels.',           pool:['blackfleet','Drift Corsair','shell_drifter','harvester'],         rate:0.330, warzone:false, flow:0,  flowName:null },
+  'cluster->hero': { d:3, label:"Relic Hunters' Route",               lore:'Crossflow region. Black Fleet Reavers hunt for pre-Sundering artifacts in the debris fields.',              pool:['blackfleet','trull_dreadnought','githyanki','nautiloid','harvester'], rate:0.330, warzone:false, flow:0,  flowName:null },
+  'hero->cluster': { d:3, label:"Relic Hunters' Route",               lore:'Crossflow region. Drift Corsair raiders and shell_drifters actively hunt returning relic-laden vessels.',           pool:['blackfleet','githyanki','nautiloid','harvester'],         rate:0.330, warzone:false, flow:0,  flowName:null },
 
   // CLUSTER ↔ DARK  (Black Flow: dark→cluster WITH flow upward)
-  'cluster->dark': { d:4, label:'The Deep Dark (Black Flow)',          lore:'You fight the Black Flow surging upward from Serath. Void creatures hunt in the churning currents.',     pool:['leviathan','Sentinel Drone','Sentinel Drone'],                    rate:0.430, warzone:false, flow:-1, flowName:'Black Flow' },
-  'dark->cluster': { d:4, label:'The Deep Dark (Black Flow)',          lore:'The Black Flow carries you upward from Serath toward Varuun. Leviathans rise with the current.',   pool:['leviathan','Sentinel Drone','Sentinel Drone'],                    rate:0.430, warzone:false, flow:+1, flowName:'Black Flow' },
+  'cluster->dark': { d:4, label:'The Deep Dark (Black Flow)',          lore:'You fight the Black Flow surging upward from Serath. Void creatures hunt in the churning currents.',     pool:['leviathan','beholder','beholder'],                    rate:0.430, warzone:false, flow:-1, flowName:'Black Flow' },
+  'dark->cluster': { d:4, label:'The Deep Dark (Black Flow)',          lore:'The Black Flow carries you upward from Serath toward Varuun. Leviathans rise with the current.',   pool:['leviathan','beholder','beholder'],                    rate:0.430, warzone:false, flow:+1, flowName:'Black Flow' },
 
   // HERO ↔ DARK    (Hammer Flow: hero→dark WITH flow southward)
-  'hero->dark':    { d:4, label:'Lightless Passage (Hammer Flow)',     lore:'The Hammer Flow drives you down into Serath. Astral leviathans ride the same deep current.',            pool:['leviathan','Sentinel Drone','blackfleet','Drift Corsair'],      rate:0.400, warzone:false, flow:+1, flowName:'Hammer Flow' },
-  'dark->hero':    { d:4, label:'Lightless Passage (Hammer Flow)',     lore:'You fight the Hammer Flow pushing back up toward Thyss. The turbulence batters the hull.',              pool:['leviathan','Sentinel Drone','blackfleet','Drift Corsair'],      rate:0.400, warzone:false, flow:-1, flowName:'Hammer Flow' },
+  'hero->dark':    { d:4, label:'Lightless Passage (Hammer Flow)',     lore:'The Hammer Flow drives you down into Serath. Astral leviathans ride the same deep current.',            pool:['leviathan','beholder','blackfleet','githyanki'],      rate:0.400, warzone:false, flow:+1, flowName:'Hammer Flow' },
+  'dark->hero':    { d:4, label:'Lightless Passage (Hammer Flow)',     lore:'You fight the Hammer Flow pushing back up toward Thyss. The turbulence batters the hull.',              pool:['leviathan','beholder','blackfleet','githyanki'],      rate:0.400, warzone:false, flow:-1, flowName:'Hammer Flow' },
 
   // DARK ↔ ELDER   (Danger 5 — no flow, pure psychic void)
-  'dark->elder':   { d:5, label:'Elder Approach',                      lore:"The Trull Overmind's psychic shadow blankets this region. No flow river touches The Far Dark — it consumes them.", pool:['leviathan','Sentinel Drone','shell_drifter'],               rate:0.520, warzone:false, flow:0,  flowName:null },
-  'elder->dark':   { d:5, label:'Elder Approach',                      lore:'Fleeing The Far Dark — the psychic wake still clings to the hull. Maximum danger in all directions.',         pool:['leviathan','Sentinel Drone','shell_drifter'],                   rate:0.500, warzone:false, flow:0,  flowName:null },
+  'dark->elder':   { d:5, label:'Elder Approach',                      lore:"The Trull Overmind's psychic shadow blankets this region. No flow river touches The Far Dark — it consumes them.", pool:['leviathan','beholder','nautiloid'],               rate:0.520, warzone:false, flow:0,  flowName:null },
+  'elder->dark':   { d:5, label:'Elder Approach',                      lore:'Fleeing The Far Dark — the psychic wake still clings to the hull. Maximum danger in all directions.',         pool:['leviathan','beholder','nautiloid'],                   rate:0.500, warzone:false, flow:0,  flowName:null },
   // ── The Breach (The Far Dark ↔ Ashmar) ──────────────────────────────
   'elder->ashmar': { d:5, label:'The Void Rift Breach',    lore:'The wound left by the Trull Overmind tears through reality itself. Void Rift entities cluster near the edges of the rift.',         pool:['frStalker','frHorde','leviathan'],    rate:0.550, warzone:false, flow:0, flowName:null },
-  'ashmar->elder': { d:5, label:'The Void Rift Breach',    lore:'Returning through the Breach — reality knits itself back behind you, but the crossing never gets easier.',                       pool:['frStalker','frHorde','shell_drifter'],    rate:0.550, warzone:false, flow:0, flowName:null },
+  'ashmar->elder': { d:5, label:'The Void Rift Breach',    lore:'Returning through the Breach — reality knits itself back behind you, but the crossing never gets easier.',                       pool:['frStalker','frHorde','nautiloid'],    rate:0.550, warzone:false, flow:0, flowName:null },
   // ── Ashmar lanes ───────────────────────────────────────────────────
   'ashmar->vodoni': { d:3, label:'Ember Run',              lore:'A fast-current lane through Ashmar volcanic ejecta clouds. The Trull Advance patrol it with unsettling regularity.',                  pool:['vodoniPatrol','corsair','plunderer'], rate:0.320, warzone:false, flow:1, flowName:'Ember Flow' },
   'vodoni->ashmar': { d:3, label:'Ember Run',              lore:'Against the Ember Flow — slower passage through volcanic ash lanes. Trull Advance patrols are less frequent heading outward.',          pool:['vodoniPatrol','corsair'],             rate:0.280, warzone:false, flow:-1, flowName:'Ember Flow' },
-  'ashmar->the_shatter_rim': { d:4, label:'Murmur Lane',          lore:'The Drift here tastes like static. Ships that linger too long report crew hearing things. Move quickly.',                   pool:['shell_drifter','frStalker','harvester'],      rate:0.420, warzone:false, flow:0, flowName:null },
-  'the_shatter_rim->ashmar': { d:4, label:'Murmur Lane',          lore:'Outbound from the Weird — the murmuring fades, replaced by a ringing that lasts for days.',                                     pool:['shell_drifter','frStalker'],              rate:0.380, warzone:false, flow:0, flowName:null },
+  'ashmar->the_shatter_rim': { d:4, label:'Murmur Lane',          lore:'The Drift here tastes like static. Ships that linger too long report crew hearing things. Move quickly.',                   pool:['nautiloid','frStalker','harvester'],      rate:0.420, warzone:false, flow:0, flowName:null },
+  'the_shatter_rim->ashmar': { d:4, label:'Murmur Lane',          lore:'Outbound from the Weird — the murmuring fades, replaced by a ringing that lasts for days.',                                     pool:['nautiloid','frStalker'],              rate:0.380, warzone:false, flow:0, flowName:null },
   'ashmar->ashmar_deep':  { d:3, label:'Trull Passage',         lore:'The Trull claim this lane as sovereign space. They will attack vessels they deem insufficiently armed — proof of strength.',     pool:['trullBattle','corsair','plunderer'],   rate:0.300, warzone:false, flow:0, flowName:null },
   'ashmar_deep->ashmar':  { d:3, label:'Trull Passage',         lore:'The Trull watch you leave. They respect the departure of a ship that survived the passage — just barely.',                       pool:['trullBattle','corsair'],               rate:0.280, warzone:false, flow:0, flowName:null },
   // ── Trull Advance lanes ─────────────────────────────────────────────────────
@@ -3639,15 +3639,15 @@ const LANES_DIR = {
   'vodoni->ashmar_deep':  { d:2, label:'Treaty Corridor',        lore:'A negotiated lane between the Trull Advance Empire and the Trull — both factions maintain grudging peace here. For now.',              pool:['vodoniPatrol','trullBattle'],          rate:0.200, warzone:false, flow:0, flowName:null },
   'ashmar_deep->vodoni':  { d:2, label:'Treaty Corridor',        lore:'The Trull respect the treaty. They also never stop calculating when to end it.',                                                 pool:['trullBattle','vodoniPatrol'],          rate:0.200, warzone:false, flow:0, flowName:null },
   // ── Ashmar Deep lanes ────────────────────────────────────────────────────
-  'ashmar_deep->the_shatter_rim':{ d:3, label:'Madness Reach',          lore:'The Trull avoid this lane where possible. Their shamans say the Weird speaks to them in voices of dead kin.',                   pool:['shell_drifter','frStalker','trullBattle'], rate:0.350, warzone:false, flow:0, flowName:null },
-  'the_shatter_rim->ashmar_deep':{ d:3, label:'Madness Reach',          lore:'Outbound from the Weird — the Trull ships on this lane look quietly relieved to see you leaving.',                               pool:['shell_drifter','frStalker'],              rate:0.320, warzone:false, flow:0, flowName:null },
+  'ashmar_deep->the_shatter_rim':{ d:3, label:'Madness Reach',          lore:'The Trull avoid this lane where possible. Their shamans say the Weird speaks to them in voices of dead kin.',                   pool:['nautiloid','frStalker','trullBattle'], rate:0.350, warzone:false, flow:0, flowName:null },
+  'the_shatter_rim->ashmar_deep':{ d:3, label:'Madness Reach',          lore:'Outbound from the Weird — the Trull ships on this lane look quietly relieved to see you leaving.',                               pool:['nautiloid','frStalker'],              rate:0.320, warzone:false, flow:0, flowName:null },
   'ashmar_deep->varuun_prime': { d:3, label:'Star Road',              lore:'A flow-current lane toward the Varuun Prime white dwarf. The heat increases steadily. Trull use it as a patrol corridor.',           pool:['trullBattle','vodoniPatrol'],          rate:0.280, warzone:false, flow:1, flowName:'Star Road Flow' },
   'varuun_prime->ashmar_deep': { d:3, label:'Star Road',              lore:'Cooling down from Varuun Prime — the heat gradient creates actual drift eddies here. Good for ambushes.',                      pool:['trullBattle','corsair'],               rate:0.300, warzone:false, flow:-1, flowName:'Star Road Flow' },
   // ── Nullen lanes ──────────────────────────────────────────────────────
   'nullen->shatter_rim':     { d:4, label:'Chitin Road',            lore:'Swarm Hull hunting grounds. They test every vessel that passes. Fail the test and they attack. Pass it... they still attack.',  pool:['thrikreen','frHorde','corsair'],      rate:0.450, warzone:true,  flow:0, flowName:null, worldBoss:'wb_grex' },
   'shatter_rim->nullen':     { d:4, label:'Chitin Road',            lore:'Inbound to Nullen — swarm hull escort you to the edge of their territory, then vanish. The war-sphere looms.',                  pool:['thrikreen','vodoniPatrol'],           rate:0.400, warzone:true,  flow:0, flowName:null, worldBoss:'wb_grex' },
   // ── The Rift Zone lanes ──────────────────────────────────────────────────
-  'the_shatter_rim->baresun':{ d:4, label:'Scar Run',               lore:'Both spheres are Void Rift-touched. The lane between them is thin in places — you can sometimes see something moving behind reality.', pool:['frStalker','frHorde','shell_drifter'], rate:0.500, warzone:false, flow:0, flowName:null, worldBoss:'wb_murmur' },
+  'the_shatter_rim->baresun':{ d:4, label:'Scar Run',               lore:'Both spheres are Void Rift-touched. The lane between them is thin in places — you can sometimes see something moving behind reality.', pool:['frStalker','frHorde','nautiloid'], rate:0.500, warzone:false, flow:0, flowName:null, worldBoss:'wb_murmur' },
   'baresun->the_shatter_rim':{ d:4, label:'Scar Run',               lore:'Outbound from The Shatter — the Void Rift scar follows your wake for a while before releasing you.',                                pool:['frStalker','frHorde'],                rate:0.450, warzone:false, flow:0, flowName:null, worldBoss:'wb_murmur' },
   // ── Varuun Prime lanes ────────────────────────────────────────────────────
   'varuun_prime->shatter_rim':   { d:3, label:'Heatwave Corridor',      lore:'The stellar radiation makes targeting difficult. The swarm hull navigate it perfectly; they claim the heat is comfortable.',   pool:['thrikreen','vodoniPatrol'],           rate:0.300, warzone:false, flow:0, flowName:null },
@@ -3655,7 +3655,7 @@ const LANES_DIR = {
   'varuun_prime->serath':  { d:3, label:'Mythic Current',         lore:'A strange undercurrent of destiny and narrative probability runs through this lane. Ships traveling it often arrive with stories.', pool:['corsair','plunderer','frStalker'],  rate:0.250, warzone:false, flow:1, flowName:'Mythic Current' },
   'serath->varuun_prime':  { d:3, label:'Mythic Current',         lore:'Against the Mythic Current — the stories you arrive with feel less resolved. A hero without a destination is just lost.',       pool:['corsair','plunderer'],                rate:0.280, warzone:false, flow:-1, flowName:'Mythic Current' },
   // ── The Shatter lanes ────────────────────────────────────────────────────
-  'baresun->thyss_outpost':  { d:4, label:'Veil Shard Lane',        lore:'The Veil — the barrier between the physical world and the spirit world that Thyss Outpost relies upon — is thin here. Things slip through.', pool:['frStalker','frHorde','shell_drifter'], rate:0.420, warzone:false, flow:0, flowName:null, worldBoss:'wb_admiral' },
+  'baresun->thyss_outpost':  { d:4, label:'Veil Shard Lane',        lore:'The Veil — the barrier between the physical world and the spirit world that Thyss Outpost relies upon — is thin here. Things slip through.', pool:['frStalker','frHorde','nautiloid'], rate:0.420, warzone:false, flow:0, flowName:null, worldBoss:'wb_admiral' },
   'thyss_outpost->baresun':  { d:4, label:'Veil Shard Lane',        lore:'Outbound from Thyss Outpost — Tevinter enchantments mark your hull. You are watched by things that do not have eyes.',                 pool:['frStalker','frHorde'],                rate:0.380, warzone:false, flow:0, flowName:null, worldBoss:'wb_admiral' },
   // ── The Shatter Rim lanes ──────────────────────────────────────────────────────
   'shatter_rim->serath':    { d:3, label:'Amber Road',             lore:'Swarm Hull trade corridor to Serath — the two cultures trade combat philosophy. Travelers are considered goods in transit.',    pool:['thrikreen','corsair'],                rate:0.250, warzone:false, flow:0, flowName:null, worldBoss:'wb_clutch' },
@@ -3667,7 +3667,7 @@ const LANES_DIR = {
   // ── NEW PATROL LANES (hidden until world boss discovered) ─────────────
   // Hollow Admiral triangle: baresun↔serath
   'baresun->serath':  { d:4, label:'The Wound Road',         lore:'An uncharted lane through twisted space. Navigation charts show nothing here — something has been actively preventing survey vessels from mapping it.',
-                        pool:['frStalker','frHorde','shell_drifter'], rate:0.480, warzone:false, flow:0, flowName:null, patrolBoss:'wb_admiral' },
+                        pool:['frStalker','frHorde','nautiloid'], rate:0.480, warzone:false, flow:0, flowName:null, patrolBoss:'wb_admiral' },
   'serath->baresun':  { d:4, label:'The Wound Road',         lore:'Inbound from Serath toward The Shatter — the geometry gets stranger the closer you get. The Harbormistress warned you about this lane.',
                         pool:['frStalker','frHorde'],             rate:0.450, warzone:false, flow:0, flowName:null, patrolBoss:'wb_admiral' },
   // Chorggrak triangle: varuun_prime↔nullen
@@ -3677,8 +3677,8 @@ const LANES_DIR = {
                         pool:['thrikreen','frHorde'],             rate:0.470, warzone:true,  flow:0, flowName:null, patrolBoss:'wb_clutch' },
 
   // HERO ↔ ELDER   (Danger 5 — no flow)
-  'hero->elder':   { d:5, label:"Void's Edge",                         lore:'Elder corruption seeps along this approach. The Drift itself seems to recoil from The Far Dark.',       pool:['leviathan','Sentinel Drone'],                              rate:0.500, warzone:false, flow:0,  flowName:null },
-  'elder->hero':   { d:5, label:"Void's Edge",                         lore:'The Elder corruption follows your wake. Leviathans shadow the ship the entire route.',                      pool:['leviathan','Sentinel Drone'],                              rate:0.480, warzone:false, flow:0,  flowName:null },
+  'hero->elder':   { d:5, label:"Void's Edge",                         lore:'Elder corruption seeps along this approach. The Drift itself seems to recoil from The Far Dark.',       pool:['leviathan','beholder'],                              rate:0.500, warzone:false, flow:0,  flowName:null },
+  'elder->hero':   { d:5, label:"Void's Edge",                         lore:'The Elder corruption follows your wake. Leviathans shadow the ship the entire route.',                      pool:['leviathan','beholder'],                              rate:0.480, warzone:false, flow:0,  flowName:null },
 };
 
 // Flow tick multipliers: riding the current is 40% faster; fighting it is 60% slower
@@ -4607,7 +4607,7 @@ function sndCreature(enemyKey, vol = 0.85) {
     'goblin_rocketer':   'wpn_rocket',
     'goblin_shaman_boat':'wpn_hex_bolt',
     'harvester':             'ability_web',
-    'shell_drifter':         'ability_mind_blast',
+    'nautiloid':         'ability_mind_blast',
     'githyanki':         'wpn_silver_sword',
     'beholder':          'wpn_Sentinel Drone_eye',
     'leviathan':         'wpn_leviathan_breath',
@@ -6462,7 +6462,7 @@ function startWaypointTravel(wp){
   G.ship.atFragSite=null;
   const dist=Math.hypot(wp.x-from.x, wp.y-from.y);
   G.phase='traveling';
-  const lane={ d:1, label:`Route to ${wp.n}`, lore:'A short diversion from the main Drift lanes.', pool:['shell_drifter','harvester'], rate:0.140, warzone:false, flow:0 };
+  const lane={ d:1, label:`Route to ${wp.n}`, lore:'A short diversion from the main Drift lanes.', pool:['nautiloid','harvester'], rate:0.140, warzone:false, flow:0 };
   // Waypoints: short diversion — visually faster with ship speed upgrades
   const fatFactor = fatigueLevel() >= 3 ? 1.25 : 1.0;
   const totalMs = Math.round(getWatchRealMs() * 0.6 * fatFactor);
@@ -6493,7 +6493,7 @@ function startFragSiteTravel(fs){
   G.phase = 'traveling';
   const lane = { d:2, label:`Route to ${fs.n}`,
     lore:'Uncharted space between the lanes. Something lurks out here.',
-    pool:['shell_drifter','harvester','corsair','plunderer'], rate:0.180, warzone:false, flow:0 };
+    pool:['nautiloid','harvester','corsair','plunderer'], rate:0.180, warzone:false, flow:0 };
   // Fragment sites: off-lane — visually faster with ship speed upgrades
   const fatFactor = fatigueLevel() >= 3 ? 1.25 : 1.0;
   const totalMs = Math.round(getWatchRealMs() * fatFactor);
@@ -6561,7 +6561,7 @@ function travelTick(){
       if(Math.random() < chance){
         G.tvl._eventLocked = true;
         clearInterval(G.tvl.timer); G.tvl.timer = null;
-        const enemyKey = (lane.pool||['shell_drifter','harvester'])[Math.floor(Math.random()*(lane.pool||['shell_drifter','harvester']).length)];
+        const enemyKey = (lane.pool||['nautiloid','harvester'])[Math.floor(Math.random()*(lane.pool||['nautiloid','harvester']).length)];
         // Show enemy approaching in travel sequence before triggering combat
         if (TS.active) {
           tsQueueEnemy(enemyKey);
@@ -9806,19 +9806,19 @@ function drawCbtShips(key){
   const _eF=(k,flip,fn)=>drawShipImg(k,ec,100,65,160,100,flip,fn);
   if(key==='fg_realm')       _eF('squid',true,     ()=>drawSquid(ec,100,65,46,true));
   else if(key==='fg_grey')   _eF('hammer',true,    ()=>drawHammer(ec,100,65,46,true));
-  else if(key==='fg_krynn')  _eF('Drift Corsair',false,()=>drawGithyanki(ec,100,65,46));
+  else if(key==='fg_krynn')  _eF('githyanki',false,()=>drawGithyanki(ec,100,65,46));
   else if(key==='fg_cluster')_eF('squid',true,     ()=>drawSquid(ec,100,65,46,true));
-  else if(key==='fg_hero')   _eF('Sentinel Drone',false, ()=>drawBeholder(ec,100,65,46));
+  else if(key==='fg_hero')   _eF('beholder',false, ()=>drawBeholder(ec,100,65,46));
   else if(key==='fg_dark')   _eF('leviathan',false,()=>drawLeviathan(ec,100,65,46));
   else if(key==='corsair')   _eF('corsair',true,   ()=>drawCorsairSloop(ec,100,65,46,true));
   else if(key==='plunderer') _eF('plunderer',true, ()=>drawPlundererBrig(ec,100,65,46,true));
   else if(key==='blackfleet')_eF('blackfleet',true,()=>drawBlackFleetReaver(ec,100,65,46,true));
-  else if(key==='shell_drifter') _eF('shell_drifter',false,()=>drawNautiloid(ec,100,65,46));
+  else if(key==='nautiloid') _eF('nautiloid',false,()=>drawNautiloid(ec,100,65,46));
   else if(key==='elder')     _eF('elder',false,    ()=>drawElder(ec,100,65,46));
   else if(key==='caiphon')   _eF('caiphon',false,  ()=>drawCaiphon(ec,100,65,46,performance.now()/1000));
-  else if(key==='Sentinel Drone')  _eF('Sentinel Drone',false, ()=>drawBeholder(ec,100,65,46));
+  else if(key==='beholder')  _eF('beholder',false, ()=>drawBeholder(ec,100,65,46));
   else if(key==='leviathan') _eF('leviathan',false,()=>drawLeviathan(ec,100,65,46));
-  else if(key==='Drift Corsair') _eF('Drift Corsair',false,()=>drawGithyanki(ec,100,65,46));
+  else if(key==='githyanki') _eF('githyanki',false,()=>drawGithyanki(ec,100,65,46));
   else if(key==='vodoniPatrol')_eF('vodoniPatrol',false,()=>drawVodoniWarship(ec,100,65,46));
   else if(key==='trullBattle')  _eF('trullBattle',false,  ()=>drawTrullBattleCruiser(ec,100,65,46));
   else if(key==='frStalker')   _eF('frStalker',false,   ()=>drawFarRealmStalker(ec,100,65,46));
@@ -11907,10 +11907,10 @@ function showLootOverlay(key, gold, items){
   if(key==='corsair')       _lF('corsair',true,      ()=>drawCorsairSloop(lc,90,55,32,true));
   else if(key==='plunderer') _lF('plunderer',true,   ()=>drawPlundererBrig(lc,90,55,32,true));
   else if(key==='blackfleet')_lF('blackfleet',true,  ()=>drawBlackFleetReaver(lc,90,55,32,true));
-  else if(key==='shell_drifter') _lF('shell_drifter',false,  ()=>drawNautiloid(lc,90,55,32));
-  else if(key==='Sentinel Drone')  _lF('Sentinel Drone',false,   ()=>drawBeholder(lc,90,55,32));
+  else if(key==='nautiloid') _lF('nautiloid',false,  ()=>drawNautiloid(lc,90,55,32));
+  else if(key==='beholder')  _lF('beholder',false,   ()=>drawBeholder(lc,90,55,32));
   else if(key==='leviathan') _lF('leviathan',false,  ()=>drawLeviathan(lc,90,55,32));
-  else if(key==='Drift Corsair') _lF('Drift Corsair',false,  ()=>drawGithyanki(lc,90,55,32));
+  else if(key==='githyanki') _lF('githyanki',false,  ()=>drawGithyanki(lc,90,55,32));
   else if(key==='elder')     _lF('elder',false,      ()=>drawElder(lc,90,55,32));
   else if(key==='vodoniPatrol')_lF('vodoniPatrol',false,()=>drawVodoniWarship(lc,90,55,32));
   else if(key==='trullBattle')  _lF('trullBattle',false,  ()=>drawTrullBattleCruiser(lc,90,55,32));
@@ -15623,7 +15623,7 @@ function _lsDrawShipSilhouette(ctx, key) {
       ctx.beginPath(); ctx.moveTo(0,i*4); ctx.lineTo(-4,i*14); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(4,i*5); ctx.lineTo(4,i*14); ctx.stroke();
     }
-  } else if(key==='shell_drifter') {
+  } else if(key==='nautiloid') {
     ctx.beginPath();
     ctx.ellipse(0,0,13,6,0,0,Math.PI*2); ctx.fill();
     ctx.beginPath();
@@ -16363,9 +16363,9 @@ function lqTrackKill(enemyKey) {
   const trackers = [
     { qid:'realm_q1_kills',  condition: (k) => k==='harvester' },
     { qid:'realm_q2_kills',  condition: (k) => k==='blackfleet' },
-    { qid:'realm_q4_kills',  condition: (k) => k==='shell_drifter' },
-    { qid:'grey_q3_kills',   condition: (k) => k==='shell_drifter' },
-    { qid:'refuge_q1_kills', condition: (k) => k==='Drift Corsair' },
+    { qid:'realm_q4_kills',  condition: (k) => k==='nautiloid' },
+    { qid:'grey_q3_kills',   condition: (k) => k==='nautiloid' },
+    { qid:'refuge_q1_kills', condition: (k) => k==='githyanki' },
   ];
   trackers.forEach(t => {
     const parentQid = t.qid.replace(/_kills$/, '');
