@@ -1527,7 +1527,7 @@ body {
     max-width: 160px;
     padding: 3px 8px;
     gap: 1px;
-    font-size: 0.5em;
+    font-size: 0.625em;
   }
 }
 #watch-hud.on { display:flex; }
@@ -5258,7 +5258,7 @@ function renderLoop(ts=0) {
     const bg=cx.createRadialGradient(mx,my,0,mx,my,r);
     bg.addColorStop(0,hexA(col,'88')); bg.addColorStop(1,hexA(col,'00'));
     cx.fillStyle=bg; cx.beginPath(); cx.arc(mx,my,r,0,Math.PI*2); cx.fill();
-    cx.fillStyle=col; cx.font='bold 9px "Cinzel",serif'; cx.textAlign='center'; cx.textBaseline='middle';
+    cx.fillStyle=col; cx.font='bold 11px "Cinzel",serif'; cx.textAlign='center'; cx.textBaseline='middle';
     cx.fillText(lane.warzone?'⚔':lane.d, mx, my);
     if(lane.warzone){
       cx.font='7px Arial'; cx.fillStyle=hexA(col,'cc');
@@ -5399,7 +5399,7 @@ function renderLoop(ts=0) {
     // Inner dot
     cx.fillStyle='#aaddff'; cx.beginPath(); cx.arc(px,py,2*pulse,0,Math.PI*2); cx.fill();
     // Label
-    cx.fillStyle='#5599bb'; cx.font='9px "Cinzel",serif'; cx.textAlign='center';
+    cx.fillStyle='#5599bb'; cx.font='12px "Cinzel",serif'; cx.textAlign='center';
     cx.fillText(wp.n, px, py+16);
   });
 
@@ -5537,7 +5537,7 @@ function renderLoop(ts=0) {
       // Breach label override
       cx.fillStyle='#00ffbb'; cx.font='bold 11px "Cinzel",serif'; cx.textAlign='center';
       cx.fillText('⬡ BREACH POINT',p.x,p.y+R+15);
-      cx.fillStyle='rgba(0,255,150,0.7)'; cx.font='9px "Cinzel",serif';
+      cx.fillStyle='rgba(0,255,150,0.7)'; cx.font='11px "Cinzel",serif';
       cx.fillText('Click to Enter',p.x,p.y+R+28);
       cx.restore();
       cx.globalAlpha=1; cx.textBaseline='alphabetic';
@@ -5550,7 +5550,7 @@ function renderLoop(ts=0) {
     }
     if(locked){cx.fillStyle='#888';cx.font='10px Arial';cx.textAlign='center';cx.fillText('🔒',p.x,p.y);}
     cx.fillStyle=locked?'#444':(isCur?'#fff':sph.c);
-    cx.font=(isCur?'bold ':'')+' 11px "Cinzel",serif'; cx.textAlign='center';
+    cx.font=(isCur?'bold ':'')+' 14px "Cinzel",serif'; cx.textAlign='center';
     cx.fillText(sph.n,p.x,p.y+R+15);
     cx.restore();
   });
@@ -5580,7 +5580,7 @@ function renderLoop(ts=0) {
       drawTheMurmur(cx, 0, 0, 18); // placeholder — all bosses use Murmur art until sprites done
       cx.restore();
       // Boss name label
-      cx.fillStyle='#ff4466'; cx.font='bold 9px "Cinzel",serif'; cx.textAlign='center';
+      cx.fillStyle='#ff4466'; cx.font='bold 11px "Cinzel",serif'; cx.textAlign='center';
       cx.fillText(wb.name, bx, by+24);
       // ⚠ icon above
       cx.font='11px Arial'; cx.fillText('⚠', bx, by-20);
