@@ -6298,6 +6298,7 @@ function getShipPos(){
 function startTravel(toId, _resumeWatchesLeft, _pausedPos, _pausedProg, _savedLaneOrigin){
   if(G.phase!=='map')return;
   if(G.tvl) G.tvl._eventLocked = false; // clear any stale lock from previous leg
+  if(G.tvl) G.tvl._sphereQueued = false; // allow sphere to re-queue on new approach
   _LP.inited = false; _LP._lastTs = 0; _LP.pools = {}; // reinit lane particles for new game
   G._restResumeBackup = null; // clear backup — travel is now underway
   // On resume (_pausedProg defined), skip the move budget check — advanceWatch already reset it
@@ -6723,7 +6724,16 @@ function arrive(id){
     if(G.localQuests['refuge_q2'] === 'active') {
       G.localQuests['refuge_q2_pending'] = true;
     }
-    setTimeout(() => openLocalSpace(), 400);
+    // If cargo quests completed, let the turn-in message show first.
+    // checkQuestTurnin fires showMsg at 400ms — we open LS after that clears.
+    const hasTurnin = G.quests.some(q=>q.turnin===id&&q.state==='active'&&G.ship.inv.some(i=>i.id===q.cargo.id));
+    if(hasTurnin) {
+      // Patch: open local space after the mission complete msgbox closes
+      const _origMsgCb = G._msgCb;
+      G._afterTurninCb = () => { setTimeout(()=>openLocalSpace(), 300); };
+    } else {
+      setTimeout(() => openLocalSpace(), 400);
+    }
     _writeAutoSave();
     return;
   }
@@ -8404,6 +8414,9 @@ function tsDrawEvent(ctx, ev, W, H) {
 
 // ── Resolve event when it reaches the ship ────────────────────────────────
 function tsResolveEvent(ev) {
+  // Reset sphere queue flag so sphere re-appears if travel resumes after this event
+  if(G.tvl) G.tvl._sphereQueued = false;
+
   if (ev.type === 'enemy') {
     const alertEl = document.getElementById('ts-alert');
     if (alertEl) { alertEl.textContent = '⚔ INTERCEPT'; alertEl.className = 'show'; }
@@ -8498,6 +8511,11 @@ function tsClose() {
   ov.classList.remove('on');
   document.getElementById('ts-speed-btn').classList.remove('fast');
   document.getElementById('ts-alert').className = '';
+  // Reset sphere queue flag so the sphere re-queues if travel resumes mid-approach
+  // (only reset if we haven't actually arrived — arrival path sets midLanePos to null)
+  if(G.tvl && G.ship.midLanePos !== null) {
+    G.tvl._sphereQueued = false;
+  }
 }
 
 // Queue an enemy approach event (called from travelTick intercept)
@@ -13068,7 +13086,9 @@ function checkQuestTurnin(sphereId){
     addLog(`✅ MISSION COMPLETE: ${q.title} — Reward: ${q.reward} gold.`,'imp');
     snd('fragment_collect', 0.9);
     updateUI();
-    setTimeout(()=>showMsg(`✅ Mission Complete`,`"${q.title}" delivered successfully.\n\nReward: ${q.reward} gold\n${FACTIONS[q.faction].n} reputation increased.`,'Excellent!',null),400);
+    setTimeout(()=>showMsg(`✅ Mission Complete`,`"${q.title}" delivered successfully.\n\nReward: ${q.reward} gold\n${FACTIONS[q.faction].n} reputation increased.`,'Excellent!',()=>{
+      if(G._afterTurninCb){ const cb=G._afterTurninCb; G._afterTurninCb=null; cb(); }
+    }),400);
   });
 }
 
