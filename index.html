@@ -1496,24 +1496,22 @@ body {
 
 /* ── WATCH / FATIGUE SYSTEM ── */
 #watch-hud {
-  position:absolute; top:10px; left:50%; transform:translateX(-50%);
+  position:fixed; top:54px; left:50%; transform:translateX(-50%);
   background:rgba(4,0,14,0.94); border:1px solid #44118866; border-radius:6px;
   padding:6px 14px; display:none; flex-direction:column; align-items:center; gap:3px;
   z-index:55; min-width:210px; max-width:320px; width:fit-content; pointer-events:none;
 }
 @media (max-width: 700px) {
   #watch-hud {
-    left: auto !important;
-    right: 6px !important;
-    top: 6px !important;
-    bottom: auto !important;
-    transform: none !important;
-    min-width: 0 !important;
-    max-width: 180px !important;
-    width: auto !important;
-    padding: 3px 8px !important;
-    gap: 1px !important;
-    font-size: 0.5em !important;
+    top: 52px;
+    left: auto;
+    right: 6px;
+    transform: none;
+    min-width: 0;
+    max-width: 160px;
+    padding: 3px 8px;
+    gap: 1px;
+    font-size: 0.5em;
   }
 }
 #watch-hud.on { display:flex; }
