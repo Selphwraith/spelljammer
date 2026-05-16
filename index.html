@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Fentheris: Voyage Through the Drift</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
@@ -10,6 +10,10 @@
   --fs: 1;   /* font scale — set by JS from saved preference */
 }
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html {
+  touch-action: manipulation;
+  -ms-touch-action: manipulation;
+}
 body {
   background: #030009; color: #d4b896;
   font-family: 'Crimson Text', serif;
@@ -19,6 +23,7 @@ body {
   grid-template-rows: 44px 1fr 56px;
   grid-template-columns: 230px 1fr;
   grid-template-areas: "hdr hdr" "side main" "log log";
+  overscroll-behavior: none;
 }
 
 /* ── HEADER ── */
@@ -58,11 +63,11 @@ body {
 .ovl-btns { display:flex; flex-direction:column; gap:5px; margin-top:2px; }
 .ovl-btn {
   font-family:'Cinzel',serif; font-size: 0.625em; letter-spacing:1px;
-  padding:6px 10px; border:1px solid #44118866; border-radius:3px;
-  background:rgba(20,5,45,0.8); color:#9977cc; cursor:pointer;
+  padding:6px 10px; border:1px solid #6633aa88; border-radius:3px;
+  background:rgba(20,5,45,0.88); color:#ccaaff; cursor:pointer;
   transition:all 0.2s; text-transform:uppercase; text-align:left;
 }
-.ovl-btn:hover { border-color:#9966dd; color:#ddbbff; background:rgba(45,15,90,0.8); }
+.ovl-btn:hover { border-color:#bb88ff; color:#ffffff; background:rgba(55,20,110,0.9); }
 
 /* ── MAIN ── */
 #main { grid-area:main; position:relative; overflow:hidden; }
@@ -72,19 +77,28 @@ body {
 .ovlay {
   position:absolute; top:0; left:0; right:0; bottom:0;
   display:none; flex-direction:column; align-items:center; justify-content:center;
-  background:rgba(3,0,10,0.93); padding:16px; gap:10px;
+  background:rgba(3,0,12,0.96); padding:16px; gap:10px;
   overflow-y:auto; overflow-x:hidden;
-  -webkit-overflow-trulllling: touch;
+  -webkit-overflow-scrolling: touch;
   z-index:10;
-  touch-action: pan-y; /* allow trulllling within overlay, block map pan */
-  pointer-events: none; /* off by default when hidden */
+  touch-action: pan-y;
+  pointer-events: none;
+  /* Prevent browser zoom inside overlays */
+  -ms-touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .ovlay.on {
   display:flex;
-  pointer-events: all; /* fully intercept all touches when visible */
+  pointer-events: all;
 }
-.ovl-close-btn { position:absolute; top:10px; right:14px; background:none; border:1px solid #44006644; border-radius:3px; color:#6655aa; font-size: 0.75em; padding:4px 10px; cursor:pointer; font-family:'Cinzel',serif; letter-spacing:1px; }
-.ovl-close-btn:hover { border-color:#9966dd; color:#ddbbff; }
+/* Global overlay text boost — ensures readable contrast on bright screens */
+.ovlay, .ovlay * { -webkit-font-smoothing:antialiased; }
+.ls-dock-label  { color:#99aacc; }
+.ls-dock-val    { color:#ddeeff; font-weight:500; }
+.ls-dock-section { font-size:0.563em; color:#6688aa; letter-spacing:2px; margin-top:4px; }
+.ovl-close-btn { position:absolute; top:10px; right:14px; background:rgba(30,12,8,0.85); border:1px solid #aa663355; border-radius:3px; color:#ddaa77; font-size: 0.75em; padding:4px 10px; cursor:pointer; font-family:'Cinzel',serif; letter-spacing:1px; }
+.ovl-close-btn:hover { border-color:#ffaa55; color:#ffcc88; background:rgba(70,28,8,0.9); }
 
 /* ── LOOT OVERLAY ── */
 .loot-title { font-family:'Cinzel',serif; font-size: 1.625em; font-weight:900; color:#ffd700; text-shadow:0 0 20px #ffd70088; letter-spacing:4px; }
@@ -338,12 +352,21 @@ body {
 .le { font-size: 0.688em; color:#554477; } .le.imp { color:#ffcc44; } .le.dmg { color:#ff7755; } .le.gd { color:#44ee88; }
 
 /* ── BUTTONS ── */
-.btn { font-family:'Cinzel',serif; font-size: 0.688em; letter-spacing:1px; padding:7px 13px; border:1px solid #5522aa; border-radius:3px; background:rgba(22,6,50,0.85); color:#d4b896; cursor:pointer; transition:all 0.2s; text-transform:uppercase; }
-.btn:hover { background:rgba(65,22,130,0.85); border-color:#9966dd; color:#fff; box-shadow:0 0 9px #9966dd44; }
+.btn { font-family:'Cinzel',serif; font-size: 0.688em; letter-spacing:1px; padding:7px 13px; border:1px solid #7744cc; border-radius:3px; background:rgba(22,6,50,0.9); color:#e8d4b8; cursor:pointer; transition:all 0.2s; text-transform:uppercase; touch-action:manipulation; }
+.btn:hover { background:rgba(70,25,140,0.92); border-color:#bb88ff; color:#fff; box-shadow:0 0 10px #9966dd55; }
 .btn:disabled { opacity:0.4; cursor:not-allowed; box-shadow:none; }
 .btn.dmg { border-color:#ff4444; color:#ff8877; } .btn.dmg:hover { background:rgba(100,12,12,0.85); box-shadow:0 0 9px #ff444444; }
-.btn.gd { border-color:#44ee88; color:#44ee88; } .btn.gd:hover { background:rgba(12,80,36,0.85); box-shadow:0 0 9px #44ee8844; }
-.btn.sm { padding:4px 9px; font-size: 0.625em; }
+.btn.gd  { border-color:#44ee88; color:#66ffaa; } .btn.gd:hover  { background:rgba(12,80,36,0.85);  box-shadow:0 0 9px #44ee8844; }
+.btn.sm  { padding:4px 9px; font-size: 0.625em; }
+/* Exit/depart/return buttons — amber so players always know how to leave a window */
+.btn.exit, button.btn-exit {
+  border-color:#aa663355; color:#ddaa77;
+  background:rgba(30,12,8,0.88);
+}
+.btn.exit:hover, button.btn-exit:hover {
+  border-color:#ffaa55; color:#ffcc88;
+  background:rgba(70,28,8,0.9);
+}
 
 ::-webkit-trullllbar { width:4px; } ::-webkit-trullllbar-track { background:#040010; } ::-webkit-trullllbar-thumb { background:#331166; border-radius:2px; }
 
@@ -425,7 +448,7 @@ body {
 .mm-btn:hover:not(:disabled) { border-color:#aa66ff; background:rgba(50,15,100,0.9); color:#fff; box-shadow:0 0 14px #9966dd44; transform:translateX(3px); }
 .mm-btn:disabled { opacity:0.3; cursor:not-allowed; }
 .mm-btn .mm-ico { font-size: 1em; width:20px; text-align:center; }
-.mm-btn .mm-desc { font-size: 0.563em; color:#6655aa; letter-spacing:1px; display:block; margin-top:2px; font-family:'Crimson Text',serif; font-style:italic; }
+.mm-btn .mm-desc { font-size: 0.563em; color:#9988bb; letter-spacing:1px; display:block; margin-top:2px; font-family:'Crimson Text',serif; font-style:italic; }
 
 /* ── CAPTAIN'S BRIEFING ── */
 .briefing-overlay {
@@ -784,6 +807,21 @@ body {
   .btn { font-size: 0.75em; }
   /* Waypoint grid 2-col */
   #wpgrid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* ── iOS/Android auto-zoom prevention ──────────────────────────────────
+     Browsers zoom in when you tap a select/input with font-size < 16px.
+     Force 16px on all interactive elements inside overlays on mobile.
+     touch-action:manipulation blocks double-tap zoom on buttons.        */
+  .ovlay select, .ovlay input, .ovlay textarea,
+  #ls-dock-panel select, #ls-dock-panel input,
+  #ov-port select, #ov-port input,
+  #ov-dockmaster select, #ov-dockmaster input {
+    font-size: 16px !important;
+    touch-action: manipulation;
+  }
+  button, .btn, .ovl-btn, .ovl-close-btn, .mm-btn, .fbtn, .drawer-ovl-btn {
+    touch-action: manipulation;
+  }
 }
 
 
@@ -838,12 +876,12 @@ body {
 }
 #lq-back:hover { border-color:#9966dd; color:#ddbbff; }
 #lq-close {
-  position:absolute; top:10px; right:14px; background:none;
-  border:1px solid #44006644; border-radius:3px; color:#6655aa;
+  position:absolute; top:10px; right:14px; background:rgba(30,12,8,0.88);
+  border:1px solid #aa663355; border-radius:3px; color:#ddaa77;
   font-size: 0.75em; padding:4px 10px; cursor:pointer;
   font-family:'Cinzel',serif; letter-spacing:1px; z-index:10;
 }
-#lq-close:hover { border-color:#9966dd; color:#ddbbff; }
+#lq-close:hover { border-color:#ffaa55; color:#ffcc88; background:rgba(70,28,8,0.9); }
 
 /* ══════════════════════════════════════════════════════════════════
    LOCAL SPACE — WASD/Click top-down exploration overlay (Fentheris System)
@@ -904,12 +942,12 @@ body {
 
 /* ── Close/Exit button ── */
 #ls-close {
-  position:absolute; top:10px; right:14px; background:none;
-  border:1px solid #44006644; border-radius:3px; color:#6655aa;
+  position:absolute; top:10px; right:14px; background:rgba(30,12,8,0.88);
+  border:1px solid #aa663355; border-radius:3px; color:#ddaa77;
   font-size:0.75em; padding:4px 10px; cursor:pointer;
   font-family:'Cinzel',serif; letter-spacing:1px; z-index:20;
 }
-#ls-close:hover { border-color:#9966dd; color:#ddbbff; }
+#ls-close:hover { border-color:#ffaa55; color:#ffcc88; background:rgba(70,28,8,0.9); }
 
 /* ── NPC interaction panel (floats over canvas when near NPC) ── */
 #ls-interact-panel {
@@ -1499,8 +1537,8 @@ body {
   text-transform:uppercase; display:none;
 }
 #rest-btn.on { display:block; }
-#rest-btn.fresh    { border:1px solid #44118866; background:rgba(20,5,45,0.8); color:#9977cc; }
-#rest-btn.fresh:hover { border-color:#9966dd; color:#ddbbff; }
+#rest-btn.fresh    { border:1px solid #6633aa66; background:rgba(20,5,45,0.88); color:#bb99ee; }
+#rest-btn.fresh:hover { border-color:#bb88ff; color:#ffffff; }
 #rest-btn.tired    { border:1px solid #aa880066; background:rgba(30,20,0,0.8); color:#ffcc44; }
 #rest-btn.fatigued { border:1px solid #aa440066; background:rgba(30,10,0,0.8); color:#ff8844; animation:fatpulse 1.6s ease-in-out infinite; }
 #rest-btn.exhausted{ border:1px solid #aa000066; background:rgba(30,0,0,0.8); color:#ff4444; animation:fatpulse 0.8s ease-in-out infinite; }
@@ -2178,8 +2216,8 @@ body {
       <div id="ls-dock-cargo-grid" style="display:flex;flex-direction:column;gap:5px;margin-top:2px;"></div>
 
       <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap;">
-        <button class="btn" style="font-size:0.688em;" onclick="closeLsDock()">⬅ Return to Space</button>
-        <button class="btn" style="font-size:0.688em;color:#ff4444;border-color:#44001133;" onclick="lsDockDepart()">⛵ Depart Fentheris System</button>
+        <button class="btn exit" style="font-size:0.688em;" onclick="closeLsDock()">⬅ Return to Space</button>
+        <button class="btn exit" style="font-size:0.688em;border-color:#661100;color:#ff8866;" onclick="lsDockDepart()">⛵ Depart Fentheris System</button>
       </div>
     </div>
 
@@ -4889,6 +4927,15 @@ function initGame() {
   for(let i=0;i<55;i++) G.phlo.push({x:Math.random(),y:Math.random(),vx:(Math.random()-.5)*0.0006,vy:(Math.random()-.5)*0.0006,sz:Math.random()*90+35,col:PC[i%PC.length],a:Math.random()*0.10+0.03,da:(Math.random()-.5)*0.0008});
 
   ensureLqState(); updateUI(); updateFragUI();
+  // ── Set mobile-appropriate initial zoom ──────────────────────────────────
+  if(window.innerWidth <= 700) {
+    // Calculate zoom so the chart fills ~90% of the shorter screen dimension
+    // Chart is drawn across the full canvas; zoom 1 = canvas pixels = CSS pixels
+    // Smaller screens need less zoom to see the full chart
+    const mz = Math.max(0.55, Math.min(0.75, window.innerWidth / 600));
+    G.view.zoom   = mz;
+    G.view.follow = true;
+  }
   // ── Initialize watch budget (no lane yet — use open drift defaults)
   G.watch.moveBudget = calcMoveBudget({ flow: 0 }, G.ship);
   G.watch.moveUsed   = 0;
@@ -4906,7 +4953,10 @@ function initGame() {
 // ║  CANVAS / RENDERING                                  ║
 // ╚══════════════════════════════════════════════════════╝
 const cv=document.getElementById('gc'), cx=cv.getContext('2d');
-function resizeCv(){ cv.width=cv.parentElement.clientWidth; cv.height=cv.parentElement.clientHeight; }
+function resizeCv(){
+  cv.width  = cv.parentElement.clientWidth;
+  cv.height = cv.parentElement.clientHeight;
+}
 function sPos(s){ return {x:s.x*cv.width, y:s.y*cv.height}; }
 
 // ── View / Camera Helpers ─────────────────────────────
@@ -13304,7 +13354,20 @@ window.addEventListener('keydown', e=>{
   function isMobile(){ return window.innerWidth<=700; }
 })();
 
-// ── Zoom HUD draw function ─────────────────────────────
+// ── Block browser-level pinch zoom on all touch surfaces ──────────────────
+// gesturestart/change/end are Safari-specific events for viewport scaling.
+// Blocking these prevents the viewport itself from zooming without affecting
+// our canvas pinch-to-zoom handler which uses touchstart/touchmove directly.
+document.addEventListener('gesturestart',  e => e.preventDefault(), {passive:false});
+document.addEventListener('gesturechange', e => e.preventDefault(), {passive:false});
+document.addEventListener('gestureend',    e => e.preventDefault(), {passive:false});
+
+// ── Canvas resize on orientation change / window resize ───────────────────
+(function(){
+  function _onResize(){ resizeCv(); }
+  window.addEventListener('resize', _onResize);
+  window.addEventListener('orientationchange', () => setTimeout(_onResize, 150));
+})();
 function drawZoomHud(cx,W,H,t){
   // Zoom HUD is now a DOM element — update its display state here
   const hud = document.getElementById('zoom-hud');
@@ -13583,7 +13646,7 @@ function _applyLoad(save) {
       captainLog: state.captainLog || [],
       travelDays: state.travelDays || 0,
       watch: state.watch || { day:1, totalHours:0, legsPushed:0, moveBudget:1, moveUsed:0, watchesWithoutRest:0, restingPhase:false },
-      view:{zoom:1,panX:0,panY:0,follow:true,_pan:false,_lastMx:0,_lastMy:0,_didDrag:false},
+      view:{zoom: window.innerWidth<=700 ? Math.max(0.55, Math.min(0.75, window.innerWidth/600)) : 1, panX:0,panY:0,follow:true,_pan:false,_lastMx:0,_lastMy:0,_didDrag:false},
     };
     for (let i = 0; i < 220; i++) G.stars.push({ x:Math.random(),y:Math.random(),r:Math.random()*1.8+0.3,twk:Math.random()*Math.PI*2,spd:Math.random()*0.014+0.003,br:Math.random() });
     const PC = ['rgba(255,90,0,','rgba(255,40,100,','rgba(150,30,255,','rgba(30,80,255,','rgba(30,230,200,','rgba(255,190,0,'];
@@ -14648,7 +14711,7 @@ function _lsBuildQmShop() {
     let qtyEl = null;
     if(!soldOut && maxSel > 1) {
       qtyEl = document.createElement('select');
-      qtyEl.style.cssText = 'font-size:0.563em;background:#080018;color:#ffcc66;border:1px solid #553322;border-radius:2px;padding:1px 2px;width:32px;flex-shrink:0;';
+      qtyEl.style.cssText = 'font-size:16px;background:#080018;color:#ffcc66;border:1px solid #553322;border-radius:2px;padding:1px 2px;width:48px;flex-shrink:0;touch-action:manipulation;';
       for(let q=1; q<=maxSel; q++) {
         const opt = document.createElement('option');
         opt.value = q; opt.textContent = q;
