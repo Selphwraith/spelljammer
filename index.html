@@ -560,6 +560,15 @@ body {
 }
 
 @media (max-width: 700px) {
+  /* Watch HUD — move to bottom-center on mobile so it doesn't cover header buttons */
+  #watch-hud {
+    top: auto;
+    bottom: 62px; /* above the log bar */
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 180px;
+    font-size: 0.875em;
+  }
   /* ── Layout skeleton ───────────────────────────────────── */
   body {
     grid-template-columns: 1fr;
@@ -1485,9 +1494,10 @@ body {
   position:absolute; top:10px; left:50%; transform:translateX(-50%);
   background:rgba(4,0,14,0.94); border:1px solid #44118866; border-radius:6px;
   padding:6px 14px; display:none; flex-direction:column; align-items:center; gap:3px;
-  z-index:260; min-width:210px; pointer-events:none;
+  z-index:55; min-width:210px; pointer-events:none;
 }
 #watch-hud.on { display:flex; }
+#watch-hud.hidden-by-overlay { display:none !important; }
 .wh-row { display:flex; align-items:center; gap:8px; }
 .wh-label { font-family:'Cinzel',serif; font-size:0.563em; color:#7755aa; letter-spacing:2px; text-transform:uppercase; }
 .wh-val   { font-family:'Cinzel',serif; font-size:0.625em; color:#ccaaff; letter-spacing:1px; }
@@ -11963,12 +11973,23 @@ function claimLoot(){
 // Sidebar overlays that mutually close each other when any one opens
 const SIDEBAR_OVERLAYS = ['inv','wpn','shp','qlog','journal','armory'];
 
+// Hide the watch HUD when any full-screen overlay is open — it's irrelevant and obstructive
+const OVERLAY_HUD_HIDE = ['inv','wpn','shp','qlog','journal','armory','port','dockmaster','localquest','localspace','loot','combat','wpnpicker','cbt-inv'];
+function _syncWatchHudVisibility() {
+  const hud = document.getElementById('watch-hud');
+  if(!hud) return;
+  const anyOpen = OVERLAY_HUD_HIDE.some(id => document.getElementById('ov-'+id)?.classList.contains('on'));
+  const lsOpen  = document.getElementById('ov-localspace')?.classList.contains('on');
+  hud.classList.toggle('hidden-by-overlay', anyOpen || lsOpen);
+}
+
 function _closeSidebarOverlays() {
   SIDEBAR_OVERLAYS.forEach(id => {
     const el = document.getElementById('ov-'+id);
     if(el) el.classList.remove('on');
   });
   _kbNavResetOnClose();
+  _syncWatchHudVisibility();
 }
 
 function openOverlay(which){
@@ -11978,8 +11999,9 @@ function openOverlay(which){
   if(which==='shp'){     buildShipOverlay();   document.getElementById('ov-shp').classList.add('on'); }
   if(which==='qlog'){    buildQuestLog('active'); document.getElementById('ov-qlog').classList.add('on'); }
   if(which==='journal'){ buildJournal();       document.getElementById('ov-journal').classList.add('on'); }
+  _syncWatchHudVisibility();
 }
-function closeOverlay(which){ document.getElementById('ov-'+which).classList.remove('on'); _kbNavResetOnClose(); }
+function closeOverlay(which){ document.getElementById('ov-'+which).classList.remove('on'); _kbNavResetOnClose(); _syncWatchHudVisibility(); }
 
 function openArmory() {
   _closeSidebarOverlays();
@@ -14505,6 +14527,7 @@ function openLocalSpace() {
   document.getElementById('ls-dock-panel').classList.remove('on');
   _lsUpdateHud();
   _lsLog('Navigate to a point of interest. WASD or click to move.');
+  _syncWatchHudVisibility();
 
   // Check touch device for joystick
   if('ontouchstart' in window) {
@@ -14532,8 +14555,8 @@ function closeLsOverlay() {
   document.getElementById('ls-npc-dialog')?.classList.remove('on');
   if(LS.animId) { cancelAnimationFrame(LS.animId); LS.animId = null; }
   LS.keys = {};
-  // Keep LS._firstEntry = false so world persists between visits this session
   setTag('Navigation'); updateUI();
+  _syncWatchHudVisibility();
 }
 
 function closeLsDock() {
