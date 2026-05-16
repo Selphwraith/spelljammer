@@ -4408,35 +4408,35 @@ const SHIP_IMAGE_DATA = {
   'corsair':      'images/ship_corsair.png',
   'plunderer':    'images/ship_plunderer.png',
   'blackfleet':   'images/ship_blackfleet.png',
-  'shell_drifter':    'images/ship_shell_drifter.png',
-  'githyanki':    'images/ship_Drift Corsair.png',
-  'beholder':     'images/ship_Sentinel Drone.png',
+  'nautiloid':    'images/ship_shell_drifter.png',
+  'githyanki':    'images/ship_drift_corsair.png',
+  'beholder':     'images/ship_sentinel_drone.png',
   'leviathan':    'images/ship_leviathan.png',
   'vodoniPatrol': 'images/ship_vodoni.png',
-  'trullBattle':   'images/ship_trull.png',
+  'trullBattle':  'images/ship_trull.png',
   'thrikreen':    'images/ship_thrikreen.png',
-  'harvester':           'images/ship_harvester.png',
+  'harvester':         'images/ship_harvester.png',
   'goblin_cutter':      'images/ship_goblin_cutter.png',
   'goblin_rocketer':    'images/ship_goblin_rocketer.png',
   'goblin_shaman_boat': 'images/ship_goblin_shaman.png',
-  'trull_patrol':        'images/ship_trull_patrol.png',
-  'trull_enforcer':      'images/ship_trull_enforcer.png',
-  'trull_slaver':        'images/ship_trull_slaver.png',
-  'trull_warship':       'images/ship_trull_warship.png',
-  'trull_dreadnought':   'images/ship_trull_dreadnought.png',
-  'phlog_mote':         'images/ship_phlog_mote.png',
-  'phlog_jellyfish':    'images/ship_phlog_jellyfish.png',
-  'phlog_flamewing':    'images/ship_phlog_flamewing.png',
-  'phlog_vinecrawler':  'images/ship_phlog_vinecrawler.png',
-  'void_shark':         'images/ship_void_shark.png',
-  'frStalker':    'images/ship_frstalker.png',
-  'frHorde':      'images/ship_frhorde.png',
-  'elder':        'images/ship_elder.png',
-  'wb_grex':      'images/ship_wb_grex.png',
-  'wb_admiral':   'images/ship_wb_admiral.png',
-  'wb_clutch':    'images/ship_wb_clutch.png',
-  'wb_murmur':    'images/ship_wb_murmur.png',
-  'npc_ship':     'images/ship_npc.png',
+  'trull_patrol':       'images/ship_trull_patrol.png',
+  'trull_enforcer':     'images/ship_trull_enforcer.png',
+  'trull_slaver':       'images/ship_trull_slaver.png',
+  'trull_warship':      'images/ship_trull_warship.png',
+  'trull_dreadnought':  'images/ship_trull_dreadnought.png',
+  'phlog_mote':        'images/ship_phlog_mote.png',
+  'phlog_jellyfish':   'images/ship_phlog_jellyfish.png',
+  'phlog_flamewing':   'images/ship_phlog_flamewing.png',
+  'phlog_vinecrawler': 'images/ship_phlog_vinecrawler.png',
+  'void_shark':        'images/ship_void_shark.png',
+  'frStalker':   'images/ship_frstalker.png',
+  'frHorde':     'images/ship_frhorde.png',
+  'elder':       'images/ship_elder.png',
+  'wb_grex':     'images/ship_wb_grex.png',
+  'wb_admiral':  'images/ship_wb_admiral.png',
+  'wb_clutch':   'images/ship_wb_clutch.png',
+  'wb_murmur':   'images/ship_wb_murmur.png',
+  'npc_ship':    'images/ship_npc.png',
 };
 const _SHIP_IMG = {};
 const _SHIP_IMG_FAILED = new Set();
@@ -13503,6 +13503,7 @@ function _buildSaveEntry(slot, name) {
       clues: [...G.clues], fragsCollected: [...G.fragsCollected],
       localQuests: G.localQuests || {},
       lsQmStock: G._lsQmStock || null,
+      lsLastSpawn: G._lsLastSpawn || {},
       lsState: (typeof LS !== 'undefined' && document.getElementById('ov-localspace')?.classList.contains('on')) ? {
         inLocalSpace: true,
         px: LS.px, py: LS.py, pAngle: LS.pAngle,
@@ -13588,7 +13589,8 @@ function _applyLoad(save) {
     const PC = ['rgba(255,90,0,','rgba(255,40,100,','rgba(150,30,255,','rgba(30,80,255,','rgba(30,230,200,','rgba(255,190,0,'];
     for (let i = 0; i < 55; i++) G.phlo.push({ x:Math.random(),y:Math.random(),vx:(Math.random()-.5)*0.0006,vy:(Math.random()-.5)*0.0006,sz:Math.random()*90+35,col:PC[i%PC.length],a:Math.random()*0.10+0.03,da:(Math.random()-.5)*0.0008 });
     G.localQuests = state.localQuests || {};
-    G._lsQmStock  = state.lsQmStock  || null;
+    G._lsQmStock   = state.lsQmStock   || null;
+    G._lsLastSpawn = state.lsLastSpawn || {};
     // ── Restore local space position if saved inside it ────────
     const savedLs = state.lsState;
     if(savedLs?.inLocalSpace) {
@@ -14297,17 +14299,77 @@ function _lsSpawnEnemy(key, wx, wy) {
   LS.enemies.push(e);
 }
 
-function _lsSpawnInitialEnemies() {
+// ── ENEMY POOLS per sphere — weighted [key, weight] pairs ──────────────────
+const LS_ENEMY_POOLS = {
+  realm: [
+    // Fentheris System — low tier. Goblins, brigands, low creatures.
+    ['goblin_cutter',      5],
+    ['goblin_rocketer',    4],
+    ['goblin_shaman_boat', 3],
+    ['corsair',            4],
+    ['plunderer',          3],
+    ['void_shark',         2],
+    ['phlog_mote',         1],
+  ],
+  // Future spheres can define their own pools here
+  // grey:  [...],
+  // krynn: [...],
+};
+
+// Weighted random pick from a pool
+function _lsPickEnemy(pool) {
+  const total = pool.reduce((a, [,w]) => a+w, 0);
+  let r = Math.random() * total;
+  for(const [key, w] of pool) { r -= w; if(r <= 0) return key; }
+  return pool[0][0];
+}
+
+// Is a spawn position clear of all POIs (port, NPCs, fragment)?
+function _lsSpawnClearOfPois(x, y, minDist) {
+  return LS.pois.every(p => {
+    const dx = x-p.x, dy = y-p.y;
+    return Math.sqrt(dx*dx+dy*dy) > minDist;
+  });
+}
+
+// Spawn enemies randomly on the outer fringe, avoiding POIs
+function _lsSpawnInitialEnemies(sphereId) {
   const W = LS.W, H = LS.H;
-  // A few harvester near the hazard zone
-  _lsSpawnEnemy('harvester',  W*0.82, H*0.18);
-  _lsSpawnEnemy('harvester',  W*0.76, H*0.24);
-  // A corsair on the patrol lane
-  _lsSpawnEnemy('corsair', W*0.50, H*0.22);
-  // A shell_drifter on the outer arc near the fragment
-  _lsSpawnEnemy('shell_drifter', W*0.22, H*0.28);
-  // Random goblin on far side
-  _lsSpawnEnemy('goblin_cutter', W*0.72, H*0.75);
+  const pool = LS_ENEMY_POOLS[sphereId] || LS_ENEMY_POOLS.realm;
+
+  // Random count: 3–7
+  const count = 3 + Math.floor(Math.random() * 5);
+  const center = { x: W/2, y: H/2 };
+
+  // Fringe ring: spawn between 70%–90% of sphere radius from center
+  const sphereR = Math.min(W, H) * 0.47;
+  const innerR  = sphereR * 0.70;
+  const outerR  = sphereR * 0.90;
+  const POI_CLEAR_DIST = 200; // keep this far from any POI
+  const MAX_ATTEMPTS = 40;
+
+  let spawned = 0;
+  for(let i = 0; i < count; i++) {
+    let placed = false;
+    for(let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      const angle = Math.random() * Math.PI * 2;
+      const r = innerR + Math.random() * (outerR - innerR);
+      const x = center.x + Math.cos(angle) * r;
+      const y = center.y + Math.sin(angle) * r;
+      if(_lsSpawnClearOfPois(x, y, POI_CLEAR_DIST)) {
+        _lsSpawnEnemy(_lsPickEnemy(pool), x, y);
+        spawned++;
+        placed = true;
+        break;
+      }
+    }
+    if(!placed) {
+      // Fallback — place anywhere on the outer edge
+      const angle = Math.random() * Math.PI * 2;
+      _lsSpawnEnemy(_lsPickEnemy(pool), center.x + Math.cos(angle)*outerR, center.y + Math.sin(angle)*outerR);
+      spawned++;
+    }
+  }
 }
 
 // ── OPEN / CLOSE ──────────────────────────────────────────────────────────
@@ -14315,7 +14377,13 @@ function openLocalSpace() {
   ensureLqState();
   snd('sphere_arrive', 0.5);
 
-  // Initialize world on first entry
+  // Initialize world on first entry OR if 30+ days since last spawn
+  const sphereId = G.ship.loc || 'realm';
+  const dayNow   = G.watch?.day || 1;
+  if(!G._lsLastSpawn) G._lsLastSpawn = {};
+  const lastSpawn   = G._lsLastSpawn[sphereId] || 0;
+  const needsRespawn = LS._firstEntry || (dayNow - lastSpawn >= 30);
+
   if(LS._firstEntry) {
     LS._firstEntry = false;
     LS.px = LS.W * 0.50 + 280;
@@ -14331,12 +14399,16 @@ function openLocalSpace() {
         twk: Math.random()*Math.PI*2, spd: Math.random()*0.005+0.001
       });
     LS.pois    = _lsDefinePois();
-    LS.enemies = [];
     LS.particles = [];
     _lsInitPatrolBases();
-    _lsSpawnInitialEnemies();
     LS.lastEncounterTime = 0;
     LS._enemySpawnTimer = 0;
+  }
+
+  if(needsRespawn) {
+    LS.enemies = [];
+    _lsSpawnInitialEnemies(sphereId);
+    G._lsLastSpawn[sphereId] = dayNow;
   }
 
   // Reset per-session transient state
@@ -15141,12 +15213,9 @@ function _lsEnemySpawnTick(dt) {
   const dx = LS.px-sx, dy = LS.py-sy;
   if(Math.sqrt(dx*dx+dy*dy) < 400) return; // too close to player
 
-  // Weighted enemy selection for Fentheris System
-  const pool = ['harvester','corsair','shell_drifter','goblin_cutter','blackfleet'];
-  const weights = [0.35, 0.25, 0.20, 0.12, 0.08];
-  let r = Math.random(), key = pool[0];
-  for(let i=0; i<pool.length; i++) { r-=weights[i]; if(r<=0){key=pool[i];break;} }
-  _lsSpawnEnemy(key, sx, sy);
+  // Use sphere-appropriate enemy pool
+  const _lsTkPool = LS_ENEMY_POOLS[G.ship.loc || 'realm'] || LS_ENEMY_POOLS.realm;
+  _lsSpawnEnemy(_lsPickEnemy(_lsTkPool), sx, sy);
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────
