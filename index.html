@@ -560,15 +560,20 @@ body {
 }
 
 @media (max-width: 700px) {
-  /* Watch HUD — move to bottom-center on mobile so it doesn't cover header buttons */
+  /* Watch HUD — compact and bottom-center on mobile */
   #watch-hud {
     top: auto;
-    bottom: 62px; /* above the log bar */
+    bottom: 54px;
     left: 50%;
     transform: translateX(-50%);
-    min-width: 180px;
-    font-size: 0.875em;
+    min-width: 0;
+    width: auto;
+    padding: 3px 10px;
+    gap: 2px;
+    font-size: 0.5em;
   }
+  .wh-pip { width: 7px; height: 7px; }
+  .wh-row { gap: 5px; }
   /* ── Layout skeleton ───────────────────────────────────── */
   body {
     grid-template-columns: 1fr;
