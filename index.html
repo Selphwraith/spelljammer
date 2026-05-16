@@ -560,24 +560,6 @@ body {
 }
 
 @media (max-width: 700px) {
-  /* Watch HUD — compact pill at top-right on mobile, out of the way */
-  #watch-hud {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    left: auto !important;
-    bottom: auto !important;
-    transform: none !important;
-    min-width: 0 !important;
-    width: auto !important;
-    max-width: 180px;
-    padding: 3px 8px !important;
-    gap: 1px !important;
-    font-size: 0.5em !important;
-    z-index: 54;
-  }
-  .wh-pip { width: 6px !important; height: 6px !important; }
-  .wh-row { gap: 4px !important; }
   /* ── Layout skeleton ───────────────────────────────────── */
   body {
     grid-template-columns: 1fr;
@@ -1518,6 +1500,21 @@ body {
   background:rgba(4,0,14,0.94); border:1px solid #44118866; border-radius:6px;
   padding:6px 14px; display:none; flex-direction:column; align-items:center; gap:3px;
   z-index:55; min-width:210px; max-width:320px; width:fit-content; pointer-events:none;
+}
+@media (max-width: 700px) {
+  #watch-hud {
+    left: auto !important;
+    right: 6px !important;
+    top: 6px !important;
+    bottom: auto !important;
+    transform: none !important;
+    min-width: 0 !important;
+    max-width: 180px !important;
+    width: auto !important;
+    padding: 3px 8px !important;
+    gap: 1px !important;
+    font-size: 0.5em !important;
+  }
 }
 #watch-hud.on { display:flex; }
 #watch-hud.hidden-by-overlay { display:none !important; }
