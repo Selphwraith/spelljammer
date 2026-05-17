@@ -4151,6 +4151,7 @@ function updateWatchHUD() {
 
   // Only show on map/traveling phases — hide during combat and all overlays
   const active = (G.phase === 'map' || G.phase === 'traveling') && G.phase !== 'combat';
+  if(active) hud.classList.remove('hidden-by-overlay'); // clear any overlay-hide flag
   hud.classList.toggle('on', active);
 
   document.getElementById('wh-day').textContent = watchTimeStr();
@@ -4552,10 +4553,20 @@ function drawShipImg(key, ctx, cx, cy, w, h, flip, fallbackFn) {
     ctx.drawImage(img, -w/2, -h/2, w, h);
     ctx.restore();
   } else {
+    // Try loading — remove from failed set periodically so new uploads get picked up
+    if(_SHIP_IMG_FAILED.has(key)) {
+      if(!_SHIP_IMG_RETRY_T) _SHIP_IMG_RETRY_T = {};
+      const now = Date.now();
+      if(!_SHIP_IMG_RETRY_T[key] || now - _SHIP_IMG_RETRY_T[key] > 30000) {
+        _SHIP_IMG_FAILED.delete(key);
+        _SHIP_IMG_RETRY_T[key] = now;
+      }
+    }
     if(!_SHIP_IMG_FAILED.has(key) && SHIP_IMAGE_DATA[key]) loadShipImages();
     fallbackFn();
   }
 }
+const _SHIP_IMG_RETRY_T = {};
 // Scale w,h for player ships so each class feels bigger than the last.
 // Pinnace = base, squid = 1.25x, hammer = 2x, manow = 2.5x
 function shipSz(type, bw, bh) {
