@@ -80,7 +80,7 @@ body {
   background:rgba(3,0,12,0.96); padding:16px; gap:10px;
   overflow-y:auto; overflow-x:hidden;
   -webkit-overflow-scrolling: touch;
-  z-index:10;
+  z-index:70;
   touch-action: pan-y;
   pointer-events: none;
   /* Prevent browser zoom inside overlays */
@@ -842,7 +842,7 @@ body {
 /* ── LOCAL QUEST OVERLAY ─────────────────────────────────────── */
 #ov-localquest {
   position: absolute; top:0; left:0; right:0; bottom:0;
-  display: none; z-index: 60;
+  display: none; z-index: 70;
   background: radial-gradient(ellipse at 40% 50%, #050018 60%, #020010 100%);
   overflow: hidden;
   pointer-events: none;
@@ -12153,6 +12153,11 @@ function setInvFilter(f,el){
 function buildInvGrid(){
   const grid=document.getElementById('inv-grid'); grid.innerHTML='';
   const detail=document.getElementById('inv-detail'); detail.style.display='none'; G.selItem=null;
+  // Sync active filter button to G.invFilter (in case overlay was reopened)
+  document.querySelectorAll('.fbtn').forEach(b => {
+    const f = b.getAttribute('onclick')?.match(/setInvFilter\('([^']+)'/)?.[1];
+    if(f) b.classList.toggle('act', f === (G.invFilter || 'all'));
+  });
   const inv=G.ship.inv.filter(i=>G.invFilter==='all'||i.type===G.invFilter);
   const empty=document.getElementById('inv-empty');
   if(inv.length===0){ empty.style.display='block'; grid.style.display='none'; }
