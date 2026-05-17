@@ -76,10 +76,11 @@ body {
 /* ── SHARED OVERLAY ── */
 .ovlay {
   position:absolute; top:0; left:0; right:0; bottom:0;
-  display:none; flex-direction:column; align-items:center; justify-content:center;
-  background:rgba(3,0,12,0.96); padding:16px; gap:10px;
+  display:none; flex-direction:column; align-items:center; justify-content:flex-start;
+  background:rgba(3,0,12,0.96); padding:16px 16px 32px; gap:10px;
   overflow-y:auto; overflow-x:hidden;
   -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
   z-index:70;
   touch-action: pan-y;
   pointer-events: none;
@@ -331,7 +332,7 @@ body {
 #tvlf { height:100%; background:linear-gradient(90deg,#9933ff,#ff3399); transition:width 0.08s linear; }
 
 /* ── MSG BOX ── */
-#msgbox { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(4,0,13,0.97); border:1px solid #5522aa; border-radius:6px; padding:20px 26px; text-align:center; display:none; z-index:60; max-width:360px; box-shadow:0 0 36px #6633aa44; pointer-events:none; }
+#msgbox { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(4,0,13,0.97); border:1px solid #5522aa; border-radius:6px; padding:20px 26px; text-align:center; display:none; z-index:75; max-width:360px; max-height:88vh; overflow-y:auto; box-shadow:0 0 36px #6633aa44; pointer-events:none; -webkit-overflow-scrolling:touch; }
 #msgbox.on { display:block; pointer-events:all; touch-action:manipulation; }
 #msgtitle { font-family:'Cinzel',serif; font-size: 1.063em; color:#ffd700; margin-bottom:8px; }
 #msgbody { font-size: 0.813em; color:#aa99cc; margin-bottom:12px; line-height:1.6; white-space:pre-line; }
@@ -418,8 +419,10 @@ body {
 /* ── MAIN MENU ── */
 .mm-screen {
   position:fixed; top:0; left:0; right:0; bottom:0; z-index:500;
-  display:flex; align-items:center; justify-content:center;
+  display:flex; align-items:flex-start; justify-content:center;
   background:rgba(3,0,9,0.92);
+  overflow-y:auto; -webkit-overflow-scrolling:touch;
+  padding:20px 0;
 }
 .mm-screen.hidden { display:none; }
 .mm-card {
@@ -427,7 +430,8 @@ body {
   background:rgba(10,2,28,0.97); border:1px solid #5522aa55;
   border-radius:8px; padding:36px 44px;
   box-shadow:0 0 60px #6633aa33, inset 0 0 40px rgba(20,0,50,0.6);
-  min-width:320px;
+  min-width:320px; max-height:92vh; overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
 }
 .mm-title {
   font-family:'Cinzel',serif; font-size: 1.75em; font-weight:900;
@@ -801,7 +805,7 @@ body {
   .b-body { font-size: 0.813em; line-height: 1.65; padding: 10px 12px; }
 
   /* ── Main menu ─────────────────────────────────────────── */
-  .mm-card { padding: 24px 18px; min-width: 0; width: 94vw; }
+  .mm-card { padding: 24px 18px; min-width: 0; width: 94vw; max-height: none; }
   .mm-title { font-size: 1.375em; letter-spacing: 3px; }
   .mm-btn { font-size: 0.813em; padding: 13px 16px; }
   .mm-desc { font-size: 0.688em; }
@@ -857,6 +861,7 @@ body {
   border: 1px solid #44118877; border-radius: 8px;
   padding: 18px 18px 14px; display: none; flex-direction: column; gap: 10px;
   box-shadow: 0 0 40px #33006644; z-index:10;
+  max-height: 85vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
 }
 #lq-card.on { display: flex; }
 .lq-portrait { width:46px; height:46px; border-radius:50%; border:2px solid #44118866; display:flex; align-items:center; justify-content:center; font-size: 1.375em; flex-shrink:0; }
