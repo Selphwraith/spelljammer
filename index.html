@@ -14875,25 +14875,28 @@ function _lsBuildCargoGrid() {
 }
 
 function _lsGetQmStock() {
-  const stock = LOCAL_QUEST_DATA[G.ship?.loc || 'realm']?.qmStock || LOCAL_QUEST_DATA.realm?.qmStock;
+  const sphereId = G.ship?.loc || 'realm';
+  const stock = LOCAL_QUEST_DATA[sphereId]?.qmStock || LOCAL_QUEST_DATA.realm?.qmStock;
   if(!stock) return [];
   const dayNow = G.watch?.day || 1;
   const RESTOCK_DAYS = 30;
 
-  // Initialize or restock
-  if(!G._lsQmStock || (dayNow - (G._lsQmStock.lastRestockDay||0)) >= RESTOCK_DAYS) {
-    G._lsQmStock = {
+  // Per-sphere cache — keyed by sphere id so switching spheres gets the right stock
+  if(!G._lsQmStock) G._lsQmStock = {};
+  const cache = G._lsQmStock[sphereId];
+  if(!cache || (dayNow - (cache.lastRestockDay||0)) >= RESTOCK_DAYS) {
+    G._lsQmStock[sphereId] = {
       lastRestockDay: dayNow,
       remaining: {}
     };
     stock.items.forEach((item, i) => {
-      G._lsQmStock.remaining[i] = item.qty ?? 1;
+      G._lsQmStock[sphereId].remaining[i] = item.qty ?? 1;
     });
   }
   return stock.items.map((item, i) => ({
     ...item,
     _idx: i,
-    remaining: G._lsQmStock.remaining[i] ?? (item.qty ?? 1)
+    remaining: G._lsQmStock[sphereId].remaining[i] ?? (item.qty ?? 1)
   }));
 }
 
@@ -14904,7 +14907,7 @@ function _lsBuildQmShop() {
 
   const items = _lsGetQmStock();
   const dayNow = G.watch?.day || 1;
-  const daysUntilRestock = 30 - ((dayNow - (G._lsQmStock?.lastRestockDay||0)) % 30);
+  const _rSphId = G.ship?.loc || 'realm'; const daysUntilRestock = 30 - ((dayNow - (G._lsQmStock?.[_rSphId]?.lastRestockDay||0)) % 30);
 
   // Restock banner
   const banner = document.createElement('div');
@@ -14985,7 +14988,7 @@ function _lsBuildQmShop() {
 
         G.ship.gold -= totalCost;
         // Update persistent stock
-        G._lsQmStock.remaining[item._idx] = Math.max(0, (G._lsQmStock.remaining[item._idx]||0) - qty);
+        const _qSphId = G.ship?.loc || 'realm'; if(G._lsQmStock?.[_qSphId]) G._lsQmStock[_qSphId].remaining[item._idx] = Math.max(0, (G._lsQmStock[_qSphId].remaining[item._idx]||0) - qty);
 
         let msg = '';
         for(let q=0; q<qty; q++) {
@@ -15332,7 +15335,8 @@ function _lsShowInteract(poi) {
     btns.appendChild(dockBtn);
 
   } else if(poi.type === 'npc') {
-    const npcData = LOCAL_QUEST_DATA.realm?.npcs.find(n=>n.id===poi.npcId);
+    const _npcSphereId = G.ship?.loc || 'realm';
+    const npcData = LOCAL_QUEST_DATA[_npcSphereId]?.npcs.find(n=>n.id===poi.npcId);
     if(npcData) {
       document.getElementById('ls-interact-prompt').textContent =
         npcData.greet.slice(0, 100) + (npcData.greet.length>100?'…':'');
@@ -15341,7 +15345,7 @@ function _lsShowInteract(poi) {
       hailBtn.onclick = () => {
         // Open the NPC card from the LQ system but inside LS context
         ensureLqState();
-        LQ.sphere = 'realm'; LQ.data = LOCAL_QUEST_DATA.realm;
+        LQ.sphere = _npcSphereId; LQ.data = LOCAL_QUEST_DATA[_npcSphereId];
         panel.classList.remove('on');
         if(npcData.shop) {
           LQ.selectedNpc = npcData;
