@@ -1221,11 +1221,11 @@ body {
 /* Skip / Speed buttons — top right */
 #ts-controls {
   position: absolute; top: 12px; right: 14px;
-  display: flex; gap: 8px; z-index: 6;
+  display: flex; flex-direction: column; gap: 6px; z-index: 6;
 }
 #ts-skip-btn, #ts-speed-btn {
-  font-family: 'Cinzel', serif; font-size: 10px;
-  padding: 6px 14px; border-radius: 4px; cursor: pointer;
+  font-family: 'Cinzel', serif; font-size: 9px;
+  padding: 4px 8px; border-radius: 4px; cursor: pointer;
   letter-spacing: 1px; transition: all 0.15s;
 }
 #ts-skip-btn {
@@ -1244,7 +1244,7 @@ body {
 
 /* Event alert banner — appears when enemy/waypoint approaches */
 #ts-alert {
-  position: absolute; top: 16px; left: 50%;
+  position: absolute; top: 72px; left: 50%;
   transform: translateX(-50%);
   background: rgba(60,5,5,0.95); border: 1px solid #ff442255;
   border-radius: 5px; padding: 8px 20px;
@@ -8540,9 +8540,13 @@ function tsOpen(lane) {
   const ov = document.getElementById('ov-travel-seq');
   ov.classList.add('on');
 
-  // Force watch HUD visible during travel — it's the main purpose of the HUD
+  // Force watch HUD to center-top — set inline style to override any CSS/browser quirks
   const wh = document.getElementById('watch-hud');
-  if(wh) { wh.classList.remove('hidden-by-overlay'); wh.classList.add('on'); }
+  if(wh) {
+    wh.classList.remove('hidden-by-overlay');
+    wh.classList.add('on');
+    wh.style.cssText = 'display:flex !important; position:absolute !important; top:10px !important; left:50% !important; right:auto !important; transform:translateX(-50%) !important; z-index:260 !important; pointer-events:none !important;';
+  }
 
   // Update destination label
   const destId = G.tvl?.to;
@@ -8566,6 +8570,9 @@ function tsClose() {
   stopSphereAudio();
   const ov = document.getElementById('ov-travel-seq');
   ov.classList.remove('on');
+  // Clear the inline style set by tsOpen so watch HUD returns to normal CSS
+  const whClose = document.getElementById('watch-hud');
+  if(whClose) whClose.style.cssText = '';
   document.getElementById('ts-speed-btn').classList.remove('fast');
   document.getElementById('ts-alert').className = '';
   // Reset sphere queue flag so the sphere re-queues if travel resumes mid-approach
