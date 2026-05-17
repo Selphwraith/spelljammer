@@ -123,7 +123,7 @@ body {
 .loot-empty { color:#5544aa; font-style:italic; font-size: 0.813em; }
 
 /* ── INVENTORY OVERLAY ── */
-.inv-header { font-family:'Cinzel',serif; font-size: 1.125em; color:#aa77ff; letter-spacing:2px; }
+.inv-header { font-family:'Cinzel',serif; font-size: 1.125em; color:#aa77ff; letter-spacing:2px; text-align:left; }
 .filter-row { display:flex; gap:5px; flex-wrap:wrap; justify-content:center; }
 .fbtn {
   font-family:'Cinzel',serif; font-size: 0.625em; letter-spacing:1px;
@@ -173,7 +173,7 @@ body {
 .inv-footer { font-size: 0.75em; color:#6655aa; }
 
 /* ── WEAPONS OVERLAY ── */
-.wpn-header { font-family:'Cinzel',serif; font-size: 1.125em; color:#ff9944; letter-spacing:2px; }
+.wpn-header { font-family:'Cinzel',serif; font-size: 1.125em; color:#ff9944; letter-spacing:2px; text-align:left; }
 .wpn-ship-label { font-size: 0.75em; color:#7766aa; font-style:italic; }
 .wpn-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; max-width:580px; width:100%; }
 .wpn-card {
@@ -192,7 +192,7 @@ body {
 .wpn-status.rdy { color:#44ee88; } .wpn-status.wait { color:#ff7744; }
 
 /* ── SHIP OVERLAY ── */
-.shp-header { font-family:'Cinzel',serif; font-size: 1.25em; color:#44ccff; letter-spacing:3px; }
+.shp-header { font-family:'Cinzel',serif; font-size: 1.25em; color:#44ccff; letter-spacing:3px; text-align:left; }
 .shp-type { font-size: 0.75em; color:#7766aa; font-style:italic; margin-bottom:4px; }
 .shp-body { display:flex; gap:20px; max-width:680px; width:100%; align-items:flex-start; }
 .shp-canvas-wrap { background:rgba(8,0,22,0.7); border:1px solid #3311557; border-radius:6px; padding:14px; border-color:#44228855; flex-shrink:0; }
@@ -614,7 +614,7 @@ body {
 
   /* ── Overlays ──────────────────────────────────────────── */
   .ovlay { padding: 10px 8px; gap: 7px; }
-  .ovl-close-btn { padding: 8px 18px; font-size: 0.875em; }
+  .ovl-close-btn { padding: 6px 12px; font-size: 0.813em; }
   .ovl-title { font-size: 1.063em; letter-spacing: 3px; }
 
   /* ════════════════════════════════════════════════════════
@@ -1410,7 +1410,7 @@ body {
   align-items: flex-start; justify-content: flex-start;
   padding: 20px 24px; gap: 0;
 }
-.qlog-header { font-family:'Cinzel',serif; font-size: 1.125em; color:#ffcc66; letter-spacing:3px; margin-bottom:4px; }
+.qlog-header { font-family:'Cinzel',serif; font-size: 1.125em; color:#ffcc66; letter-spacing:3px; margin-bottom:4px; text-align:left; }
 .qlog-sub    { font-size: 0.688em; color:#554477; letter-spacing:1px; margin-bottom:14px; }
 .qlog-tabs   { display:flex; gap:6px; margin-bottom:14px; }
 .qlog-tab    { font-family:'Cinzel',serif; font-size: 0.625em; letter-spacing:1px; padding:5px 14px;
@@ -2119,8 +2119,10 @@ body {
 
   <!-- WAYPOINT PORT (supplies only) -->
   <div class="ovlay" id="ov-waypoint">
-    <button class="ovl-close-btn" onclick="departWaypoint()">⛵ Continue Journey</button>
-    <div class="ptop" id="wp-name">IEF Relay Station</div>
+    <div class="ovl-title-row">
+      <div class="ptop" id="wp-name">IEF Relay Station</div>
+      <button class="ovl-close-btn" onclick="departWaypoint()">⛵ Continue Journey</button>
+    </div>
     <div class="pdesc" id="wp-desc">Emergency resupply only.</div>
     <div style="font-size:11px;color:#6644aa;font-style:italic;margin-bottom:4px;">Field prices — 50% above port rates. No weapons or upgrades.</div>
     <div class="sgrid" id="wpgrid" style="max-width:420px;grid-template-columns:repeat(3,1fr);"></div>
