@@ -12019,6 +12019,11 @@ const OVERLAY_HUD_HIDE = ['inv','wpn','shp','qlog','journal','armory','port','do
 function _syncWatchHudVisibility() {
   const hud = document.getElementById('watch-hud');
   if(!hud) return;
+  // Never hide during traveling — that's the main purpose of the watch HUD
+  if(G.phase === 'traveling' || G.phase === 'map') {
+    hud.classList.remove('hidden-by-overlay');
+    return;
+  }
   const anyOpen = OVERLAY_HUD_HIDE.some(id => document.getElementById('ov-'+id)?.classList.contains('on'));
   const lsOpen  = document.getElementById('ov-localspace')?.classList.contains('on');
   hud.classList.toggle('hidden-by-overlay', anyOpen || lsOpen);
