@@ -6785,33 +6785,12 @@ function arrive(id){
         'Set Course', null), 600);
     }
   }
-  addLog(`Click the sphere again to dock at ${sph.n}.`,'');
-  // ── REALMSPACE: open Local Space instead of normal port flow ──
-  if(id === 'realm') {
-    checkQuestTurnin(id);
-    setTag('Navigation'); updateUI();
-    ensureLqState();
-    // Engine field test — realm counts as a valid away sphere
-    if(G.localQuests['refuge_q2'] === 'active') {
-      G.localQuests['refuge_q2_pending'] = true;
-    }
-    // If cargo quests completed, let the turn-in message show first.
-    // checkQuestTurnin fires showMsg at 400ms — we open LS after that clears.
-    const hasTurnin = G.quests.some(q=>q.turnin===id&&q.state==='active'&&G.ship.inv.some(i=>i.id===q.cargo.id));
-    if(hasTurnin) {
-      // Patch: open local space after the mission complete msgbox closes
-      const _origMsgCb = G._msgCb;
-      G._afterTurninCb = () => { setTimeout(()=>openLocalSpace(), 300); };
-    } else {
-      setTimeout(() => openLocalSpace(), 400);
-    }
-    _writeAutoSave();
-    return;
-  }
+  // ── LOCAL SPACE SPHERES — auto-open on arrival ───────────────────────────
+  const _LS_SPHERES = new Set(['realm','refuge','grey']);
   checkQuestTurnin(id);
   setTag('Navigation'); updateUI();
-  // Local quest: engine field test tracking + button update
   ensureLqState();
+  // Engine field test tracking — any non-refuge sphere counts as away
   if(id !== 'refuge' && G.localQuests['refuge_q2'] === 'active') {
     G.localQuests['refuge_q2_pending'] = true;
   }
@@ -6820,7 +6799,20 @@ function arrive(id){
     G.localQuests['refuge_q2_pending'] = false;
     addLog('Engine field test data recorded. Return to Chief Engineer Velt at the Local Quests panel.', 'gd');
   }
-_writeAutoSave();
+  if(_LS_SPHERES.has(id)) {
+    addLog(`Arrived at ${sph.n}. Entering local space…`, '');
+    // If a cargo quest turn-in is pending let the msgbox show first, then open LS
+    const hasTurnin = G.quests.some(q=>q.turnin===id&&q.state==='active'&&G.ship.inv.some(i=>i.id===q.cargo.id));
+    if(hasTurnin) {
+      G._afterTurninCb = () => { setTimeout(()=>openLocalSpace(), 300); };
+    } else {
+      setTimeout(() => openLocalSpace(), 400);
+    }
+    _writeAutoSave();
+    return;
+  }
+  addLog(`Click the sphere again to dock at ${sph.n}.`,'');
+  _writeAutoSave();
 }
 
 // ╔══════════════════════════════════════════════════════╗
