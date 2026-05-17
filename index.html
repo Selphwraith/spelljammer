@@ -4530,12 +4530,30 @@ function loadShipImages() {
       _SHIP_IMG[key] = img;
       // Redraw the menu ship once the pinnace image is ready
       if(key === 'pinnace') drawMenuShip();
+      // If combat is active and this image is the current enemy or player ship, redraw
+      if(G.cbt && G.phase === 'combat') {
+        const enemyKey = G.cbt.enemy?._key;
+        // Map guardian keys to the image key they use in drawCbtShips
+        const guardianImgKey = {fg_krynn:'githyanki', fg_hero:'beholder', fg_dark:'leviathan'};
+        const resolvedEnemyImgKey = guardianImgKey[enemyKey] || enemyKey;
+        if(key === resolvedEnemyImgKey || key === G.ship?.type) {
+          drawCbtShips(enemyKey);
+        }
+      }
     };
     img.onerror = () => {
       // Retry once after 2s in case assets weren't ready
       setTimeout(() => {
         const retry = new Image();
-        retry.onload  = () => { _SHIP_IMG[key] = retry; if(key==='pinnace') drawMenuShip(); };
+        retry.onload  = () => {
+          _SHIP_IMG[key] = retry;
+          if(key === 'pinnace') drawMenuShip();
+          if(G.cbt && G.phase === 'combat') {
+            const ek = G.cbt.enemy?._key;
+            const gik = {fg_krynn:'githyanki', fg_hero:'beholder', fg_dark:'leviathan'};
+            if(key === (gik[ek] || ek) || key === G.ship?.type) drawCbtShips(ek);
+          }
+        };
         retry.onerror = () => { _SHIP_IMG_FAILED.add(key); };
         retry.src = path;
       }, 2000);
@@ -8399,7 +8417,40 @@ function tsDrawEvent(ctx, ev, W, H) {
     ctx.rotate(angle);
     const [ew, eh] = [80, 50];
     ctx.shadowColor = '#ff4422'; ctx.shadowBlur = 20;
-    drawShipImg(ev.key, ctx, 0, 0, ew, eh, false, () => drawCorsairSloop(ctx, 0, 0, 22, false));
+    drawShipImg(ev.key, ctx, 0, 0, ew, eh, false, () => {
+      // Per-enemy fallback — matches drawCbtShips procedural draws
+      const k = ev.key;
+      if(k==='nautiloid')          drawNautiloid(ctx,0,0,22);
+      else if(k==='githyanki')     drawGithyanki(ctx,0,0,22);
+      else if(k==='beholder')      drawBeholder(ctx,0,0,22);
+      else if(k==='leviathan')     drawLeviathan(ctx,0,0,22);
+      else if(k==='blackfleet')    drawBlackFleetReaver(ctx,0,0,22,false);
+      else if(k==='plunderer')     drawPlundererBrig(ctx,0,0,22,false);
+      else if(k==='harvester')     drawNeogi(ctx,0,0,22);
+      else if(k==='thrikreen')     drawThriKreen(ctx,0,0,22);
+      else if(k==='trullBattle')   drawTrullBattleCruiser(ctx,0,0,22);
+      else if(k==='vodoniPatrol')  drawVodoniWarship(ctx,0,0,22);
+      else if(k==='frStalker')     drawFarRealmStalker(ctx,0,0,22);
+      else if(k==='frHorde')       drawFarRealmHorde(ctx,0,0,22);
+      else if(k==='trull_patrol')  drawTrullPatrol(ctx,0,0,22);
+      else if(k==='trull_enforcer')drawTrullEnforcer(ctx,0,0,22);
+      else if(k==='trull_slaver')  drawTrullSlaver(ctx,0,0,22);
+      else if(k==='trull_warship') drawTrullWarship(ctx,0,0,22);
+      else if(k==='trull_dreadnought')drawTrullDreadnought(ctx,0,0,22);
+      else if(k==='goblin_cutter') drawGoblinCutter(ctx,0,0,22);
+      else if(k==='goblin_rocketer')drawGoblinRocketer(ctx,0,0,22);
+      else if(k==='goblin_shaman_boat')drawGoblinShaman(ctx,0,0,22);
+      else if(k==='phlog_mote')    drawPhlogMote(ctx,0,0,22);
+      else if(k==='phlog_jellyfish')drawPhlogJellyfish(ctx,0,0,22);
+      else if(k==='phlog_flamewing')drawPhlogFlamewing(ctx,0,0,22);
+      else if(k==='phlog_vinecrawler')drawPhlogVinecrawler(ctx,0,0,22);
+      else if(k==='void_shark')    drawVoidShark(ctx,0,0,22);
+      else if(k==='wb_grex')       drawWarlordGrex(ctx,0,0,22);
+      else if(k==='wb_admiral')    drawHollowAdmiral(ctx,0,0,22);
+      else if(k==='wb_clutch')     drawClutchMother(ctx,0,0,22);
+      else if(k==='wb_murmur')     drawTheMurmur(ctx,0,0,22);
+      else                         drawCorsairSloop(ctx,0,0,22,false);
+    });
     ctx.shadowBlur = 0;
     ctx.restore();
     // Label — offset perpendicular to approach direction so it doesn't overlap ship
