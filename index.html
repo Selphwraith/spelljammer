@@ -1514,7 +1514,7 @@ body {
   position:fixed; top:54px; left:50%; transform:translateX(-50%);
   background:rgba(4,0,14,0.94); border:1px solid #44118866; border-radius:6px;
   padding:6px 14px; display:none; flex-direction:column; align-items:center; gap:3px;
-  z-index:55; min-width:210px; max-width:320px; width:fit-content; pointer-events:none;
+  z-index:260; min-width:210px; max-width:320px; width:fit-content; pointer-events:none;
 }
 @media (max-width: 700px) {
   #watch-hud {
@@ -2089,19 +2089,19 @@ body {
       <div id="ts-prog-bar-wrap"><div id="ts-prog-bar"></div></div>
       <div id="ts-watch-label"></div>
     </div>
-  </div>
 
-  <!-- WATCH HUD — shows during travel -->
-  <div id="watch-hud">
-    <div class="wh-row">
-      <span class="wh-label">Time</span>
-      <span class="wh-val" id="wh-day">Day 1 — 06:00</span>
-      <div class="wh-pips" id="wh-pips"></div>
-    </div>
-    <div class="wh-row">
-      <span class="wh-label">Move</span>
-      <span class="wh-val" id="wh-move">—</span>
-      <span id="fatigue-badge" class="fatigue-fresh">Fresh</span>
+    <!-- WATCH HUD — inside travel overlay so it renders above the canvas -->
+    <div id="watch-hud">
+      <div class="wh-row">
+        <span class="wh-label">Time</span>
+        <span class="wh-val" id="wh-day">Day 1 — 06:00</span>
+        <div class="wh-pips" id="wh-pips"></div>
+      </div>
+      <div class="wh-row">
+        <span class="wh-label">Move</span>
+        <span class="wh-val" id="wh-move">—</span>
+        <span id="fatigue-badge" class="fatigue-fresh">Fresh</span>
+      </div>
     </div>
   </div>
 
