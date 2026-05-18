@@ -6563,6 +6563,23 @@ function startFragSiteTravel(fs){
   tsOpen(lane); // open travel sequence for frag site approach
 }
 
+function _checkQuestRefresh() {
+  if(!G.quests || !G.watch) return;
+  const dayNow = G.watch.day || 1;
+  if(!G._questRefreshDay) G._questRefreshDay = {};
+  G.quests.forEach(q => {
+    if(q.state === 'complete') {
+      const completedDay = G._questRefreshDay[q.id] || 0;
+      if(!completedDay) {
+        G._questRefreshDay[q.id] = dayNow;
+      } else if(dayNow - completedDay >= 10) {
+        q.state = 'inactive';
+        delete G._questRefreshDay[q.id];
+      }
+    }
+  });
+}
+
 function travelTick(){
   if(G.phase!=='traveling'){ clearInterval(G.tvl?.timer); return; }
   // ── Event lock: if any encounter/waypoint/watch event already fired this
