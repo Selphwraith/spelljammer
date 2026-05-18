@@ -12029,7 +12029,7 @@ function genLoot(key){
   return items;
 }
 
-function showLootOverlay(key, TS, items){
+function showLootOverlay(key, gold, items){
   G._pendingLoot=items; G._pendingGold=gold; G._lootKey=key;
   const e=ENM[key] || FRAG_GUARDIANS[key] || WORLD_BOSSES[key] || (key==='shothothug' ? FINAL_BOSS : null);
   document.getElementById('loot-subline').textContent=`${e.name} ${e.sub} — Destroyed`;
