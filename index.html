@@ -1024,43 +1024,55 @@ body {
 .ls-dock-val { font-size:0.688em; color:#aabbdd; }
 .ls-dock-btn { font-size:0.688em; padding:5px 12px; }
 
-/* ── Ask Locals panel ── */
-#ls-locals-panel {
-  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-  background:rgba(4,0,16,0.98); border:1px solid #aa882244;
-  border-radius:10px; padding:18px 20px 16px;
-  display:none; flex-direction:column; gap:10px;
-  width:340px; max-height:85vh; overflow-y:auto;
-  box-shadow:0 0 50px #aa882218; z-index:21;
+/* ══ FRAGMENT DUNGEON OVERLAY ═══════════════════════════════════════════════ */
+#ov-fragsitee {
+  position:absolute; top:0; left:0; right:0; bottom:0;
+  display:none; z-index:67; background:#060201;
+  overflow:hidden; pointer-events:none;
 }
-#ls-locals-panel.on { display:flex; }
-#ls-locals-title {
-  font-family:'Cinzel',serif; font-size:0.8em; color:#ccaa55;
-  letter-spacing:2px; text-align:center; margin-bottom:2px;
+#ov-fragsitee.on { display:block; pointer-events:all; touch-action:none; }
+#fd-canvas { position:absolute; inset:0; width:100%; height:100%; display:block; z-index:1; cursor:crosshair; }
+#fd-hud {
+  position:absolute; top:0; left:0; right:0;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 140px 8px 14px; z-index:10; pointer-events:none;
+  background:linear-gradient(180deg,rgba(6,2,1,0.90) 0%,transparent 100%);
 }
-.ls-local-card {
-  display:flex; align-items:center; gap:10px;
-  padding:8px 10px; border-radius:6px;
-  background:rgba(20,12,4,0.7); border:1px solid #55441133;
-  cursor:pointer; transition:border-color 0.15s;
+#fd-hud-title { font-family:'Cinzel',serif; font-size:0.875em; color:#cc8833; letter-spacing:2px; text-shadow:0 0 20px #cc883366; }
+#fd-hud-stats { display:flex; gap:16px; font-size:0.688em; color:#776644; }
+#fd-hud-stats span { color:#ccaa77; }
+#fd-minimap {
+  position:absolute; bottom:48px; right:14px; width:110px; height:110px; border-radius:6px;
+  border:1px solid #cc883333; background:rgba(6,2,1,0.85); overflow:hidden; z-index:10;
+  pointer-events:none; box-shadow:0 0 18px #cc883318;
 }
-.ls-local-card:hover { border-color:#aa882266; }
-.ls-local-card.used { opacity:0.45; cursor:default; pointer-events:none; }
-.ls-local-card.selected { border-color:#ccaa55; background:rgba(40,28,4,0.9); }
-.ls-local-portrait { font-size:1.5em; flex-shrink:0; width:32px; text-align:center; }
-.ls-local-info { flex:1; min-width:0; }
-.ls-local-name { font-size:0.688em; color:#ccbb88; font-weight:600; }
-.ls-local-flavor { font-size:0.563em; color:#887755; font-style:italic; margin-top:1px; }
-#ls-locals-response {
-  padding:10px 12px; border-radius:6px;
-  background:rgba(10,6,2,0.8); border:1px solid #66441122;
-  font-size:0.688em; color:#ccbb88; font-style:italic; line-height:1.5;
-  display:none;
+#fd-minimap canvas { width:100%; height:100%; }
+#fd-log-strip {
+  position:absolute; bottom:8px; left:50%; transform:translateX(-50%);
+  background:rgba(8,3,1,0.92); border:1px solid #66330033; border-radius:4px;
+  padding:5px 18px; font-size:0.688em; color:#887755; font-style:italic;
+  pointer-events:none; max-width:560px; text-align:center; z-index:10;
 }
-#ls-locals-response.on { display:block; }
-#ls-locals-cost-hint {
-  font-size:0.563em; color:#886633; text-align:center; font-style:italic;
+#fd-log-strip.alert  { color:#ffaa33; }
+#fd-log-strip.danger { color:#ff5533; }
+#fd-abort {
+  position:absolute; top:10px; right:14px; background:rgba(30,10,4,0.88);
+  border:1px solid #cc440033; border-radius:4px; padding:6px 14px;
+  font-family:'Cinzel',serif; font-size:0.625em; color:#cc6633;
+  cursor:pointer; z-index:12; letter-spacing:1px;
 }
+#fd-abort:hover { border-color:#cc6633; color:#ffaa66; }
+#fd-interact-panel {
+  position:absolute; bottom:54px; left:50%; transform:translateX(-50%);
+  background:rgba(8,3,1,0.96); border:1px solid #cc883344; border-radius:6px;
+  padding:10px 16px 8px; z-index:11; min-width:240px; max-width:340px;
+  display:none; flex-direction:column; gap:6px; text-align:center;
+}
+#fd-interact-panel.on { display:flex; }
+#fd-interact-name { font-family:'Cinzel',serif; font-size:0.75em; color:#ffcc77; letter-spacing:1px; }
+#fd-interact-desc { font-size:0.625em; color:#887755; font-style:italic; }
+#fd-interact-btns { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:4px; }
+#fd-joystick-zone { position:absolute; bottom:60px; left:20px; width:100px; height:100px; z-index:12; display:none; touch-action:none; }
 
 /* ── Virtual joystick (mobile) ── */
 #ls-joystick-zone {
@@ -2319,19 +2331,7 @@ body {
       <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap;">
         <button class="btn exit" style="font-size:0.688em;" onclick="closeLsDock()">⬅ Return to Space</button>
         <button id="ls-dock-deliver-btn" class="btn" onclick="lsDockDeliverCargo()" style="display:none;font-size:0.688em;border-color:#446600;color:#88ff44;margin-bottom:4px;">📦 Deliver Cargo Mission</button>
-        <button id="ls-dock-ask-locals-btn" class="btn" onclick="lsOpenLocalsPanel()" style="font-size:0.688em;border-color:#aa882244;color:#ccaa55;">🍺 Ask Locals</button>
         <button class="btn exit" style="font-size:0.688em;border-color:#661100;color:#ff8866;" onclick="lsDockDepart()" id="ls-dock-depart-btn">⛵ Depart System</button>
-      </div>
-    </div>
-
-    <!-- Ask Locals panel -->
-    <div id="ls-locals-panel">
-      <div id="ls-locals-title">🍺 ASK THE LOCALS</div>
-      <div id="ls-locals-cost-hint"></div>
-      <div id="ls-locals-cards" style="display:flex;flex-direction:column;gap:6px;"></div>
-      <div id="ls-locals-response"></div>
-      <div style="display:flex;justify-content:center;margin-top:6px;">
-        <button class="btn exit" style="font-size:0.688em;" onclick="lsCloseLocalsPanel()">⬅ Back to Dock</button>
       </div>
     </div>
 
@@ -2354,6 +2354,44 @@ body {
     <div id="ls-joystick-zone">
       <div id="ls-joystick-base">
         <div id="ls-joystick-knob"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ FRAGMENT DUNGEON OVERLAY ══════════════════════════════════════════ -->
+  <div id="ov-fragsitee">
+    <canvas id="fd-canvas"></canvas>
+
+    <!-- HUD top bar -->
+    <div id="fd-hud">
+      <div id="fd-hud-title">🔮 THE FLOTSAM FIELD</div>
+      <div id="fd-hud-stats">
+        Hull: <span id="fd-hud-hull">—</span> &nbsp;
+        Crew: <span id="fd-hud-crew">—</span> &nbsp;
+        🔷 <span id="fd-hud-gold">—</span>
+      </div>
+    </div>
+
+    <!-- Minimap bottom-right -->
+    <div id="fd-minimap"><canvas id="fd-minimap-canvas" width="110" height="110"></canvas></div>
+
+    <!-- Log strip -->
+    <div id="fd-log-strip">Entering the site…</div>
+
+    <!-- Abort button -->
+    <button id="fd-abort" onclick="closeFragDungeon()">⬅ Abort Mission</button>
+
+    <!-- Interact panel (loot / guardian chamber) -->
+    <div id="fd-interact-panel">
+      <div id="fd-interact-name"></div>
+      <div id="fd-interact-desc"></div>
+      <div id="fd-interact-btns"></div>
+    </div>
+
+    <!-- Mobile joystick (reuses same logic) -->
+    <div id="fd-joystick-zone">
+      <div id="ls-joystick-base" style="width:100px;height:100px;border-radius:50%;background:rgba(68,136,255,0.08);border:1px solid #4488ff33;">
+        <div id="fd-joystick-knob" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;border-radius:50%;background:rgba(100,150,255,0.25);border:1px solid #4488ff55;"></div>
       </div>
     </div>
   </div>
@@ -2858,6 +2896,23 @@ const ENM = {
       { n:'Mass Psychic Domination',  ico:'🧠', d:[4,8], cd:2, threat:5, txt:'DANGER: Mind control blast. Deals damage AND removes 3 crew.', crew:3 },
       { n:'Void Singularity Pulse',   ico:'⬛', d:[3,10], cd:3, threat:5, txt:'DANGER: Compressed void energy — ignores resistance and shreds max hull by 8.', maxhullshred:8, pierceres:true }
     ]},
+
+  // ── Fragment Dungeon Minions ────────────────────────────────────────────────
+  // Realm (Flotsam Field) — automated salvage drones and corsair advance scouts
+  fd_realm_drone: { name:'Wreck-Salvage Drone', sub:'Flotsam Field — Autonomous Unit', hp:32, maxHp:32, crew:0, maxCrew:0, g:[12,22],
+    atk:[{n:'Hull Grinder',  d:[1,6], txt:'Automated grinder arms tear across your hull plating!'},{n:'Debris Barrage',d:[1,4],txt:'The drone launches a burst of compressed debris fragments!'}],
+    sp:{n:'Overload Burst',c:0.22,txt:'The drone enters overload — raw energy discharges across your hull!',fx:'summon',d:[1,6]},col:'#aabb66',diff:1,
+    wpns:[
+      { n:'Grinder Array',    ico:'⚙️', d:[1,6], cd:0, threat:1, txt:'Automated grinder — fires every round.' },
+      { n:'Debris Launcher',  ico:'💥', d:[1,4], cd:2, threat:2, txt:'Compresses wreckage into high-velocity slugs.' }
+    ]},
+  fd_realm_scout: { name:'Corsair Advance Scout', sub:'Flotsam Field — Patrol', hp:55, maxHp:55, crew:4, maxCrew:4, g:[20,35],
+    atk:[{n:'Crossbow Volley',  d:[2,6], txt:"The scout's crew unleashes a trained bolt volley!"},{n:'Boarding Grapple',d:[1,6],txt:'A grapple punches into your hull — crew dragged toward the scout!',crew:1}],
+    sp:{n:'Corsair Feint',c:0.25,txt:'The scout breaks off then loops back — a flanking pass that bypasses your forward shields!',fx:'dodge'},col:'#cc8833',diff:2,
+    wpns:[
+      { n:'Scout Crossbows',  ico:'🏹', d:[2,6], cd:0, threat:2, txt:'Disciplined patrol fire — every round.' },
+      { n:'Boarding Grapple', ico:'⛓️', d:[1,6], cd:2, threat:3, txt:'Grapple-and-board — damage + 1 crew lost.', crew:1 }
+    ]},
 };
 
 // the Unnamed — the true final boss, revealed mid-Trull Overmind fight
@@ -2986,6 +3041,9 @@ const LOOT = {
   fg_cluster: [{id:'ngvnm',c:0.80},{id:'starcoin',c:0.70},{id:'thrallring',c:0.45},{id:'crewmead',c:0.55},{id:'antimag',c:0.25}],
   fg_hero:    [{id:'bheye',c:0.85},{id:'antimag',c:0.50},{id:'runeshard',c:0.45},{id:'psiamp',c:0.55},{id:'voidchart',c:0.35}],
   fg_dark:    [{id:'levscal',c:0.85},{id:'levblood',c:0.65},{id:'voidchart',c:0.50},{id:'arccore',c:0.45},{id:'antimag',c:0.40}],
+  // ── Fragment Dungeon Minion loot ─────────────────────────────────────────
+  fd_realm_drone:  [{id:'moteash',c:0.70},{id:'repkit',c:0.55},{id:'starcoin',c:0.40},{id:'gobsack',c:0.35}],
+  fd_realm_scout:  [{id:'plunder',c:0.75},{id:'silksw',c:0.60},{id:'crewmead',c:0.45},{id:'starcoin',c:0.50},{id:'corskit',c:0.35}],
   // ── Void Rift enemy loot ─────────────────────────────────────────────
   vodoniPatrol:[{id:'vodeml',c:0.55},{id:'starcoin',c:0.75},{id:'arccore',c:0.30},{id:'repkit',c:0.45},{id:'crewmead',c:0.25},{id:'vodncore',c:0.08}],
   scroBattle:  [{id:'trulltrophy',c:0.70},{id:'plunder',c:0.65},{id:'crewmead',c:0.40},{id:'starcoin',c:0.55},{id:'arccore',c:0.22}],
@@ -5019,7 +5077,7 @@ function initGame() {
     phase:'map',
     ship:{
       type:'pinnace', name:'IEF Vanguard',
-      hull:65, maxHull:65, crew:6, maxCrew:6, air:12, maxAir:12, gold:150, speed:4,
+      hull:65, maxHull:65, crew:6, maxCrew:6, air:12, maxAir:12, TS:150, speed:4,
       resist:0, wpns:['ballista'], upgrades:[], inv:[],
       loc:'refuge', atWp:null, sigTier:null,
     },
@@ -6877,7 +6935,7 @@ function arrive(id){
     }
   }
   // ── LOCAL SPACE SPHERES — auto-open on arrival ───────────────────────────
-  const _LS_SPHERES = new Set(['realm','refuge','grey','cluster','krynn','hero','dark']);
+  const _LS_SPHERES = new Set(['realm','refuge','grey','cluster','krynn']);
   checkQuestTurnin(id);
   setTag('Navigation'); updateUI();
   ensureLqState();
@@ -6908,24 +6966,6 @@ function arrive(id){
     G.localQuests['refuge_q2_pending'] = false;
     addLog('Engine field test data recorded. Return to Chief Engineer Velt at the Local Quests panel.', 'gd');
   }
-  // hero_q3: Omen explore quest — mark pending when player leaves Thyss
-  if(id !== 'hero' && G.localQuests['hero_q3'] === 'active') {
-    G.localQuests['hero_q3_pending'] = true;
-  }
-  if(id === 'hero' && G.localQuests['hero_q3_pending']) {
-    G.localQuests['hero_q3_visited'] = true;
-    G.localQuests['hero_q3_pending'] = false;
-    addLog('The Drift has left its mark on you. Return to Omen at Citadel Exalted to report.', 'gd');
-  }
-  // dark_q3: Trull Defector explore quest — mark pending when player leaves Serath
-  if(id !== 'dark' && G.localQuests['dark_q3'] === 'active') {
-    G.localQuests['dark_q3_pending'] = true;
-  }
-  if(id === 'dark' && G.localQuests['dark_q3_pending']) {
-    G.localQuests['dark_q3_visited'] = true;
-    G.localQuests['dark_q3_pending'] = false;
-    addLog('Breach lanes navigable. Return to the Trull Defector Commander at Voidhaven to report.', 'gd');
-  }
   if(_LS_SPHERES.has(id)) {
     addLog(`Arrived at ${sph.n}. Entering local space…`, '');
     // If a cargo quest turn-in is pending let the msgbox show first, then open LS
@@ -6949,7 +6989,7 @@ let _portSphere=null;
 function enterPort(sph){
   if(sph.boss)return;
   // ── REALMSPACE: redirect to Local Space overlay ──────────
-  if(sph.id === 'realm' || sph.id === 'refuge' || sph.id === 'grey' || sph.id === 'cluster' || sph.id === 'krynn' || sph.id === 'hero' || sph.id === 'dark') { openLocalSpace(); return; }
+  if(sph.id === 'realm' || sph.id === 'refuge' || sph.id === 'grey' || sph.id === 'cluster' || sph.id === 'krynn') { openLocalSpace(); return; }
   // ── the Scar-Wraith confrontation at The Shatter ───────────────
   if(sph.id === 'baresun' && G.shothothuqUnlocked && !(G.worldBossDefeated && G.worldBossDefeated.has('shothothug'))){
     addLog('⬡ The The Shatter scar screams. Something vast is coming through.','dmg');
@@ -7084,7 +7124,7 @@ function shopItems(stock){
   // ── Basic supplies (always available) ──────────────────
   if(s.hull<s.maxHull) items.push({ico:'🔧',name:'Repair Hull',desc:`Restore to ${s.maxHull} HP`,cost:Math.floor((s.maxHull-s.hull)*0.5),act:'repair'});
   if(s.crew<s.maxCrew) items.push({ico:'👥',name:'Hire Crew',desc:`Refill crew to ${s.maxCrew}`,cost:(s.maxCrew-s.crew)*3,act:'crew'});
-  if(s.air<(s.maxAir||12)) items.push({ico:'💨',name:'Refill Air',desc:`Restore to ${s.maxAir||12} days`,cost:Math.floor((30-s.air)*0.6),act:'air'});
+  if(s.air<(s.maxAir||12)) items.push({ico:'💨',name:'Refill Air',desc:`Restore to ${s.maxAir||12} days`,cost:Math.floor((30-s.air)*0.5),act:'air'});
 
   // ── Void Welder — available at drydock ports to buy ─────
   if(stock && stock.drydock){
@@ -9497,7 +9537,7 @@ function buildWaypointShop(){
   const items=[];
   if(s.hull<s.maxHull) items.push({ico:'🔧',name:'Emergency Repair',desc:`Restore to ${s.maxHull} HP`,cost:Math.ceil((s.maxHull-s.hull)*0.7),act:'repair'});
   if(s.crew<s.maxCrew) items.push({ico:'👥',name:'Crew from Reserves',desc:`Refill crew to ${s.maxCrew}`,cost:(s.maxCrew-s.crew)*5,act:'crew'});
-  if(s.air<(s.maxAir||12)) items.push({ico:'💨',name:'Emergency Air',desc:`Restore to ${s.maxAir||12} days`,cost:Math.ceil((30-s.air)*0.95),act:'air'});
+  if(s.air<(s.maxAir||12)) items.push({ico:'💨',name:'Emergency Air',desc:`Restore to ${s.maxAir||12} days`,cost:Math.ceil((30-s.air)*0.8),act:'air'});
   if(!items.length){
     const d=document.createElement('div'); d.style.cssText='color:#5544aa;font-style:italic;font-size:13px;grid-column:1/-1;text-align:center;padding:14px;';
     d.textContent='All supplies already at maximum.'; grid.appendChild(d); return;
@@ -9588,7 +9628,7 @@ function buildWaystationGrid(ws){
   // Air
   const maxAir = s.maxAir || 12;
   if(s.air < maxAir){
-    const base = Math.floor((maxAir - s.air) * 0.6);
+    const base = Math.floor((maxAir - s.air) * 0.5);
     const cost = Math.ceil(base * PREMIUM);
     items.push({ ico:'💨', name:'Refill Air', desc:`Restore to ${maxAir} days`, cost, act:'air' });
   }
@@ -10029,15 +10069,15 @@ function drawCbtShips(key){
   const ec=document.getElementById('cv-enemy').getContext('2d');
   ec.clearRect(0,0,200,130);
   const _eF=(k,flip,fn)=>drawShipImg(k,ec,100,65,160,100,flip,fn);
-  if(key==='fg_realm')       _eF('squid',false,    ()=>drawSquid(ec,100,65,46,true));
-  else if(key==='fg_grey')   _eF('hammer',false,   ()=>drawHammer(ec,100,65,46,true));
+  if(key==='fg_realm')       _eF('squid',true,     ()=>drawSquid(ec,100,65,46,true));
+  else if(key==='fg_grey')   _eF('hammer',true,    ()=>drawHammer(ec,100,65,46,true));
   else if(key==='fg_krynn')  _eF('githyanki',false,()=>drawGithyanki(ec,100,65,46));
-  else if(key==='fg_cluster')_eF('squid',false,    ()=>drawSquid(ec,100,65,46,true));
+  else if(key==='fg_cluster')_eF('squid',true,     ()=>drawSquid(ec,100,65,46,true));
   else if(key==='fg_hero')   _eF('beholder',false, ()=>drawBeholder(ec,100,65,46));
   else if(key==='fg_dark')   _eF('leviathan',false,()=>drawLeviathan(ec,100,65,46));
-  else if(key==='corsair')   _eF('corsair',false,  ()=>drawCorsairSloop(ec,100,65,46,true));
-  else if(key==='plunderer') _eF('plunderer',false,()=>drawPlundererBrig(ec,100,65,46,true));
-  else if(key==='blackfleet')_eF('blackfleet',false,()=>drawBlackFleetReaver(ec,100,65,46,true));
+  else if(key==='corsair')   _eF('corsair',true,   ()=>drawCorsairSloop(ec,100,65,46,true));
+  else if(key==='plunderer') _eF('plunderer',true, ()=>drawPlundererBrig(ec,100,65,46,true));
+  else if(key==='blackfleet')_eF('blackfleet',true,()=>drawBlackFleetReaver(ec,100,65,46,true));
   else if(key==='nautiloid') _eF('nautiloid',false,()=>drawNautiloid(ec,100,65,46));
   else if(key==='elder')     _eF('elder',false,    ()=>drawElder(ec,100,65,46));
   else if(key==='caiphon')   _eF('caiphon',false,  ()=>drawCaiphon(ec,100,65,46,performance.now()/1000));
@@ -10050,19 +10090,19 @@ function drawCbtShips(key){
   else if(key==='frHorde')     _eF('frHorde',false,     ()=>drawFarRealmHorde(ec,100,65,46));
   else if(key==='thrikreen')   _eF('thrikreen',false,   ()=>drawThriKreen(ec,100,65,46));
   else if(key==='harvester')       _eF('harvester',false,       ()=>drawNeogi(ec,100,65,46));
-  else if(key==='goblin_cutter')      _eF('goblin_cutter',false,      ()=>drawGoblinCutter(ec,100,65,46));
-  else if(key==='goblin_rocketer')    _eF('goblin_rocketer',false,    ()=>drawGoblinRocketer(ec,100,65,46));
-  else if(key==='goblin_shaman_boat') _eF('goblin_shaman_boat',false, ()=>drawGoblinShaman(ec,100,65,46));
-  else if(key==='trull_patrol')       _eF('trull_patrol',false,       ()=>drawTrullPatrol(ec,100,65,46));
-  else if(key==='trull_enforcer')      _eF('trull_enforcer',false,     ()=>drawTrullEnforcer(ec,100,65,46));
-  else if(key==='trull_slaver')        _eF('trull_slaver',false,       ()=>drawTrullSlaver(ec,100,65,46));
-  else if(key==='trull_warship')       _eF('trull_warship',false,      ()=>drawTrullWarship(ec,100,65,46));
-  else if(key==='trull_dreadnought')   _eF('trull_dreadnought',false,  ()=>drawTrullDreadnought(ec,100,65,46));
+  else if(key==='goblin_cutter')      _eF('goblin_cutter',true,      ()=>drawGoblinCutter(ec,100,65,46));
+  else if(key==='goblin_rocketer')    _eF('goblin_rocketer',true,    ()=>drawGoblinRocketer(ec,100,65,46));
+  else if(key==='goblin_shaman_boat') _eF('goblin_shaman_boat',true, ()=>drawGoblinShaman(ec,100,65,46));
+  else if(key==='trull_patrol')       _eF('trull_patrol',true,       ()=>drawTrullPatrol(ec,100,65,46));
+  else if(key==='trull_enforcer')      _eF('trull_enforcer',true,     ()=>drawTrullEnforcer(ec,100,65,46));
+  else if(key==='trull_slaver')        _eF('trull_slaver',true,       ()=>drawTrullSlaver(ec,100,65,46));
+  else if(key==='trull_warship')       _eF('trull_warship',true,      ()=>drawTrullWarship(ec,100,65,46));
+  else if(key==='trull_dreadnought')   _eF('trull_dreadnought',true,  ()=>drawTrullDreadnought(ec,100,65,46));
   else if(key==='phlog_mote')          _eF('phlog_mote',false,        ()=>drawPhlogMote(ec,100,65,46));
   else if(key==='phlog_jellyfish')     _eF('phlog_jellyfish',false,   ()=>drawPhlogJellyfish(ec,100,65,46));
   else if(key==='phlog_flamewing')     _eF('phlog_flamewing',false,   ()=>drawPhlogFlamewing(ec,100,65,46));
   else if(key==='phlog_vinecrawler')   _eF('phlog_vinecrawler',false, ()=>drawPhlogVinecrawler(ec,100,65,46));
-  else if(key==='void_shark')     _eF('void_shark',false,     ()=>drawVoidShark(ec,100,65,46));
+  else if(key==='void_shark')     _eF('void_shark',true,     ()=>drawVoidShark(ec,100,65,46));
   else if(key==='wb_grex')     _eF('wb_grex',false,     ()=>drawWarlordGrex(ec,100,65,46));
   else if(key==='wb_admiral')  _eF('wb_admiral',false,  ()=>drawHollowAdmiral(ec,100,65,46));
   else if(key==='wb_clutch')   _eF('wb_clutch',false,   ()=>drawClutchMother(ec,100,65,46));
@@ -14082,7 +14122,7 @@ function _applyLoad(save) {
     if(typeof _lsPendingReturn !== 'undefined') _lsPendingReturn = false;
     if(typeof _lsPendingFragment !== 'undefined') _lsPendingFragment = null;
     // Close LS sub-panels
-    ['ls-dock-panel','ls-npc-dialog','ls-interact-panel','ls-locals-panel'].forEach(id=>{
+    ['ls-dock-panel','ls-npc-dialog','ls-interact-panel'].forEach(id=>{
       const el=document.getElementById(id); if(el)el.classList.remove('on');
     });
     G = {
@@ -14435,7 +14475,7 @@ const LOCAL_QUEST_DATA = {
       flavor: 'Field-authorized IEF materiel. Fentheris System station allocation.',
       items: [
         { type:'supply', ico:'🔧', name:'Emergency Hull Patch', desc:'Restores 40 hull points', cost:55, act:'hull40', qty:8 },
-        { type:'supply', ico:'💨', name:'Compressed Air Cylinder', desc:'Restores full air supply', cost:42, act:'air', qty:6 },
+        { type:'supply', ico:'💨', name:'Compressed Air Cylinder', desc:'Restores full air supply', cost:40, act:'air', qty:6 },
         { type:'supply', ico:'👥', name:'IEF Crew Transfer', desc:'Assigns 4 trained crew from station reserves', cost:60, act:'crew4', qty:5 },
         { type:'usable', ico:'🩹', name:"Alchemist's Mend", desc:'Use in combat: Restores 20 hull + 1 crew', cost:80, itemKey:'almend', qty:4 },
         { type:'upgrade', ico:'🛡', name:'Ablative Hull Plating', desc:'+50 max hull points (IEF grade)', cost:110, act:'upg', upg:'plating', qty:1 },
@@ -14555,7 +14595,7 @@ const LOCAL_QUEST_DATA = {
       flavor: 'Ironhaven IEF attachment. Dwarven-certified equipment.',
       items: [
         { type:'supply', ico:'🔧', name:'Emergency Hull Patch', desc:'Restores 40 hull points', cost:55, act:'hull40' },
-        { type:'supply', ico:'💨', name:'Compressed Air Cylinder', desc:'Restores full air supply', cost:42, act:'air' },
+        { type:'supply', ico:'💨', name:'Compressed Air Cylinder', desc:'Restores full air supply', cost:40, act:'air' },
         { type:'supply', ico:'👥', name:'IEF Crew Transfer', desc:'Assigns 4 trained crew', cost:60, act:'crew4' },
         { type:'upgrade', ico:'🛡', name:'Reinforced Dwarven Plating', desc:'+50 max hull (forge-certified)', cost:115, act:'upg', upg:'plating' },
         { type:'upgrade', ico:'🌀', name:'Air Recycler', desc:'Air lasts 2× longer in the void', cost:90, act:'upg', upg:'recycler' },
@@ -14656,7 +14696,7 @@ const LOCAL_QUEST_DATA = {
       flavor: 'Steel Dragon Pact military surplus. Elven precision, void-grade construction.',
       items: [
         { type:'supply', ico:'🔧', name:'Emergency Hull Patch',        desc:'Restores 40 hull points',                 cost:60,  act:'hull40' },
-        { type:'supply', ico:'💨', name:'Compressed Air Cylinder',     desc:'Restores full air supply',                cost:47,  act:'air' },
+        { type:'supply', ico:'💨', name:'Compressed Air Cylinder',     desc:'Restores full air supply',                cost:45,  act:'air' },
         { type:'supply', ico:'👥', name:'Crew Hire (Vael)',            desc:'+4 crew from the docks',                  cost:65,  act:'crew4' },
         { type:'usable', ico:'💉', name:'Void Sailer Stimpack',        desc:'Use: Restores 6 crew in combat',          cost:70,  itemKey:'stimpack' },
         { type:'usable', ico:'🌀', name:'Phase Disruptor',             desc:'Disable one enemy weapon for 2 turns',    cost:90,  itemKey:'phasedis' },
@@ -14758,7 +14798,7 @@ const LOCAL_QUEST_DATA = {
       flavor: 'Thousand Sails salvage market. No questions, no receipts, everything works.',
       items: [
         { type:'supply', ico:'🔧', name:'Emergency Hull Patch',       desc:'Restores 40 hull points',          cost:60,  act:'hull40' },
-        { type:'supply', ico:'💨', name:'Compressed Air Cylinder',    desc:'Restores full air supply',          cost:47,  act:'air' },
+        { type:'supply', ico:'💨', name:'Compressed Air Cylinder',    desc:'Restores full air supply',          cost:45,  act:'air' },
         { type:'supply', ico:'👥', name:'Crew Hire (Freeport)',       desc:'+4 crew from the docks',            cost:65,  act:'crew4' },
         { type:'usable', ico:'🍺', name:"Crew's Courage Mead",        desc:"Use: Restores 3 crew in combat",    cost:55,  itemKey:'crewmead' },
         { type:'upgrade', ico:'💥', name:'Chain Reaction Crystal',    desc:'30% chance of free bonus shot on any hit', cost:300, act:'upg', upg:'chainreact' },
@@ -14846,219 +14886,13 @@ const LOCAL_QUEST_DATA = {
       flavor: 'IEF Station Refuge — full field allocation. Admiral-authorized.',
       items: [
         { type:'supply', ico:'🔧', name:'Emergency Hull Patch', desc:'Restores 40 hull', cost:50, act:'hull40' },
-        { type:'supply', ico:'💨', name:'Compressed Air Cylinder', desc:'Full air resupply', cost:40, act:'air' },
+        { type:'supply', ico:'💨', name:'Compressed Air Cylinder', desc:'Full air resupply', cost:38, act:'air' },
         { type:'supply', ico:'👥', name:'IEF Crew Transfer', desc:'+4 trained crew', cost:55, act:'crew4' },
         { type:'usable', ico:'🧪', name:'IEF Leviathan Blood Vial', desc:'Use: +30 hull in combat (field grade)', cost:60, itemKey:'levblood' },
         { type:'upgrade', ico:'🛡', name:'Hull Plating', desc:'+50 max hull', cost:100, act:'upg', upg:'plating' },
         { type:'upgrade', ico:'⚡', name:'Speed Engine', desc:'+2 void sailing speed', cost:80, act:'upg', upg:'engine' },
         { type:'upgrade', ico:'🏠', name:'Crew Quarters', desc:'+8 max crew', cost:65, act:'upg', upg:'quarters' },
         { type:'upgrade', ico:'🌀', name:'Air Recycler', desc:'Air lasts 2× longer', cost:90, act:'upg', upg:'recycler' },
-      ]
-    }
-  },
-
-  // ═══════════════════════════════════════════════════════════
-  // THYSS (hero) — Citadel Exalted, late-game
-  // ═══════════════════════════════════════════════════════════
-  hero: {
-    label: 'Citadel Exalted — Thyss Local Space',
-    color: '#ffff44',
-    bgColor: 'rgba(80,40,10,0.20)',
-    npcs: [
-      {
-        id: 'hero_qm',
-        name: 'Keeper Thessaly Vorn',
-        role: 'Citadel Exalted Archivist and Port-Warden',
-        portrait: '📜', color: '#ffff44',
-        greet: "The Citadel has stood since before the current age, Captain. We have records that predate the Collapse itself. I am Keeper Vorn — Archivist, Port-Warden, and the last authority in this sphere who still reads the old languages. Whatever you need, if it can be found in Thyss, I can find it.",
-        shop: true,
-        quests: [
-          {
-            id: 'hero_q1',
-            title: 'The Archivist\'s Request',
-            desc: "Keeper Thessaly Vorn needs a Sentinel Optical Array — a component that drops from Vault-Keeper Sentinel Drones in the outer lanes. She's tracing the guardian lineage that protects the Pre-Sundering Vault.",
-            task: 'Bring Keeper Vorn a Sentinel Optical Array (bheye) from the outer lanes.',
-            reward: '🔷 180 TS + 🔧 Void Welder (restores 20 MAX hull)',
-            type: 'delivery',
-            checkDesc: 'Have a Sentinel Optical Array in cargo.',
-            check: (G) => G.ship.inv.some(i => i.id === 'bheye'),
-            rewardFn: (G) => {
-              const idx = G.ship.inv.findIndex(i => i.id === 'bheye');
-              if(idx >= 0) G.ship.inv.splice(idx, 1);
-              G.ship.gold += 180;
-              G.ship.inv.push({...ITEMS['voidwelder'], uid: uid()});
-              addLog("Keeper Vorn receives the array with both hands. 'This confirms the lineage. The guardians were seeded from a single Vault-Keeper source before the Collapse. Here — a void welder, rarer than anything in my archive. Use it wisely, Captain.'", 'gd');
-              jlogVoidWelder();
-            },
-            trigger: () => {}
-          }
-        ]
-      },
-      {
-        id: 'hero_archivist',
-        name: 'Archivist Yssel Dain',
-        role: 'Pre-Sundering Scholar — Citadel Exalted Research Division',
-        portrait: '🔭', color: '#ffcc66',
-        greet: "Pre-Sundering history is my specialty, Captain, and the lanes around Thyss are a living archive. The Sentinel Drones you'll encounter aren't random — they follow patrol patterns set down before the Collapse. I've been documenting them. The problem is that documenting them requires getting close to them, and my ship is, diplomatically speaking, not built for that.",
-        quests: [
-          {
-            id: 'hero_q2',
-            title: 'Sentinel Study',
-            desc: "Archivist Dain is documenting the Sentinel Drone patrol patterns around Thyss. She needs combat data from at least 2 Sentinel Drones destroyed in the outer lanes — the only way to get their internal logs is from the wreckage.",
-            task: 'Destroy 2 Sentinel Drone (beholder) ships in the lanes and return.',
-            reward: '🔷 200 TS + 🛡️ Ablative Phase Plating (equip: −3 incoming damage)',
-            type: 'combat',
-            checkDesc: 'Destroy 2 Sentinel Drone ships.',
-            check: (G) => (G.localQuests?.hero_q2_kills || 0) >= 2,
-            rewardFn: (G) => {
-              G.ship.gold += 200;
-              G.ship.inv.push({...ITEMS['antimag'], uid: uid()});
-              addLog("Dain downloads the combat telemetry with barely concealed excitement. 'The patrol decay patterns match the pre-Collapse schematics exactly. They haven't changed. Not once. Here — this plating was recovered from a Sentinel hull. Their builders knew something about deflection we've been trying to reverse-engineer.'", 'gd');
-            },
-            trigger: (G) => { G.localQuests.hero_q2_kills = 0; }
-          }
-        ]
-      },
-      {
-        id: 'hero_wanderer',
-        name: '"Omen"',
-        role: 'Void-Touched Wanderer — Far Dark Survivor',
-        portrait: '👁️', color: '#cc88ff',
-        greet: "I walked out of the Far Dark three years ago. Still don't know how. The other survivors — there were four of us — two went silent, one is in a medical bay on Refuge. I'm here because Thyss is the last stable sphere before it, and stable is relative. I need to know whether the breach lanes are still crossable. Someone who sails them regularly could tell me. Someone who's been out there recently.",
-        quests: [
-          {
-            id: 'hero_q3',
-            title: 'Proof of the Drift',
-            desc: "A Far Dark survivor known only as Omen needs confirmation that the outer Drift lanes are still navigable. She won't say why, exactly — but the way she watches the lane charts suggests she's planning something.",
-            task: 'Travel to any other sphere and return to Omen at Citadel Exalted.',
-            reward: '🔷 160 TS + 🗺️ Void Chart (navigation artifact)',
-            type: 'explore',
-            checkDesc: 'Travel to any sphere and return to Thyss.',
-            check: (G) => (G.localQuests?.hero_q3_visited || false),
-            rewardFn: (G) => {
-              G.ship.gold += 160;
-              G.ship.inv.push({...ITEMS['voidchart'], uid: uid()});
-              addLog("Omen studies your course log in silence for a long moment. 'The lanes hold. Good.' She sets down a void chart — hand-annotated, old, clearly valuable. 'I made this before I went through. It's more useful on this side of the gate.'", 'gd');
-            },
-            trigger: (G) => { G.localQuests.hero_q3_visited = false; }
-          }
-        ]
-      }
-    ],
-    qmStock: {
-      flavor: 'Pre-Sundering artifacts of terrible and wonderful power. Handle accordingly.',
-      items: [
-        { type:'supply', ico:'🔧', name:'Vault-Grade Hull Patch',     desc:'Restores 40 hull points',          cost:65,  act:'hull40' },
-        { type:'supply', ico:'💨', name:'Compressed Air Cylinder',    desc:'Restores full air supply',          cost:47,  act:'air' },
-        { type:'supply', ico:'👥', name:'Crew Hire (Thyss Dock)',     desc:'+4 crew from the Citadel',          cost:70,  act:'crew4' },
-        { type:'usable', ico:'🔧', name:'Void Welder',                desc:'Use: Restores 20 MAX hull (rare)',   cost:180, itemKey:'voidwelder' },
-        { type:'usable', ico:'🧪', name:'Psionic Amplifier',          desc:'Use: Stun enemy for 1 turn',        cost:90,  itemKey:'psiamp' },
-        { type:'wpn', ico:'💥', name:'Pre-Sundering Bombard',         desc:'4d10 · 5-round reload · ancient siege weapon', cost:420, wk:'bombard' },
-        { type:'wpn', ico:'💀', name:'Nether Cannon',                 desc:'4d8 · 4-round reload · void-forged dissolution round', cost:380, wk:'nether' },
-        { type:'upgrade', ico:'🔀', name:'Volley System',             desc:'Fire ALL ready weapons simultaneously', cost:350, act:'upg', upg:'volley' },
-      ]
-    }
-  },
-
-  // ═══════════════════════════════════════════════════════════
-  // SERATH (dark) — Voidhaven, endgame
-  // ═══════════════════════════════════════════════════════════
-  dark: {
-    label: 'Voidhaven — Serath Local Space',
-    color: '#aa66ff',
-    bgColor: 'rgba(10,10,40,0.22)',
-    npcs: [
-      {
-        id: 'dark_qm',
-        name: 'Void-Broker Sythari',
-        role: 'Voidhaven Exchange, Serath',
-        portrait: '💜', color: '#aa66ff',
-        greet: "Light-worlder. You've come a long way. Serath doesn't welcome the lost — but you don't look lost. You look like someone finishing something. I am Sythari. I broker things in Voidhaven that aren't available in the bright spheres. If you need it and it exists, I can find it. The question is whether you can find what I need first.",
-        shop: true,
-        quests: [
-          {
-            id: 'dark_q1',
-            title: 'The Broker\'s Price',
-            desc: "Void-Broker Sythari deals in things that aren't available elsewhere. She wants a Silver Astral Blade Fragment — a rare component that drops from Drift Corsair warships in the lanes near Serath.",
-            task: 'Bring Sythari a Silver Astral Blade Fragment (silblade) from Drift Corsair ships.',
-            reward: '🔷 200 TS + 🗺️ Void Chart + ⚙️ Arcane Navigation Core Fragment',
-            type: 'delivery',
-            checkDesc: 'Have a Silver Astral Blade Fragment in cargo.',
-            check: (G) => G.ship.inv.some(i => i.id === 'silblade'),
-            rewardFn: (G) => {
-              const idx = G.ship.inv.findIndex(i => i.id === 'silblade');
-              if(idx >= 0) G.ship.inv.splice(idx, 1);
-              G.ship.gold += 200;
-              G.ship.inv.push({...ITEMS['voidchart'], uid: uid()});
-              G.ship.inv.push({...ITEMS['arccore'], uid: uid()});
-              addLog("Sythari runs a finger along the blade fragment's edge without drawing blood — a practised motion. 'Yes. This is what I needed.' She produces two items from beneath the counter. 'A void chart of the deep lanes. And an arcane core fragment — worth more than both of us combined to the right buyer. Don't sell it cheap.'", 'gd');
-            },
-            trigger: () => {}
-          }
-        ]
-      },
-      {
-        id: 'dark_scout',
-        name: '"Remnant"',
-        role: 'Far Dark Scout — Survived the Gate',
-        portrait: '🌑', color: '#8866cc',
-        greet: "I made it back from beyond the Far Dark gate. Once. That's apparently unique enough to be notable. The Leviathans out there are different from the ones in the local lanes — they've been changed by whatever's on the other side. The Void Rift Stalkers are worse. I need to know if the entities out here are connected to what I saw in the Far Dark. Combat data would help confirm that.",
-        quests: [
-          {
-            id: 'dark_q2',
-            title: 'Beyond the Veil',
-            desc: "A Far Dark survivor called Remnant is trying to establish whether the void entities in Serath's lanes are connected to what exists beyond the Far Dark gate. She needs combat data from 2 Leviathans or Void Rift Stalkers.",
-            task: 'Destroy 2 Leviathan or Void Rift Stalker ships in the lanes and return.',
-            reward: '🔷 220 TS + 🌀 Anti-Magic Sphere Shard (equip: −3 incoming damage)',
-            type: 'combat',
-            checkDesc: 'Destroy 2 Leviathan or Void Rift Stalker ships.',
-            check: (G) => (G.localQuests?.dark_q2_kills || 0) >= 2,
-            rewardFn: (G) => {
-              G.ship.gold += 220;
-              G.ship.inv.push({...ITEMS['antimag'], uid: uid()});
-              addLog("Remnant studies the sensor logs without speaking for a long time. 'They're the same. The resonance signature is identical.' She sets down an anti-magic shard without looking up. 'What's in the Far Dark is here already. It's just taking its time.' She pauses. 'The gate beyond this sphere — if the Trull Overmind opens it fully, there won't be lanes anymore. There won't be anything.'", 'gd');
-            },
-            trigger: (G) => { G.localQuests.dark_q2_kills = 0; }
-          }
-        ]
-      },
-      {
-        id: 'dark_trull',
-        name: 'Trull Defector Commander',
-        role: 'Former Trull Advance — Breakaway Officer',
-        portrait: '⚔️', color: '#ff4444',
-        greet: "I broke from the Overmind signal six months ago. The signal said: this is necessary, this is inevitable, the breach is for the glory of the Advance. But I've seen what comes through breaches. I've seen what the Overmind is making room for. It is not for the glory of anyone. I need proof the lanes out of Serath are still crossable — proof I can take to other officers who are starting to question.",
-        quests: [
-          {
-            id: 'dark_q3',
-            title: 'The Defector\'s Proof',
-            desc: "A Trull officer who broke from the Overmind's signal needs independent confirmation that the breach lanes beyond Serath are still navigable. He's trying to build a coalition of doubters — and he needs hard evidence.",
-            task: 'Travel to any other sphere and return to the Trull Defector at Voidhaven.',
-            reward: '🔷 180 TS + 🧪 Leviathan Blood Vial (use in combat: +30 hull)',
-            type: 'explore',
-            checkDesc: 'Travel to any sphere and return to Serath.',
-            check: (G) => (G.localQuests?.dark_q3_visited || false),
-            rewardFn: (G) => {
-              G.ship.gold += 180;
-              G.ship.inv.push({...ITEMS['levblood'], uid: uid()});
-              addLog("The Defector Commander takes your course log and studies it with the focused intensity of someone filing evidence. 'The lanes hold. The Overmind's claim that they're collapsing — lies, to prevent movement.' He produces a sealed vial. 'Leviathan blood. Rare. Useful. Consider it a down payment on whatever comes next — because something is coming.'", 'gd');
-            },
-            trigger: (G) => { G.localQuests.dark_q3_visited = false; }
-          }
-        ]
-      }
-    ],
-    qmStock: {
-      flavor: 'Born in the lightless void. For captains who are running out of options.',
-      items: [
-        { type:'supply', ico:'🔧', name:'Void-Grade Hull Patch',      desc:'Restores 40 hull points',              cost:70,  act:'hull40' },
-        { type:'supply', ico:'💨', name:'Compressed Air Cylinder',    desc:'Restores full air supply',              cost:50,  act:'air' },
-        { type:'supply', ico:'👥', name:'Crew Hire (Voidhaven)',      desc:'+4 crew from the dark docks',           cost:72,  act:'crew4' },
-        { type:'usable', ico:'🧪', name:'Leviathan Blood Vial',       desc:'Use: +30 hull in combat',               cost:75,  itemKey:'levblood' },
-        { type:'usable', ico:'💊', name:'Void Sailer Stimpack',       desc:'Use: +6 crew in combat',                cost:80,  itemKey:'stimpack' },
-        { type:'wpn', ico:'⚡', name:'Star Elven Ballista',           desc:'3d6 · 0-round reload · elven-forged, fires every turn', cost:440, wk:'sballista' },
-        { type:'wpn', ico:'🌀', name:'Void Cannon',                   desc:'6d8 · 6-round reload · endgame annihilation round', cost:520, wk:'voidcann' },
-        { type:'upgrade', ico:'🔫', name:'Rapid-Fire System',         desc:'Reduce all weapon reload times by 1', cost:320, act:'upg', upg:'rapidfire' },
       ]
     }
   }
@@ -15159,323 +14993,11 @@ const LS = {
 
   // reveal flag
   _firstEntry: true,
-
-  // Ask Locals session state
-  _localsPool: null,
-  _localsKnowledgeIdx: -1,
 };
 
 // ── POINTS OF INTEREST ────────────────────────────────────────────────────
 // Each POI: { id, label, role, x, y, r (interaction radius), col, icon, type }
 // Types: 'dock'|'npc'|'fragment'|'hazard_zone'|'patrol'
-// ╔══════════════════════════════════════════════════════════════════════════╗
-// ║  ASK LOCALS — Fragment reveal system                                     ║
-// ║  8 archetypes per sphere. 4 drawn per visit. 1 knows the truth.          ║
-// ║  tightlipped:true → asks 5 TS before giving the tip.                     ║
-// ╚══════════════════════════════════════════════════════════════════════════╝
-
-const LS_LOCALS_POOL = {
-
-  // ── Fentheris Orbital (realm) — The Flotsam Field ──────────────────────
-  realm: [
-    { portrait:'👷', name:'Station Hand Brix',       flavor:'Fentheris dock crew, third rotation.',       tightlipped:false,
-      useless:["Can't help you there, Captain. I just move crates.","My shift ends in an hour. Ask someone at the briefing desk.","Navigation's above my pay grade. Sorry."],
-      tip:"There's a debris field out in the outer arc — old wreckage from before the current age. Something in there pings the instruments in a way that doesn't read like metal. The IEF survey team marked it and kept going. I wouldn't." },
-    { portrait:'🛸', name:'Scout Pilot Vaen',         flavor:'IEF light patrol, off-rotation.',            tightlipped:false,
-      useless:["I've been running the same lane for six weeks. Nothing unusual.","The lanes have been quiet. Suspiciously quiet, actually.","Check with the briefing officer. I just fly where they point me."],
-      tip:"Ran a survey pass near the outer arc last week. My resonance instruments spiked hard over a debris cluster — the kind of spike you get near old Navigation Core activity. The coordinates are still in my log if you want a heading." },
-    { portrait:'🧑‍💼', name:'Cargo Broker Meln',      flavor:'Independent freight, Fentheris run.',        tightlipped:true,
-      useless:["I deal in cargo, not gossip.","Whatever you're looking for, I haven't seen it.","I keep my eyes on my manifest and my manifest only."],
-      tip:"You're looking for something old in this system. I know what you mean and I know roughly where it is. That kind of information has value, Captain. Five TS and I'll point you at the right part of the sky." },
-    { portrait:'⚒️', name:'Salvager Doss',            flavor:'Deep-void recovery, freelance.',             tightlipped:true,
-      useless:["I work the outer lanes. Interesting stuff out there if you know where to look.","Half the wrecks in this system have already been picked clean. Half.","I don't give away coordinates. That's how you go broke."],
-      tip:"I've worked every wreck field in this system. There's one cluster I've never touched — instruments go strange near it. Not dangerous strange. Old strange. Five TS covers my lost claim on it." },
-    { portrait:'🧑‍🔬', name:'IEF Analyst Thren',      flavor:'Station intelligence, Fentheris post.',      tightlipped:false,
-      useless:["Our sensor logs are classified, I'm afraid.","I can confirm the lanes are active, but nothing beyond that.","You'd need to file a formal data request. Takes about three weeks."],
-      tip:"Off the record — our passive sensors have been picking up a crystalline resonance from the outer arc debris field for months. We've been told to log it and move on. I don't know why. I think you should look into it." },
-    { portrait:'🍺', name:'Off-Duty Crewman Kett',    flavor:'IEF corvette crew, shore leave.',            tightlipped:false,
-      useless:["Honestly I'm just here to drink. No offense.","Third tour out of Fentheris. It all looks the same after a while.","Ask one of the pilots. They actually pay attention to the lanes."],
-      tip:"My ship passed through the outer debris arc last patrol. My bunkmate said there was something in the wreckage that wasn't wreckage. Looked like a structure — or what was left of one. Gave her a bad feeling. I think that's where you want to look." },
-    { portrait:'📡', name:'Comms Tech Sirrel',        flavor:'Station communications, night watch.',       tightlipped:true,
-      useless:["I monitor frequencies, not navigation lanes.","Everything on the comms bands is routine. Nothing unusual.","I'm not supposed to discuss active monitoring data."],
-      tip:"We've been picking up a faint coherent signal from a debris field in the outer arc. Not communication — more like a beacon. Old encoding. IEF command knows about it and hasn't done anything. Five TS for the coordinates." },
-    { portrait:'🔧', name:'Engine Tech Parva',        flavor:'Station maintenance, hull division.',        tightlipped:false,
-      useless:["My world is engines and hull plating. I don't get out much.","The pilots know where things are. I just keep the ships running.","Whatever you're looking for, a pilot would know better than me."],
-      tip:"A pilot came in last month with her instruments scrambled. Said she'd flown too close to something in the outer debris arc — a massive crystalline structure half-buried in the wreckage. Her nav crystal was singing for a week after. That's probably what you're looking for." },
-  ],
-
-  // ── Korreth / Ironhaven (grey) — The Dwarven Vault ─────────────────────
-  grey: [
-    { portrait:'⚒️', name:'Forgehand Grunn',          flavor:'Ironhaven hull works, day shift.',           tightlipped:false,
-      useless:["I forge hull plates. I don't track what's drifting in the void.","Talk to the prospectors. They know the outer lanes better than anyone.","Long as it's not my forge, I don't care where it is."],
-      tip:"The deep-road miners have been talking about a vault spotted drifting between Korreth and Vael. Ancient dwarven construction — pre-Collapse seals still on it. The elders say it's cursed. The elders say everything's cursed. I'd go look." },
-    { portrait:'⛏️', name:'Prospector Veld',           flavor:'Outer lane surveyor, independent.',          tightlipped:true,
-      useless:["I survey claim sites. I don't share findings for free.","The outer lanes have plenty of interesting things. None of them yours.","Surveys cost. That's the rule."],
-      tip:"There's a vault drifting in the Korreth-Vael lane. Flagged it two years ago. Pre-Collapse construction, dwarven, sealed tight. Something's still active inside — the instruments don't lie. Five TS for the heading." },
-    { portrait:'🔮', name:'Runesmith Dalla',           flavor:'Ironhaven Rune Guild, itinerant.',           tightlipped:false,
-      useless:["My expertise is active rune-work. Ancient history is someone else's department.","The vault records here go back eight hundred years. Not far enough.","Whatever you're looking for is older than our records. That much I know."],
-      tip:"The old rune-readers have a term for what you're sensing — a dead resonance. Something that was alive once and isn't quite done. There's a vault drifting in the Korreth-Vael lane. Pre-Sundering dwarven work. Something inside is still responsive." },
-    { portrait:'🧱', name:'Quarry Boss Torec',         flavor:'Korreth deep extraction, contract.',         tightlipped:true,
-      useless:["I pull ore from the deep lanes. Anything not ore is someone else's problem.","If it doesn't have a mineral assay I can't help you.","Ask the void pilots. They see things I don't."],
-      tip:"We nearly hit a vault on a survey run last season. Drifting in the outer lane, Korreth side, pre-Sundering construction. Something inside still had power — our instruments started behaving strangely. Five TS and I'll pull up the coordinates." },
-    { portrait:'🛡️', name:'Vault Guard Osse',          flavor:'Ironhaven Station security, third post.',    tightlipped:false,
-      useless:["My job is the station perimeter. I don't track what's in the lanes.","If it's a security matter I can help. If it's history, talk to the guild.","The record-keepers might know. I definitely don't."],
-      tip:"I used to run the outer patrol circuit. There's a drifting object in the lane between here and Vael that doesn't appear on any IEF chart — pre-Collapse dwarven construction, old seals intact. The patrol pilots steer around it. I always wondered what was inside." },
-    { portrait:'🧑‍💼', name:'IEF Liaison Prenn',       flavor:'IEF-Ironhaven coordination office.',         tightlipped:false,
-      useless:["My remit is trade coordination, not exploration.","I file reports. I don't generate field intelligence.","The scouts would know better than me."],
-      tip:"There's a matter in the field logs I'm not supposed to discuss. A drifting dwarven vault in the Korreth-Vael transit lane — flagged as a navigational hazard, officially ignored. The power readings are consistent with active pre-Sundering construction." },
-    { portrait:'🍺', name:'Miner Off-Shift Brelk',     flavor:'Deep rock extraction, waiting on transport.',tightlipped:true,
-      useless:["Just waiting for my transport. Not my business what's in the void.","I work underground. Everything up here looks the same to me.","Ask the lane pilots. They're the ones who actually look around."],
-      tip:"One of my crew spotted something drifting in the outer lane last rotation. Old dwarven vault — they recognized the construction. Something inside still had a light on. Five TS and I'll give you the bearing." },
-    { portrait:'📚', name:'Archive Keeper Sund',       flavor:'Ironhaven historical records.',              tightlipped:false,
-      useless:["Our records go back eight centuries. Not far enough.","The pre-Collapse archives were lost in the Sundering. We have fragments.","I can look for records but it may take time you don't have."],
-      tip:"I've been cross-referencing pre-Collapse construction logs. There's a vault listed in the outer transit lane — marked as a sealed treasury, purpose redacted. It was supposed to be recovered after the Collapse. No record it ever was. It should still be there." },
-  ],
-
-  // ── Vael / Palanthas Spindle (krynn) — The Star Nest ───────────────────
-  krynn: [
-    { portrait:'🐉', name:'Dragon Pact Veteran Ser',  flavor:'Steel Dragon Pact, retired field corps.',    tightlipped:false,
-      useless:["The Pact records everything in this sphere. Most of it is classified.","I've flown every lane around Vael. Ask me a specific question.","What are you looking for? Maybe I've heard of it."],
-      tip:"There's a stellar formation in the outer arc that the Corsairs have fortified — they call it the Star Nest. Hollow inside. Old pre-Sundering construction at its core that the Corsairs don't understand. They're guarding something they didn't put there. That's where you want to go." },
-    { portrait:'🗡️', name:'Former Corsair Yeth',      flavor:'Independent, Vael dock work.',               tightlipped:true,
-      useless:["I flew with the Corsairs for six years. I don't miss it.","There's a lot of things in the outer lanes that aren't on the charts.","I keep what I know to myself. Old habit."],
-      tip:"I know what's in the Star Nest. I helped guard it once, before I knew what it was. The Corsairs found something old and powerful drifting there and built their camp around it. They don't understand what they have. Five TS and I'll give you the coordinates." },
-    { portrait:'📡', name:'Academy Scout Tyve',        flavor:'Vael Academy, field survey rotation.',       tightlipped:false,
-      useless:["My last survey run flagged seventeen anomalies. Hard to narrow it down.","The outer arc is lousy with Corsair activity. Getting close to anything takes patience.","The Academy has been tracking something in this system for years. I can't officially share it."],
-      tip:"The Academy has been monitoring a stellar formation in the outer arc — the Star Nest. The resonance readings from the core are consistent with a Navigation Core. The Corsairs are sitting on top of it without knowing what they have." },
-    { portrait:'⚔️', name:'Steel Dragon Pact Soldier',flavor:'Active patrol assignment, Vael defense.',    tightlipped:false,
-      useless:["My patrol zone doesn't extend that far out.","We've been having trouble with Corsair activity in the outer lanes lately.","Ask a scout. They know the outer arc better than the defense fleet."],
-      tip:"The Corsairs have fortified a stellar formation they call the Star Nest. We've had eyes on it for months — they're definitely guarding something at the core that was there before they arrived. Our instruments read it as a strong crystalline resonance signature." },
-    { portrait:'🔭', name:'Navigator Elisse',          flavor:'Free trader, Vael regular.',                 tightlipped:true,
-      useless:["I navigate by charts and I keep my charts to myself.","The outer arc has some interesting geometry. That's all I'll say.","Information costs in the void. You know that."],
-      tip:"I've been skirting the edge of the Corsair formation for months on my trade runs. Something at the core puts out a resonance that interferes with my instruments in a very specific way — the same way an active Navigation Core does. Five TS says I give you the approach vector." },
-    { portrait:'🧑‍🔬', name:'Void Researcher Kael',  flavor:'Vael Academy, independent study.',           tightlipped:false,
-      useless:["My research is theoretical, not field-based.","I study resonance patterns. Not everything has a physical location.","The outer arc has a lot of interesting activity. Most of it is Corsair-related."],
-      tip:"The stellar formation the Corsairs have occupied has a core resonance signature I've been analyzing for two years. Pre-Sundering in origin, matches the theoretical profile of a Navigation Core almost exactly. Whatever the Corsairs think they're guarding, what they actually have is much older and much more important." },
-    { portrait:'🍺', name:'Off-Duty Pact Crew Ren',   flavor:'Steel Dragon Pact, shore rotation.',         tightlipped:false,
-      useless:["I've been on shore leave for two weeks. Not current on lane activity.","Ask the active patrols. I'm trying not to think about work.","Whatever's in the outer arc, I'm sure someone knows. Just not me."],
-      tip:"My ship ran a close pass on the Corsair formation last patrol — the Star Nest. The resonance from the core set off every crystal instrument on our ship simultaneously. The commander filed it as equipment malfunction. It wasn't. You should go look at what's in there." },
-    { portrait:'🛸', name:'Void Ranger Syla',          flavor:'Independent patrol, outer lane specialist.',  tightlipped:true,
-      useless:["I patrol where I want and I report to no one.","The outer arc has plenty of things that don't need finding.","Information is currency and I don't give it away."],
-      tip:"The Star Nest — I've scouted it three times. Something at the core doesn't belong to the Corsairs. Old construction, pre-Sundering. The resonance from it is significant. Five TS and I give you the heading plus the approach that avoids their outer sentries." },
-  ],
-
-  // ── Varuun / Thousand Sails (cluster) — The Broker's Cache ─────────────
-  cluster: [
-    { portrait:'🏴‍☠️', name:'Freeport Regular Skan',  flavor:'Thousand Sails, permanent fixture.',         tightlipped:false,
-      useless:["I know everything about Varuun and most of it I'll never tell you.","The void around here is lousy with interesting things. Most of them dangerous.","What are you looking for? I might've heard something."],
-      tip:"There's a broker's cache in the central void — harvester territory. Rumor is it's been there since before the current harvester clans. Something in it that isn't cargo. Something that predates the whole arrangement. Start in the central lanes, past the harvester line." },
-    { portrait:'⚙️', name:'Salvager Crix',             flavor:'Independent, Varuun-based operations.',      tightlipped:true,
-      useless:["I salvage what's already lost. Whatever you're after isn't lost yet.","The central void has plenty of hiding spots. None of them marked on charts.","Coordinates cost. Everything costs in Varuun."],
-      tip:"I found the edge of the cache field twice without meaning to. Central void sector, harvester lanes. There's a resonance out there that doesn't match harvester tech — older, cleaner. The harvesters are circling it without knowing what they're orbiting. Five TS for the sector heading." },
-    { portrait:'💰', name:'Black Market Broker Lyss',  flavor:'Thousand Sails Exchange, informal.',         tightlipped:true,
-      useless:["I deal in goods, not navigation data.","Everything in the void has a buyer. I just facilitate.","Whatever you're after, it's going to cost more than you think."],
-      tip:"The broker's cache is real. Three years I've been trying to find it. Central void, past the harvester line. Something in it reads as a Navigation Core on the right instruments. The harvesters are guarding the approaches without knowing why. Five TS and I share what I have." },
-    { portrait:'🔭', name:'Relic Hunter Vass',         flavor:'Varuun salvage circuit, specialist.',        tightlipped:false,
-      useless:["I track relics across six spheres. Most leads go nowhere.","The central void around Varuun is rich in pre-Collapse material. Not all of it interesting.","Whatever you're after, someone probably tried to find it before you."],
-      tip:"The broker's cache is a real location. A harvester information broker hid something there before the clan consolidation — something that wasn't supposed to exist in harvester possession. Central void, harvester patrol perimeter. I've gotten close enough to read the resonance signature." },
-    { portrait:'🗡️', name:'Corsair Deserter Mael',    flavor:'Former Black Fleet, independent now.',        tightlipped:false,
-      useless:["I left the Black Fleet because I got tired of taking orders.","The central void is harvester territory. I avoid it when I can.","I know the outer lanes but not the core sectors."],
-      tip:"The Black Fleet used to run the harvester boundary before the clans pushed us out. There's a pocket in the central void that the harvesters orbit around but never enter — like there's something in there they don't want to disturb. Whatever it is, it's been there a long time. That's your target." },
-    { portrait:'🧑‍💼', name:'Freeport Quartermaster', flavor:'Thousand Sails supply logistics.',            tightlipped:false,
-      useless:["I manage inventory. Not navigation.","The central void sectors aren't my operational area.","Ask someone who flies the core lanes. I stay near the dock."],
-      tip:"A cargo runner came in last month who'd strayed into the central void sectors. Said she'd seen a cache site — something old, built into a hollow asteroid, harvesters all around it. She described a resonance field that scrambled her instruments. I wrote down her bearing. You want it?" },
-    { portrait:'🍺', name:'Drifter Pol',              flavor:'No fixed port, just passing through.',       tightlipped:true,
-      useless:["I drift. I don't navigate. There's a difference.","The void is big. I've seen a lot of it and remember very little.","Ask someone with a fixed address."],
-      tip:"I camped near the broker's cache site for three days last year without knowing what it was. Central void, past the harvester line. Something there that hums — not engines, more like a crystal under pressure. The harvesters were giving it a wide berth. Five TS for the general heading." },
-    { portrait:'⚒️', name:'Scrap Dealer Fenn',        flavor:'Varuun salvage exchange, day trader.',       tightlipped:false,
-      useless:["I deal in scrap metal, not coordinates.","The central void sectors have been locked down by harvesters for years.","I don't go out that far. The rates aren't good enough."],
-      tip:"The harvester broker who ran this sector before the clan consolidation had a private cache in the central void. When she disappeared, nobody could find it. The rumor is it's still active — the resonance readings match something very old and very significant." },
-  ],
-
-  // ── Thyss / Citadel Exalted (hero) — Pre-Sundering Vault ───────────────
-  hero: [
-    { portrait:'📜', name:'Citadel Librarian Orne',   flavor:'Citadel Exalted archive division.',          tightlipped:false,
-      useless:["The Citadel's records are extensive but not everything is indexed.","Pre-Sundering history is a specialty study. Not every archivist covers it.","I can point you at relevant records if you have a specific query."],
-      tip:"The old records describe a sealed vault in the outer arc — pre-Sundering construction, locked since before the current age. The guardian assigned to it was never recalled. Whatever is inside was meant to be found eventually, by the right hands." },
-    { portrait:'🧙', name:'Pilgrim Scholar Aeve',      flavor:'Thyss historical circuit, wandering.',      tightlipped:false,
-      useless:["I study the old sites. Most of them are empty now.","The pre-Sundering era left a great deal behind. Not all of it has been found.","Thyss has more history per league than any sphere I've visited."],
-      tip:"There is a vault in the outer arc — pre-Sundering, sealed. The pilgrimage records call it a Repository of Continuing Purpose. That means it was meant to be opened, just not by anyone. There is a guardian. There has always been a guardian. Approach with respect and your weapons ready." },
-    { portrait:'⚔️', name:'Citadel Honor Guard Vel',  flavor:'Citadel Exalted ceremonial division.',       tightlipped:true,
-      useless:["The Citadel's outer approaches are my responsibility.","Security matters are classified beyond my authority to share.","I notice things in the outer arc that I'm not authorized to discuss."],
-      tip:"There's a pre-Sundering site in the outer arc I've been briefed on but not authorized to direct people toward. I know what it contains. What I can tell you is that it matters, and someone with your mission profile should probably already know about it. Five TS for the heading, and I never said anything." },
-    { portrait:'🔭', name:'Relic Mapper Seln',         flavor:'Thyss artifact survey, contract work.',     tightlipped:false,
-      useless:["I've mapped thirty-seven pre-Sundering sites across four spheres.","Most of what I find is empty. They were very good at clearing out before they left.","Thyss has several active sites. Active meaning not empty."],
-      tip:"I mapped a vault in the outer arc two seasons ago. Pre-Sundering, sealed, but the power readings inside were live. Something in there is still operating. I filed my survey and the Citadel immediately classified it. That's the one you want." },
-    { portrait:'🧑‍🔬', name:'Void Historian Nyre',    flavor:'Academy circuit, Thyss posting.',            tightlipped:false,
-      useless:["Pre-Sundering history is complicated by the fact that very little survived.","The Citadel has records that predate our current calendar. Most in languages we're still translating.","Whatever you're looking for, the answer may be in the archive rather than the void."],
-      tip:"The archive contains a reference to a sealed Repository in Thyss outer space — pre-Sundering term for a vault designed to survive the anticipated Collapse. The coordinates are oblique but I've triangulated them. Something out there was designed to be found. By someone ready for it." },
-    { portrait:'🍺', name:'Citadel Worker Bram',      flavor:'Citadel maintenance, general staff.',        tightlipped:true,
-      useless:["I fix things. I don't study things.","The outer arc is someone else's job.","Security staff would know more than I do."],
-      tip:"I've done maintenance runs on the outer sensor array and always get a reading off something in the arc that the instruments can't classify. The supervisors told me to ignore it. The supervisors have told me to ignore a lot of things. Five TS and I give you what I've recorded." },
-    { portrait:'🛸', name:'Survey Pilot Crae',         flavor:'Citadel outer survey, contracted.',          tightlipped:false,
-      useless:["I fly the outer survey routes. Mostly quiet.","Pre-Sundering sites show up on certain instrument configurations. Rare, but it happens.","The outer arc has some interesting geometry on the right heading."],
-      tip:"My last outer survey pass picked up a hard resonance from a sealed vault structure north of Thyss. Pre-Sundering construction — you can tell by the field harmonics. Something inside is still active. Whatever it is, it has been waiting a very long time." },
-    { portrait:'📚', name:'Archive Novice Tal',        flavor:'Citadel Exalted junior staff.',              tightlipped:false,
-      useless:["I'm still learning the filing system. The archive is extensive.","Keeper Vorn would know more than I do.","The older records are in the deep archive. I'm not cleared for those yet."],
-      tip:"I found a record last week I wasn't supposed to be reading — pre-Sundering survey coordinates pointing to a vault in the outer arc. Marked Returning Purpose, which the glossary defines as 'a site intended to be found when the need arises.' I think the need is now. I can give you the heading." },
-  ],
-
-  // ── Serath / Voidhaven (dark) — The Dark Mote ──────────────────────────
-  dark: [
-    { portrait:'🌑', name:'Void Merchant Sythen',     flavor:'Voidhaven Exchange, independent.',           tightlipped:true,
-      useless:["I deal in void goods. Not information.","Serath keeps its secrets and so do I.","Whatever you're looking for, it probably has a price you haven't accounted for."],
-      tip:"The Dark Mote. That's what the locals call it. A void pocket south of Serath where the Drift thins and reality gets approximate. Something old is in there — the void has been feeding it for a long time. Five TS and I'll tell you how to find it without getting lost on the way in." },
-    { portrait:'🧑‍🦯', name:'Serath Elder Nish',      flavor:'Native guide, Voidhaven district.',          tightlipped:false,
-      useless:["Serath has its own rhythms. Outsiders rarely understand them.","The void around this sphere is not like other voids.","What you are looking for may already be looking for you."],
-      tip:"The Dark Mote. We have known of it since before our records began. A place where the Drift comes thin and something old waits inside. The void feeds it. It has been patient. The Navigation Core inside it is real — our seers have confirmed it. Go there with your ship in good order." },
-    { portrait:'💜', name:'Voidhaven Dock Hand Kre',  flavor:'Serath port maintenance, Voidhaven.',        tightlipped:false,
-      useless:["I work the docks. The void beyond the station is someone else's concern.","Serath is not a friendly sphere to navigators who don't know what they're doing.","Ask someone who flies the outer lanes. I stay close to the station."],
-      tip:"The pilots who run the outer lanes talk about a void pocket south of Serath — the Dark Mote. The instruments go soft near it, like the Drift is thinner there. Something inside has been reading as active on the resonance charts for as long as anyone can remember." },
-    { portrait:'⚔️', name:'Trull Defector Cren',      flavor:'Former Trull Advance, Serath exile.',         tightlipped:false,
-      useless:["The Trull Advance knows about Serath. They've known for a long time.","The Overmind wanted this sphere for a reason. I only understood that reason after I left.","Whatever the Void Rift is reaching for in this system, it's focused on a specific point."],
-      tip:"The Overmind's target in this sphere has always been the Dark Mote — a void pocket south of Serath where a Navigation Core has been drifting since before the current age. The Overmind wants it. That means you need it first. Your instruments will go strange as you approach. That's how you'll know you're close." },
-    { portrait:'🌌', name:'Far Dark Scout Vel',        flavor:'Beyond-gate survivor, freelance.',           tightlipped:true,
-      useless:["I've been beyond the gate and back. Nothing out here seems particularly dangerous anymore.","The void around Serath is thin in places. If you know what that means, you know what to avoid.","I keep what I learned beyond the gate close. It's the only leverage I have left."],
-      tip:"The Dark Mote. I went in before I went through the gate. Something is in there that has been waiting — old, patient, not friendly but not hostile. The Navigation Core inside it is real. Five TS for the approach bearing that doesn't get you turned around in the thinspace." },
-    { portrait:'🌑', name:'Serath Void Pilot Nara',   flavor:'Outer lane transit, Serath regular.',        tightlipped:false,
-      useless:["The outer lanes around Serath are some of the strangest I've flown.","There are void pockets in this sphere that don't behave like normal space.","I've been flying Serath approaches for four years. Ask me something specific."],
-      tip:"South of the sphere there's a void pocket the locals call the Dark Mote. The Drift thins to almost nothing near it. My instruments lose calibration within a certain range of it — a specific kind of loss I've learned to recognize as Navigation Core activity. Old, and awake." },
-    { portrait:'💀', name:'Black Market Broker Sile', flavor:'Voidhaven Exchange, gray market.',            tightlipped:true,
-      useless:["I deal in things that aren't supposed to exist. Information isn't one of them.","Serath has a long memory and I'm part of that memory.","Coordinates aren't something I give away."],
-      tip:"The Dark Mote. South of Serath, where the void gets thin. Something in there predates the current arrangement of spheres. The locals have always known. The Overmind knows. Now you do too. Five TS says I give you the heading before someone else gets there first." },
-    { portrait:'🧑‍🔬', name:'Void Researcher Eld',   flavor:'Serath Institute, field posting.',           tightlipped:false,
-      useless:["The void around Serath behaves differently than standard drift-space.","Our instruments require recalibration every time we enter the outer lanes here.","Pre-existing void anomalies in this sphere predate our research capacity to explain them."],
-      tip:"The Dark Mote is a documented phenomenon — a void pocket south of the sphere where the Drift structure becomes irregular. We've been recording its resonance output for three years. The signature is consistent with an active Navigation Core in a semi-stable phase state. It has occupied that void pocket for a very long time." },
-  ],
-};
-
-// ── ASK LOCALS FUNCTIONS ──────────────────────────────────────────────────
-
-function lsOpenLocalsPanel() {
-  const sphereId = G.ship?.loc || 'realm';
-  const pool = LS_LOCALS_POOL[sphereId];
-  if(!pool) { _lsLog('No locals available to question here.'); return; }
-
-  // Pick 4 random locals from pool
-  const shuffled = pool.slice().sort(() => Math.random() - 0.5).slice(0, 4);
-  // Assign one as the knowledgeable informant
-  const knowledgeIdx = Math.floor(Math.random() * shuffled.length);
-  LS._localsPool = shuffled;
-  LS._localsKnowledgeIdx = knowledgeIdx;
-
-  // Hide dock, show locals panel
-  document.getElementById('ls-dock-panel').classList.remove('on');
-  const panel = document.getElementById('ls-locals-panel');
-  panel.classList.add('on');
-  document.getElementById('ls-locals-response').classList.remove('on');
-  document.getElementById('ls-locals-response').innerHTML = '';
-
-  // Cost hint — only show if any of the 4 are tight-lipped
-  const anyTightlipped = shuffled.some(l => l.tightlipped);
-  const hint = document.getElementById('ls-locals-cost-hint');
-  hint.textContent = anyTightlipped
-    ? 'Some locals may want a little something for their trouble. 🔷 5 TS'
-    : 'The locals seem willing to talk tonight.';
-
-  // Build cards
-  const cardsEl = document.getElementById('ls-locals-cards');
-  cardsEl.innerHTML = '';
-  shuffled.forEach((local, i) => {
-    const card = document.createElement('div');
-    card.className = 'ls-local-card';
-    card.dataset.idx = i;
-    card.innerHTML = `
-      <div class="ls-local-portrait">${local.portrait}</div>
-      <div class="ls-local-info">
-        <div class="ls-local-name">${local.name}</div>
-        <div class="ls-local-flavor">${local.flavor}</div>
-      </div>`;
-    card.addEventListener('click', () => _lsLocalsClickCard(i));
-    cardsEl.appendChild(card);
-  });
-}
-
-function _lsLocalsClickCard(idx) {
-  const local = LS._localsPool?.[idx];
-  if(!local) return;
-
-  // Don't re-trigger used cards
-  const card = document.querySelector(`.ls-local-card[data-idx="${idx}"]`);
-  if(card?.classList.contains('used')) return;
-
-  // Highlight selected card
-  document.querySelectorAll('.ls-local-card').forEach(c => c.classList.remove('selected'));
-  if(card) card.classList.add('selected');
-
-  const isKnowledgeable = (idx === LS._localsKnowledgeIdx);
-  const respEl = document.getElementById('ls-locals-response');
-  respEl.classList.add('on');
-
-  if(isKnowledgeable && local.tightlipped) {
-    // Tight-lipped informant — ask for payment first
-    const canAfford = G.ship.gold >= 5;
-    respEl.innerHTML = `
-      <div style="font-size:0.625em;color:#887755;margin-bottom:6px;">${local.portrait} ${local.name}</div>
-      <div style="margin-bottom:10px;">"${local.name.split(' ').pop()} sizes you up slowly. There might be something worth your time — but information like that doesn't come free. Five TS for my trouble."</div>
-      <button class="btn" id="ls-locals-pay-btn" style="font-size:0.625em;padding:4px 14px;border-color:#aa882255;color:#ccaa55;" onclick="_lsLocalsPay(${idx})" ${canAfford?'':'disabled'}>🔷 Pay 5 TS</button>
-      ${!canAfford ? '<div style="color:#884444;font-size:0.563em;margin-top:6px;">Not enough TS.</div>' : ''}`;
-  } else if(isKnowledgeable) {
-    // Free informant — reveal tip directly
-    _lsLocalsRevealTip(idx, local);
-  } else {
-    // Useless chatter
-    const line = local.useless[Math.floor(Math.random() * local.useless.length)];
-    respEl.innerHTML = `<div style="font-size:0.625em;color:#887755;margin-bottom:6px;">${local.portrait} ${local.name}</div>"${line}"`;
-    if(card) { card.classList.add('used'); card.classList.remove('selected'); }
-  }
-}
-
-function _lsLocalsPay(idx) {
-  if(G.ship.gold < 5) return;
-  G.ship.gold -= 5;
-  updateUI();
-  const local = LS._localsPool?.[idx];
-  if(local) _lsLocalsRevealTip(idx, local);
-}
-
-function _lsLocalsRevealTip(idx, local) {
-  // Dim all cards — conversation is over
-  document.querySelectorAll('.ls-local-card').forEach(c => { c.classList.add('used'); c.classList.remove('selected'); });
-
-  const respEl = document.getElementById('ls-locals-response');
-  respEl.innerHTML = `
-    <div style="font-size:0.625em;color:#ccaa55;margin-bottom:6px;">${local.portrait} ${local.name}</div>
-    <div style="line-height:1.55;">"${local.tip}"</div>
-    <div style="color:#44cc88;font-size:0.563em;margin-top:10px;letter-spacing:1px;">📍 LOCATION MARKED ON YOUR LOCAL CHART</div>`;
-
-  _lsLocalsRevealFragment();
-}
-
-function _lsLocalsRevealFragment() {
-  const sphereId = G.ship?.loc || 'realm';
-  ensureLqState();
-  G.localQuests[sphereId + '_frag_revealed'] = true;
-
-  // Unhide the fragment POI and fire ping
-  const fragPoi = LS.pois?.find(p => p.type === 'fragment');
-  if(fragPoi) {
-    fragPoi.hidden = false;
-    fragPoi._pingT = 8.0;
-  }
-
-  // Log entry
-  const fs = FRAGMENT_SITES.find(f => f.sphere === sphereId);
-  const siteName = fs ? fs.n : 'a site of interest';
-  addLog(`📍 ${siteName} marked on your local chart. Investigate the fragment signal.`, 'gd');
-  snd('sphere_arrive', 0.5);
-
-  // Refresh dock button state when player eventually returns
-  // (panel stays open — player closes manually)
-}
-
-function lsCloseLocalsPanel() {
-  document.getElementById('ls-locals-panel').classList.remove('on');
-  document.getElementById('ls-locals-response').classList.remove('on');
-  document.getElementById('ls-dock-panel').classList.add('on');
-  _lsRefreshDock();
-}
-
 function _lsDefinePois() {
   const W = LS.W, H = LS.H;
   const sphereId = G.ship?.loc || 'realm';
@@ -15540,7 +15062,7 @@ function _lsDefinePois() {
         patrol: true, patrolR: 100, patrolSpeed: 0.20, patrolAngle: 3.5,
       },
       {
-        id:'fragment', label:"Fragment Orbit — The Star Nest", role:'Navigation Core Site', hidden:true,
+        id:'fragment', label:"Fragment Orbit — The Star Nest", role:'Navigation Core Site',
         x: W*0.20, y: H*0.20, r: 55, col:'#ffdd44', icon:'🔮', type:'fragment',
       },
       {
@@ -15587,7 +15109,7 @@ function _lsDefinePois() {
       },
       // Fragment Site — The Broker's Cache
       {
-        id:'fragment', label:"Fragment Orbit — The Broker's Cache", role:'Navigation Core Site', hidden:true,
+        id:'fragment', label:"Fragment Orbit — The Broker's Cache", role:'Navigation Core Site',
         x: W*0.20, y: H*0.22, r: 55, col:'#ffdd44', icon:'🔮', type:'fragment',
       },
       // Harvester salvage zone — outer ring
@@ -15643,7 +15165,7 @@ function _lsDefinePois() {
       },
       // Fragment Site — The Dwarven Vault, outer edge
       {
-        id:'fragment', label:'Fragment Orbit — The Dwarven Vault', role:'Navigation Core Site', hidden:true,
+        id:'fragment', label:'Fragment Orbit — The Dwarven Vault', role:'Navigation Core Site',
         x: W*0.20, y: H*0.20, r: 55, col:'#ffdd44', icon:'🔮', type:'fragment',
       },
       // Harvester Disruption Zone — outer ring
@@ -15657,92 +15179,6 @@ function _lsDefinePois() {
         id:'hazard_plunderer', label:'Plunderer Lane', role:'⚠ Pirate Activity',
         x: W*0.75, y: H*0.75, r: 150, col:'#ff8833', icon:'⚠', type:'hazard_zone',
         enemyKey: 'plunderer', spawnRate: 0.4,
-      },
-    ];
-  }
-
-  // ── THYSS (hero) — ancient fortress-dock, late-game ─────────────────────
-  if (sphereId === 'hero') {
-    return [
-      {
-        id:'dock', label:'Citadel Exalted', role:'Pre-Sundering Fortress-Dock · Air · Hull · Crew · QM',
-        x: W*0.50, y: H*0.50, r: 70, col:'#ffff44', icon:'⚓', type:'dock',
-        safeRadius: 300,
-      },
-      {
-        id:'npc_thessaly', label:'Keeper Thessaly Vorn', role:'Citadel Exalted Archivist and Port-Warden',
-        x: W*0.38, y: H*0.42, r: 48, col:'#ffff44', icon:'📜', type:'npc',
-        npcId: 'hero_qm',
-        patrol: true, patrolR: 95, patrolSpeed: 0.20, patrolAngle: 0,
-      },
-      {
-        id:'npc_archivist', label:'Archivist Yssel Dain', role:'Pre-Sundering Scholar — Citadel',
-        x: W*0.63, y: H*0.42, r: 48, col:'#ffcc66', icon:'🔭', type:'npc',
-        npcId: 'hero_archivist',
-        patrol: true, patrolR: 110, patrolSpeed: 0.16, patrolAngle: 1.8,
-      },
-      {
-        id:'npc_omen', label:'"Omen"', role:'Void-Touched Wanderer — Far Dark Survivor',
-        x: W*0.50, y: H*0.65, r: 48, col:'#cc88ff', icon:'👁️', type:'npc',
-        npcId: 'hero_wanderer',
-        patrol: true, patrolR: 100, patrolSpeed: 0.14, patrolAngle: 3.5,
-      },
-      {
-        id:'fragment', label:'Fragment Orbit — Pre-Sundering Vault', role:'Navigation Core Site', hidden:true,
-        x: W*0.18, y: H*0.20, r: 55, col:'#ffdd44', icon:'🔮', type:'fragment',
-      },
-      {
-        id:'hazard_beholder', label:'Sentinel Drone Perimeter', role:'⚠ Vault-Keeper Drone Activity',
-        x: W*0.78, y: H*0.24, r: 170, col:'#ff4444', icon:'⚠', type:'hazard_zone',
-        enemyKey: 'beholder', spawnRate: 0.50,
-      },
-      {
-        id:'hazard_leviathan', label:'Deep-Void Hunting Ground', role:'⚠ Leviathan Territory',
-        x: W*0.75, y: H*0.75, r: 155, col:'#aa44ff', icon:'⚠', type:'hazard_zone',
-        enemyKey: 'leviathan', spawnRate: 0.35,
-      },
-    ];
-  }
-
-  // ── SERATH (dark) — lightless void-port, endgame ─────────────────────────
-  if (sphereId === 'dark') {
-    return [
-      {
-        id:'dock', label:'Voidhaven', role:'Serath Void Market · Air · Hull · Crew · QM',
-        x: W*0.50, y: H*0.50, r: 70, col:'#aa66ff', icon:'⚓', type:'dock',
-        safeRadius: 280,
-      },
-      {
-        id:'npc_sythari', label:'Void-Broker Sythari', role:'Voidhaven Exchange, Serath',
-        x: W*0.38, y: H*0.42, r: 48, col:'#aa66ff', icon:'💜', type:'npc',
-        npcId: 'dark_qm',
-        patrol: true, patrolR: 90, patrolSpeed: 0.22, patrolAngle: 0,
-      },
-      {
-        id:'npc_remnant', label:'"Remnant"', role:'Far Dark Scout — Survived the Gate',
-        x: W*0.63, y: H*0.42, r: 48, col:'#8866cc', icon:'🌑', type:'npc',
-        npcId: 'dark_scout',
-        patrol: true, patrolR: 105, patrolSpeed: 0.18, patrolAngle: 2.0,
-      },
-      {
-        id:'npc_trull_defector', label:'Trull Defector Commander', role:'Former Trull Advance — Breakaway',
-        x: W*0.50, y: H*0.65, r: 48, col:'#ff4444', icon:'⚔️', type:'npc',
-        npcId: 'dark_trull',
-        patrol: true, patrolR: 95, patrolSpeed: 0.16, patrolAngle: 4.0,
-      },
-      {
-        id:'fragment', label:'Fragment Orbit — The Dark Mote', role:'Navigation Core Site', hidden:true,
-        x: W*0.20, y: H*0.22, r: 55, col:'#ffdd44', icon:'🔮', type:'fragment',
-      },
-      {
-        id:'hazard_leviathan', label:'Void Leviathan Zone', role:'⚠ Extreme Danger',
-        x: W*0.78, y: H*0.24, r: 165, col:'#ff2222', icon:'⚠', type:'hazard_zone',
-        enemyKey: 'leviathan', spawnRate: 0.55,
-      },
-      {
-        id:'hazard_stalker', label:'Void Rift Stalker Territory', role:'⚠ Far Dark Incursion',
-        x: W*0.74, y: H*0.74, r: 155, col:'#6600cc', icon:'⚠', type:'hazard_zone',
-        enemyKey: 'frStalker', spawnRate: 0.40,
       },
     ];
   }
@@ -15785,7 +15221,7 @@ function _lsDefinePois() {
     },
     // Fragment Orbit Site — outer edge, guarded
     {
-      id:'fragment', label:'Fragment Orbit — The Flotsam Field', role:'Navigation Core Site', hidden:true,
+      id:'fragment', label:'Fragment Orbit — The Flotsam Field', role:'Navigation Core Site',
       x: W*0.18, y: H*0.22, r: 55, col:'#ffdd44', icon:'🔮', type:'fragment',
     },
     // Harvester Disruption Zone — outer ring, high danger
@@ -15866,28 +15302,6 @@ const LS_ENEMY_POOLS = {
   ],
   // Future spheres can define their own pools here
   // krynn: [...],
-  // Thyss (hero) — late-game: Sentinel Drones, Leviathans, Blackfleet, Drift Corsairs
-  hero: [
-    ['beholder',           5],
-    ['leviathan',          4],
-    ['blackfleet',         4],
-    ['githyanki',          3],
-    ['trull_dreadnought',  3],
-    ['harvester',          2],
-    ['phlog_flamewing',    1],
-    ['frStalker',          1],
-  ],
-  // Serath (dark) — endgame: Void Rift entities, Leviathans, Sentinel Drones
-  dark: [
-    ['leviathan',          5],
-    ['beholder',           4],
-    ['frStalker',          4],
-    ['frHorde',            3],
-    ['githyanki',          3],
-    ['trull_dreadnought',  2],
-    ['phlog_vinecrawler',  1],
-    ['phlog_jellyfish',    1],
-  ],
 };
 
 // Weighted random pick from a pool
@@ -15994,19 +15408,6 @@ function openLocalSpace() {
     LS._enemySpawnTimer = 0;
     LS._pickupChecked = false;  // reset so pickup check fires on first dock
   }
-  // Reveal fragment POI if locals have already been asked this sphere
-  const _fragPoi = LS.pois.find(p=>p.type==='fragment');
-  if(_fragPoi) {
-    const _fragKey = (G.ship?.loc||'realm') + '_frag_revealed';
-    if(G.localQuests && G.localQuests[_fragKey]) {
-      _fragPoi.hidden = false;
-      // If core already collected mark it visually cleared (no fight prompt)
-      const _fs = FRAGMENT_SITES.find(f=>f.sphere===(G.ship?.loc||'realm'));
-      if(_fs && G.fragsCollected && G.fragsCollected.has(_fs.id)) {
-        _fragPoi._cleared = true;
-      }
-    }
-  }
 
   if(needsRespawn) {
     LS.enemies = [];
@@ -16084,7 +15485,7 @@ function lsDockDepart() {
   G.phase = 'map';
   updateUI();
   const _dSph = G.ship.loc || 'realm';
-  const _dSphName = _dSph === 'refuge' ? 'Refuge Station' : _dSph === 'grey' ? 'Korreth' : _dSph === 'cluster' ? 'Varuun' : _dSph === 'krynn' ? 'Vael' : _dSph === 'hero' ? 'Thyss' : _dSph === 'dark' ? 'Serath' : 'Fentheris System';
+  const _dSphName = _dSph === 'refuge' ? 'Refuge Station' : _dSph === 'grey' ? 'Korreth' : _dSph === 'cluster' ? 'Varuun' : _dSph === 'krynn' ? 'Vael' : 'Fentheris System';
   addLog('Departed ' + _dSphName + ' local space.','');
 }
 
@@ -16155,14 +15556,6 @@ function _lsRefreshDock() {
   if(hBtn){ hBtn.textContent = `🔷 ${hullCost} TS`; hBtn.disabled = s.hull >= s.maxHull || s.gold < hullCost; }
   if(aBtn){ aBtn.textContent = `🔷 ${airCost} TS`;  aBtn.disabled = s.air  >= (s.maxAir||12) || s.gold < airCost; }
   if(cBtn){ cBtn.textContent = `🔷 ${crewCost} TS`; cBtn.disabled = s.crew >= s.maxCrew || s.gold < crewCost; }
-  // Ask Locals button — hide once fragment is revealed, or if this sphere has no fragment
-  const _alBtn = document.getElementById('ls-dock-ask-locals-btn');
-  if(_alBtn) {
-    const _fragExists   = LS.pois?.some(p => p.type === 'fragment');
-    const _alRevealed   = G.localQuests?.[(G.ship?.loc||'realm') + '_frag_revealed'];
-    _alBtn.style.display = (_fragExists && !_alRevealed) ? '' : 'none';
-  }
-
   // Build QM shop grid
   _lsBuildQmShop();
   // Build cargo sell grid
@@ -16198,7 +15591,7 @@ function _lsBuildCargoGrid() {
       G.ship.inv = G.ship.inv.filter(i => !['trade','component','artifact'].includes(i.type));
       G.ship.gold += total;
       snd('purchase', 0.7);
-      const _sellSphName = G.ship?.loc === 'refuge' ? 'IEF Refuge Station' : G.ship?.loc === 'grey' ? 'Ironhaven Station' : G.ship?.loc === 'cluster' ? 'Thousand Sails Freeport' : G.ship?.loc === 'krynn' ? 'Palanthas Spindle' : G.ship?.loc === 'hero' ? 'Citadel Exalted' : G.ship?.loc === 'dark' ? 'Voidhaven' : 'Fentheris Orbital'; addLog(`Sold all cargo at ${_sellSphName} for ${total} TS.`, 'gd');
+      const _sellSphName = G.ship?.loc === 'refuge' ? 'IEF Refuge Station' : G.ship?.loc === 'grey' ? 'Ironhaven Station' : G.ship?.loc === 'cluster' ? 'Thousand Sails Freeport' : G.ship?.loc === 'krynn' ? 'Palanthas Spindle' : 'Fentheris Orbital'; addLog(`Sold all cargo at ${_sellSphName} for ${total} TS.`, 'gd');
       updateUI(); _lsRefreshDock();
     };
     grid.appendChild(allRow);
@@ -16469,34 +15862,12 @@ function _lsLoop(ts) {
   _lsRender(LS.ctx, cW, cH, dt);
   _lsRenderMinimap();
 
-  // NPC patrol wander update — velocity-based, waypoint-driven
+  // Patrol POI position update
   LS.pois.forEach(p => {
-    if(!p.patrol) return;
-    // Lazy-init in case of save-load or hot-reload
-    if(p._wTargetX === undefined) _lsNpcPickTarget(p);
-    p._wTimer -= dt;
-    const tdx = (p._wTargetX||p._baseX) - p.x;
-    const tdy = (p._wTargetY||p._baseY) - p.y;
-    const tdist = Math.sqrt(tdx*tdx + tdy*tdy);
-    // Arrived or timed out — pick next waypoint
-    if(tdist < 12 || p._wTimer <= 0) _lsNpcPickTarget(p);
-    // Smoothly accelerate toward target (spring-like)
-    const spd   = p.patrolSpeed * 80;     // patrolSpeed (rad/s scale) → ~px/s
-    const tx    = (tdx / (tdist || 1)) * spd;
-    const ty    = (tdy / (tdist || 1)) * spd;
-    const accel = Math.min(dt * 2.5, 1);
-    p._wvx = (p._wvx||0) + (tx - (p._wvx||0)) * accel;
-    p._wvy = (p._wvy||0) + (ty - (p._wvy||0)) * accel;
-    p.x += p._wvx * dt;
-    p.y += p._wvy * dt;
-    // Smooth facing toward direction of travel — left side of image is nose
-    const spd2 = Math.sqrt(p._wvx*p._wvx + p._wvy*p._wvy);
-    if(spd2 > 3) {
-      const targetFacing = Math.atan2(-p._wvy, -p._wvx); // nose = -X in image space
-      let da = targetFacing - (p._facingAngle||0);
-      while(da >  Math.PI) da -= Math.PI*2;
-      while(da < -Math.PI) da += Math.PI*2;
-      p._facingAngle = (p._facingAngle||0) + da * Math.min(dt * 3, 1);
+    if(p.patrol) {
+      p.patrolAngle = (p.patrolAngle + p.patrolSpeed * dt) % (Math.PI*2);
+      p.x = p._baseX + Math.cos(p.patrolAngle) * p.patrolR;
+      p.y = p._baseY + Math.sin(p.patrolAngle) * p.patrolR;
     }
   });
 }
@@ -16720,7 +16091,6 @@ function _lsCheckProximity() {
   let closest = null, closestDist = Infinity;
   LS.pois.forEach(p => {
     if(!INTERACTABLE_TYPES.has(p.type)) return;
-    if(p.hidden) return;
     const dx = LS.px-p.x, dy = LS.py-p.y;
     const d = Math.sqrt(dx*dx+dy*dy);
     if(d < p.r + 30 && d < closestDist) { closest=p; closestDist=d; }
@@ -16752,7 +16122,7 @@ function _lsShowInteract(poi) {
     dockBtn.className='btn'; dockBtn.textContent='⚓ Dock';
     dockBtn.onclick = () => {
       const _dSphId = G.ship?.loc || 'realm';
-      const _dockName = _dSphId === 'refuge' ? 'IEF Refuge Station' : _dSphId === 'grey' ? 'Ironhaven Station' : _dSphId === 'cluster' ? 'Thousand Sails Freeport' : _dSphId === 'krynn' ? 'Palanthas Spindle' : _dSphId === 'hero' ? 'Citadel Exalted' : _dSphId === 'dark' ? 'Voidhaven' : 'Fentheris Orbital Station';
+      const _dockName = _dSphId === 'refuge' ? 'IEF Refuge Station' : _dSphId === 'grey' ? 'Ironhaven Station' : _dSphId === 'cluster' ? 'Thousand Sails Freeport' : _dSphId === 'krynn' ? 'Palanthas Spindle' : 'Fentheris Orbital Station';
       _lsLog('Docked at ' + _dockName + '.', '');
       document.getElementById('ls-dock-title').textContent = '⚓ ' + _dockName.toUpperCase();
       const _departBtn = document.getElementById('ls-dock-depart-btn');
@@ -16808,21 +16178,29 @@ function _lsShowInteract(poi) {
         `${fs.n} crackles with hostile energy. A guardian vessel — ${guardian?.name || 'unknown'} — blocks access to the Fragment.`;
       const fightBtn = document.createElement('button');
       fightBtn.className='btn'; fightBtn.style.color='#ffdd44';
-      fightBtn.textContent='⚔ Engage Guardian';
-      fightBtn.onclick = () => {
-        panel.classList.remove('on');
-        _lsLog('⚔ Fragment Guardian closing in!','danger');
-        setTimeout(() => {
-          // Hide LS overlay, run the proper guardian confirm dialog
-          document.getElementById('ov-localspace').classList.remove('on');
-          if(LS.animId){ cancelAnimationFrame(LS.animId); LS.animId=null; }
-          _lsPendingReturn = true;
-          _lsPendingFragment = fs;
-          // Use the existing guardian confirm overlay (shows ship art + lore)
-          G.phase = 'map';
-          showGuardianConfirm(fs);
-        }, 600);
-      };
+      // Realm uses the dungeon approach; other spheres go direct (for now)
+      if(fs.id === 'fs_realm') {
+        fightBtn.textContent='🔮 Enter the Site';
+        fightBtn.onclick = () => {
+          panel.classList.remove('on');
+          LS.interactOpen = false; LS.nearPoi = null;
+          _fdShowWarning(fs);
+        };
+      } else {
+        fightBtn.textContent='⚔ Engage Guardian';
+        fightBtn.onclick = () => {
+          panel.classList.remove('on');
+          _lsLog('⚔ Fragment Guardian closing in!','danger');
+          setTimeout(() => {
+            document.getElementById('ov-localspace').classList.remove('on');
+            if(LS.animId){ cancelAnimationFrame(LS.animId); LS.animId=null; }
+            _lsPendingReturn = true;
+            _lsPendingFragment = fs;
+            G.phase = 'map';
+            showGuardianConfirm(fs);
+          }, 600);
+        };
+      }
       btns.appendChild(fightBtn);
 
       const retreatBtn = document.createElement('button');
@@ -17049,7 +16427,7 @@ function _lsRender(cx, W, H, dt) {
   });
 
   // ── POI icons ──
-  LS.pois.filter(p=>p.type!=='hazard_zone'&&p.type!=='patrol_zone'&&!p.hidden).forEach(p=>{
+  LS.pois.filter(p=>p.type!=='hazard_zone'&&p.type!=='patrol_zone').forEach(p=>{
     // Glow halo
     const grd = cx.createRadialGradient(p.x,p.y,0,p.x,p.y,38);
     grd.addColorStop(0,hexA(p.col,'33')); grd.addColorStop(1,'transparent');
@@ -17066,24 +16444,21 @@ function _lsRender(cx, W, H, dt) {
 
     // NPC POIs — draw as a ship using npc_ship PNG (unique per NPC via slow rotation)
     if(p.type==='npc') {
-      // Rotate so the left side of the image (nose) faces the direction of travel
-      const npcAngle = (p._facingAngle || 0);
+      // Slowly drift-rotate so each NPC faces a slightly different direction
+      const npcAngle = (p.patrolAngle || 0);
       cx.save(); cx.translate(p.x, p.y); cx.rotate(npcAngle);
       cx.shadowColor=p.col; cx.shadowBlur=10;
       drawShipImg('npc_ship', cx, 0, 0, 28, 18, false, () => {
-        // Fallback: nose-left corvette shape (−X = front, +X = rear)
+        // Fallback: a distinct IEF-style corvette shape
         cx.fillStyle=p.col;
         cx.beginPath();
-        cx.moveTo(-13, 0);  // nose
-        cx.lineTo(4, -5); cx.lineTo(8, -9); // upper wing
-        cx.lineTo(5, 0);    // tail centre
-        cx.lineTo(8, 9); cx.lineTo(4, 5);   // lower wing
-        cx.closePath();
+        cx.moveTo(0,-13); cx.lineTo(-5,4); cx.lineTo(-9,8);
+        cx.lineTo(0,5); cx.lineTo(9,8); cx.lineTo(5,4); cx.closePath();
         cx.fill();
-        // Wing struts along tail
+        // Wing struts
         cx.strokeStyle=p.col; cx.lineWidth=1;
-        cx.beginPath(); cx.moveTo(0,-2); cx.lineTo(1,-11); cx.stroke();
-        cx.beginPath(); cx.moveTo(0, 2); cx.lineTo(1, 11); cx.stroke();
+        cx.beginPath(); cx.moveTo(-3,0); cx.lineTo(-11,2); cx.stroke();
+        cx.beginPath(); cx.moveTo(3,0);  cx.lineTo(11,2);  cx.stroke();
       });
       cx.shadowBlur=0; cx.restore();
 
@@ -17149,28 +16524,10 @@ function _lsRender(cx, W, H, dt) {
         cx.restore();
       }
     } else if(p.type==='fragment') {
-      // Ping rings — expand outward for several seconds after reveal
-      if(p._pingT > 0) {
-        p._pingT -= dt;
-        const pingCount = 3;
-        for(let pi=0; pi<pingCount; pi++) {
-          const phase = ((p._pingT * 0.55) + pi/pingCount) % 1;
-          const pr = p.r + 10 + phase * 120;
-          const pa = (1-phase) * 0.7;
-          cx.save();
-          cx.globalAlpha = pa;
-          cx.strokeStyle = '#ffdd44';
-          cx.lineWidth = 2;
-          cx.beginPath(); cx.arc(p.x, p.y, pr, 0, Math.PI*2); cx.stroke();
-          cx.restore();
-        }
-      }
       // Pulsing crystal
       const fpulse = 0.5+0.5*Math.sin(LS.t*2.2);
       cx.save(); cx.translate(p.x,p.y); cx.rotate(LS.t*0.4);
-      // Cleared tint — greyed out after core collected
-      cx.fillStyle = p._cleared ? '#556655' : p.col;
-      cx.globalAlpha=0.7+0.3*fpulse;
+      cx.fillStyle=p.col; cx.globalAlpha=0.7+0.3*fpulse;
       cx.beginPath();
       cx.moveTo(0,-14); cx.lineTo(5,-3); cx.lineTo(14,0);
       cx.lineTo(5,3);   cx.lineTo(0,14); cx.lineTo(-5,3);
@@ -17346,7 +16703,7 @@ function _lsRenderMinimap() {
   });
 
   // POIs
-  LS.pois.filter(p=>p.type!=='hazard_zone'&&p.type!=='patrol_zone'&&!p.hidden).forEach(p=>{
+  LS.pois.filter(p=>p.type!=='hazard_zone'&&p.type!=='patrol_zone').forEach(p=>{
     const mx2 = ox+p.x*scale;
     const my2 = oy+p.y*scale;
     mx.fillStyle=p.col;
@@ -17480,44 +16837,43 @@ document.getElementById('ls-canvas').addEventListener('click', e => {
 // Must run after _lsDefinePois sets up the pois array
 function _lsInitPatrolBases() {
   LS.pois.forEach(p => {
-    if(p.patrol) {
-      p._baseX = p.x;
-      p._baseY = p.y;
-      // Spread starting positions using patrolAngle so NPCs don't stack at center
-      p.x = p._baseX + Math.cos(p.patrolAngle) * p.patrolR * 0.6;
-      p.y = p._baseY + Math.sin(p.patrolAngle) * p.patrolR * 0.6;
-      p._wvx = 0;
-      p._wvy = 0;
-      p._facingAngle = p.patrolAngle + Math.PI; // start facing inward (nose toward dock)
-      p._wTimer = Math.random() * 1.5;           // stagger first target picks
-      _lsNpcPickTarget(p);
-    }
+    if(p.patrol) { p._baseX = p.x; p._baseY = p.y; }
   });
 }
 
-// Pick a new random wander destination within the NPC's home area
-function _lsNpcPickTarget(p) {
-  const angle = Math.random() * Math.PI * 2;
-  const dist  = (0.3 + Math.random() * 0.7) * p.patrolR;
-  p._wTargetX = p._baseX + Math.cos(angle) * dist;
-  p._wTargetY = p._baseY + Math.sin(angle) * dist;
-  p._wTimer   = 3 + Math.random() * 4;  // 3–7 seconds per waypoint
-}
-
-// ── Show/hide Ask Locals button based on fragment state ──────────────────────
 // ── POST-COMBAT RETURN HOOK ───────────────────────────────────────────────
 // We patch into the existing combat end flow so that when _lsPendingReturn is
 // set we re-open the LS overlay instead of going to map.
 // We do this by wrapping the existing combatVictory / combatDefeat exit points.
 const _lsOrigCombatWinCleanup = typeof _combatWinCleanup === 'function' ? _combatWinCleanup : null;
 function _lsCheckReturnAfterCombat() {
+  // Fragment dungeon — minion combat return (reopen dungeon)
+  if(FD.pendingReturn) {
+    FD.pendingReturn = false;
+    if(G.cbt?.enemy?._key) lqTrackKill(G.cbt.enemy._key);
+    if(FD.pendingEnemyIdx !== null) {
+      FD.enemies.splice(FD.pendingEnemyIdx, 1);
+      FD.pendingEnemyIdx = null;
+    }
+    setTimeout(() => _fdReopen(), 500);
+    return;
+  }
+  // Fragment dungeon — guardian fight resolved; close dungeon and return to LS
+  if(FD._fromDungeon) {
+    FD._fromDungeon = false;
+    _lsPendingReturn = false;
+    _lsPendingFragment = null;
+    // Mark fragment POI cleared
+    const _fdFragPoi = LS.pois?.find(p => p.type === 'fragment');
+    if(_fdFragPoi) _fdFragPoi._cleared = true;
+    document.getElementById('ov-fragsitee')?.classList.remove('on');
+    if(FD.animId){ cancelAnimationFrame(FD.animId); FD.animId = null; }
+    setTimeout(() => openLocalSpace(), 600);
+    return;
+  }
   if(_lsPendingReturn) {
     _lsPendingReturn = false;
-    // Track kill for local quest
     if(G.cbt?.enemy?._key) lqTrackKill(G.cbt.enemy._key);
-    // Fragment fight: G._pendingFragSite was set by startFragmentFight and the
-    // fragment award/message is handled by the existing win condition code.
-    // _lsPendingFragment just signals we came from LS — clear it and reopen.
     _lsPendingFragment = null;
     setTimeout(() => openLocalSpace(), 600);
   }
@@ -18098,6 +17454,653 @@ function closeLqShop() {
   LQ.selectedNpc = null;
 }
 
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║  FRAGMENT DUNGEON SYSTEM (FD)                                            ║
+// ║  Top-down corridor exploration — triggered from fragment POI in LS       ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+
+const FD_CONFIGS = {
+  realm: {
+    name: 'The Flotsam Field',
+    entryLog: 'Entering the Flotsam Field. Wreckage closes in on all sides. Automated sentinels are active.',
+    guardianWarning: "Corsair Captain Aldren commands this site with a full complement of advance scouts and automated wreck-sentinels. The Navigation Core is at the far end of the field.",
+    floorColor:   '#201408',
+    accentColor:  '#cc8833',
+    minRooms: 5, maxRooms: 7,
+    enemies:       ['fd_realm_drone','fd_realm_scout'],
+    enemyWeights:  [3, 2],
+    lootTable: [
+      {id:'plunder',c:0.85},{id:'repkit',c:0.70},{id:'crewmead',c:0.60},
+      {id:'starcoin',c:0.75},{id:'corskit',c:0.50},{id:'beacon',c:0.22},
+    ],
+  },
+};
+
+const FD = {
+  canvas:null, ctx:null, mmCanvas:null, mmCtx:null,
+  animId:null, t:0, lastTs:0,
+  W:3800, H:2200,
+  px:300, py:800,
+  pvx:0, pvy:0, pAngle:0,
+  pSpeed:120, pAccel:440, pFriction:0.88,
+  pTargetX:null, pTargetY:null,
+  keys:{},
+  joystickActive:false, joystickX:0, joystickY:0,
+  rooms:[], corridors:[],
+  enemies:[],
+  particles:[],
+  site:null, config:null,
+  camX:0, camY:0,
+  nearPoi:null, interactOpen:false,
+  pendingReturn:false,
+  pendingEnemyIdx:null,
+  _fromDungeon:false,
+  _fogCanvas:null,
+  _stars:[],
+};
+const FD_VISION_R = 310;
+
+// ── Warning dialog before entry ────────────────────────────────────────────
+function _fdShowWarning(fs) {
+  const cfg = FD_CONFIGS[G.ship?.loc||'realm'];
+  if(!cfg){ openFragDungeon(fs); return; }
+  const s=G.ship, pct=Math.round((s.hull/s.maxHull)*100);
+  const hIco = pct<40?'⚠':pct<70?'•':'✓';
+  showMsg(`🔮 ${fs.n}`,
+    `You are about to enter ${fs.n}.\n\n${cfg.guardianWarning}\n\nShip status:\n  ${hIco} Hull: ${s.hull}/${s.maxHull} (${pct}%)\n  • Crew: ${s.crew}/${s.maxCrew}\n  🔷 ${s.gold} TS\n\nRepair at the dock before entering if needed.`,
+    '⚔ Enter the Site', ()=>openFragDungeon(fs),
+    '↩ Not yet', null);
+}
+
+// ── Open dungeon ───────────────────────────────────────────────────────────
+function openFragDungeon(fs) {
+  const sphId = G.ship?.loc||'realm';
+  const cfg = FD_CONFIGS[sphId];
+  if(!cfg) return;
+  FD.site=fs; FD.config=cfg;
+
+  const nRooms = cfg.minRooms + Math.floor(Math.random()*(cfg.maxRooms-cfg.minRooms+1));
+  const layout = _fdGenLayout(nRooms);
+  FD.rooms=layout.rooms; FD.corridors=layout.corridors;
+  FD.enemies=[]; FD.particles=[]; FD._fogCanvas=null;
+  _fdPopulateRooms(cfg);
+
+  const entry=FD.rooms[0];
+  FD.px=entry.x+entry.w/2; FD.py=entry.y+entry.h/2;
+  FD.pvx=0; FD.pvy=0; FD.pAngle=0;
+  FD.pTargetX=null; FD.pTargetY=null;
+  FD.interactOpen=false; FD.nearPoi=null; FD.keys={};
+  FD._stars=[];
+  for(let i=0;i<200;i++) FD._stars.push({
+    x:Math.random()*FD.W, y:Math.random()*FD.H,
+    r:Math.random()*1.2+0.2, b:Math.random()*0.35+0.05
+  });
+
+  const ov=document.getElementById('ov-fragsitee');
+  ov.classList.add('on');
+  document.getElementById('fd-hud-title').textContent='🔮 '+cfg.name.toUpperCase();
+  document.getElementById('fd-interact-panel').classList.remove('on');
+  _fdLog(cfg.entryLog); _fdUpdateHud();
+  if('ontouchstart' in window) document.getElementById('fd-joystick-zone').style.display='block';
+
+  FD.canvas   = document.getElementById('fd-canvas');
+  FD.ctx      = FD.canvas.getContext('2d');
+  FD.mmCanvas = document.getElementById('fd-minimap-canvas');
+  FD.mmCtx    = FD.mmCanvas.getContext('2d');
+  FD.canvas.addEventListener('click', _fdHandleClick);
+  document.addEventListener('keydown', _fdKeyDown);
+  document.addEventListener('keyup',   _fdKeyUp);
+  if(FD.animId) cancelAnimationFrame(FD.animId);
+  FD.lastTs=0;
+  FD.animId=requestAnimationFrame(_fdLoop);
+}
+
+function _fdReopen() {
+  document.getElementById('ov-fragsitee').classList.add('on');
+  document.getElementById('fd-interact-panel').classList.remove('on');
+  FD.interactOpen=false; FD.nearPoi=null; FD.keys={};
+  _fdLog('Back in the site. Proceed to the guardian chamber.'); _fdUpdateHud();
+  FD.canvas   = document.getElementById('fd-canvas');
+  FD.ctx      = FD.canvas.getContext('2d');
+  FD.mmCanvas = document.getElementById('fd-minimap-canvas');
+  FD.mmCtx    = FD.mmCanvas.getContext('2d');
+  FD.canvas.addEventListener('click', _fdHandleClick);
+  document.addEventListener('keydown', _fdKeyDown);
+  document.addEventListener('keyup',   _fdKeyUp);
+  if(FD.animId) cancelAnimationFrame(FD.animId);
+  FD.lastTs=0;
+  FD.animId=requestAnimationFrame(_fdLoop);
+}
+
+function closeFragDungeon() {
+  document.getElementById('ov-fragsitee').classList.remove('on');
+  document.getElementById('fd-interact-panel').classList.remove('on');
+  if(FD.animId){ cancelAnimationFrame(FD.animId); FD.animId=null; }
+  FD.canvas?.removeEventListener('click', _fdHandleClick);
+  document.removeEventListener('keydown', _fdKeyDown);
+  document.removeEventListener('keyup',   _fdKeyUp);
+  FD.keys={};
+  addLog('Retreated from '+(FD.site?.n||'the fragment site')+'.','');
+  setTimeout(()=>openLocalSpace(), 300);
+}
+
+// ── Room generation ────────────────────────────────────────────────────────
+function _fdGenLayout(nRooms) {
+  const CORR_H=64, GAP_MIN=70, GAP_MAX=140;
+  const SIZES=[{w:280,h:230},{w:320,h:250},{w:360,h:265},{w:400,h:280},{w:450,h:300}];
+  const rooms=[], corridors=[];
+  let curX=160, curCY=FD.H/2;
+
+  for(let i=0;i<nRooms;i++){
+    const sz=SIZES[Math.floor(Math.random()*SIZES.length)];
+    const type = i===0?'entry':i===nRooms-1?'guardian':Math.random()<0.55?'encounter':'loot';
+    const room={
+      id:i, type,
+      x:curX, y:curCY-sz.h/2, w:sz.w, h:sz.h,
+      cx:curX+sz.w/2, cy:curCY,
+      revealed:false, visible:false,
+      enemies:[], loots:[], guardianDefeated:false,
+    };
+    rooms.push(room);
+
+    if(i>0){
+      const prev=rooms[i-1];
+      const oTop=Math.max(prev.y,room.y)+8;
+      const oBot=Math.min(prev.y+prev.h,room.y+room.h)-8;
+      const overlap=oBot-oTop;
+      const corrH=overlap>=CORR_H?CORR_H:Math.max(overlap,24);
+      const corrY=overlap>=corrH
+        ?(oTop+oBot)/2-corrH/2
+        :(prev.cy+room.cy)/2-corrH/2;
+      corridors.push({
+        id:i-1,
+        x:prev.x+prev.w,
+        y:corrY,
+        w:room.x-(prev.x+prev.w),
+        h:corrH,
+        roomA:i-1, roomB:i,
+        revealed:false, visible:false,
+      });
+    }
+
+    const gap=GAP_MIN+Math.floor(Math.random()*(GAP_MAX-GAP_MIN));
+    curX+=sz.w+gap;
+    const dy=(Math.random()-0.5)*110;
+    curCY=Math.max(sz.h/2+80, Math.min(FD.H-sz.h/2-80, curCY+dy));
+  }
+  return {rooms,corridors};
+}
+
+function _fdPopulateRooms(cfg){
+  const wTotal=cfg.enemyWeights.reduce((a,b)=>a+b,0);
+  FD.rooms.forEach(room=>{
+    if(room.type==='encounter'){
+      const count=1+Math.floor(Math.random()*2);
+      for(let i=0;i<count;i++){
+        let r=Math.random()*wTotal, key=cfg.enemies[cfg.enemies.length-1];
+        for(let k=0;k<cfg.enemies.length;k++){ r-=cfg.enemyWeights[k]; if(r<=0){key=cfg.enemies[k];break;} }
+        const enemy={
+          key, roomId:room.id,
+          x:room.x+room.w*(0.25+Math.random()*0.5),
+          y:room.y+room.h*(0.25+Math.random()*0.5),
+          vx:0, vy:0, _key:key,
+          state:'wander',
+          wanderAngle:Math.random()*Math.PI*2,
+          wanderTimer:1+Math.random()*2,
+          _facingAngle:Math.random()*Math.PI*2,
+        };
+        room.enemies.push(FD.enemies.length);
+        FD.enemies.push(enemy);
+      }
+    }
+    if(room.type==='loot'){
+      room.loots.push({
+        x:room.x+room.w/2+(Math.random()-0.5)*80,
+        y:room.y+room.h/2+(Math.random()-0.5)*60,
+        collected:false,
+      });
+    }
+  });
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function _fdIsInFloor(wx,wy){
+  for(const r of FD.rooms)    if(wx>=r.x&&wx<=r.x+r.w&&wy>=r.y&&wy<=r.y+r.h) return true;
+  for(const c of FD.corridors)if(wx>=c.x&&wx<=c.x+c.w&&wy>=c.y&&wy<=c.y+c.h) return true;
+  return false;
+}
+
+function _fdLOS(x1,y1,x2,y2){
+  const dx=x2-x1,dy=y2-y1;
+  const steps=Math.max(1,Math.ceil(Math.sqrt(dx*dx+dy*dy)/22));
+  for(let s=1;s<steps;s++){
+    const t=s/steps;
+    if(!_fdIsInFloor(x1+dx*t,y1+dy*t)) return false;
+  }
+  return true;
+}
+
+// ── Visibility (fog of war) ────────────────────────────────────────────────
+function _fdUpdateVisibility(){
+  const R=FD_VISION_R;
+  FD.rooms.forEach(r=>{
+    const dx=(r.x+r.w/2)-FD.px, dy=(r.y+r.h/2)-FD.py;
+    const inRange=Math.sqrt(dx*dx+dy*dy)<R+Math.max(r.w,r.h)*0.6;
+    const los=inRange&&_fdLOS(FD.px,FD.py,r.x+r.w/2,r.y+r.h/2);
+    r.visible=los; if(los) r.revealed=true;
+  });
+  FD.corridors.forEach(c=>{
+    const dx=(c.x+c.w/2)-FD.px, dy=(c.y+c.h/2)-FD.py;
+    const inRange=Math.sqrt(dx*dx+dy*dy)<R+Math.max(c.w,c.h)*0.6;
+    const los=inRange&&_fdLOS(FD.px,FD.py,c.x+c.w/2,c.y+c.h/2);
+    c.visible=los; if(los) c.revealed=true;
+  });
+}
+
+// ── Player movement ────────────────────────────────────────────────────────
+function _fdUpdatePlayer(dt){
+  const K=FD.keys;
+  let ax=0,ay=0;
+  if(K['w']||K['W']||K['ArrowUp'])    ay-=1;
+  if(K['s']||K['S']||K['ArrowDown'])  ay+=1;
+  if(K['a']||K['A']||K['ArrowLeft'])  ax-=1;
+  if(K['d']||K['D']||K['ArrowRight']) ax+=1;
+  if(FD.joystickActive){ax+=FD.joystickX;ay+=FD.joystickY;}
+
+  const mag=Math.sqrt(ax*ax+ay*ay);
+  if(mag>1){ax/=mag;ay/=mag;}
+  const hasInput=mag>0.05;
+
+  if(hasInput){
+    FD.pTargetX=null; FD.pTargetY=null;
+    FD.pvx+=ax*FD.pAccel*dt; FD.pvy+=ay*FD.pAccel*dt;
+    const spd=Math.sqrt(FD.pvx*FD.pvx+FD.pvy*FD.pvy);
+    if(spd>FD.pSpeed){FD.pvx=FD.pvx/spd*FD.pSpeed;FD.pvy=FD.pvy/spd*FD.pSpeed;}
+  } else if(FD.pTargetX!==null){
+    const tdx=FD.pTargetX-FD.px,tdy=FD.pTargetY-FD.py;
+    const td=Math.sqrt(tdx*tdx+tdy*tdy);
+    if(td<12){FD.pTargetX=null;FD.pTargetY=null;FD.pvx*=0.4;FD.pvy*=0.4;}
+    else{
+      const tx=(tdx/td)*FD.pSpeed,ty=(tdy/td)*FD.pSpeed;
+      FD.pvx+=(tx-FD.pvx)*Math.min(dt*6,1);
+      FD.pvy+=(ty-FD.pvy)*Math.min(dt*6,1);
+    }
+  }
+  FD.pvx*=FD.pFriction; FD.pvy*=FD.pFriction;
+
+  const nx=FD.px+FD.pvx*dt, ny=FD.py+FD.pvy*dt;
+  if(_fdIsInFloor(nx,ny))       {FD.px=nx;FD.py=ny;}
+  else if(_fdIsInFloor(nx,FD.py)){FD.px=nx;FD.pvy=0;}
+  else if(_fdIsInFloor(FD.px,ny)){FD.py=ny;FD.pvx=0;}
+  else                           {FD.pvx=0;FD.pvy=0;}
+
+  const spd=Math.sqrt(FD.pvx*FD.pvx+FD.pvy*FD.pvy);
+  if(spd>3){
+    const ta=Math.atan2(-FD.pvy,-FD.pvx);
+    let da=ta-FD.pAngle;
+    while(da>Math.PI)da-=Math.PI*2; while(da<-Math.PI)da+=Math.PI*2;
+    FD.pAngle+=da*Math.min(dt*5,1);
+  }
+}
+
+// ── Enemy AI ───────────────────────────────────────────────────────────────
+function _fdUpdateEnemies(dt){
+  FD.enemies.forEach((e,idx)=>{
+    const room=FD.rooms[e.roomId];
+    if(!room?.visible){e.vx=0;e.vy=0;return;}
+
+    const dx=FD.px-e.x, dy=FD.py-e.y;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+
+    if(dist<72 && !FD.pendingReturn){_fdTriggerCombat(idx);return;}
+
+    const AGGRO=200;
+    if(dist<AGGRO) e.state='chase';
+    else if(dist>AGGRO*1.4) e.state='wander';
+
+    const spd=e.state==='chase'?75:38;
+
+    if(e.state==='chase'){
+      const nx=e.x+(dx/dist)*spd*dt;
+      const ny=e.y+(dy/dist)*spd*dt;
+      e.x=Math.max(room.x+16,Math.min(room.x+room.w-16,nx));
+      e.y=Math.max(room.y+16,Math.min(room.y+room.h-16,ny));
+      e.vx=dx/dist*spd; e.vy=dy/dist*spd;
+    } else {
+      e.wanderTimer-=dt;
+      if(e.wanderTimer<=0){e.wanderAngle=Math.random()*Math.PI*2;e.wanderTimer=1.5+Math.random()*2.5;}
+      const wx=e.x+Math.cos(e.wanderAngle)*spd*dt;
+      const wy=e.y+Math.sin(e.wanderAngle)*spd*dt;
+      if(wx>=room.x+16&&wx<=room.x+room.w-16)e.x=wx; else e.wanderAngle+=Math.PI;
+      if(wy>=room.y+16&&wy<=room.y+room.h-16)e.y=wy; else e.wanderAngle+=Math.PI;
+      e.vx=Math.cos(e.wanderAngle)*spd; e.vy=Math.sin(e.wanderAngle)*spd;
+    }
+
+    const es=Math.sqrt(e.vx*e.vx+e.vy*e.vy);
+    if(es>4){
+      const ta=Math.atan2(-e.vy,-e.vx);
+      let da=ta-e._facingAngle;
+      while(da>Math.PI)da-=Math.PI*2; while(da<-Math.PI)da+=Math.PI*2;
+      e._facingAngle+=da*Math.min(dt*4,1);
+    }
+  });
+}
+
+function _fdTriggerCombat(idx){
+  const e=FD.enemies[idx];
+  if(!e||FD.pendingReturn) return;
+  FD.pendingReturn=true; FD.pendingEnemyIdx=idx;
+  FD.pTargetX=null; FD.pTargetY=null;
+  _fdLog('⚔ Enemy intercepted!','danger');
+  if(FD.animId){cancelAnimationFrame(FD.animId);FD.animId=null;}
+  FD.canvas?.removeEventListener('click',_fdHandleClick);
+  document.removeEventListener('keydown',_fdKeyDown);
+  document.removeEventListener('keyup',_fdKeyUp);
+  document.getElementById('ov-fragsitee').classList.remove('on');
+  setTimeout(()=>{_lsPendingReturn=true;startCombat(e.key);},400);
+}
+
+// ── Interactions (loot / guardian chamber) ─────────────────────────────────
+function _fdCheckInteractions(){
+  if(FD.interactOpen) return;
+  for(const room of FD.rooms){
+    if(!room.visible) continue;
+    for(const loot of room.loots){
+      if(loot.collected) continue;
+      if(Math.hypot(loot.x-FD.px,loot.y-FD.py)<68){_fdShowLootInteract(loot);return;}
+    }
+    if(room.type==='guardian'&&!room.guardianDefeated){
+      const gcx=room.x+room.w/2,gcy=room.y+room.h/2;
+      if(Math.hypot(gcx-FD.px,gcy-FD.py)<90){_fdShowGuardianInteract();return;}
+    }
+  }
+}
+
+function _fdShowLootInteract(loot){
+  FD.interactOpen=true;
+  const panel=document.getElementById('fd-interact-panel');
+  document.getElementById('fd-interact-name').textContent='📦 Salvage Cache';
+  document.getElementById('fd-interact-desc').textContent='A sealed cargo container from the wreck field. Something of value inside.';
+  const btns=document.getElementById('fd-interact-btns');
+  btns.innerHTML='';
+  const take=document.createElement('button'); take.className='btn'; take.textContent='⚒ Salvage';
+  take.onclick=()=>{
+    loot.collected=true; panel.classList.remove('on'); FD.interactOpen=false;
+    const table=FD.config.lootTable;
+    const drops=table.filter(e=>Math.random()<e.c);
+    if(drops.length>0){
+      const pick=drops[Math.floor(Math.random()*drops.length)];
+      const item=ITEMS[pick.id];
+      if(item){G.ship.inv.push({...item,uid:uid()}); _fdLog('Salvaged: '+item.n,'gd'); addLog('Found '+item.n+' in a cache.','gd');}
+    } else {
+      const g=15+Math.floor(Math.random()*25); G.ship.gold+=g;
+      _fdLog('Salvaged '+g+' TS in loose coin.','gd'); addLog('Recovered '+g+' TS from a cache.','gd');
+    }
+    _fdUpdateHud(); snd('purchase',0.6);
+  };
+  const leave=document.createElement('button'); leave.className='btn';
+  leave.style.cssText='color:#776644;border-color:#44221133;'; leave.textContent='← Leave';
+  leave.onclick=()=>{panel.classList.remove('on');FD.interactOpen=false;};
+  btns.appendChild(take); btns.appendChild(leave);
+  panel.classList.add('on');
+}
+
+function _fdShowGuardianInteract(){
+  FD.interactOpen=true;
+  const gd=FRAG_GUARDIANS[FD.site.guardianKey];
+  const panel=document.getElementById('fd-interact-panel');
+  document.getElementById('fd-interact-name').textContent='⚔ Guardian Chamber';
+  document.getElementById('fd-interact-desc').textContent=
+    (gd?.name||'The Guardian')+' stands watch here. '+gd?.hp+' hull points. Destroy it to claim the Navigation Core.';
+  const btns=document.getElementById('fd-interact-btns');
+  btns.innerHTML='';
+  const eng=document.createElement('button'); eng.className='btn'; eng.style.color='#ffdd44';
+  eng.textContent='⚔ Engage Guardian';
+  eng.onclick=()=>{panel.classList.remove('on');FD.interactOpen=false;_fdLaunchGuardianFight();};
+  const ret=document.createElement('button'); ret.className='btn';
+  ret.style.cssText='color:#776644;border-color:#44221133;'; ret.textContent='← Fall Back';
+  ret.onclick=()=>{panel.classList.remove('on');FD.interactOpen=false;};
+  btns.appendChild(eng); btns.appendChild(ret);
+  panel.classList.add('on');
+}
+
+function _fdLaunchGuardianFight(){
+  if(FD.animId){cancelAnimationFrame(FD.animId);FD.animId=null;}
+  FD.canvas?.removeEventListener('click',_fdHandleClick);
+  document.removeEventListener('keydown',_fdKeyDown);
+  document.removeEventListener('keyup',_fdKeyUp);
+  document.getElementById('ov-fragsitee').classList.remove('on');
+  FD._fromDungeon=true; _lsPendingReturn=true; _lsPendingFragment=FD.site;
+  setTimeout(()=>{G.phase='map'; showGuardianConfirm(FD.site);},300);
+}
+
+// ── Main loop ──────────────────────────────────────────────────────────────
+function _fdLoop(ts){
+  FD.animId=requestAnimationFrame(_fdLoop);
+  const dt=Math.min((ts-(FD.lastTs||ts))/1000,0.06);
+  FD.lastTs=ts; FD.t+=dt;
+  _fdUpdatePlayer(dt); _fdUpdateEnemies(dt);
+  _fdUpdateVisibility(); _fdCheckInteractions(); _fdUpdateHud();
+  const cv=FD.canvas;
+  const cW=cv.width=cv.offsetWidth, cH=cv.height=cv.offsetHeight;
+  FD.camX=FD.px-cW/2; FD.camY=FD.py-cH/2;
+  _fdRender(FD.ctx,cW,cH); _fdRenderMinimap();
+}
+
+// ── Render ────────────────────────────────────────────────────────────────
+function _fdRender(cx,cW,cH){
+  cx.fillStyle='#060201'; cx.fillRect(0,0,cW,cH);
+  cx.save(); cx.translate(-FD.camX,-FD.camY);
+
+  // Background debris stars
+  cx.fillStyle='#776644';
+  FD._stars.forEach(s=>{cx.globalAlpha=s.b;cx.beginPath();cx.arc(s.x,s.y,s.r,0,Math.PI*2);cx.fill();});
+  cx.globalAlpha=1;
+
+  // Revealed floors (dim history)
+  cx.fillStyle='#130d06';
+  FD.rooms.forEach(r=>{if(r.revealed&&!r.visible)cx.fillRect(r.x,r.y,r.w,r.h);});
+  FD.corridors.forEach(c=>{if(c.revealed&&!c.visible)cx.fillRect(c.x,c.y,c.w,c.h);});
+
+  // Visible floors (fully lit)
+  FD.rooms.forEach(r=>{
+    if(!r.visible) return;
+    cx.fillStyle=r.type==='guardian'?'#2a1508':r.type==='loot'?'#1e180a':'#201408';
+    cx.fillRect(r.x,r.y,r.w,r.h);
+    // Grid lines
+    cx.strokeStyle='#2a1c0a'; cx.lineWidth=1;
+    for(let lx=r.x+40;lx<r.x+r.w;lx+=40){cx.beginPath();cx.moveTo(lx,r.y);cx.lineTo(lx,r.y+r.h);cx.stroke();}
+    for(let ly=r.y+40;ly<r.y+r.h;ly+=40){cx.beginPath();cx.moveTo(r.x,ly);cx.lineTo(r.x+r.w,ly);cx.stroke();}
+    cx.strokeStyle='#443318'; cx.lineWidth=3; cx.strokeRect(r.x+1,r.y+1,r.w-2,r.h-2);
+    // Type ambiance
+    if(r.type==='guardian'){
+      const g=cx.createRadialGradient(r.x+r.w/2,r.y+r.h/2,20,r.x+r.w/2,r.y+r.h/2,r.w*0.55);
+      g.addColorStop(0,'rgba(200,40,0,0.12)');g.addColorStop(1,'transparent');
+      cx.fillStyle=g;cx.fillRect(r.x,r.y,r.w,r.h);
+    } else if(r.type==='loot'){
+      const g=cx.createRadialGradient(r.x+r.w/2,r.y+r.h/2,10,r.x+r.w/2,r.y+r.h/2,r.w*0.45);
+      g.addColorStop(0,'rgba(200,160,0,0.09)');g.addColorStop(1,'transparent');
+      cx.fillStyle=g;cx.fillRect(r.x,r.y,r.w,r.h);
+    }
+    const lbl={entry:'ENTRY',guardian:'GUARDIAN CHAMBER',loot:'CACHE',encounter:''}[r.type]||'';
+    if(lbl){cx.font='bold 9px Cinzel,serif';cx.textAlign='center';cx.fillStyle='#443318';cx.fillText(lbl,r.x+r.w/2,r.y+13);cx.textAlign='left';}
+  });
+  FD.corridors.forEach(c=>{
+    if(!c.visible)return;
+    cx.fillStyle='#1a1006';cx.fillRect(c.x,c.y,c.w,c.h);
+    cx.strokeStyle='#332211';cx.lineWidth=2;cx.strokeRect(c.x,c.y,c.w,c.h);
+  });
+
+  // POIs in visible rooms
+  FD.rooms.forEach(r=>{
+    if(!r.visible)return;
+    r.loots.forEach(loot=>{
+      if(loot.collected)return;
+      const p=0.7+0.3*Math.sin(FD.t*2.2);
+      const g=cx.createRadialGradient(loot.x,loot.y,0,loot.x,loot.y,30);
+      g.addColorStop(0,'rgba(220,180,0,0.25)');g.addColorStop(1,'transparent');
+      cx.fillStyle=g;cx.beginPath();cx.arc(loot.x,loot.y,30,0,Math.PI*2);cx.fill();
+      cx.globalAlpha=p;cx.font='20px Arial';cx.textAlign='center';cx.textBaseline='middle';
+      cx.fillText('📦',loot.x,loot.y);cx.globalAlpha=1;cx.textBaseline='alphabetic';
+      cx.font='9px sans-serif';cx.fillStyle='#ccaa44';cx.textAlign='center';
+      cx.fillText('SALVAGE',loot.x,loot.y+20);cx.textAlign='left';
+    });
+    if(r.type==='guardian'&&!r.guardianDefeated){
+      const gcx=r.x+r.w/2,gcy=r.y+r.h/2,p=0.5+0.5*Math.sin(FD.t*1.8);
+      cx.save();cx.translate(gcx,gcy);
+      cx.strokeStyle=`rgba(200,40,0,${0.4+0.35*p})`;cx.lineWidth=2+p*2;
+      cx.beginPath();cx.arc(0,0,38+p*8,0,Math.PI*2);cx.stroke();
+      const g2=cx.createRadialGradient(0,0,8,0,0,42);
+      g2.addColorStop(0,'rgba(255,60,0,0.28)');g2.addColorStop(1,'transparent');
+      cx.fillStyle=g2;cx.beginPath();cx.arc(0,0,42,0,Math.PI*2);cx.fill();
+      cx.font='22px Arial';cx.textAlign='center';cx.textBaseline='middle';cx.fillText('⚔',0,0);
+      cx.restore();
+      const gd=FRAG_GUARDIANS[FD.site?.guardianKey];
+      cx.font='bold 9px Cinzel,serif';cx.textAlign='center';cx.fillStyle='#ff6633';
+      cx.fillText(gd?.name||'GUARDIAN',gcx,gcy+54);cx.textAlign='left';
+    } else if(r.type==='guardian'&&r.guardianDefeated){
+      const gcx=r.x+r.w/2,gcy=r.y+r.h/2;
+      cx.font='22px Arial';cx.textAlign='center';cx.textBaseline='middle';
+      cx.globalAlpha=0.35;cx.fillText('✓',gcx,gcy);cx.globalAlpha=1;
+      cx.textBaseline='alphabetic';cx.textAlign='left';
+    }
+  });
+
+  // Enemies (visible rooms only)
+  FD.enemies.forEach(e=>{
+    const room=FD.rooms[e.roomId];
+    if(!room?.visible)return;
+    cx.save();cx.translate(e.x,e.y);cx.rotate(e._facingAngle||0);
+    cx.shadowColor=ENM[e.key]?.col||'#cc8833';cx.shadowBlur=8;
+    drawShipImg(e.key,cx,0,0,26,16,false,()=>{
+      cx.fillStyle=ENM[e.key]?.col||'#cc8833';
+      cx.beginPath();cx.moveTo(-11,0);cx.lineTo(4,-5);cx.lineTo(7,-8);
+      cx.lineTo(5,0);cx.lineTo(7,8);cx.lineTo(4,5);cx.closePath();cx.fill();
+    });
+    cx.shadowBlur=0;cx.restore();
+    if(e.state==='chase'){
+      const ap=0.7+0.3*Math.sin(FD.t*4);
+      cx.save();cx.globalAlpha=ap;
+      cx.fillStyle='rgba(255,50,0,0.85)';cx.strokeStyle='#ff4400';cx.lineWidth=1.2;
+      cx.beginPath();cx.arc(e.x,e.y-22,9,0,Math.PI*2);cx.fill();cx.stroke();
+      cx.font='bold 12px Arial';cx.textAlign='center';cx.textBaseline='middle';
+      cx.fillStyle='#ffdd44';cx.fillText('!',e.x,e.y-22);cx.restore();
+    }
+  });
+
+  // Player
+  cx.save();cx.translate(FD.px,FD.py);cx.rotate(FD.pAngle);
+  cx.shadowColor='#4488ff';cx.shadowBlur=14;
+  drawShipImg(G.ship?.type||'pinnace',cx,0,0,30,18,false,()=>{
+    cx.fillStyle='#4488ff';
+    cx.beginPath();cx.moveTo(-13,0);cx.lineTo(5,-6);cx.lineTo(9,-10);
+    cx.lineTo(6,0);cx.lineTo(9,10);cx.lineTo(5,6);cx.closePath();cx.fill();
+  });
+  cx.shadowBlur=0;cx.restore();
+
+  // Engine particles
+  if(Math.random()<0.4&&(Math.abs(FD.pvx)+Math.abs(FD.pvy))>5){
+    FD.particles.push({
+      x:FD.px-Math.cos(FD.pAngle)*14,y:FD.py-Math.sin(FD.pAngle)*14,
+      vx:(Math.random()-0.5)*12,vy:(Math.random()-0.5)*12,
+      life:0.4+Math.random()*0.3,maxLife:0.4,
+    });
+  }
+  FD.particles=FD.particles.filter(p=>p.life>0);
+  FD.particles.forEach(p=>{
+    p.x+=p.vx*0.016;p.y+=p.vy*0.016;p.life-=0.016;
+    cx.globalAlpha=Math.max(0,p.life/(p.maxLife||0.4))*0.55;
+    cx.fillStyle='#4488ff';cx.beginPath();cx.arc(p.x,p.y,2,0,Math.PI*2);cx.fill();
+  });
+  cx.globalAlpha=1;
+
+  cx.restore(); // end camera translate
+  _fdApplyFog(cx,cW,cH);
+}
+
+// ── Fog of war ────────────────────────────────────────────────────────────
+function _fdApplyFog(cx,cW,cH){
+  if(!FD._fogCanvas||FD._fogCanvas.width!==cW||FD._fogCanvas.height!==cH){
+    FD._fogCanvas=document.createElement('canvas');
+    FD._fogCanvas.width=cW; FD._fogCanvas.height=cH;
+  }
+  const fc=FD._fogCanvas.getContext('2d');
+  fc.fillStyle='rgba(6,2,1,1)'; fc.fillRect(0,0,cW,cH);
+
+  // Cut visibility hole — clipped to visible floor rects (wall-blocking)
+  fc.save();
+  fc.beginPath();
+  FD.rooms.forEach(r=>{ if(r.visible) fc.rect(r.x-FD.camX,r.y-FD.camY,r.w,r.h); });
+  FD.corridors.forEach(c=>{ if(c.visible) fc.rect(c.x-FD.camX,c.y-FD.camY,c.w,c.h); });
+  fc.clip();
+  fc.globalCompositeOperation='destination-out';
+  const px=FD.px-FD.camX,py=FD.py-FD.camY,R=FD_VISION_R;
+  const grd=fc.createRadialGradient(px,py,R*0.15,px,py,R);
+  grd.addColorStop(0,'rgba(0,0,0,1)');
+  grd.addColorStop(0.75,'rgba(0,0,0,0.95)');
+  grd.addColorStop(1,'rgba(0,0,0,0)');
+  fc.fillStyle=grd; fc.fillRect(0,0,cW,cH);
+  fc.restore();
+
+  // Dim overlay for revealed-but-not-currently-visible rooms
+  fc.save();
+  fc.beginPath();
+  FD.rooms.forEach(r=>{ if(r.revealed&&!r.visible) fc.rect(r.x-FD.camX,r.y-FD.camY,r.w,r.h); });
+  FD.corridors.forEach(c=>{ if(c.revealed&&!c.visible) fc.rect(c.x-FD.camX,c.y-FD.camY,c.w,c.h); });
+  fc.clip();
+  fc.globalCompositeOperation='source-over';
+  fc.fillStyle='rgba(6,2,1,0.65)'; fc.fillRect(0,0,cW,cH);
+  fc.restore();
+
+  cx.drawImage(FD._fogCanvas,0,0);
+}
+
+// ── Minimap ────────────────────────────────────────────────────────────────
+function _fdRenderMinimap(){
+  const mc=FD.mmCanvas,mx=FD.mmCtx;
+  if(!mc||!mx)return;
+  const mW=mc.width,mH=mc.height;
+  mx.clearRect(0,0,mW,mH);
+  mx.fillStyle='rgba(6,2,1,0.9)';mx.fillRect(0,0,mW,mH);
+  const scX=(mW-8)/FD.W,scY=(mH-8)/FD.H,ox=4,oy=4;
+  FD.rooms.forEach(r=>{
+    if(!r.revealed)return;
+    mx.fillStyle=r.visible?(r.type==='guardian'?'#ff5522':r.type==='loot'?'#ccaa44':'#aa7733'):'#443322';
+    mx.fillRect(ox+r.x*scX,oy+r.y*scY,r.w*scX,r.h*scY);
+  });
+  FD.corridors.forEach(c=>{
+    if(!c.revealed)return;
+    mx.fillStyle=c.visible?'#886644':'#332211';
+    mx.fillRect(ox+c.x*scX,oy+c.y*scY,c.w*scX,c.h*scY);
+  });
+  mx.fillStyle='#4488ff';
+  mx.beginPath();mx.arc(ox+FD.px*scX,oy+FD.py*scY,3,0,Math.PI*2);mx.fill();
+}
+
+// ── HUD / log ──────────────────────────────────────────────────────────────
+function _fdUpdateHud(){
+  const s=G.ship;
+  document.getElementById('fd-hud-hull').textContent=s.hull+'/'+s.maxHull;
+  document.getElementById('fd-hud-crew').textContent=s.crew+'/'+s.maxCrew;
+  document.getElementById('fd-hud-gold').textContent=s.gold;
+}
+function _fdLog(msg,cls){
+  const el=document.getElementById('fd-log-strip');
+  if(!el)return; el.textContent=msg; el.className=cls||'';
+}
+
+// ── Input ──────────────────────────────────────────────────────────────────
+function _fdHandleClick(e){
+  if(FD.interactOpen)return;
+  const rect=FD.canvas.getBoundingClientRect();
+  const scX=FD.canvas.width/rect.width,scY=FD.canvas.height/rect.height;
+  const wx=(e.clientX-rect.left)*scX+FD.camX;
+  const wy=(e.clientY-rect.top)*scY+FD.camY;
+  if(_fdIsInFloor(wx,wy)){FD.pTargetX=wx;FD.pTargetY=wy;}
+}
+function _fdKeyDown(e){FD.keys[e.key]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault();}
+function _fdKeyUp(e){FD.keys[e.key]=false;}
+
 // Kill tracking: when a combat enemy is defeated, check active local quests
 function lqTrackKill(enemyKey) {
   if(!G.localQuests) return;
@@ -18109,8 +18112,6 @@ function lqTrackKill(enemyKey) {
     { qid:'cluster_q2_kills', condition: (k) => k==='harvester' },
     { qid:'krynn_q2_kills',   condition: (k) => k==='githyanki' },
     { qid:'refuge_q1_kills', condition: (k) => k==='githyanki' },
-    { qid:'hero_q2_kills',   condition: (k) => k==='beholder' },
-    { qid:'dark_q2_kills',   condition: (k) => k==='leviathan' || k==='frStalker' },
   ];
   trackers.forEach(t => {
     const parentQid = t.qid.replace(/_kills$/, '');
