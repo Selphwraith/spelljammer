@@ -11961,6 +11961,12 @@ function endCbt(won){
   const invPanel = document.getElementById('cbt-inv-panel');
   if (invPanel) invPanel.classList.remove('on');
   setAmbient('map');
+  // Local space combat — return to LS instead of resuming travel
+  if(_lsPendingReturn) {
+    G.phase = 'map'; setTag('Navigation'); updateUI();
+    _lsCheckReturnAfterCombat();
+    return;
+  }
   if(G.tvl.toFragSite){
     G.phase='traveling';
     setTag(`Traveling → ${G.tvl.toFragSite.n}`);
