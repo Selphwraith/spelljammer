@@ -15111,6 +15111,7 @@ function openLocalSpace() {
     _lsInitPatrolBases();
     LS.lastEncounterTime = 0;
     LS._enemySpawnTimer = 0;
+    LS._pickupChecked = false;  // reset so pickup check fires on first dock
   }
 
   if(needsRespawn) {
@@ -15181,6 +15182,7 @@ function lsDockDeliverCargo() {
 }
 
 function lsDockDepart() {
+  LS._pickupChecked = false;
   closeLsDock();
   closeLsOverlay();
   // Ensure player is at realm on the map
@@ -15225,6 +15227,11 @@ function lsDockService(type) {
 
 function _lsRefreshDock() {
   const s = G.ship;
+  // Trigger cargo pickup notification once per dock session for accepted cargo quests
+  if(!LS._pickupChecked) {
+    LS._pickupChecked = true;
+    setTimeout(() => checkQuestPickup(G.ship?.loc || 'realm'), 400);
+  }
   document.getElementById('ls-dock-hull').textContent = s.hull+'/'+s.maxHull;
   document.getElementById('ls-dock-crew').textContent = s.crew+'/'+s.maxCrew;
   document.getElementById('ls-dock-air').textContent  = (s.air||0)+' days';
