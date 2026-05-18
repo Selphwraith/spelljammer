@@ -16721,6 +16721,7 @@ function _lsCheckProximity() {
   let closest = null, closestDist = Infinity;
   LS.pois.forEach(p => {
     if(!INTERACTABLE_TYPES.has(p.type)) return;
+    if(p.hidden) return;  // not revealed yet — not interactable
     const dx = LS.px-p.x, dy = LS.py-p.y;
     const d = Math.sqrt(dx*dx+dy*dy);
     if(d < p.r + 30 && d < closestDist) { closest=p; closestDist=d; }
@@ -17461,7 +17462,37 @@ document.getElementById('ls-canvas').addEventListener('click', e => {
   }
 })();
 
-// ── PATROL POI BASE POSITIONS (initialize before first loop) ──────────────
+// ── FD (Fragment Dungeon) MOBILE JOYSTICK ────────────────────────────────
+(function() {
+  const zone = document.getElementById('fd-joystick-zone');
+  if(!zone) return;
+  // The knob is the first child div inside the base div
+  const knob = zone.querySelector('div div') || zone.querySelector('div');
+  let startX=0, startY=0, _active=false;
+  const R=32;
+  zone.addEventListener('touchstart', e=>{
+    e.preventDefault(); _active=true; FD.joystickActive=true;
+    const rect=zone.getBoundingClientRect();
+    startX=rect.left+50; startY=rect.top+50;
+    _updateFdKnob(e.touches[0].clientX, e.touches[0].clientY);
+  },{passive:false});
+  zone.addEventListener('touchmove', e=>{
+    e.preventDefault(); if(!_active) return;
+    _updateFdKnob(e.touches[0].clientX, e.touches[0].clientY);
+  },{passive:false});
+  zone.addEventListener('touchend', ()=>{
+    _active=false; FD.joystickActive=false; FD.joystickX=0; FD.joystickY=0;
+    if(knob) knob.style.transform='translate(-50%,-50%)';
+  });
+  function _updateFdKnob(cx,cy){
+    let dx=cx-startX, dy=cy-startY;
+    const d=Math.sqrt(dx*dx+dy*dy);
+    if(d>R){dx*=R/d;dy*=R/d;}
+    if(knob) knob.style.transform=`translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+    FD.joystickX=dx/R; FD.joystickY=dy/R;
+    if(d>4) FD.pAngle=Math.atan2(dy,dx);
+  }
+})();
 // Must run after _lsDefinePois sets up the pois array
 function _lsInitPatrolBases() {
   LS.pois.forEach(p => {
@@ -18382,7 +18413,7 @@ function _fdUpdatePlayer(dt){
 
   const spd=Math.sqrt(FD.pvx*FD.pvx+FD.pvy*FD.pvy);
   if(spd>3){
-    const ta=Math.atan2(-FD.pvy,-FD.pvx);
+    const ta=Math.atan2(FD.pvy,FD.pvx);
     let da=ta-FD.pAngle;
     while(da>Math.PI)da-=Math.PI*2; while(da<-Math.PI)da+=Math.PI*2;
     FD.pAngle+=da*Math.min(dt*5,1);
@@ -18516,6 +18547,9 @@ function _fdLaunchGuardianFight(){
   document.removeEventListener('keydown',_fdKeyDown);
   document.removeEventListener('keyup',_fdKeyUp);
   document.getElementById('ov-fragsitee').classList.remove('on');
+  // Also hide LS overlay — ov-guardian is z-index 40, below LS's 65, so it must be clear
+  document.getElementById('ov-localspace').classList.remove('on');
+  if(LS.animId){cancelAnimationFrame(LS.animId);LS.animId=null;}
   FD._fromDungeon=true; _lsPendingReturn=true; _lsPendingFragment=FD.site;
   setTimeout(()=>{G.phase='map'; showGuardianConfirm(FD.site);},300);
 }
