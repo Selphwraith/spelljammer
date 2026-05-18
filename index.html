@@ -16086,12 +16086,34 @@ function _lsLoop(ts) {
   _lsRender(LS.ctx, cW, cH, dt);
   _lsRenderMinimap();
 
-  // Patrol POI position update
+  // NPC patrol wander update — velocity-based, waypoint-driven
   LS.pois.forEach(p => {
-    if(p.patrol) {
-      p.patrolAngle = (p.patrolAngle + p.patrolSpeed * dt) % (Math.PI*2);
-      p.x = p._baseX + Math.cos(p.patrolAngle) * p.patrolR;
-      p.y = p._baseY + Math.sin(p.patrolAngle) * p.patrolR;
+    if(!p.patrol) return;
+    // Lazy-init in case of save-load or hot-reload
+    if(p._wTargetX === undefined) _lsNpcPickTarget(p);
+    p._wTimer -= dt;
+    const tdx = (p._wTargetX||p._baseX) - p.x;
+    const tdy = (p._wTargetY||p._baseY) - p.y;
+    const tdist = Math.sqrt(tdx*tdx + tdy*tdy);
+    // Arrived or timed out — pick next waypoint
+    if(tdist < 12 || p._wTimer <= 0) _lsNpcPickTarget(p);
+    // Smoothly accelerate toward target (spring-like)
+    const spd   = p.patrolSpeed * 80;     // patrolSpeed (rad/s scale) → ~px/s
+    const tx    = (tdx / (tdist || 1)) * spd;
+    const ty    = (tdy / (tdist || 1)) * spd;
+    const accel = Math.min(dt * 2.5, 1);
+    p._wvx = (p._wvx||0) + (tx - (p._wvx||0)) * accel;
+    p._wvy = (p._wvy||0) + (ty - (p._wvy||0)) * accel;
+    p.x += p._wvx * dt;
+    p.y += p._wvy * dt;
+    // Smooth facing toward direction of travel — left side of image is nose
+    const spd2 = Math.sqrt(p._wvx*p._wvx + p._wvy*p._wvy);
+    if(spd2 > 3) {
+      const targetFacing = Math.atan2(-p._wvy, -p._wvx); // nose = -X in image space
+      let da = targetFacing - (p._facingAngle||0);
+      while(da >  Math.PI) da -= Math.PI*2;
+      while(da < -Math.PI) da += Math.PI*2;
+      p._facingAngle = (p._facingAngle||0) + da * Math.min(dt * 3, 1);
     }
   });
 }
@@ -16660,21 +16682,24 @@ function _lsRender(cx, W, H, dt) {
 
     // NPC POIs — draw as a ship using npc_ship PNG (unique per NPC via slow rotation)
     if(p.type==='npc') {
-      // Slowly drift-rotate so each NPC faces a slightly different direction
-      const npcAngle = (p.patrolAngle || 0);
+      // Rotate so the left side of the image (nose) faces the direction of travel
+      const npcAngle = (p._facingAngle || 0);
       cx.save(); cx.translate(p.x, p.y); cx.rotate(npcAngle);
       cx.shadowColor=p.col; cx.shadowBlur=10;
       drawShipImg('npc_ship', cx, 0, 0, 28, 18, false, () => {
-        // Fallback: a distinct IEF-style corvette shape
+        // Fallback: nose-left corvette shape (−X = front, +X = rear)
         cx.fillStyle=p.col;
         cx.beginPath();
-        cx.moveTo(0,-13); cx.lineTo(-5,4); cx.lineTo(-9,8);
-        cx.lineTo(0,5); cx.lineTo(9,8); cx.lineTo(5,4); cx.closePath();
+        cx.moveTo(-13, 0);  // nose
+        cx.lineTo(4, -5); cx.lineTo(8, -9); // upper wing
+        cx.lineTo(5, 0);    // tail centre
+        cx.lineTo(8, 9); cx.lineTo(4, 5);   // lower wing
+        cx.closePath();
         cx.fill();
-        // Wing struts
+        // Wing struts along tail
         cx.strokeStyle=p.col; cx.lineWidth=1;
-        cx.beginPath(); cx.moveTo(-3,0); cx.lineTo(-11,2); cx.stroke();
-        cx.beginPath(); cx.moveTo(3,0);  cx.lineTo(11,2);  cx.stroke();
+        cx.beginPath(); cx.moveTo(0,-2); cx.lineTo(1,-11); cx.stroke();
+        cx.beginPath(); cx.moveTo(0, 2); cx.lineTo(1, 11); cx.stroke();
       });
       cx.shadowBlur=0; cx.restore();
 
@@ -17053,8 +17078,28 @@ document.getElementById('ls-canvas').addEventListener('click', e => {
 // Must run after _lsDefinePois sets up the pois array
 function _lsInitPatrolBases() {
   LS.pois.forEach(p => {
-    if(p.patrol) { p._baseX = p.x; p._baseY = p.y; }
+    if(p.patrol) {
+      p._baseX = p.x;
+      p._baseY = p.y;
+      // Spread starting positions using patrolAngle so NPCs don't stack at center
+      p.x = p._baseX + Math.cos(p.patrolAngle) * p.patrolR * 0.6;
+      p.y = p._baseY + Math.sin(p.patrolAngle) * p.patrolR * 0.6;
+      p._wvx = 0;
+      p._wvy = 0;
+      p._facingAngle = p.patrolAngle + Math.PI; // start facing inward (nose toward dock)
+      p._wTimer = Math.random() * 1.5;           // stagger first target picks
+      _lsNpcPickTarget(p);
+    }
   });
+}
+
+// Pick a new random wander destination within the NPC's home area
+function _lsNpcPickTarget(p) {
+  const angle = Math.random() * Math.PI * 2;
+  const dist  = (0.3 + Math.random() * 0.7) * p.patrolR;
+  p._wTargetX = p._baseX + Math.cos(angle) * dist;
+  p._wTargetY = p._baseY + Math.sin(angle) * dist;
+  p._wTimer   = 3 + Math.random() * 4;  // 3–7 seconds per waypoint
 }
 
 // ── POST-COMBAT RETURN HOOK ───────────────────────────────────────────────
