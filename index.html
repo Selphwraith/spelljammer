@@ -1024,6 +1024,44 @@ body {
 .ls-dock-val { font-size:0.688em; color:#aabbdd; }
 .ls-dock-btn { font-size:0.688em; padding:5px 12px; }
 
+/* ── Ask Locals panel ── */
+#ls-locals-panel {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  background:rgba(4,0,16,0.98); border:1px solid #aa882244;
+  border-radius:10px; padding:18px 20px 16px;
+  display:none; flex-direction:column; gap:10px;
+  width:340px; max-height:85vh; overflow-y:auto;
+  box-shadow:0 0 50px #aa882218; z-index:21;
+}
+#ls-locals-panel.on { display:flex; }
+#ls-locals-title {
+  font-family:'Cinzel',serif; font-size:0.8em; color:#ccaa55;
+  letter-spacing:2px; text-align:center; margin-bottom:2px;
+}
+.ls-local-card {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 10px; border-radius:6px;
+  background:rgba(20,12,4,0.7); border:1px solid #55441133;
+  cursor:pointer; transition:border-color 0.15s;
+}
+.ls-local-card:hover { border-color:#aa882266; }
+.ls-local-card.used { opacity:0.45; cursor:default; pointer-events:none; }
+.ls-local-card.selected { border-color:#ccaa55; background:rgba(40,28,4,0.9); }
+.ls-local-portrait { font-size:1.5em; flex-shrink:0; width:32px; text-align:center; }
+.ls-local-info { flex:1; min-width:0; }
+.ls-local-name { font-size:0.688em; color:#ccbb88; font-weight:600; }
+.ls-local-flavor { font-size:0.563em; color:#887755; font-style:italic; margin-top:1px; }
+#ls-locals-response {
+  padding:10px 12px; border-radius:6px;
+  background:rgba(10,6,2,0.8); border:1px solid #66441122;
+  font-size:0.688em; color:#ccbb88; font-style:italic; line-height:1.5;
+  display:none;
+}
+#ls-locals-response.on { display:block; }
+#ls-locals-cost-hint {
+  font-size:0.563em; color:#886633; text-align:center; font-style:italic;
+}
+
 /* ── Virtual joystick (mobile) ── */
 #ls-joystick-zone {
   position:absolute; bottom:60px; left:20px;
@@ -2281,7 +2319,19 @@ body {
       <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap;">
         <button class="btn exit" style="font-size:0.688em;" onclick="closeLsDock()">⬅ Return to Space</button>
         <button id="ls-dock-deliver-btn" class="btn" onclick="lsDockDeliverCargo()" style="display:none;font-size:0.688em;border-color:#446600;color:#88ff44;margin-bottom:4px;">📦 Deliver Cargo Mission</button>
+        <button id="ls-dock-ask-locals-btn" class="btn" onclick="lsOpenLocalsPanel()" style="font-size:0.688em;border-color:#aa882244;color:#ccaa55;">🍺 Ask Locals</button>
         <button class="btn exit" style="font-size:0.688em;border-color:#661100;color:#ff8866;" onclick="lsDockDepart()" id="ls-dock-depart-btn">⛵ Depart System</button>
+      </div>
+    </div>
+
+    <!-- Ask Locals panel -->
+    <div id="ls-locals-panel">
+      <div id="ls-locals-title">🍺 ASK THE LOCALS</div>
+      <div id="ls-locals-cost-hint"></div>
+      <div id="ls-locals-cards" style="display:flex;flex-direction:column;gap:6px;"></div>
+      <div id="ls-locals-response"></div>
+      <div style="display:flex;justify-content:center;margin-top:6px;">
+        <button class="btn exit" style="font-size:0.688em;" onclick="lsCloseLocalsPanel()">⬅ Back to Dock</button>
       </div>
     </div>
 
@@ -14032,7 +14082,7 @@ function _applyLoad(save) {
     if(typeof _lsPendingReturn !== 'undefined') _lsPendingReturn = false;
     if(typeof _lsPendingFragment !== 'undefined') _lsPendingFragment = null;
     // Close LS sub-panels
-    ['ls-dock-panel','ls-npc-dialog','ls-interact-panel'].forEach(id=>{
+    ['ls-dock-panel','ls-npc-dialog','ls-interact-panel','ls-locals-panel'].forEach(id=>{
       const el=document.getElementById(id); if(el)el.classList.remove('on');
     });
     G = {
@@ -15109,11 +15159,323 @@ const LS = {
 
   // reveal flag
   _firstEntry: true,
+
+  // Ask Locals session state
+  _localsPool: null,
+  _localsKnowledgeIdx: -1,
 };
 
 // ── POINTS OF INTEREST ────────────────────────────────────────────────────
 // Each POI: { id, label, role, x, y, r (interaction radius), col, icon, type }
 // Types: 'dock'|'npc'|'fragment'|'hazard_zone'|'patrol'
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║  ASK LOCALS — Fragment reveal system                                     ║
+// ║  8 archetypes per sphere. 4 drawn per visit. 1 knows the truth.          ║
+// ║  tightlipped:true → asks 5 TS before giving the tip.                     ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+
+const LS_LOCALS_POOL = {
+
+  // ── Fentheris Orbital (realm) — The Flotsam Field ──────────────────────
+  realm: [
+    { portrait:'👷', name:'Station Hand Brix',       flavor:'Fentheris dock crew, third rotation.',       tightlipped:false,
+      useless:["Can't help you there, Captain. I just move crates.","My shift ends in an hour. Ask someone at the briefing desk.","Navigation's above my pay grade. Sorry."],
+      tip:"There's a debris field out in the outer arc — old wreckage from before the current age. Something in there pings the instruments in a way that doesn't read like metal. The IEF survey team marked it and kept going. I wouldn't." },
+    { portrait:'🛸', name:'Scout Pilot Vaen',         flavor:'IEF light patrol, off-rotation.',            tightlipped:false,
+      useless:["I've been running the same lane for six weeks. Nothing unusual.","The lanes have been quiet. Suspiciously quiet, actually.","Check with the briefing officer. I just fly where they point me."],
+      tip:"Ran a survey pass near the outer arc last week. My resonance instruments spiked hard over a debris cluster — the kind of spike you get near old Navigation Core activity. The coordinates are still in my log if you want a heading." },
+    { portrait:'🧑‍💼', name:'Cargo Broker Meln',      flavor:'Independent freight, Fentheris run.',        tightlipped:true,
+      useless:["I deal in cargo, not gossip.","Whatever you're looking for, I haven't seen it.","I keep my eyes on my manifest and my manifest only."],
+      tip:"You're looking for something old in this system. I know what you mean and I know roughly where it is. That kind of information has value, Captain. Five TS and I'll point you at the right part of the sky." },
+    { portrait:'⚒️', name:'Salvager Doss',            flavor:'Deep-void recovery, freelance.',             tightlipped:true,
+      useless:["I work the outer lanes. Interesting stuff out there if you know where to look.","Half the wrecks in this system have already been picked clean. Half.","I don't give away coordinates. That's how you go broke."],
+      tip:"I've worked every wreck field in this system. There's one cluster I've never touched — instruments go strange near it. Not dangerous strange. Old strange. Five TS covers my lost claim on it." },
+    { portrait:'🧑‍🔬', name:'IEF Analyst Thren',      flavor:'Station intelligence, Fentheris post.',      tightlipped:false,
+      useless:["Our sensor logs are classified, I'm afraid.","I can confirm the lanes are active, but nothing beyond that.","You'd need to file a formal data request. Takes about three weeks."],
+      tip:"Off the record — our passive sensors have been picking up a crystalline resonance from the outer arc debris field for months. We've been told to log it and move on. I don't know why. I think you should look into it." },
+    { portrait:'🍺', name:'Off-Duty Crewman Kett',    flavor:'IEF corvette crew, shore leave.',            tightlipped:false,
+      useless:["Honestly I'm just here to drink. No offense.","Third tour out of Fentheris. It all looks the same after a while.","Ask one of the pilots. They actually pay attention to the lanes."],
+      tip:"My ship passed through the outer debris arc last patrol. My bunkmate said there was something in the wreckage that wasn't wreckage. Looked like a structure — or what was left of one. Gave her a bad feeling. I think that's where you want to look." },
+    { portrait:'📡', name:'Comms Tech Sirrel',        flavor:'Station communications, night watch.',       tightlipped:true,
+      useless:["I monitor frequencies, not navigation lanes.","Everything on the comms bands is routine. Nothing unusual.","I'm not supposed to discuss active monitoring data."],
+      tip:"We've been picking up a faint coherent signal from a debris field in the outer arc. Not communication — more like a beacon. Old encoding. IEF command knows about it and hasn't done anything. Five TS for the coordinates." },
+    { portrait:'🔧', name:'Engine Tech Parva',        flavor:'Station maintenance, hull division.',        tightlipped:false,
+      useless:["My world is engines and hull plating. I don't get out much.","The pilots know where things are. I just keep the ships running.","Whatever you're looking for, a pilot would know better than me."],
+      tip:"A pilot came in last month with her instruments scrambled. Said she'd flown too close to something in the outer debris arc — a massive crystalline structure half-buried in the wreckage. Her nav crystal was singing for a week after. That's probably what you're looking for." },
+  ],
+
+  // ── Korreth / Ironhaven (grey) — The Dwarven Vault ─────────────────────
+  grey: [
+    { portrait:'⚒️', name:'Forgehand Grunn',          flavor:'Ironhaven hull works, day shift.',           tightlipped:false,
+      useless:["I forge hull plates. I don't track what's drifting in the void.","Talk to the prospectors. They know the outer lanes better than anyone.","Long as it's not my forge, I don't care where it is."],
+      tip:"The deep-road miners have been talking about a vault spotted drifting between Korreth and Vael. Ancient dwarven construction — pre-Collapse seals still on it. The elders say it's cursed. The elders say everything's cursed. I'd go look." },
+    { portrait:'⛏️', name:'Prospector Veld',           flavor:'Outer lane surveyor, independent.',          tightlipped:true,
+      useless:["I survey claim sites. I don't share findings for free.","The outer lanes have plenty of interesting things. None of them yours.","Surveys cost. That's the rule."],
+      tip:"There's a vault drifting in the Korreth-Vael lane. Flagged it two years ago. Pre-Collapse construction, dwarven, sealed tight. Something's still active inside — the instruments don't lie. Five TS for the heading." },
+    { portrait:'🔮', name:'Runesmith Dalla',           flavor:'Ironhaven Rune Guild, itinerant.',           tightlipped:false,
+      useless:["My expertise is active rune-work. Ancient history is someone else's department.","The vault records here go back eight hundred years. Not far enough.","Whatever you're looking for is older than our records. That much I know."],
+      tip:"The old rune-readers have a term for what you're sensing — a dead resonance. Something that was alive once and isn't quite done. There's a vault drifting in the Korreth-Vael lane. Pre-Sundering dwarven work. Something inside is still responsive." },
+    { portrait:'🧱', name:'Quarry Boss Torec',         flavor:'Korreth deep extraction, contract.',         tightlipped:true,
+      useless:["I pull ore from the deep lanes. Anything not ore is someone else's problem.","If it doesn't have a mineral assay I can't help you.","Ask the void pilots. They see things I don't."],
+      tip:"We nearly hit a vault on a survey run last season. Drifting in the outer lane, Korreth side, pre-Sundering construction. Something inside still had power — our instruments started behaving strangely. Five TS and I'll pull up the coordinates." },
+    { portrait:'🛡️', name:'Vault Guard Osse',          flavor:'Ironhaven Station security, third post.',    tightlipped:false,
+      useless:["My job is the station perimeter. I don't track what's in the lanes.","If it's a security matter I can help. If it's history, talk to the guild.","The record-keepers might know. I definitely don't."],
+      tip:"I used to run the outer patrol circuit. There's a drifting object in the lane between here and Vael that doesn't appear on any IEF chart — pre-Collapse dwarven construction, old seals intact. The patrol pilots steer around it. I always wondered what was inside." },
+    { portrait:'🧑‍💼', name:'IEF Liaison Prenn',       flavor:'IEF-Ironhaven coordination office.',         tightlipped:false,
+      useless:["My remit is trade coordination, not exploration.","I file reports. I don't generate field intelligence.","The scouts would know better than me."],
+      tip:"There's a matter in the field logs I'm not supposed to discuss. A drifting dwarven vault in the Korreth-Vael transit lane — flagged as a navigational hazard, officially ignored. The power readings are consistent with active pre-Sundering construction." },
+    { portrait:'🍺', name:'Miner Off-Shift Brelk',     flavor:'Deep rock extraction, waiting on transport.',tightlipped:true,
+      useless:["Just waiting for my transport. Not my business what's in the void.","I work underground. Everything up here looks the same to me.","Ask the lane pilots. They're the ones who actually look around."],
+      tip:"One of my crew spotted something drifting in the outer lane last rotation. Old dwarven vault — they recognized the construction. Something inside still had a light on. Five TS and I'll give you the bearing." },
+    { portrait:'📚', name:'Archive Keeper Sund',       flavor:'Ironhaven historical records.',              tightlipped:false,
+      useless:["Our records go back eight centuries. Not far enough.","The pre-Collapse archives were lost in the Sundering. We have fragments.","I can look for records but it may take time you don't have."],
+      tip:"I've been cross-referencing pre-Collapse construction logs. There's a vault listed in the outer transit lane — marked as a sealed treasury, purpose redacted. It was supposed to be recovered after the Collapse. No record it ever was. It should still be there." },
+  ],
+
+  // ── Vael / Palanthas Spindle (krynn) — The Star Nest ───────────────────
+  krynn: [
+    { portrait:'🐉', name:'Dragon Pact Veteran Ser',  flavor:'Steel Dragon Pact, retired field corps.',    tightlipped:false,
+      useless:["The Pact records everything in this sphere. Most of it is classified.","I've flown every lane around Vael. Ask me a specific question.","What are you looking for? Maybe I've heard of it."],
+      tip:"There's a stellar formation in the outer arc that the Corsairs have fortified — they call it the Star Nest. Hollow inside. Old pre-Sundering construction at its core that the Corsairs don't understand. They're guarding something they didn't put there. That's where you want to go." },
+    { portrait:'🗡️', name:'Former Corsair Yeth',      flavor:'Independent, Vael dock work.',               tightlipped:true,
+      useless:["I flew with the Corsairs for six years. I don't miss it.","There's a lot of things in the outer lanes that aren't on the charts.","I keep what I know to myself. Old habit."],
+      tip:"I know what's in the Star Nest. I helped guard it once, before I knew what it was. The Corsairs found something old and powerful drifting there and built their camp around it. They don't understand what they have. Five TS and I'll give you the coordinates." },
+    { portrait:'📡', name:'Academy Scout Tyve',        flavor:'Vael Academy, field survey rotation.',       tightlipped:false,
+      useless:["My last survey run flagged seventeen anomalies. Hard to narrow it down.","The outer arc is lousy with Corsair activity. Getting close to anything takes patience.","The Academy has been tracking something in this system for years. I can't officially share it."],
+      tip:"The Academy has been monitoring a stellar formation in the outer arc — the Star Nest. The resonance readings from the core are consistent with a Navigation Core. The Corsairs are sitting on top of it without knowing what they have." },
+    { portrait:'⚔️', name:'Steel Dragon Pact Soldier',flavor:'Active patrol assignment, Vael defense.',    tightlipped:false,
+      useless:["My patrol zone doesn't extend that far out.","We've been having trouble with Corsair activity in the outer lanes lately.","Ask a scout. They know the outer arc better than the defense fleet."],
+      tip:"The Corsairs have fortified a stellar formation they call the Star Nest. We've had eyes on it for months — they're definitely guarding something at the core that was there before they arrived. Our instruments read it as a strong crystalline resonance signature." },
+    { portrait:'🔭', name:'Navigator Elisse',          flavor:'Free trader, Vael regular.',                 tightlipped:true,
+      useless:["I navigate by charts and I keep my charts to myself.","The outer arc has some interesting geometry. That's all I'll say.","Information costs in the void. You know that."],
+      tip:"I've been skirting the edge of the Corsair formation for months on my trade runs. Something at the core puts out a resonance that interferes with my instruments in a very specific way — the same way an active Navigation Core does. Five TS says I give you the approach vector." },
+    { portrait:'🧑‍🔬', name:'Void Researcher Kael',  flavor:'Vael Academy, independent study.',           tightlipped:false,
+      useless:["My research is theoretical, not field-based.","I study resonance patterns. Not everything has a physical location.","The outer arc has a lot of interesting activity. Most of it is Corsair-related."],
+      tip:"The stellar formation the Corsairs have occupied has a core resonance signature I've been analyzing for two years. Pre-Sundering in origin, matches the theoretical profile of a Navigation Core almost exactly. Whatever the Corsairs think they're guarding, what they actually have is much older and much more important." },
+    { portrait:'🍺', name:'Off-Duty Pact Crew Ren',   flavor:'Steel Dragon Pact, shore rotation.',         tightlipped:false,
+      useless:["I've been on shore leave for two weeks. Not current on lane activity.","Ask the active patrols. I'm trying not to think about work.","Whatever's in the outer arc, I'm sure someone knows. Just not me."],
+      tip:"My ship ran a close pass on the Corsair formation last patrol — the Star Nest. The resonance from the core set off every crystal instrument on our ship simultaneously. The commander filed it as equipment malfunction. It wasn't. You should go look at what's in there." },
+    { portrait:'🛸', name:'Void Ranger Syla',          flavor:'Independent patrol, outer lane specialist.',  tightlipped:true,
+      useless:["I patrol where I want and I report to no one.","The outer arc has plenty of things that don't need finding.","Information is currency and I don't give it away."],
+      tip:"The Star Nest — I've scouted it three times. Something at the core doesn't belong to the Corsairs. Old construction, pre-Sundering. The resonance from it is significant. Five TS and I give you the heading plus the approach that avoids their outer sentries." },
+  ],
+
+  // ── Varuun / Thousand Sails (cluster) — The Broker's Cache ─────────────
+  cluster: [
+    { portrait:'🏴‍☠️', name:'Freeport Regular Skan',  flavor:'Thousand Sails, permanent fixture.',         tightlipped:false,
+      useless:["I know everything about Varuun and most of it I'll never tell you.","The void around here is lousy with interesting things. Most of them dangerous.","What are you looking for? I might've heard something."],
+      tip:"There's a broker's cache in the central void — harvester territory. Rumor is it's been there since before the current harvester clans. Something in it that isn't cargo. Something that predates the whole arrangement. Start in the central lanes, past the harvester line." },
+    { portrait:'⚙️', name:'Salvager Crix',             flavor:'Independent, Varuun-based operations.',      tightlipped:true,
+      useless:["I salvage what's already lost. Whatever you're after isn't lost yet.","The central void has plenty of hiding spots. None of them marked on charts.","Coordinates cost. Everything costs in Varuun."],
+      tip:"I found the edge of the cache field twice without meaning to. Central void sector, harvester lanes. There's a resonance out there that doesn't match harvester tech — older, cleaner. The harvesters are circling it without knowing what they're orbiting. Five TS for the sector heading." },
+    { portrait:'💰', name:'Black Market Broker Lyss',  flavor:'Thousand Sails Exchange, informal.',         tightlipped:true,
+      useless:["I deal in goods, not navigation data.","Everything in the void has a buyer. I just facilitate.","Whatever you're after, it's going to cost more than you think."],
+      tip:"The broker's cache is real. Three years I've been trying to find it. Central void, past the harvester line. Something in it reads as a Navigation Core on the right instruments. The harvesters are guarding the approaches without knowing why. Five TS and I share what I have." },
+    { portrait:'🔭', name:'Relic Hunter Vass',         flavor:'Varuun salvage circuit, specialist.',        tightlipped:false,
+      useless:["I track relics across six spheres. Most leads go nowhere.","The central void around Varuun is rich in pre-Collapse material. Not all of it interesting.","Whatever you're after, someone probably tried to find it before you."],
+      tip:"The broker's cache is a real location. A harvester information broker hid something there before the clan consolidation — something that wasn't supposed to exist in harvester possession. Central void, harvester patrol perimeter. I've gotten close enough to read the resonance signature." },
+    { portrait:'🗡️', name:'Corsair Deserter Mael',    flavor:'Former Black Fleet, independent now.',        tightlipped:false,
+      useless:["I left the Black Fleet because I got tired of taking orders.","The central void is harvester territory. I avoid it when I can.","I know the outer lanes but not the core sectors."],
+      tip:"The Black Fleet used to run the harvester boundary before the clans pushed us out. There's a pocket in the central void that the harvesters orbit around but never enter — like there's something in there they don't want to disturb. Whatever it is, it's been there a long time. That's your target." },
+    { portrait:'🧑‍💼', name:'Freeport Quartermaster', flavor:'Thousand Sails supply logistics.',            tightlipped:false,
+      useless:["I manage inventory. Not navigation.","The central void sectors aren't my operational area.","Ask someone who flies the core lanes. I stay near the dock."],
+      tip:"A cargo runner came in last month who'd strayed into the central void sectors. Said she'd seen a cache site — something old, built into a hollow asteroid, harvesters all around it. She described a resonance field that scrambled her instruments. I wrote down her bearing. You want it?" },
+    { portrait:'🍺', name:'Drifter Pol',              flavor:'No fixed port, just passing through.',       tightlipped:true,
+      useless:["I drift. I don't navigate. There's a difference.","The void is big. I've seen a lot of it and remember very little.","Ask someone with a fixed address."],
+      tip:"I camped near the broker's cache site for three days last year without knowing what it was. Central void, past the harvester line. Something there that hums — not engines, more like a crystal under pressure. The harvesters were giving it a wide berth. Five TS for the general heading." },
+    { portrait:'⚒️', name:'Scrap Dealer Fenn',        flavor:'Varuun salvage exchange, day trader.',       tightlipped:false,
+      useless:["I deal in scrap metal, not coordinates.","The central void sectors have been locked down by harvesters for years.","I don't go out that far. The rates aren't good enough."],
+      tip:"The harvester broker who ran this sector before the clan consolidation had a private cache in the central void. When she disappeared, nobody could find it. The rumor is it's still active — the resonance readings match something very old and very significant." },
+  ],
+
+  // ── Thyss / Citadel Exalted (hero) — Pre-Sundering Vault ───────────────
+  hero: [
+    { portrait:'📜', name:'Citadel Librarian Orne',   flavor:'Citadel Exalted archive division.',          tightlipped:false,
+      useless:["The Citadel's records are extensive but not everything is indexed.","Pre-Sundering history is a specialty study. Not every archivist covers it.","I can point you at relevant records if you have a specific query."],
+      tip:"The old records describe a sealed vault in the outer arc — pre-Sundering construction, locked since before the current age. The guardian assigned to it was never recalled. Whatever is inside was meant to be found eventually, by the right hands." },
+    { portrait:'🧙', name:'Pilgrim Scholar Aeve',      flavor:'Thyss historical circuit, wandering.',      tightlipped:false,
+      useless:["I study the old sites. Most of them are empty now.","The pre-Sundering era left a great deal behind. Not all of it has been found.","Thyss has more history per league than any sphere I've visited."],
+      tip:"There is a vault in the outer arc — pre-Sundering, sealed. The pilgrimage records call it a Repository of Continuing Purpose. That means it was meant to be opened, just not by anyone. There is a guardian. There has always been a guardian. Approach with respect and your weapons ready." },
+    { portrait:'⚔️', name:'Citadel Honor Guard Vel',  flavor:'Citadel Exalted ceremonial division.',       tightlipped:true,
+      useless:["The Citadel's outer approaches are my responsibility.","Security matters are classified beyond my authority to share.","I notice things in the outer arc that I'm not authorized to discuss."],
+      tip:"There's a pre-Sundering site in the outer arc I've been briefed on but not authorized to direct people toward. I know what it contains. What I can tell you is that it matters, and someone with your mission profile should probably already know about it. Five TS for the heading, and I never said anything." },
+    { portrait:'🔭', name:'Relic Mapper Seln',         flavor:'Thyss artifact survey, contract work.',     tightlipped:false,
+      useless:["I've mapped thirty-seven pre-Sundering sites across four spheres.","Most of what I find is empty. They were very good at clearing out before they left.","Thyss has several active sites. Active meaning not empty."],
+      tip:"I mapped a vault in the outer arc two seasons ago. Pre-Sundering, sealed, but the power readings inside were live. Something in there is still operating. I filed my survey and the Citadel immediately classified it. That's the one you want." },
+    { portrait:'🧑‍🔬', name:'Void Historian Nyre',    flavor:'Academy circuit, Thyss posting.',            tightlipped:false,
+      useless:["Pre-Sundering history is complicated by the fact that very little survived.","The Citadel has records that predate our current calendar. Most in languages we're still translating.","Whatever you're looking for, the answer may be in the archive rather than the void."],
+      tip:"The archive contains a reference to a sealed Repository in Thyss outer space — pre-Sundering term for a vault designed to survive the anticipated Collapse. The coordinates are oblique but I've triangulated them. Something out there was designed to be found. By someone ready for it." },
+    { portrait:'🍺', name:'Citadel Worker Bram',      flavor:'Citadel maintenance, general staff.',        tightlipped:true,
+      useless:["I fix things. I don't study things.","The outer arc is someone else's job.","Security staff would know more than I do."],
+      tip:"I've done maintenance runs on the outer sensor array and always get a reading off something in the arc that the instruments can't classify. The supervisors told me to ignore it. The supervisors have told me to ignore a lot of things. Five TS and I give you what I've recorded." },
+    { portrait:'🛸', name:'Survey Pilot Crae',         flavor:'Citadel outer survey, contracted.',          tightlipped:false,
+      useless:["I fly the outer survey routes. Mostly quiet.","Pre-Sundering sites show up on certain instrument configurations. Rare, but it happens.","The outer arc has some interesting geometry on the right heading."],
+      tip:"My last outer survey pass picked up a hard resonance from a sealed vault structure north of Thyss. Pre-Sundering construction — you can tell by the field harmonics. Something inside is still active. Whatever it is, it has been waiting a very long time." },
+    { portrait:'📚', name:'Archive Novice Tal',        flavor:'Citadel Exalted junior staff.',              tightlipped:false,
+      useless:["I'm still learning the filing system. The archive is extensive.","Keeper Vorn would know more than I do.","The older records are in the deep archive. I'm not cleared for those yet."],
+      tip:"I found a record last week I wasn't supposed to be reading — pre-Sundering survey coordinates pointing to a vault in the outer arc. Marked Returning Purpose, which the glossary defines as 'a site intended to be found when the need arises.' I think the need is now. I can give you the heading." },
+  ],
+
+  // ── Serath / Voidhaven (dark) — The Dark Mote ──────────────────────────
+  dark: [
+    { portrait:'🌑', name:'Void Merchant Sythen',     flavor:'Voidhaven Exchange, independent.',           tightlipped:true,
+      useless:["I deal in void goods. Not information.","Serath keeps its secrets and so do I.","Whatever you're looking for, it probably has a price you haven't accounted for."],
+      tip:"The Dark Mote. That's what the locals call it. A void pocket south of Serath where the Drift thins and reality gets approximate. Something old is in there — the void has been feeding it for a long time. Five TS and I'll tell you how to find it without getting lost on the way in." },
+    { portrait:'🧑‍🦯', name:'Serath Elder Nish',      flavor:'Native guide, Voidhaven district.',          tightlipped:false,
+      useless:["Serath has its own rhythms. Outsiders rarely understand them.","The void around this sphere is not like other voids.","What you are looking for may already be looking for you."],
+      tip:"The Dark Mote. We have known of it since before our records began. A place where the Drift comes thin and something old waits inside. The void feeds it. It has been patient. The Navigation Core inside it is real — our seers have confirmed it. Go there with your ship in good order." },
+    { portrait:'💜', name:'Voidhaven Dock Hand Kre',  flavor:'Serath port maintenance, Voidhaven.',        tightlipped:false,
+      useless:["I work the docks. The void beyond the station is someone else's concern.","Serath is not a friendly sphere to navigators who don't know what they're doing.","Ask someone who flies the outer lanes. I stay close to the station."],
+      tip:"The pilots who run the outer lanes talk about a void pocket south of Serath — the Dark Mote. The instruments go soft near it, like the Drift is thinner there. Something inside has been reading as active on the resonance charts for as long as anyone can remember." },
+    { portrait:'⚔️', name:'Trull Defector Cren',      flavor:'Former Trull Advance, Serath exile.',         tightlipped:false,
+      useless:["The Trull Advance knows about Serath. They've known for a long time.","The Overmind wanted this sphere for a reason. I only understood that reason after I left.","Whatever the Void Rift is reaching for in this system, it's focused on a specific point."],
+      tip:"The Overmind's target in this sphere has always been the Dark Mote — a void pocket south of Serath where a Navigation Core has been drifting since before the current age. The Overmind wants it. That means you need it first. Your instruments will go strange as you approach. That's how you'll know you're close." },
+    { portrait:'🌌', name:'Far Dark Scout Vel',        flavor:'Beyond-gate survivor, freelance.',           tightlipped:true,
+      useless:["I've been beyond the gate and back. Nothing out here seems particularly dangerous anymore.","The void around Serath is thin in places. If you know what that means, you know what to avoid.","I keep what I learned beyond the gate close. It's the only leverage I have left."],
+      tip:"The Dark Mote. I went in before I went through the gate. Something is in there that has been waiting — old, patient, not friendly but not hostile. The Navigation Core inside it is real. Five TS for the approach bearing that doesn't get you turned around in the thinspace." },
+    { portrait:'🌑', name:'Serath Void Pilot Nara',   flavor:'Outer lane transit, Serath regular.',        tightlipped:false,
+      useless:["The outer lanes around Serath are some of the strangest I've flown.","There are void pockets in this sphere that don't behave like normal space.","I've been flying Serath approaches for four years. Ask me something specific."],
+      tip:"South of the sphere there's a void pocket the locals call the Dark Mote. The Drift thins to almost nothing near it. My instruments lose calibration within a certain range of it — a specific kind of loss I've learned to recognize as Navigation Core activity. Old, and awake." },
+    { portrait:'💀', name:'Black Market Broker Sile', flavor:'Voidhaven Exchange, gray market.',            tightlipped:true,
+      useless:["I deal in things that aren't supposed to exist. Information isn't one of them.","Serath has a long memory and I'm part of that memory.","Coordinates aren't something I give away."],
+      tip:"The Dark Mote. South of Serath, where the void gets thin. Something in there predates the current arrangement of spheres. The locals have always known. The Overmind knows. Now you do too. Five TS says I give you the heading before someone else gets there first." },
+    { portrait:'🧑‍🔬', name:'Void Researcher Eld',   flavor:'Serath Institute, field posting.',           tightlipped:false,
+      useless:["The void around Serath behaves differently than standard drift-space.","Our instruments require recalibration every time we enter the outer lanes here.","Pre-existing void anomalies in this sphere predate our research capacity to explain them."],
+      tip:"The Dark Mote is a documented phenomenon — a void pocket south of the sphere where the Drift structure becomes irregular. We've been recording its resonance output for three years. The signature is consistent with an active Navigation Core in a semi-stable phase state. It has occupied that void pocket for a very long time." },
+  ],
+};
+
+// ── ASK LOCALS FUNCTIONS ──────────────────────────────────────────────────
+
+function lsOpenLocalsPanel() {
+  const sphereId = G.ship?.loc || 'realm';
+  const pool = LS_LOCALS_POOL[sphereId];
+  if(!pool) { _lsLog('No locals available to question here.'); return; }
+
+  // Pick 4 random locals from pool
+  const shuffled = pool.slice().sort(() => Math.random() - 0.5).slice(0, 4);
+  // Assign one as the knowledgeable informant
+  const knowledgeIdx = Math.floor(Math.random() * shuffled.length);
+  LS._localsPool = shuffled;
+  LS._localsKnowledgeIdx = knowledgeIdx;
+
+  // Hide dock, show locals panel
+  document.getElementById('ls-dock-panel').classList.remove('on');
+  const panel = document.getElementById('ls-locals-panel');
+  panel.classList.add('on');
+  document.getElementById('ls-locals-response').classList.remove('on');
+  document.getElementById('ls-locals-response').innerHTML = '';
+
+  // Cost hint — only show if any of the 4 are tight-lipped
+  const anyTightlipped = shuffled.some(l => l.tightlipped);
+  const hint = document.getElementById('ls-locals-cost-hint');
+  hint.textContent = anyTightlipped
+    ? 'Some locals may want a little something for their trouble. 🔷 5 TS'
+    : 'The locals seem willing to talk tonight.';
+
+  // Build cards
+  const cardsEl = document.getElementById('ls-locals-cards');
+  cardsEl.innerHTML = '';
+  shuffled.forEach((local, i) => {
+    const card = document.createElement('div');
+    card.className = 'ls-local-card';
+    card.dataset.idx = i;
+    card.innerHTML = `
+      <div class="ls-local-portrait">${local.portrait}</div>
+      <div class="ls-local-info">
+        <div class="ls-local-name">${local.name}</div>
+        <div class="ls-local-flavor">${local.flavor}</div>
+      </div>`;
+    card.addEventListener('click', () => _lsLocalsClickCard(i));
+    cardsEl.appendChild(card);
+  });
+}
+
+function _lsLocalsClickCard(idx) {
+  const local = LS._localsPool?.[idx];
+  if(!local) return;
+
+  // Don't re-trigger used cards
+  const card = document.querySelector(`.ls-local-card[data-idx="${idx}"]`);
+  if(card?.classList.contains('used')) return;
+
+  // Highlight selected card
+  document.querySelectorAll('.ls-local-card').forEach(c => c.classList.remove('selected'));
+  if(card) card.classList.add('selected');
+
+  const isKnowledgeable = (idx === LS._localsKnowledgeIdx);
+  const respEl = document.getElementById('ls-locals-response');
+  respEl.classList.add('on');
+
+  if(isKnowledgeable && local.tightlipped) {
+    // Tight-lipped informant — ask for payment first
+    const canAfford = G.ship.gold >= 5;
+    respEl.innerHTML = `
+      <div style="font-size:0.625em;color:#887755;margin-bottom:6px;">${local.portrait} ${local.name}</div>
+      <div style="margin-bottom:10px;">"${local.name.split(' ').pop()} sizes you up slowly. There might be something worth your time — but information like that doesn't come free. Five TS for my trouble."</div>
+      <button class="btn" id="ls-locals-pay-btn" style="font-size:0.625em;padding:4px 14px;border-color:#aa882255;color:#ccaa55;" onclick="_lsLocalsPay(${idx})" ${canAfford?'':'disabled'}>🔷 Pay 5 TS</button>
+      ${!canAfford ? '<div style="color:#884444;font-size:0.563em;margin-top:6px;">Not enough TS.</div>' : ''}`;
+  } else if(isKnowledgeable) {
+    // Free informant — reveal tip directly
+    _lsLocalsRevealTip(idx, local);
+  } else {
+    // Useless chatter
+    const line = local.useless[Math.floor(Math.random() * local.useless.length)];
+    respEl.innerHTML = `<div style="font-size:0.625em;color:#887755;margin-bottom:6px;">${local.portrait} ${local.name}</div>"${line}"`;
+    if(card) { card.classList.add('used'); card.classList.remove('selected'); }
+  }
+}
+
+function _lsLocalsPay(idx) {
+  if(G.ship.gold < 5) return;
+  G.ship.gold -= 5;
+  updateUI();
+  const local = LS._localsPool?.[idx];
+  if(local) _lsLocalsRevealTip(idx, local);
+}
+
+function _lsLocalsRevealTip(idx, local) {
+  // Dim all cards — conversation is over
+  document.querySelectorAll('.ls-local-card').forEach(c => { c.classList.add('used'); c.classList.remove('selected'); });
+
+  const respEl = document.getElementById('ls-locals-response');
+  respEl.innerHTML = `
+    <div style="font-size:0.625em;color:#ccaa55;margin-bottom:6px;">${local.portrait} ${local.name}</div>
+    <div style="line-height:1.55;">"${local.tip}"</div>
+    <div style="color:#44cc88;font-size:0.563em;margin-top:10px;letter-spacing:1px;">📍 LOCATION MARKED ON YOUR LOCAL CHART</div>`;
+
+  _lsLocalsRevealFragment();
+}
+
+function _lsLocalsRevealFragment() {
+  const sphereId = G.ship?.loc || 'realm';
+  ensureLqState();
+  G.localQuests[sphereId + '_frag_revealed'] = true;
+
+  // Unhide the fragment POI and fire ping
+  const fragPoi = LS.pois?.find(p => p.type === 'fragment');
+  if(fragPoi) {
+    fragPoi.hidden = false;
+    fragPoi._pingT = 8.0;
+  }
+
+  // Log entry
+  const fs = FRAGMENT_SITES.find(f => f.sphere === sphereId);
+  const siteName = fs ? fs.n : 'a site of interest';
+  addLog(`📍 ${siteName} marked on your local chart. Investigate the fragment signal.`, 'gd');
+  snd('sphere_arrive', 0.5);
+
+  // Refresh dock button state when player eventually returns
+  // (panel stays open — player closes manually)
+}
+
+function lsCloseLocalsPanel() {
+  document.getElementById('ls-locals-panel').classList.remove('on');
+  document.getElementById('ls-locals-response').classList.remove('on');
+  document.getElementById('ls-dock-panel').classList.add('on');
+  _lsRefreshDock();
+}
+
 function _lsDefinePois() {
   const W = LS.W, H = LS.H;
   const sphereId = G.ship?.loc || 'realm';
@@ -15178,7 +15540,7 @@ function _lsDefinePois() {
         patrol: true, patrolR: 100, patrolSpeed: 0.20, patrolAngle: 3.5,
       },
       {
-        id:'fragment', label:"Fragment Orbit — The Star Nest", role:'Navigation Core Site',
+        id:'fragment', label:"Fragment Orbit — The Star Nest", role:'Navigation Core Site', hidden:true,
         x: W*0.20, y: H*0.20, r: 55, col:'#ffdd44', icon:'🔮', type:'fragment',
       },
       {
@@ -15225,7 +15587,7 @@ function _lsDefinePois() {
       },
       // Fragment Site — The Broker's Cache
       {
-        id:'fragment', label:"Fragment Orbit — The Broker's Cache", role:'Navigation Core Site',
+        id:'fragment', label:"Fragment Orbit — The Broker's Cache", role:'Navigation Core Site', hidden:true,
         x: W*0.20, y: H*0.22, r: 55, col:'#ffdd44', icon:'🔮', type:'fragment',
       },
       // Harvester salvage zone — outer ring
@@ -15281,7 +15643,7 @@ function _lsDefinePois() {
       },
       // Fragment Site — The Dwarven Vault, outer edge
       {
-        id:'fragment', label:'Fragment Orbit — The Dwarven Vault', role:'Navigation Core Site',
+        id:'fragment', label:'Fragment Orbit — The Dwarven Vault', role:'Navigation Core Site', hidden:true,
         x: W*0.20, y: H*0.20, r: 55, col:'#ffdd44', icon:'🔮', type:'fragment',
       },
       // Harvester Disruption Zone — outer ring
@@ -15326,7 +15688,7 @@ function _lsDefinePois() {
         patrol: true, patrolR: 100, patrolSpeed: 0.14, patrolAngle: 3.5,
       },
       {
-        id:'fragment', label:'Fragment Orbit — Pre-Sundering Vault', role:'Navigation Core Site',
+        id:'fragment', label:'Fragment Orbit — Pre-Sundering Vault', role:'Navigation Core Site', hidden:true,
         x: W*0.18, y: H*0.20, r: 55, col:'#ffdd44', icon:'🔮', type:'fragment',
       },
       {
@@ -15369,7 +15731,7 @@ function _lsDefinePois() {
         patrol: true, patrolR: 95, patrolSpeed: 0.16, patrolAngle: 4.0,
       },
       {
-        id:'fragment', label:'Fragment Orbit — The Dark Mote', role:'Navigation Core Site',
+        id:'fragment', label:'Fragment Orbit — The Dark Mote', role:'Navigation Core Site', hidden:true,
         x: W*0.20, y: H*0.22, r: 55, col:'#ffdd44', icon:'🔮', type:'fragment',
       },
       {
@@ -15423,7 +15785,7 @@ function _lsDefinePois() {
     },
     // Fragment Orbit Site — outer edge, guarded
     {
-      id:'fragment', label:'Fragment Orbit — The Flotsam Field', role:'Navigation Core Site',
+      id:'fragment', label:'Fragment Orbit — The Flotsam Field', role:'Navigation Core Site', hidden:true,
       x: W*0.18, y: H*0.22, r: 55, col:'#ffdd44', icon:'🔮', type:'fragment',
     },
     // Harvester Disruption Zone — outer ring, high danger
@@ -15632,6 +15994,19 @@ function openLocalSpace() {
     LS._enemySpawnTimer = 0;
     LS._pickupChecked = false;  // reset so pickup check fires on first dock
   }
+  // Reveal fragment POI if locals have already been asked this sphere
+  const _fragPoi = LS.pois.find(p=>p.type==='fragment');
+  if(_fragPoi) {
+    const _fragKey = (G.ship?.loc||'realm') + '_frag_revealed';
+    if(G.localQuests && G.localQuests[_fragKey]) {
+      _fragPoi.hidden = false;
+      // If core already collected mark it visually cleared (no fight prompt)
+      const _fs = FRAGMENT_SITES.find(f=>f.sphere===(G.ship?.loc||'realm'));
+      if(_fs && G.fragsCollected && G.fragsCollected.has(_fs.id)) {
+        _fragPoi._cleared = true;
+      }
+    }
+  }
 
   if(needsRespawn) {
     LS.enemies = [];
@@ -15780,6 +16155,14 @@ function _lsRefreshDock() {
   if(hBtn){ hBtn.textContent = `🔷 ${hullCost} TS`; hBtn.disabled = s.hull >= s.maxHull || s.gold < hullCost; }
   if(aBtn){ aBtn.textContent = `🔷 ${airCost} TS`;  aBtn.disabled = s.air  >= (s.maxAir||12) || s.gold < airCost; }
   if(cBtn){ cBtn.textContent = `🔷 ${crewCost} TS`; cBtn.disabled = s.crew >= s.maxCrew || s.gold < crewCost; }
+  // Ask Locals button — hide once fragment is revealed, or if this sphere has no fragment
+  const _alBtn = document.getElementById('ls-dock-ask-locals-btn');
+  if(_alBtn) {
+    const _fragExists   = LS.pois?.some(p => p.type === 'fragment');
+    const _alRevealed   = G.localQuests?.[(G.ship?.loc||'realm') + '_frag_revealed'];
+    _alBtn.style.display = (_fragExists && !_alRevealed) ? '' : 'none';
+  }
+
   // Build QM shop grid
   _lsBuildQmShop();
   // Build cargo sell grid
@@ -16337,6 +16720,7 @@ function _lsCheckProximity() {
   let closest = null, closestDist = Infinity;
   LS.pois.forEach(p => {
     if(!INTERACTABLE_TYPES.has(p.type)) return;
+    if(p.hidden) return;
     const dx = LS.px-p.x, dy = LS.py-p.y;
     const d = Math.sqrt(dx*dx+dy*dy);
     if(d < p.r + 30 && d < closestDist) { closest=p; closestDist=d; }
@@ -16665,7 +17049,7 @@ function _lsRender(cx, W, H, dt) {
   });
 
   // ── POI icons ──
-  LS.pois.filter(p=>p.type!=='hazard_zone'&&p.type!=='patrol_zone').forEach(p=>{
+  LS.pois.filter(p=>p.type!=='hazard_zone'&&p.type!=='patrol_zone'&&!p.hidden).forEach(p=>{
     // Glow halo
     const grd = cx.createRadialGradient(p.x,p.y,0,p.x,p.y,38);
     grd.addColorStop(0,hexA(p.col,'33')); grd.addColorStop(1,'transparent');
@@ -16765,10 +17149,28 @@ function _lsRender(cx, W, H, dt) {
         cx.restore();
       }
     } else if(p.type==='fragment') {
+      // Ping rings — expand outward for several seconds after reveal
+      if(p._pingT > 0) {
+        p._pingT -= dt;
+        const pingCount = 3;
+        for(let pi=0; pi<pingCount; pi++) {
+          const phase = ((p._pingT * 0.55) + pi/pingCount) % 1;
+          const pr = p.r + 10 + phase * 120;
+          const pa = (1-phase) * 0.7;
+          cx.save();
+          cx.globalAlpha = pa;
+          cx.strokeStyle = '#ffdd44';
+          cx.lineWidth = 2;
+          cx.beginPath(); cx.arc(p.x, p.y, pr, 0, Math.PI*2); cx.stroke();
+          cx.restore();
+        }
+      }
       // Pulsing crystal
       const fpulse = 0.5+0.5*Math.sin(LS.t*2.2);
       cx.save(); cx.translate(p.x,p.y); cx.rotate(LS.t*0.4);
-      cx.fillStyle=p.col; cx.globalAlpha=0.7+0.3*fpulse;
+      // Cleared tint — greyed out after core collected
+      cx.fillStyle = p._cleared ? '#556655' : p.col;
+      cx.globalAlpha=0.7+0.3*fpulse;
       cx.beginPath();
       cx.moveTo(0,-14); cx.lineTo(5,-3); cx.lineTo(14,0);
       cx.lineTo(5,3);   cx.lineTo(0,14); cx.lineTo(-5,3);
@@ -16944,7 +17346,7 @@ function _lsRenderMinimap() {
   });
 
   // POIs
-  LS.pois.filter(p=>p.type!=='hazard_zone'&&p.type!=='patrol_zone').forEach(p=>{
+  LS.pois.filter(p=>p.type!=='hazard_zone'&&p.type!=='patrol_zone'&&!p.hidden).forEach(p=>{
     const mx2 = ox+p.x*scale;
     const my2 = oy+p.y*scale;
     mx.fillStyle=p.col;
@@ -17102,6 +17504,7 @@ function _lsNpcPickTarget(p) {
   p._wTimer   = 3 + Math.random() * 4;  // 3–7 seconds per waypoint
 }
 
+// ── Show/hide Ask Locals button based on fragment state ──────────────────────
 // ── POST-COMBAT RETURN HOOK ───────────────────────────────────────────────
 // We patch into the existing combat end flow so that when _lsPendingReturn is
 // set we re-open the LS overlay instead of going to map.
