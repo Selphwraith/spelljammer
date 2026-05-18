@@ -4969,7 +4969,7 @@ function initGame() {
     phase:'map',
     ship:{
       type:'pinnace', name:'IEF Vanguard',
-      hull:65, maxHull:65, crew:6, maxCrew:6, air:12, maxAir:12, TS:150, speed:4,
+      hull:65, maxHull:65, crew:6, maxCrew:6, air:12, maxAir:12, gold:150, speed:4,
       resist:0, wpns:['ballista'], upgrades:[], inv:[],
       loc:'refuge', atWp:null, sigTier:null,
     },
@@ -6827,7 +6827,7 @@ function arrive(id){
     }
   }
   // ── LOCAL SPACE SPHERES — auto-open on arrival ───────────────────────────
-  const _LS_SPHERES = new Set(['realm','refuge','grey','cluster','krynn']);
+  const _LS_SPHERES = new Set(['realm','refuge','grey','cluster','krynn','hero','dark']);
   checkQuestTurnin(id);
   setTag('Navigation'); updateUI();
   ensureLqState();
@@ -6858,6 +6858,24 @@ function arrive(id){
     G.localQuests['refuge_q2_pending'] = false;
     addLog('Engine field test data recorded. Return to Chief Engineer Velt at the Local Quests panel.', 'gd');
   }
+  // hero_q3: Omen explore quest — mark pending when player leaves Thyss
+  if(id !== 'hero' && G.localQuests['hero_q3'] === 'active') {
+    G.localQuests['hero_q3_pending'] = true;
+  }
+  if(id === 'hero' && G.localQuests['hero_q3_pending']) {
+    G.localQuests['hero_q3_visited'] = true;
+    G.localQuests['hero_q3_pending'] = false;
+    addLog('The Drift has left its mark on you. Return to Omen at Citadel Exalted to report.', 'gd');
+  }
+  // dark_q3: Trull Defector explore quest — mark pending when player leaves Serath
+  if(id !== 'dark' && G.localQuests['dark_q3'] === 'active') {
+    G.localQuests['dark_q3_pending'] = true;
+  }
+  if(id === 'dark' && G.localQuests['dark_q3_pending']) {
+    G.localQuests['dark_q3_visited'] = true;
+    G.localQuests['dark_q3_pending'] = false;
+    addLog('Breach lanes navigable. Return to the Trull Defector Commander at Voidhaven to report.', 'gd');
+  }
   if(_LS_SPHERES.has(id)) {
     addLog(`Arrived at ${sph.n}. Entering local space…`, '');
     // If a cargo quest turn-in is pending let the msgbox show first, then open LS
@@ -6881,7 +6899,7 @@ let _portSphere=null;
 function enterPort(sph){
   if(sph.boss)return;
   // ── REALMSPACE: redirect to Local Space overlay ──────────
-  if(sph.id === 'realm' || sph.id === 'refuge' || sph.id === 'grey' || sph.id === 'cluster' || sph.id === 'krynn') { openLocalSpace(); return; }
+  if(sph.id === 'realm' || sph.id === 'refuge' || sph.id === 'grey' || sph.id === 'cluster' || sph.id === 'krynn' || sph.id === 'hero' || sph.id === 'dark') { openLocalSpace(); return; }
   // ── the Scar-Wraith confrontation at The Shatter ───────────────
   if(sph.id === 'baresun' && G.shothothuqUnlocked && !(G.worldBossDefeated && G.worldBossDefeated.has('shothothug'))){
     addLog('⬡ The The Shatter scar screams. Something vast is coming through.','dmg');
@@ -7016,7 +7034,7 @@ function shopItems(stock){
   // ── Basic supplies (always available) ──────────────────
   if(s.hull<s.maxHull) items.push({ico:'🔧',name:'Repair Hull',desc:`Restore to ${s.maxHull} HP`,cost:Math.floor((s.maxHull-s.hull)*0.5),act:'repair'});
   if(s.crew<s.maxCrew) items.push({ico:'👥',name:'Hire Crew',desc:`Refill crew to ${s.maxCrew}`,cost:(s.maxCrew-s.crew)*3,act:'crew'});
-  if(s.air<(s.maxAir||12)) items.push({ico:'💨',name:'Refill Air',desc:`Restore to ${s.maxAir||12} days`,cost:Math.floor((30-s.air)*0.5),act:'air'});
+  if(s.air<(s.maxAir||12)) items.push({ico:'💨',name:'Refill Air',desc:`Restore to ${s.maxAir||12} days`,cost:Math.floor((30-s.air)*0.6),act:'air'});
 
   // ── Void Welder — available at drydock ports to buy ─────
   if(stock && stock.drydock){
@@ -9429,7 +9447,7 @@ function buildWaypointShop(){
   const items=[];
   if(s.hull<s.maxHull) items.push({ico:'🔧',name:'Emergency Repair',desc:`Restore to ${s.maxHull} HP`,cost:Math.ceil((s.maxHull-s.hull)*0.7),act:'repair'});
   if(s.crew<s.maxCrew) items.push({ico:'👥',name:'Crew from Reserves',desc:`Refill crew to ${s.maxCrew}`,cost:(s.maxCrew-s.crew)*5,act:'crew'});
-  if(s.air<(s.maxAir||12)) items.push({ico:'💨',name:'Emergency Air',desc:`Restore to ${s.maxAir||12} days`,cost:Math.ceil((30-s.air)*0.8),act:'air'});
+  if(s.air<(s.maxAir||12)) items.push({ico:'💨',name:'Emergency Air',desc:`Restore to ${s.maxAir||12} days`,cost:Math.ceil((30-s.air)*0.95),act:'air'});
   if(!items.length){
     const d=document.createElement('div'); d.style.cssText='color:#5544aa;font-style:italic;font-size:13px;grid-column:1/-1;text-align:center;padding:14px;';
     d.textContent='All supplies already at maximum.'; grid.appendChild(d); return;
@@ -9520,7 +9538,7 @@ function buildWaystationGrid(ws){
   // Air
   const maxAir = s.maxAir || 12;
   if(s.air < maxAir){
-    const base = Math.floor((maxAir - s.air) * 0.5);
+    const base = Math.floor((maxAir - s.air) * 0.6);
     const cost = Math.ceil(base * PREMIUM);
     items.push({ ico:'💨', name:'Refill Air', desc:`Restore to ${maxAir} days`, cost, act:'air' });
   }
@@ -14367,7 +14385,7 @@ const LOCAL_QUEST_DATA = {
       flavor: 'Field-authorized IEF materiel. Fentheris System station allocation.',
       items: [
         { type:'supply', ico:'🔧', name:'Emergency Hull Patch', desc:'Restores 40 hull points', cost:55, act:'hull40', qty:8 },
-        { type:'supply', ico:'💨', name:'Compressed Air Cylinder', desc:'Restores full air supply', cost:40, act:'air', qty:6 },
+        { type:'supply', ico:'💨', name:'Compressed Air Cylinder', desc:'Restores full air supply', cost:42, act:'air', qty:6 },
         { type:'supply', ico:'👥', name:'IEF Crew Transfer', desc:'Assigns 4 trained crew from station reserves', cost:60, act:'crew4', qty:5 },
         { type:'usable', ico:'🩹', name:"Alchemist's Mend", desc:'Use in combat: Restores 20 hull + 1 crew', cost:80, itemKey:'almend', qty:4 },
         { type:'upgrade', ico:'🛡', name:'Ablative Hull Plating', desc:'+50 max hull points (IEF grade)', cost:110, act:'upg', upg:'plating', qty:1 },
@@ -14487,7 +14505,7 @@ const LOCAL_QUEST_DATA = {
       flavor: 'Ironhaven IEF attachment. Dwarven-certified equipment.',
       items: [
         { type:'supply', ico:'🔧', name:'Emergency Hull Patch', desc:'Restores 40 hull points', cost:55, act:'hull40' },
-        { type:'supply', ico:'💨', name:'Compressed Air Cylinder', desc:'Restores full air supply', cost:40, act:'air' },
+        { type:'supply', ico:'💨', name:'Compressed Air Cylinder', desc:'Restores full air supply', cost:42, act:'air' },
         { type:'supply', ico:'👥', name:'IEF Crew Transfer', desc:'Assigns 4 trained crew', cost:60, act:'crew4' },
         { type:'upgrade', ico:'🛡', name:'Reinforced Dwarven Plating', desc:'+50 max hull (forge-certified)', cost:115, act:'upg', upg:'plating' },
         { type:'upgrade', ico:'🌀', name:'Air Recycler', desc:'Air lasts 2× longer in the void', cost:90, act:'upg', upg:'recycler' },
@@ -14588,7 +14606,7 @@ const LOCAL_QUEST_DATA = {
       flavor: 'Steel Dragon Pact military surplus. Elven precision, void-grade construction.',
       items: [
         { type:'supply', ico:'🔧', name:'Emergency Hull Patch',        desc:'Restores 40 hull points',                 cost:60,  act:'hull40' },
-        { type:'supply', ico:'💨', name:'Compressed Air Cylinder',     desc:'Restores full air supply',                cost:45,  act:'air' },
+        { type:'supply', ico:'💨', name:'Compressed Air Cylinder',     desc:'Restores full air supply',                cost:47,  act:'air' },
         { type:'supply', ico:'👥', name:'Crew Hire (Vael)',            desc:'+4 crew from the docks',                  cost:65,  act:'crew4' },
         { type:'usable', ico:'💉', name:'Void Sailer Stimpack',        desc:'Use: Restores 6 crew in combat',          cost:70,  itemKey:'stimpack' },
         { type:'usable', ico:'🌀', name:'Phase Disruptor',             desc:'Disable one enemy weapon for 2 turns',    cost:90,  itemKey:'phasedis' },
@@ -14690,7 +14708,7 @@ const LOCAL_QUEST_DATA = {
       flavor: 'Thousand Sails salvage market. No questions, no receipts, everything works.',
       items: [
         { type:'supply', ico:'🔧', name:'Emergency Hull Patch',       desc:'Restores 40 hull points',          cost:60,  act:'hull40' },
-        { type:'supply', ico:'💨', name:'Compressed Air Cylinder',    desc:'Restores full air supply',          cost:45,  act:'air' },
+        { type:'supply', ico:'💨', name:'Compressed Air Cylinder',    desc:'Restores full air supply',          cost:47,  act:'air' },
         { type:'supply', ico:'👥', name:'Crew Hire (Freeport)',       desc:'+4 crew from the docks',            cost:65,  act:'crew4' },
         { type:'usable', ico:'🍺', name:"Crew's Courage Mead",        desc:"Use: Restores 3 crew in combat",    cost:55,  itemKey:'crewmead' },
         { type:'upgrade', ico:'💥', name:'Chain Reaction Crystal',    desc:'30% chance of free bonus shot on any hit', cost:300, act:'upg', upg:'chainreact' },
@@ -14778,13 +14796,219 @@ const LOCAL_QUEST_DATA = {
       flavor: 'IEF Station Refuge — full field allocation. Admiral-authorized.',
       items: [
         { type:'supply', ico:'🔧', name:'Emergency Hull Patch', desc:'Restores 40 hull', cost:50, act:'hull40' },
-        { type:'supply', ico:'💨', name:'Compressed Air Cylinder', desc:'Full air resupply', cost:38, act:'air' },
+        { type:'supply', ico:'💨', name:'Compressed Air Cylinder', desc:'Full air resupply', cost:40, act:'air' },
         { type:'supply', ico:'👥', name:'IEF Crew Transfer', desc:'+4 trained crew', cost:55, act:'crew4' },
         { type:'usable', ico:'🧪', name:'IEF Leviathan Blood Vial', desc:'Use: +30 hull in combat (field grade)', cost:60, itemKey:'levblood' },
         { type:'upgrade', ico:'🛡', name:'Hull Plating', desc:'+50 max hull', cost:100, act:'upg', upg:'plating' },
         { type:'upgrade', ico:'⚡', name:'Speed Engine', desc:'+2 void sailing speed', cost:80, act:'upg', upg:'engine' },
         { type:'upgrade', ico:'🏠', name:'Crew Quarters', desc:'+8 max crew', cost:65, act:'upg', upg:'quarters' },
         { type:'upgrade', ico:'🌀', name:'Air Recycler', desc:'Air lasts 2× longer', cost:90, act:'upg', upg:'recycler' },
+      ]
+    }
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // THYSS (hero) — Citadel Exalted, late-game
+  // ═══════════════════════════════════════════════════════════
+  hero: {
+    label: 'Citadel Exalted — Thyss Local Space',
+    color: '#ffff44',
+    bgColor: 'rgba(80,40,10,0.20)',
+    npcs: [
+      {
+        id: 'hero_qm',
+        name: 'Keeper Thessaly Vorn',
+        role: 'Citadel Exalted Archivist and Port-Warden',
+        portrait: '📜', color: '#ffff44',
+        greet: "The Citadel has stood since before the current age, Captain. We have records that predate the Collapse itself. I am Keeper Vorn — Archivist, Port-Warden, and the last authority in this sphere who still reads the old languages. Whatever you need, if it can be found in Thyss, I can find it.",
+        shop: true,
+        quests: [
+          {
+            id: 'hero_q1',
+            title: 'The Archivist\'s Request',
+            desc: "Keeper Thessaly Vorn needs a Sentinel Optical Array — a component that drops from Vault-Keeper Sentinel Drones in the outer lanes. She's tracing the guardian lineage that protects the Pre-Sundering Vault.",
+            task: 'Bring Keeper Vorn a Sentinel Optical Array (bheye) from the outer lanes.',
+            reward: '🔷 180 TS + 🔧 Void Welder (restores 20 MAX hull)',
+            type: 'delivery',
+            checkDesc: 'Have a Sentinel Optical Array in cargo.',
+            check: (G) => G.ship.inv.some(i => i.id === 'bheye'),
+            rewardFn: (G) => {
+              const idx = G.ship.inv.findIndex(i => i.id === 'bheye');
+              if(idx >= 0) G.ship.inv.splice(idx, 1);
+              G.ship.gold += 180;
+              G.ship.inv.push({...ITEMS['voidwelder'], uid: uid()});
+              addLog("Keeper Vorn receives the array with both hands. 'This confirms the lineage. The guardians were seeded from a single Vault-Keeper source before the Collapse. Here — a void welder, rarer than anything in my archive. Use it wisely, Captain.'", 'gd');
+              jlogVoidWelder();
+            },
+            trigger: () => {}
+          }
+        ]
+      },
+      {
+        id: 'hero_archivist',
+        name: 'Archivist Yssel Dain',
+        role: 'Pre-Sundering Scholar — Citadel Exalted Research Division',
+        portrait: '🔭', color: '#ffcc66',
+        greet: "Pre-Sundering history is my specialty, Captain, and the lanes around Thyss are a living archive. The Sentinel Drones you'll encounter aren't random — they follow patrol patterns set down before the Collapse. I've been documenting them. The problem is that documenting them requires getting close to them, and my ship is, diplomatically speaking, not built for that.",
+        quests: [
+          {
+            id: 'hero_q2',
+            title: 'Sentinel Study',
+            desc: "Archivist Dain is documenting the Sentinel Drone patrol patterns around Thyss. She needs combat data from at least 2 Sentinel Drones destroyed in the outer lanes — the only way to get their internal logs is from the wreckage.",
+            task: 'Destroy 2 Sentinel Drone (beholder) ships in the lanes and return.',
+            reward: '🔷 200 TS + 🛡️ Ablative Phase Plating (equip: −3 incoming damage)',
+            type: 'combat',
+            checkDesc: 'Destroy 2 Sentinel Drone ships.',
+            check: (G) => (G.localQuests?.hero_q2_kills || 0) >= 2,
+            rewardFn: (G) => {
+              G.ship.gold += 200;
+              G.ship.inv.push({...ITEMS['antimag'], uid: uid()});
+              addLog("Dain downloads the combat telemetry with barely concealed excitement. 'The patrol decay patterns match the pre-Collapse schematics exactly. They haven't changed. Not once. Here — this plating was recovered from a Sentinel hull. Their builders knew something about deflection we've been trying to reverse-engineer.'", 'gd');
+            },
+            trigger: (G) => { G.localQuests.hero_q2_kills = 0; }
+          }
+        ]
+      },
+      {
+        id: 'hero_wanderer',
+        name: '"Omen"',
+        role: 'Void-Touched Wanderer — Far Dark Survivor',
+        portrait: '👁️', color: '#cc88ff',
+        greet: "I walked out of the Far Dark three years ago. Still don't know how. The other survivors — there were four of us — two went silent, one is in a medical bay on Refuge. I'm here because Thyss is the last stable sphere before it, and stable is relative. I need to know whether the breach lanes are still crossable. Someone who sails them regularly could tell me. Someone who's been out there recently.",
+        quests: [
+          {
+            id: 'hero_q3',
+            title: 'Proof of the Drift',
+            desc: "A Far Dark survivor known only as Omen needs confirmation that the outer Drift lanes are still navigable. She won't say why, exactly — but the way she watches the lane charts suggests she's planning something.",
+            task: 'Travel to any other sphere and return to Omen at Citadel Exalted.',
+            reward: '🔷 160 TS + 🗺️ Void Chart (navigation artifact)',
+            type: 'explore',
+            checkDesc: 'Travel to any sphere and return to Thyss.',
+            check: (G) => (G.localQuests?.hero_q3_visited || false),
+            rewardFn: (G) => {
+              G.ship.gold += 160;
+              G.ship.inv.push({...ITEMS['voidchart'], uid: uid()});
+              addLog("Omen studies your course log in silence for a long moment. 'The lanes hold. Good.' She sets down a void chart — hand-annotated, old, clearly valuable. 'I made this before I went through. It's more useful on this side of the gate.'", 'gd');
+            },
+            trigger: (G) => { G.localQuests.hero_q3_visited = false; }
+          }
+        ]
+      }
+    ],
+    qmStock: {
+      flavor: 'Pre-Sundering artifacts of terrible and wonderful power. Handle accordingly.',
+      items: [
+        { type:'supply', ico:'🔧', name:'Vault-Grade Hull Patch',     desc:'Restores 40 hull points',          cost:65,  act:'hull40' },
+        { type:'supply', ico:'💨', name:'Compressed Air Cylinder',    desc:'Restores full air supply',          cost:47,  act:'air' },
+        { type:'supply', ico:'👥', name:'Crew Hire (Thyss Dock)',     desc:'+4 crew from the Citadel',          cost:70,  act:'crew4' },
+        { type:'usable', ico:'🔧', name:'Void Welder',                desc:'Use: Restores 20 MAX hull (rare)',   cost:180, itemKey:'voidwelder' },
+        { type:'usable', ico:'🧪', name:'Psionic Amplifier',          desc:'Use: Stun enemy for 1 turn',        cost:90,  itemKey:'psiamp' },
+        { type:'wpn', ico:'💥', name:'Pre-Sundering Bombard',         desc:'4d10 · 5-round reload · ancient siege weapon', cost:420, wk:'bombard' },
+        { type:'wpn', ico:'💀', name:'Nether Cannon',                 desc:'4d8 · 4-round reload · void-forged dissolution round', cost:380, wk:'nether' },
+        { type:'upgrade', ico:'🔀', name:'Volley System',             desc:'Fire ALL ready weapons simultaneously', cost:350, act:'upg', upg:'volley' },
+      ]
+    }
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // SERATH (dark) — Voidhaven, endgame
+  // ═══════════════════════════════════════════════════════════
+  dark: {
+    label: 'Voidhaven — Serath Local Space',
+    color: '#aa66ff',
+    bgColor: 'rgba(10,10,40,0.22)',
+    npcs: [
+      {
+        id: 'dark_qm',
+        name: 'Void-Broker Sythari',
+        role: 'Voidhaven Exchange, Serath',
+        portrait: '💜', color: '#aa66ff',
+        greet: "Light-worlder. You've come a long way. Serath doesn't welcome the lost — but you don't look lost. You look like someone finishing something. I am Sythari. I broker things in Voidhaven that aren't available in the bright spheres. If you need it and it exists, I can find it. The question is whether you can find what I need first.",
+        shop: true,
+        quests: [
+          {
+            id: 'dark_q1',
+            title: 'The Broker\'s Price',
+            desc: "Void-Broker Sythari deals in things that aren't available elsewhere. She wants a Silver Astral Blade Fragment — a rare component that drops from Drift Corsair warships in the lanes near Serath.",
+            task: 'Bring Sythari a Silver Astral Blade Fragment (silblade) from Drift Corsair ships.',
+            reward: '🔷 200 TS + 🗺️ Void Chart + ⚙️ Arcane Navigation Core Fragment',
+            type: 'delivery',
+            checkDesc: 'Have a Silver Astral Blade Fragment in cargo.',
+            check: (G) => G.ship.inv.some(i => i.id === 'silblade'),
+            rewardFn: (G) => {
+              const idx = G.ship.inv.findIndex(i => i.id === 'silblade');
+              if(idx >= 0) G.ship.inv.splice(idx, 1);
+              G.ship.gold += 200;
+              G.ship.inv.push({...ITEMS['voidchart'], uid: uid()});
+              G.ship.inv.push({...ITEMS['arccore'], uid: uid()});
+              addLog("Sythari runs a finger along the blade fragment's edge without drawing blood — a practised motion. 'Yes. This is what I needed.' She produces two items from beneath the counter. 'A void chart of the deep lanes. And an arcane core fragment — worth more than both of us combined to the right buyer. Don't sell it cheap.'", 'gd');
+            },
+            trigger: () => {}
+          }
+        ]
+      },
+      {
+        id: 'dark_scout',
+        name: '"Remnant"',
+        role: 'Far Dark Scout — Survived the Gate',
+        portrait: '🌑', color: '#8866cc',
+        greet: "I made it back from beyond the Far Dark gate. Once. That's apparently unique enough to be notable. The Leviathans out there are different from the ones in the local lanes — they've been changed by whatever's on the other side. The Void Rift Stalkers are worse. I need to know if the entities out here are connected to what I saw in the Far Dark. Combat data would help confirm that.",
+        quests: [
+          {
+            id: 'dark_q2',
+            title: 'Beyond the Veil',
+            desc: "A Far Dark survivor called Remnant is trying to establish whether the void entities in Serath's lanes are connected to what exists beyond the Far Dark gate. She needs combat data from 2 Leviathans or Void Rift Stalkers.",
+            task: 'Destroy 2 Leviathan or Void Rift Stalker ships in the lanes and return.',
+            reward: '🔷 220 TS + 🌀 Anti-Magic Sphere Shard (equip: −3 incoming damage)',
+            type: 'combat',
+            checkDesc: 'Destroy 2 Leviathan or Void Rift Stalker ships.',
+            check: (G) => (G.localQuests?.dark_q2_kills || 0) >= 2,
+            rewardFn: (G) => {
+              G.ship.gold += 220;
+              G.ship.inv.push({...ITEMS['antimag'], uid: uid()});
+              addLog("Remnant studies the sensor logs without speaking for a long time. 'They're the same. The resonance signature is identical.' She sets down an anti-magic shard without looking up. 'What's in the Far Dark is here already. It's just taking its time.' She pauses. 'The gate beyond this sphere — if the Trull Overmind opens it fully, there won't be lanes anymore. There won't be anything.'", 'gd');
+            },
+            trigger: (G) => { G.localQuests.dark_q2_kills = 0; }
+          }
+        ]
+      },
+      {
+        id: 'dark_trull',
+        name: 'Trull Defector Commander',
+        role: 'Former Trull Advance — Breakaway Officer',
+        portrait: '⚔️', color: '#ff4444',
+        greet: "I broke from the Overmind signal six months ago. The signal said: this is necessary, this is inevitable, the breach is for the glory of the Advance. But I've seen what comes through breaches. I've seen what the Overmind is making room for. It is not for the glory of anyone. I need proof the lanes out of Serath are still crossable — proof I can take to other officers who are starting to question.",
+        quests: [
+          {
+            id: 'dark_q3',
+            title: 'The Defector\'s Proof',
+            desc: "A Trull officer who broke from the Overmind's signal needs independent confirmation that the breach lanes beyond Serath are still navigable. He's trying to build a coalition of doubters — and he needs hard evidence.",
+            task: 'Travel to any other sphere and return to the Trull Defector at Voidhaven.',
+            reward: '🔷 180 TS + 🧪 Leviathan Blood Vial (use in combat: +30 hull)',
+            type: 'explore',
+            checkDesc: 'Travel to any sphere and return to Serath.',
+            check: (G) => (G.localQuests?.dark_q3_visited || false),
+            rewardFn: (G) => {
+              G.ship.gold += 180;
+              G.ship.inv.push({...ITEMS['levblood'], uid: uid()});
+              addLog("The Defector Commander takes your course log and studies it with the focused intensity of someone filing evidence. 'The lanes hold. The Overmind's claim that they're collapsing — lies, to prevent movement.' He produces a sealed vial. 'Leviathan blood. Rare. Useful. Consider it a down payment on whatever comes next — because something is coming.'", 'gd');
+            },
+            trigger: (G) => { G.localQuests.dark_q3_visited = false; }
+          }
+        ]
+      }
+    ],
+    qmStock: {
+      flavor: 'Born in the lightless void. For captains who are running out of options.',
+      items: [
+        { type:'supply', ico:'🔧', name:'Void-Grade Hull Patch',      desc:'Restores 40 hull points',              cost:70,  act:'hull40' },
+        { type:'supply', ico:'💨', name:'Compressed Air Cylinder',    desc:'Restores full air supply',              cost:50,  act:'air' },
+        { type:'supply', ico:'👥', name:'Crew Hire (Voidhaven)',      desc:'+4 crew from the dark docks',           cost:72,  act:'crew4' },
+        { type:'usable', ico:'🧪', name:'Leviathan Blood Vial',       desc:'Use: +30 hull in combat',               cost:75,  itemKey:'levblood' },
+        { type:'usable', ico:'💊', name:'Void Sailer Stimpack',       desc:'Use: +6 crew in combat',                cost:80,  itemKey:'stimpack' },
+        { type:'wpn', ico:'⚡', name:'Star Elven Ballista',           desc:'3d6 · 0-round reload · elven-forged, fires every turn', cost:440, wk:'sballista' },
+        { type:'wpn', ico:'🌀', name:'Void Cannon',                   desc:'6d8 · 6-round reload · endgame annihilation round', cost:520, wk:'voidcann' },
+        { type:'upgrade', ico:'🔫', name:'Rapid-Fire System',         desc:'Reduce all weapon reload times by 1', cost:320, act:'upg', upg:'rapidfire' },
       ]
     }
   }
@@ -15075,6 +15299,92 @@ function _lsDefinePois() {
     ];
   }
 
+  // ── THYSS (hero) — ancient fortress-dock, late-game ─────────────────────
+  if (sphereId === 'hero') {
+    return [
+      {
+        id:'dock', label:'Citadel Exalted', role:'Pre-Sundering Fortress-Dock · Air · Hull · Crew · QM',
+        x: W*0.50, y: H*0.50, r: 70, col:'#ffff44', icon:'⚓', type:'dock',
+        safeRadius: 300,
+      },
+      {
+        id:'npc_thessaly', label:'Keeper Thessaly Vorn', role:'Citadel Exalted Archivist and Port-Warden',
+        x: W*0.38, y: H*0.42, r: 48, col:'#ffff44', icon:'📜', type:'npc',
+        npcId: 'hero_qm',
+        patrol: true, patrolR: 95, patrolSpeed: 0.20, patrolAngle: 0,
+      },
+      {
+        id:'npc_archivist', label:'Archivist Yssel Dain', role:'Pre-Sundering Scholar — Citadel',
+        x: W*0.63, y: H*0.42, r: 48, col:'#ffcc66', icon:'🔭', type:'npc',
+        npcId: 'hero_archivist',
+        patrol: true, patrolR: 110, patrolSpeed: 0.16, patrolAngle: 1.8,
+      },
+      {
+        id:'npc_omen', label:'"Omen"', role:'Void-Touched Wanderer — Far Dark Survivor',
+        x: W*0.50, y: H*0.65, r: 48, col:'#cc88ff', icon:'👁️', type:'npc',
+        npcId: 'hero_wanderer',
+        patrol: true, patrolR: 100, patrolSpeed: 0.14, patrolAngle: 3.5,
+      },
+      {
+        id:'fragment', label:'Fragment Orbit — Pre-Sundering Vault', role:'Navigation Core Site',
+        x: W*0.18, y: H*0.20, r: 55, col:'#ffdd44', icon:'🔮', type:'fragment',
+      },
+      {
+        id:'hazard_beholder', label:'Sentinel Drone Perimeter', role:'⚠ Vault-Keeper Drone Activity',
+        x: W*0.78, y: H*0.24, r: 170, col:'#ff4444', icon:'⚠', type:'hazard_zone',
+        enemyKey: 'beholder', spawnRate: 0.50,
+      },
+      {
+        id:'hazard_leviathan', label:'Deep-Void Hunting Ground', role:'⚠ Leviathan Territory',
+        x: W*0.75, y: H*0.75, r: 155, col:'#aa44ff', icon:'⚠', type:'hazard_zone',
+        enemyKey: 'leviathan', spawnRate: 0.35,
+      },
+    ];
+  }
+
+  // ── SERATH (dark) — lightless void-port, endgame ─────────────────────────
+  if (sphereId === 'dark') {
+    return [
+      {
+        id:'dock', label:'Voidhaven', role:'Serath Void Market · Air · Hull · Crew · QM',
+        x: W*0.50, y: H*0.50, r: 70, col:'#aa66ff', icon:'⚓', type:'dock',
+        safeRadius: 280,
+      },
+      {
+        id:'npc_sythari', label:'Void-Broker Sythari', role:'Voidhaven Exchange, Serath',
+        x: W*0.38, y: H*0.42, r: 48, col:'#aa66ff', icon:'💜', type:'npc',
+        npcId: 'dark_qm',
+        patrol: true, patrolR: 90, patrolSpeed: 0.22, patrolAngle: 0,
+      },
+      {
+        id:'npc_remnant', label:'"Remnant"', role:'Far Dark Scout — Survived the Gate',
+        x: W*0.63, y: H*0.42, r: 48, col:'#8866cc', icon:'🌑', type:'npc',
+        npcId: 'dark_scout',
+        patrol: true, patrolR: 105, patrolSpeed: 0.18, patrolAngle: 2.0,
+      },
+      {
+        id:'npc_trull_defector', label:'Trull Defector Commander', role:'Former Trull Advance — Breakaway',
+        x: W*0.50, y: H*0.65, r: 48, col:'#ff4444', icon:'⚔️', type:'npc',
+        npcId: 'dark_trull',
+        patrol: true, patrolR: 95, patrolSpeed: 0.16, patrolAngle: 4.0,
+      },
+      {
+        id:'fragment', label:'Fragment Orbit — The Dark Mote', role:'Navigation Core Site',
+        x: W*0.20, y: H*0.22, r: 55, col:'#ffdd44', icon:'🔮', type:'fragment',
+      },
+      {
+        id:'hazard_leviathan', label:'Void Leviathan Zone', role:'⚠ Extreme Danger',
+        x: W*0.78, y: H*0.24, r: 165, col:'#ff2222', icon:'⚠', type:'hazard_zone',
+        enemyKey: 'leviathan', spawnRate: 0.55,
+      },
+      {
+        id:'hazard_stalker', label:'Void Rift Stalker Territory', role:'⚠ Far Dark Incursion',
+        x: W*0.74, y: H*0.74, r: 155, col:'#6600cc', icon:'⚠', type:'hazard_zone',
+        enemyKey: 'frStalker', spawnRate: 0.40,
+      },
+    ];
+  }
+
   // ── FENTHERIS SYSTEM (realm) — default full layout ────────────────────────
   return [
     // Fentheris Orbital Station — center-safe zone, the dock
@@ -15194,6 +15504,28 @@ const LS_ENEMY_POOLS = {
   ],
   // Future spheres can define their own pools here
   // krynn: [...],
+  // Thyss (hero) — late-game: Sentinel Drones, Leviathans, Blackfleet, Drift Corsairs
+  hero: [
+    ['beholder',           5],
+    ['leviathan',          4],
+    ['blackfleet',         4],
+    ['githyanki',          3],
+    ['trull_dreadnought',  3],
+    ['harvester',          2],
+    ['phlog_flamewing',    1],
+    ['frStalker',          1],
+  ],
+  // Serath (dark) — endgame: Void Rift entities, Leviathans, Sentinel Drones
+  dark: [
+    ['leviathan',          5],
+    ['beholder',           4],
+    ['frStalker',          4],
+    ['frHorde',            3],
+    ['githyanki',          3],
+    ['trull_dreadnought',  2],
+    ['phlog_vinecrawler',  1],
+    ['phlog_jellyfish',    1],
+  ],
 };
 
 // Weighted random pick from a pool
@@ -15377,7 +15709,7 @@ function lsDockDepart() {
   G.phase = 'map';
   updateUI();
   const _dSph = G.ship.loc || 'realm';
-  const _dSphName = _dSph === 'refuge' ? 'Refuge Station' : _dSph === 'grey' ? 'Korreth' : _dSph === 'cluster' ? 'Varuun' : _dSph === 'krynn' ? 'Vael' : 'Fentheris System';
+  const _dSphName = _dSph === 'refuge' ? 'Refuge Station' : _dSph === 'grey' ? 'Korreth' : _dSph === 'cluster' ? 'Varuun' : _dSph === 'krynn' ? 'Vael' : _dSph === 'hero' ? 'Thyss' : _dSph === 'dark' ? 'Serath' : 'Fentheris System';
   addLog('Departed ' + _dSphName + ' local space.','');
 }
 
@@ -15483,7 +15815,7 @@ function _lsBuildCargoGrid() {
       G.ship.inv = G.ship.inv.filter(i => !['trade','component','artifact'].includes(i.type));
       G.ship.gold += total;
       snd('purchase', 0.7);
-      const _sellSphName = G.ship?.loc === 'refuge' ? 'IEF Refuge Station' : G.ship?.loc === 'grey' ? 'Ironhaven Station' : G.ship?.loc === 'cluster' ? 'Thousand Sails Freeport' : G.ship?.loc === 'krynn' ? 'Palanthas Spindle' : 'Fentheris Orbital'; addLog(`Sold all cargo at ${_sellSphName} for ${total} TS.`, 'gd');
+      const _sellSphName = G.ship?.loc === 'refuge' ? 'IEF Refuge Station' : G.ship?.loc === 'grey' ? 'Ironhaven Station' : G.ship?.loc === 'cluster' ? 'Thousand Sails Freeport' : G.ship?.loc === 'krynn' ? 'Palanthas Spindle' : G.ship?.loc === 'hero' ? 'Citadel Exalted' : G.ship?.loc === 'dark' ? 'Voidhaven' : 'Fentheris Orbital'; addLog(`Sold all cargo at ${_sellSphName} for ${total} TS.`, 'gd');
       updateUI(); _lsRefreshDock();
     };
     grid.appendChild(allRow);
@@ -16014,7 +16346,7 @@ function _lsShowInteract(poi) {
     dockBtn.className='btn'; dockBtn.textContent='⚓ Dock';
     dockBtn.onclick = () => {
       const _dSphId = G.ship?.loc || 'realm';
-      const _dockName = _dSphId === 'refuge' ? 'IEF Refuge Station' : _dSphId === 'grey' ? 'Ironhaven Station' : _dSphId === 'cluster' ? 'Thousand Sails Freeport' : _dSphId === 'krynn' ? 'Palanthas Spindle' : 'Fentheris Orbital Station';
+      const _dockName = _dSphId === 'refuge' ? 'IEF Refuge Station' : _dSphId === 'grey' ? 'Ironhaven Station' : _dSphId === 'cluster' ? 'Thousand Sails Freeport' : _dSphId === 'krynn' ? 'Palanthas Spindle' : _dSphId === 'hero' ? 'Citadel Exalted' : _dSphId === 'dark' ? 'Voidhaven' : 'Fentheris Orbital Station';
       _lsLog('Docked at ' + _dockName + '.', '');
       document.getElementById('ls-dock-title').textContent = '⚓ ' + _dockName.toUpperCase();
       const _departBtn = document.getElementById('ls-dock-depart-btn');
@@ -17329,6 +17661,8 @@ function lqTrackKill(enemyKey) {
     { qid:'cluster_q2_kills', condition: (k) => k==='harvester' },
     { qid:'krynn_q2_kills',   condition: (k) => k==='githyanki' },
     { qid:'refuge_q1_kills', condition: (k) => k==='githyanki' },
+    { qid:'hero_q2_kills',   condition: (k) => k==='beholder' },
+    { qid:'dark_q2_kills',   condition: (k) => k==='leviathan' || k==='frStalker' },
   ];
   trackers.forEach(t => {
     const parentQid = t.qid.replace(/_kills$/, '');
