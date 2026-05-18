@@ -6827,7 +6827,7 @@ function arrive(id){
     }
   }
   // ── LOCAL SPACE SPHERES — auto-open on arrival ───────────────────────────
-  const _LS_SPHERES = new Set(['realm','refuge','grey','cluster']);
+  const _LS_SPHERES = new Set(['realm','refuge','grey','cluster','krynn']);
   checkQuestTurnin(id);
   setTag('Navigation'); updateUI();
   ensureLqState();
@@ -6843,6 +6843,15 @@ function arrive(id){
     G.localQuests['cluster_q3_visited'] = true;
     G.localQuests['cluster_q3_pending'] = false;
     addLog('Lane confirmed clear. Return to Port-Boss Kezzix to report.', 'gd');
+  }
+  // krynn_q3: Kael intelligence run — mark pending when player leaves Vael
+  if(id !== 'krynn' && G.localQuests['krynn_q3'] === 'active') {
+    G.localQuests['krynn_q3_pending'] = true;
+  }
+  if(id === 'krynn' && G.localQuests['krynn_q3_pending']) {
+    G.localQuests['krynn_q3_visited'] = true;
+    G.localQuests['krynn_q3_pending'] = false;
+    addLog('Lane data confirmed. Return to Kael Voss to report.', 'gd');
   }
   if(id === 'refuge' && G.localQuests['refuge_q2_pending']) {
     G.localQuests['refuge_q2_visited'] = true;
@@ -6872,7 +6881,7 @@ let _portSphere=null;
 function enterPort(sph){
   if(sph.boss)return;
   // ── REALMSPACE: redirect to Local Space overlay ──────────
-  if(sph.id === 'realm' || sph.id === 'refuge' || sph.id === 'grey' || sph.id === 'cluster') { openLocalSpace(); return; }
+  if(sph.id === 'realm' || sph.id === 'refuge' || sph.id === 'grey' || sph.id === 'cluster' || sph.id === 'krynn') { openLocalSpace(); return; }
   // ── the Scar-Wraith confrontation at The Shatter ───────────────
   if(sph.id === 'baresun' && G.shothothuqUnlocked && !(G.worldBossDefeated && G.worldBossDefeated.has('shothothug'))){
     addLog('⬡ The The Shatter scar screams. Something vast is coming through.','dmg');
@@ -11081,7 +11090,7 @@ async function doAction(type, idx, itemUid) {
           cLog(`💥 WARP CANNON BACKFIRE — the shot reverses through the warp field and hits YOUR hull for ${backDmg} damage!`, 'dmg');
           updateCbtUI();
           await sleep(600);
-          if(G.ship.hull <= 0){ cbtLose(); return; }
+          if(G.ship.hull <= 0){ doDefeat('hull_combat'); return; }
           break;
         }
 
@@ -11175,7 +11184,7 @@ async function doAction(type, idx, itemUid) {
           triggerAnim(pCV(), 'anim-shake');
           floatDmg(pCV(), backBurn, true);
           cLog(`🔥 Drift Torch backfire — flame catches your own hull for ${backBurn} damage!`, 'dmg');
-          if(G.ship.hull <= 0){ cbtLose(); return; }
+          if(G.ship.hull <= 0){ doDefeat('hull_combat'); return; }
         }
         // Entropic Discharger — costs 2 crew per shot
         if(wk === 'entropic'){
@@ -14489,6 +14498,108 @@ const LOCAL_QUEST_DATA = {
   },
 
   // ═══════════════════════════════════════════════════════════
+  // KRYNN — Palanthas Spindle, Vael
+  // ═══════════════════════════════════════════════════════════
+  krynn: {
+    label: 'Palanthas Spindle — Local Space',
+    color: '#ff8844',
+    bgColor: 'rgba(100,50,10,0.20)',
+    npcs: [
+      {
+        id: 'krynn_qm',
+        name: 'Wing-Commander Serathis',
+        role: 'Steel Dragon Pact — Vael Defense Fleet QM',
+        portrait: '🐉', color: '#ff8844',
+        greet: "The Spindle doesn't see many IEF vessels this far out. You're either very capable or very lucky — the Dragon Passage has been brutal lately. The Steel Dragon Pact keeps what order exists in Vael space, but our reach only extends so far. I have a use for a captain who operates outside that reach. Interested?",
+        shop: true,
+        quests: [
+          {
+            id: 'krynn_q1',
+            title: 'The Serathis Exchange',
+            desc: "Wing-Commander Serathis needs a Psionic Amplifier — Steel Dragon Pact intelligence operatives use them to extract void-navigation data from captured Drift Corsair prisoners. They drop from Drift Corsair and Shell Drifter ships on the outer lanes.",
+            task: 'Bring Wing-Commander Serathis a Psionic Amplifier from your cargo.',
+            reward: '🔷 150 TS + ⚔️ Corsair Blade Shard (component)',
+            type: 'delivery',
+            checkDesc: 'Have a Psionic Amplifier in cargo.',
+            check: (G) => G.ship.inv.some(i => i.id === 'psiamp'),
+            rewardFn: (G) => {
+              const idx = G.ship.inv.findIndex(i => i.id === 'psiamp');
+              if(idx >= 0) G.ship.inv.splice(idx, 1);
+              G.ship.gold += 150;
+              G.ship.inv.push({...ITEMS['silksw'], uid: uid()});
+              addLog("Serathis takes the Amplifier with practiced efficiency. 'The Steel Dragon Pact has long memories, Captain. You've earned a marker from us — and this fragment from the last Corsair warship we boarded. Use it well.'", 'gd');
+            },
+            trigger: () => {}
+          }
+        ]
+      },
+      {
+        id: 'krynn_scholar',
+        name: 'Scholar Tyen Avoss',
+        role: 'Vael Academy — Void Resonance Research',
+        portrait: '📡', color: '#aaddff',
+        greet: "I've been monitoring void resonance patterns in the outer lanes for three seasons. The data is clear — the Drift Corsair warbands are not raiding randomly. They're searching for something specific along the Dragon Passage. Two of their warships were in a restricted resonance zone last tenday. I need someone to drive them out so my instruments can get a clean reading.",
+        quests: [
+          {
+            id: 'krynn_q2',
+            title: "Avoss's Clear Channel",
+            desc: "Scholar Tyen Avoss needs the void resonance zones along the Dragon Passage cleared of Drift Corsair activity. Destroy 2 Drift Corsair Warships in the outer lanes and return.",
+            task: 'Destroy 2 Drift Corsair Warships in the lanes and return to Avoss.',
+            reward: '🔷 170 TS + 🔮 Psionic Amplifier',
+            type: 'combat',
+            checkDesc: 'Destroy 2 Drift Corsair Warships and return.',
+            check: (G) => (G.localQuests?.krynn_q2_kills || 0) >= 2,
+            rewardFn: (G) => {
+              G.ship.gold += 170;
+              G.ship.inv.push({...ITEMS['psiamp'], uid: uid()});
+              addLog("Avoss pulls up a holographic display of the resonance data. 'Clean signal at last. Fascinating — the Corsairs were attempting to triangulate a Navigation Core using void-echo positioning. They were close. Fortunately, you were closer to them.'", 'gd');
+            },
+            trigger: (G) => { G.localQuests.krynn_q2_kills = 0; }
+          }
+        ]
+      },
+      {
+        id: 'krynn_defector',
+        name: 'Kael Voss',
+        role: 'Former Drift Corsair — Independent Void Pilot',
+        portrait: '🗡️', color: '#cc88ff',
+        greet: "I flew with the Corsair warbands for eight years. Then the Overmind's signal started bleeding through into our warships — not an order, not a command. Just a presence, pressing against the back of every mind aboard. Half my crew didn't notice. The other half stopped being themselves. I got out before it reached me. Now I run cargo and sell what I know to people who'll use it. You look like someone who'll use it.",
+        quests: [
+          {
+            id: 'krynn_q3',
+            title: "Kael's Intelligence",
+            desc: "Kael Voss, a former Drift Corsair pilot, has intelligence on Corsair patrol routes — but needs confirmation the lanes are still navigable. Travel to any other sphere and return with proof the routes are open.",
+            task: 'Travel to any other sphere and return to Kael to confirm the lanes.',
+            reward: '🔷 140 TS + 🧵 Astral Silk (trade good)',
+            type: 'explore',
+            checkDesc: 'Travel to any sphere and return to Kael.',
+            check: (G) => (G.localQuests?.krynn_q3_visited || false),
+            rewardFn: (G) => {
+              G.ship.gold += 140;
+              G.ship.inv.push({...ITEMS['astsil'], uid: uid()});
+              addLog("Kael nods slowly at your nav data. 'Dragon Passage is holding. Good. Here — payment and a bolt of Astral Silk from the last Corsair hold I raided before I left. Lighter than air, stronger than chainmail. Worth more than it looks.'", 'gd');
+            },
+            trigger: (G) => { G.localQuests.krynn_q3_visited = false; }
+          }
+        ]
+      }
+    ],
+    qmStock: {
+      flavor: 'Steel Dragon Pact military surplus. Elven precision, void-grade construction.',
+      items: [
+        { type:'supply', ico:'🔧', name:'Emergency Hull Patch',        desc:'Restores 40 hull points',                 cost:60,  act:'hull40' },
+        { type:'supply', ico:'💨', name:'Compressed Air Cylinder',     desc:'Restores full air supply',                cost:45,  act:'air' },
+        { type:'supply', ico:'👥', name:'Crew Hire (Vael)',            desc:'+4 crew from the docks',                  cost:65,  act:'crew4' },
+        { type:'usable', ico:'💉', name:'Void Sailer Stimpack',        desc:'Use: Restores 6 crew in combat',          cost:70,  itemKey:'stimpack' },
+        { type:'usable', ico:'🌀', name:'Phase Disruptor',             desc:'Disable one enemy weapon for 2 turns',    cost:90,  itemKey:'phasedis' },
+        { type:'upgrade', ico:'🔁', name:'Rapid Fire Mount',           desc:'Ballista-type weapons fire twice per action', cost:270, act:'upg', upg:'rapidfire' },
+        { type:'wpn', ico:'⚔️', name:'Superior Ballista',              desc:'3d6 · fires every round · elven-forged, never jams', cost:145, wk:'sballista' },
+        { type:'wpn', ico:'🧠', name:'Psionic Lance',                  desc:'3d6 · hits crew directly · 3-round reload (Steel Dragon grade)', cost:680, wk:'psylance' },
+      ]
+    }
+  },
+
+  // ═══════════════════════════════════════════════════════════
   // CLUSTERSPACE — Thousand Sails Freeport, Varuun
   // ═══════════════════════════════════════════════════════════
   cluster: {
@@ -14817,6 +14928,48 @@ function _lsDefinePois() {
   }
 
   // ── KORRETH (grey) — dwarven forge-sphere, mid-tier enemies ─────────────
+  if (sphereId === 'krynn') {
+    return [
+      {
+        id:'dock', label:'Palanthas Spindle', role:'Steel Dragon Pact · Air · Hull · Crew · QM',
+        x: W*0.50, y: H*0.50, r: 70, col:'#ff8844', icon:'⚓', type:'dock',
+        safeRadius: 300,
+      },
+      {
+        id:'npc_serathis', label:'Wing-Cmdr. Serathis', role:'Steel Dragon Pact Defense Fleet',
+        x: W*0.37, y: H*0.42, r: 48, col:'#ff8844', icon:'🐉', type:'npc',
+        npcId: 'krynn_qm',
+        patrol: true, patrolR: 95, patrolSpeed: 0.22, patrolAngle: 0,
+      },
+      {
+        id:'npc_scholar', label:'Scholar Tyen Avoss', role:'Vael Academy — Void Research',
+        x: W*0.63, y: H*0.42, r: 48, col:'#aaddff', icon:'📡', type:'npc',
+        npcId: 'krynn_scholar',
+        patrol: true, patrolR: 110, patrolSpeed: 0.17, patrolAngle: 1.8,
+      },
+      {
+        id:'npc_defector', label:'Kael Voss', role:'Former Drift Corsair — Independent',
+        x: W*0.50, y: H*0.65, r: 48, col:'#cc88ff', icon:'🗡️', type:'npc',
+        npcId: 'krynn_defector',
+        patrol: true, patrolR: 100, patrolSpeed: 0.20, patrolAngle: 3.5,
+      },
+      {
+        id:'fragment', label:"Fragment Orbit — The Star Nest", role:'Navigation Core Site',
+        x: W*0.20, y: H*0.20, r: 55, col:'#ffdd44', icon:'🔮', type:'fragment',
+      },
+      {
+        id:'hazard_corsair', label:'Drift Corsair Patrol Zone', role:'⚠ Corsair Warband Activity',
+        x: W*0.76, y: H*0.26, r: 170, col:'#ff4444', icon:'⚠', type:'hazard_zone',
+        enemyKey: 'githyanki', spawnRate: 0.5,
+      },
+      {
+        id:'hazard_beholder', label:'Sentinel Drone Hunting Ground', role:'⚠ High Danger',
+        x: W*0.72, y: H*0.72, r: 155, col:'#aa44ff', icon:'⚠', type:'hazard_zone',
+        enemyKey: 'beholder', spawnRate: 0.35,
+      },
+    ];
+  }
+
   if (sphereId === 'cluster') {
     return [
       // Thousand Sails Freeport — central dock, teal colour
@@ -15017,6 +15170,17 @@ const LS_ENEMY_POOLS = {
     ['phlog_flamewing',    2],
     ['phlog_vinecrawler',  1],
   ],
+  // Vael (krynn) — mid-late tier: Drift Corsairs, Sentinel Drones, Leviathans, Trull heavy
+  krynn: [
+    ['githyanki',          5],
+    ['beholder',           4],
+    ['blackfleet',         3],
+    ['trull_warship',      3],
+    ['trull_dreadnought',  2],
+    ['leviathan',          2],
+    ['harvester',          2],
+    ['phlog_flamewing',    1],
+  ],
   // Varuun (cluster) — pirate-heavy freeport: corsairs, blackfleet, plunderers, harvesters
   cluster: [
     ['corsair',            5],
@@ -15213,7 +15377,7 @@ function lsDockDepart() {
   G.phase = 'map';
   updateUI();
   const _dSph = G.ship.loc || 'realm';
-  const _dSphName = _dSph === 'refuge' ? 'Refuge Station' : _dSph === 'grey' ? 'Korreth' : _dSph === 'cluster' ? 'Varuun' : 'Fentheris System';
+  const _dSphName = _dSph === 'refuge' ? 'Refuge Station' : _dSph === 'grey' ? 'Korreth' : _dSph === 'cluster' ? 'Varuun' : _dSph === 'krynn' ? 'Vael' : 'Fentheris System';
   addLog('Departed ' + _dSphName + ' local space.','');
 }
 
@@ -15319,7 +15483,7 @@ function _lsBuildCargoGrid() {
       G.ship.inv = G.ship.inv.filter(i => !['trade','component','artifact'].includes(i.type));
       G.ship.gold += total;
       snd('purchase', 0.7);
-      const _sellSphName = G.ship?.loc === 'refuge' ? 'IEF Refuge Station' : G.ship?.loc === 'grey' ? 'Ironhaven Station' : G.ship?.loc === 'cluster' ? 'Thousand Sails Freeport' : 'Fentheris Orbital'; addLog(`Sold all cargo at ${_sellSphName} for ${total} TS.`, 'gd');
+      const _sellSphName = G.ship?.loc === 'refuge' ? 'IEF Refuge Station' : G.ship?.loc === 'grey' ? 'Ironhaven Station' : G.ship?.loc === 'cluster' ? 'Thousand Sails Freeport' : G.ship?.loc === 'krynn' ? 'Palanthas Spindle' : 'Fentheris Orbital'; addLog(`Sold all cargo at ${_sellSphName} for ${total} TS.`, 'gd');
       updateUI(); _lsRefreshDock();
     };
     grid.appendChild(allRow);
@@ -15850,7 +16014,7 @@ function _lsShowInteract(poi) {
     dockBtn.className='btn'; dockBtn.textContent='⚓ Dock';
     dockBtn.onclick = () => {
       const _dSphId = G.ship?.loc || 'realm';
-      const _dockName = _dSphId === 'refuge' ? 'IEF Refuge Station' : _dSphId === 'grey' ? 'Ironhaven Station' : _dSphId === 'cluster' ? 'Thousand Sails Freeport' : 'Fentheris Orbital Station';
+      const _dockName = _dSphId === 'refuge' ? 'IEF Refuge Station' : _dSphId === 'grey' ? 'Ironhaven Station' : _dSphId === 'cluster' ? 'Thousand Sails Freeport' : _dSphId === 'krynn' ? 'Palanthas Spindle' : 'Fentheris Orbital Station';
       _lsLog('Docked at ' + _dockName + '.', '');
       document.getElementById('ls-dock-title').textContent = '⚓ ' + _dockName.toUpperCase();
       const _departBtn = document.getElementById('ls-dock-depart-btn');
@@ -17163,6 +17327,7 @@ function lqTrackKill(enemyKey) {
     { qid:'realm_q4_kills',  condition: (k) => k==='nautiloid' },
     { qid:'grey_q3_kills',   condition: (k) => k==='harvester' || k==='trull_slaver' },
     { qid:'cluster_q2_kills', condition: (k) => k==='harvester' },
+    { qid:'krynn_q2_kills',   condition: (k) => k==='githyanki' },
     { qid:'refuge_q1_kills', condition: (k) => k==='githyanki' },
   ];
   trackers.forEach(t => {
