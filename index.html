@@ -10516,6 +10516,10 @@ function _drawEnemyOnCtx(key, ctx, cw, ch, w, h) {
   else if(key==='leviathan')         _eF('leviathan',false,          ()=>drawLeviathan(ctx,cx,cy,r));
   else if(key==='githyanki')         _eF('githyanki',false,          ()=>drawGithyanki(ctx,cx,cy,r));
   else if(key==='harvester')         _eF('harvester',false,          ()=>drawNeogi(ctx,cx,cy,r));
+  else if(key==='fd_realm_drone')    _eF('fd_realm_drone',false,     ()=>drawGoblinCutter(ctx,cx,cy,r));
+  else if(key==='fd_realm_scout')    _eF('fd_realm_scout',false,     ()=>drawCorsairSloop(ctx,cx,cy,r,true));
+  else if(key==='fd_grey_construct') _eF('fd_grey_construct',false,  ()=>drawHammer(ctx,cx,cy,r,true));
+  else if(key==='fd_grey_marine')    _eF('fd_grey_marine',false,     ()=>drawTrullPatrol(ctx,cx,cy,r));
   else                               drawSquid(ctx,cx,cy,r,true);
 }
 
@@ -10595,6 +10599,10 @@ function drawCbtShips(key){
   else if(key==='wb_clutch')   _eF('wb_clutch',false,   ()=>drawClutchMother(ec,100,65,46));
   else if(key==='wb_murmur')   _eF('wb_murmur',false,   ()=>drawTheMurmur(ec,100,65,46));
   else if(key==='shothothug')  _eF('wb_murmur',false,   ()=>drawTheMurmur(ec,100,65,46));
+  else if(key==='fd_realm_drone')    _eF('fd_realm_drone',false,    ()=>drawGoblinCutter(ec,100,65,46));
+  else if(key==='fd_realm_scout')    _eF('fd_realm_scout',false,    ()=>drawCorsairSloop(ec,100,65,46,true));
+  else if(key==='fd_grey_construct') _eF('fd_grey_construct',false, ()=>drawHammer(ec,100,65,46,true));
+  else if(key==='fd_grey_marine')    _eF('fd_grey_marine',false,    ()=>drawTrullPatrol(ec,100,65,46));
   else drawSquid(ec,100,65,46,true);
 }
 
