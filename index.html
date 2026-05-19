@@ -18212,7 +18212,7 @@ function _lsCheckReturnAfterCombat() {
   // Fragment dungeon — minion combat return (reopen dungeon)
   if(FD.pendingReturn) {
     FD.pendingReturn = false;
-    if(G.cbt?.enemy?._key) lqTrackKill(G.cbt.enemy._key);
+    // lqTrackKill already fired in cbtWin — do not call again here
     if(FD.pendingEnemyIdx !== null) {
       FD.enemies.splice(FD.pendingEnemyIdx, 1);
       FD.pendingEnemyIdx = null;
@@ -18235,7 +18235,7 @@ function _lsCheckReturnAfterCombat() {
   }
   if(_lsPendingReturn) {
     _lsPendingReturn = false;
-    if(G.cbt?.enemy?._key) lqTrackKill(G.cbt.enemy._key);
+    // lqTrackKill already fired in cbtWin — do not call again here
     _lsPendingFragment = null;
     setTimeout(() => openLocalSpace(), 600);
   }
