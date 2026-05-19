@@ -296,27 +296,15 @@ body {
 #cbt-enemy-stack { display:flex; flex-direction:column; align-items:center; gap:5px; }
 .cbt-extra-row   { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
 .cbt-extra-unit  { display:flex; flex-direction:column; align-items:center; gap:2px; }
-.cv-extra-canvas {
-  border-radius:4px; border:1px solid #aa334455;
-  background:rgba(15,3,38,0.75);
-  transition: transform 0.15s, box-shadow 0.15s;
-  cursor:default;
-}
-.cv-extra-canvas:hover { border-color:#cc6655; }
-.cbt-extra-name {
-  font-family:'Cinzel',serif; font-size:7px; color:#886655;
-  text-align:center; letter-spacing:0.5px; max-width:88px;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
+.cv-extra-canvas { border-radius:4px; border:1px solid #aa334455; background:rgba(15,3,38,0.75); transition:transform 0.15s,box-shadow 0.15s; }
+.cbt-extra-name  { font-family:'Cinzel',serif; font-size:7px; color:#886655; text-align:center; letter-spacing:0.5px; max-width:88px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 @keyframes extra-attack-flash {
   0%   { box-shadow:none; transform:scale(1); border-color:#aa334455; }
-  25%  { box-shadow:0 0 16px 5px #ff6633, 0 0 6px 2px #ff3300; transform:scale(1.22); border-color:#ff6633; }
+  25%  { box-shadow:0 0 16px 5px #ff6633,0 0 6px 2px #ff3300; transform:scale(1.22); border-color:#ff6633; }
   65%  { box-shadow:0 0 10px 3px #ff884488; transform:scale(1.14); border-color:#ff8844; }
   100% { box-shadow:none; transform:scale(1); border-color:#aa334455; }
 }
-.cv-extra-canvas.stack-attacking {
-  animation: extra-attack-flash 0.75s ease-out forwards;
-}
+.cv-extra-canvas.stack-attacking { animation:extra-attack-flash 0.75s ease-out forwards; }
 
 /* Combat ability row */
 .cbt-ability-row { display:flex; gap:5px; flex-wrap:wrap; justify-content:center; width:100%; max-width:660px; margin-top:4px; }
@@ -1962,7 +1950,7 @@ body {
           <div class="cname" id="ct-ename">Shell Drifter</div>
           <div id="cbt-enemy-stack">
             <canvas id="cv-enemy" width="200" height="130"></canvas>
-            <!-- extra enemy canvases injected here by _buildEnemyStack() -->
+            <!-- extra enemy canvases injected by _buildEnemyStack() -->
           </div>
           <div class="cstat">Hull: <span id="ct-ehp">80</span>/<span id="ct-emhp">80</span></div>
           <div class="hpw"><div class="hpf" id="ct-ebar" style="width:100%"></div></div>
@@ -2998,6 +2986,22 @@ const ENM = {
       { n:'Scout Crossbows',  ico:'🏹', d:[2,6], cd:0, threat:2, txt:'Disciplined patrol fire — every round.' },
       { n:'Boarding Grapple', ico:'⛓️', d:[1,6], cd:2, threat:3, txt:'Grapple-and-board — damage + 1 crew lost.', crew:1 }
     ]},
+
+  // ── GREY (Dwarven Vault) dungeon minions ──────────────────────────────
+  fd_grey_golem: { name:'Vault-Stone Golem', sub:'Dwarven Vault — Automated Guardian', hp:58, maxHp:58, crew:0, maxCrew:0, g:[18,30],
+    atk:[{n:'Granite Slam',d:[2,6],txt:'The golem drives a fist of solid forge-stone into your hull!'},{n:'Rune Pulse',d:[1,6],txt:'Dwarven runic energy discharges from the golem\'s core!'}],
+    sp:{n:'Stone Shell',c:0.22,txt:'The golem hardens its outer shell — taking 50% less damage next hit!',fx:'dodge'},col:'#8899aa',diff:2,
+    wpns:[
+      { n:'Granite Slam',    ico:'🪨', d:[2,6], cd:0, threat:2, txt:'Relentless forge-stone impact — hits every round.' },
+      { n:'Rune Discharge',  ico:'⚡', d:[2,5], cd:2, threat:3, txt:'Dwarven rune energy pulse — bypasses light plating.' }
+    ]},
+  fd_grey_rune: { name:'Rune Sentinel', sub:'Dwarven Vault — Rune Ward', hp:44, maxHp:44, crew:0, maxCrew:0, g:[14,26],
+    atk:[{n:'Rune Lance',d:[1,8],txt:'A focused rune-lance cuts across your hull like a blade!'},{n:'Ward Pulse',d:[1,6],txt:'The sentinel broadcasts a ward pulse — your weapons stutter!'}],
+    sp:{n:'Recall Rune',c:0.28,txt:'The sentinel activates a recall rune — teleporting to an advantageous flanking position!',fx:'dodge'},col:'#aabb88',diff:1,
+    wpns:[
+      { n:'Rune Lance',      ico:'🔷', d:[1,8], cd:1, threat:2, txt:'Focused runic beam — precise and fast.' },
+      { n:'Ward Disruption', ico:'🌀', d:[1,6], cd:2, threat:3, txt:'Disrupts your weapons — one weapon disabled for 1 round.', sabotage:true }
+    ]},
 };
 
 // the Unnamed — the true final boss, revealed mid-Trull Overmind fight
@@ -3129,6 +3133,8 @@ const LOOT = {
   // ── Fragment Dungeon Minion loot ─────────────────────────────────────────
   fd_realm_drone:  [{id:'moteash',c:0.70},{id:'repkit',c:0.55},{id:'starcoin',c:0.40},{id:'gobsack',c:0.35}],
   fd_realm_scout:  [{id:'plunder',c:0.75},{id:'silksw',c:0.60},{id:'crewmead',c:0.45},{id:'starcoin',c:0.50},{id:'corskit',c:0.35}],
+  fd_grey_golem:   [{id:'arccore',c:0.65},{id:'repkit',c:0.55},{id:'starcoin',c:0.50},{id:'runeshard',c:0.45}],
+  fd_grey_rune:    [{id:'runeshard',c:0.70},{id:'starcoin',c:0.55},{id:'arccore',c:0.40},{id:'repkit',c:0.35}],
   // ── Void Rift enemy loot ─────────────────────────────────────────────
   vodoniPatrol:[{id:'vodeml',c:0.55},{id:'starcoin',c:0.75},{id:'arccore',c:0.30},{id:'repkit',c:0.45},{id:'crewmead',c:0.25},{id:'vodncore',c:0.08}],
   scroBattle:  [{id:'trulltrophy',c:0.70},{id:'plunder',c:0.65},{id:'crewmead',c:0.40},{id:'starcoin',c:0.55},{id:'arccore',c:0.22}],
@@ -3428,7 +3434,7 @@ const FRAG_GUARDIANS = {
     wpns:[
       { n:'Siege Cannon Battery',   ico:'🏰', d:[3,10], cd:1, threat:3, txt:'Dwarven siege guns — methodical, punishing, unceasing.' },
       { n:'Iron Marine Boarding',   ico:'🪖', d:[2,8],  cd:2, threat:4, txt:'Armoured marines breach your hull — 1 crew lost.', crew:1 },
-      { n:'Fortress Suppression',   ico:'💣', d:[4,8],  cd:3, threat:5, txt:'DANGER: Concentrated suppression fire — all your weapon cooldowns +1 this round.', sabotage:true }
+      { n:'Fortress Suppression',   ico:'💣', d:[4,8],  cd:3, threat:5, txt:'DANGER: Concentrated suppression fire.', sabotage:true }
     ]},
   fg_krynn:  { name:"War-Commander Zith'ral",  sub:"Fragment Guardian — The Star Nest",   hp:172, maxHp:172, g:[88,128],
     atk:[{n:'Silver Sword Salvo',d:[3,10],txt:'Elite Drift Corsair warriors unleash a devastating broadside!'},{n:'Astral Boarding',d:[2,8],txt:'Warriors phase through your hull — crew dragged away!',crew:2}],
@@ -3436,7 +3442,7 @@ const FRAG_GUARDIANS = {
     wpns:[
       { n:'Silver Sword Salvo',     ico:'⚔️', d:[3,10], cd:1, threat:3, txt:'Elite warrior broadside — precision and power combined.' },
       { n:'Astral Boarding Party',  ico:'🌌', d:[2,8],  cd:2, threat:4, txt:'Warriors phase through your hull — 2 crew dragged into the void!', crew:2 },
-      { n:'Void Rend',              ico:'🌀', d:[4,8],  cd:3, threat:5, txt:'DANGER: Reality tears open around your ship — ignores all resistance.', pierceres:true }
+      { n:'Void Rend',              ico:'🌀', d:[4,8],  cd:3, threat:5, txt:'DANGER: Reality tears open — ignores all resistance.', pierceres:true }
     ]},
   fg_cluster:{ name:'The Broker',              sub:"Fragment Guardian — The Broker's Cache", hp:158, maxHp:158, g:[85,125],
     atk:[{n:'Venom Barrage',d:[3,10],txt:'Harvester venom-bolts corrode your hull plating!'},{n:'Thrall Wave',d:[2,8],txt:'Mind-controlled thralls storm your ship — crew lost!',crew:2}],
@@ -3451,16 +3457,16 @@ const FRAG_GUARDIANS = {
     sp:{n:'Eye Ray Storm',c:0.30,txt:'A storm of eye rays lances from every angle simultaneously!',fx:'multi',d:[3,8]}, col:'#ff3399', diff:4,
     wpns:[
       { n:'Disintegration Beam',    ico:'🔴', d:[4,10], cd:1, threat:4, txt:'DANGER: Concentrated disintegration ray — massive hull damage.' },
-      { n:'Anti-Magic Pulse',       ico:'🌐', d:[2,8],  cd:2, threat:3, txt:'Disrupts weapon systems — disables one of your weapons for 1 round.', sabotage:true },
+      { n:'Anti-Magic Pulse',       ico:'🌐', d:[2,8],  cd:2, threat:3, txt:'Disrupts weapon systems — disables one weapon for 1 round.', sabotage:true },
       { n:'Eye Ray Barrage',        ico:'👁️', d:[3,10], cd:3, threat:5, txt:'DANGER: Multi-spectrum eye rays — bypasses all resistance.', pierceres:true }
     ]},
   fg_dark:   { name:'The Void Prophet',        sub:'Fragment Guardian — The Dark Mote',   hp:200, maxHp:200, g:[110,160],
-    atk:[{n:'Void Slam',d:[4,10],txt:'Reality warps — the impact arrives before the sound.'},{n:'Dark Breath',d:[3,8],txt:'Lightless void energy floods your ship from within!'}],
+    atk:[{n:'Void Slam',d:[4,10],txt:'Reality warps — the impact arrives before the sound.'},{n:'Dark Breath',d:[3,10],txt:'Lightless void energy floods your ship from within!'}],
     sp:{n:'Phase Rift',c:0.30,txt:'The Prophet tears a phase rift — your next attack passes straight through!',fx:'phase'}, col:'#6633cc', diff:4,
     wpns:[
       { n:'Void Slam',              ico:'⬛', d:[4,10], cd:1, threat:4, txt:'Reality warps — the impact arrives before the sound. Massive damage.' },
-      { n:'Dark Breath',            ico:'🌑', d:[3,10], cd:2, threat:4, txt:'Lightless void energy floods your ship from within — no resistance applies.', pierceres:true },
-      { n:'Unmaking Wave',          ico:'🕳️', d:[4,8],  cd:3, threat:5, txt:'DANGER: Existential damage — reduces your max hull by 6 until repaired.', special:'corrode' }
+      { n:'Dark Breath',            ico:'🌑', d:[3,10], cd:2, threat:4, txt:'Lightless void energy floods your ship — no resistance applies.', pierceres:true },
+      { n:'Unmaking Wave',          ico:'🕳️', d:[4,8],  cd:3, threat:5, txt:'DANGER: Existential damage — reduces max hull by 6 until repaired.', special:'corrode' }
     ]},
 };
 
@@ -3948,7 +3954,7 @@ const DAY_START_HOUR = 6;
 
 // Base real-time per leg at speed 4 (base ship)
 // Speed upgrades halve this: speed 6 = 75%, speed 8 = 50%, speed 10 = 40%
-const WATCH_REAL_MS_BASE = 24000; // 24 real seconds per watch (8 hours × 3s/hour) at base speed
+const WATCH_REAL_MS_BASE = 60000; // 60 real seconds per watch (8 hours × 7.5s/hour) at base speed
 
 // Compute actual WATCH_REAL_MS based on ship speed
 function getWatchRealMs() {
@@ -3993,8 +3999,8 @@ function laneWatchCost(lane, ship) {
   return Math.max(1, cost - speedBonus);
 }
 
-// Animation: 24 seconds per watch at base speed 4 (8 hours × 3 real seconds per hour)
-// Higher speed = faster animation — speed 6 = ~18s, speed 8 = ~12s, speed 10 = ~9.6s
+// Animation: 60 seconds per watch at base speed 4 (8 hours × 7.5s/hour)
+// Higher speed = faster animation — speed 6 = 40s, speed 8 = 30s, speed 10 = 24s
 function getWatchRealMs() {
   const speed = G?.ship?.speed || 4;
   return Math.max(6000, Math.round(24000 * (4 / speed)));
@@ -4768,6 +4774,14 @@ const SHIP_IMAGE_DATA = {
   'wb_clutch':   'images/ship_wb_clutch.png?v=2',
   'wb_murmur':   'images/ship_wb_murmur.png?v=2',
   'npc_ship':    'images/ship_npc.png?v=2',
+  // Fragment dungeon — Realm (Flotsam Field)
+  'fd_realm_drone': 'images/ship_fd_realm_drone.png?v=2',
+  'fd_realm_scout': 'images/ship_fd_realm_scout.png?v=2',
+  'fg_realm':       'images/ship_fg_realm.png?v=2',
+  // Fragment dungeon — Grey (Dwarven Vault)
+  'fd_grey_golem':  'images/ship_fd_grey_golem.png?v=2',
+  'fd_grey_rune':   'images/ship_fd_grey_rune.png?v=2',
+  'fg_grey':        'images/ship_fg_grey.png?v=2',
 };
 const _SHIP_IMG = {};
 const _SHIP_IMG_FAILED = new Set();
@@ -4783,7 +4797,10 @@ function loadShipImages() {
       if(G.cbt && G.phase === 'combat') {
         const enemyKey = G.cbt.enemy?._key;
         // Map guardian keys to the image key they use in drawCbtShips
-        const guardianImgKey = {fg_krynn:'githyanki', fg_hero:'beholder', fg_dark:'leviathan'};
+        const guardianImgKey = {
+          fg_realm:'fg_realm', fg_grey:'fg_grey', fg_cluster:'harvester',
+          fg_krynn:'githyanki', fg_hero:'beholder', fg_dark:'leviathan'
+        };
         const resolvedEnemyImgKey = guardianImgKey[enemyKey] || enemyKey;
         if(key === resolvedEnemyImgKey || key === G.ship?.type) {
           drawCbtShips(enemyKey);
@@ -4799,7 +4816,10 @@ function loadShipImages() {
           if(key === 'pinnace') drawMenuShip();
           if(G.cbt && G.phase === 'combat') {
             const ek = G.cbt.enemy?._key;
-            const gik = {fg_krynn:'githyanki', fg_hero:'beholder', fg_dark:'leviathan'};
+            const gik = {
+              fg_realm:'fg_realm', fg_grey:'fg_grey', fg_cluster:'harvester',
+              fg_krynn:'githyanki', fg_hero:'beholder', fg_dark:'leviathan'
+            };
             if(key === (gik[ek] || ek) || key === G.ship?.type) drawCbtShips(ek);
           }
         };
@@ -8617,16 +8637,53 @@ function tsRender(timestamp) {
     else                          drawManow(ctx, 0, 0, 42, false);
   });
 
-  // Engine trail — fires from the STERN (negative X in ship space = below on screen after rotation)
-  const trailLen = 40 + tier * 5;
-  for (let i = 0; i < 5; i++) {
-    const tx = -sw * 0.4 - i * trailLen / 5;
-    const ta = (0.5 - i * 0.09) * 0.7;
-    const tr = (4 - i * 0.6) * (0.7 + 0.3 * Math.sin(TS.t * 3 + i));
-    const tg = ctx.createRadialGradient(tx, 0, 0, tx, 0, tr * 2);
-    tg.addColorStop(0, `rgba(160,80,255,${ta})`);
-    tg.addColorStop(1, 'transparent');
-    ctx.fillStyle = tg; ctx.beginPath(); ctx.arc(tx, 0, tr * 2, 0, Math.PI*2); ctx.fill();
+  // Engine trail — speed-scaled: more ports, longer, brighter at higher speeds
+  {
+    const spd = G.ship?.speed || 4;
+    const trailTier = spd <= 4 ? 0 : spd <= 6 ? 1 : spd <= 8 ? 2 : 3;
+    const TRAIL = [
+      { count:5,  len:40,  coreR:3.5, glowR:7,  coreCol:'rgba(160,80,255,',  glowCol:'rgba(100,40,200,',  ports:1, spread:0      },
+      { count:8,  len:60,  coreR:4.5, glowR:10, coreCol:'rgba(100,160,255,', glowCol:'rgba(60,100,255,',  ports:1, spread:0      },
+      { count:12, len:85,  coreR:5.5, glowR:14, coreCol:'rgba(100,220,255,', glowCol:'rgba(0,160,255,',   ports:2, spread:sw*0.18 },
+      { count:16, len:110, coreR:7,   glowR:18, coreCol:'rgba(255,255,255,', glowCol:'rgba(80,200,255,',  ports:3, spread:sw*0.22 },
+    ];
+    const tc = TRAIL[trailTier];
+    const portOffsets = tc.ports===1?[0]:tc.ports===2?[-tc.spread,tc.spread]:[-tc.spread,0,tc.spread];
+    portOffsets.forEach((portOff,pi) => {
+      for(let i=0;i<tc.count;i++){
+        const frac=i/tc.count, tx=-sw*0.4-frac*tc.len, ty=portOff, decay=1-frac;
+        const fan=frac*tc.spread*0.4*Math.sin(TS.t*4+pi*2.1+i*0.3);
+        const coreA=decay*(0.85-pi*0.12);
+        const cr=tc.coreR*decay*(0.8+0.2*Math.sin(TS.t*6+i+pi));
+        const cg=ctx.createRadialGradient(tx,ty+fan,0,tx,ty+fan,cr*1.6);
+        cg.addColorStop(0,tc.coreCol+Math.min(1,coreA).toFixed(2)+')');
+        cg.addColorStop(1,'transparent');
+        ctx.fillStyle=cg; ctx.beginPath(); ctx.arc(tx,ty+fan,cr*1.6,0,Math.PI*2); ctx.fill();
+        if(i%2===0){
+          const ga=decay*0.30*(1-pi*0.08), gr=tc.glowR*decay;
+          const gg=ctx.createRadialGradient(tx,ty+fan,0,tx,ty+fan,gr);
+          gg.addColorStop(0,tc.glowCol+Math.min(1,ga).toFixed(2)+')');
+          gg.addColorStop(1,'transparent');
+          ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(tx,ty+fan,gr,0,Math.PI*2); ctx.fill();
+        }
+      }
+      if(trailTier>=2){
+        const beamLen=tc.len*0.35, beamA=0.55-pi*0.12;
+        const bg2=ctx.createLinearGradient(-sw*0.4,portOff,-sw*0.4-beamLen,portOff);
+        bg2.addColorStop(0,tc.coreCol+beamA.toFixed(2)+')');
+        bg2.addColorStop(1,tc.glowCol+'0)');
+        ctx.strokeStyle=bg2; ctx.lineWidth=tc.coreR*1.6*(1-pi*0.2); ctx.lineCap='round';
+        ctx.beginPath(); ctx.moveTo(-sw*0.4,portOff); ctx.lineTo(-sw*0.4-beamLen,portOff); ctx.stroke();
+      }
+    });
+    if(trailTier===3){
+      const coronaA=0.18+0.10*Math.sin(TS.t*5.5);
+      const cg2=ctx.createRadialGradient(-sw*0.55,0,0,-sw*0.55,0,tc.len*0.6);
+      cg2.addColorStop(0,`rgba(120,220,255,${(coronaA*1.5).toFixed(2)})`);
+      cg2.addColorStop(0.4,`rgba(60,160,255,${coronaA.toFixed(2)})`);
+      cg2.addColorStop(1,'transparent');
+      ctx.fillStyle=cg2; ctx.beginPath(); ctx.arc(-sw*0.55,0,tc.len*0.6,0,Math.PI*2); ctx.fill();
+    }
   }
   ctx.restore();
 
@@ -9559,7 +9616,13 @@ function buy(item){
           addLog(`Hull Plating installed: +50 max hull.`, 'gd'); break;
         case 'engine':
           s.speed += 2;
-          addLog(`Speed Engine installed: +2 speed.`, 'gd'); break;
+          addLog(`Speed Engine installed: +2 speed (now ${s.speed}).`, 'gd'); break;
+        case 'engine2':
+          s.speed += 2;
+          addLog(`Overclocked Helm Drive installed: +2 speed (now ${s.speed}).`, 'gd'); break;
+        case 'engine3':
+          s.speed += 2;
+          addLog(`Void-Runner Core installed: +2 speed (now ${s.speed}). Maximum velocity achieved.`, 'gd'); break;
         case 'quarters':
           s.maxCrew += 8; s.crew = s.maxCrew;
           addLog(`Crew Quarters installed: +8 max crew.`, 'gd'); break;
@@ -9892,24 +9955,61 @@ function showGuardianConfirm(site){
   document.getElementById('grd-stats').textContent =
     `${gd.name}  ·  ${gd.hp} Hull Points  ·  ${gd.g[0]}–${gd.g[1]} TS`;
   document.getElementById('grd-lore').textContent  = site.lore;
-  // Draw guardian ship on canvas
-  const gc = document.getElementById('grd-canvas').getContext('2d');
-  gc.clearRect(0,0,200,120);
-  gc.fillStyle='rgba(5,0,15,0.7)'; gc.fillRect(0,0,200,120);
-  // Starfield
-  for(let i=0;i<35;i++){
-    gc.fillStyle=`rgba(255,255,255,${0.1+Math.random()*0.25})`;
-    gc.beginPath(); gc.arc(Math.random()*200,Math.random()*120,Math.random()*1.2+0.3,0,Math.PI*2); gc.fill();
+
+  // Draw guardian ship on canvas — use PNG if loaded, fall back to procedural
+  const grdCv = document.getElementById('grd-canvas');
+  const gc = grdCv.getContext('2d');
+
+  function _drawGuardianPreview() {
+    gc.clearRect(0,0,200,120);
+    gc.fillStyle='rgba(5,0,15,0.85)'; gc.fillRect(0,0,200,120);
+    // Starfield backdrop
+    for(let i=0;i<40;i++){
+      gc.fillStyle=`rgba(255,255,255,${0.08+Math.random()*0.22})`;
+      gc.beginPath(); gc.arc(Math.random()*200,Math.random()*120,Math.random()*1.3+0.3,0,Math.PI*2); gc.fill();
+    }
+    // Glow halo behind ship
+    const haloCol = gd.col || '#cc8833';
+    const halo = gc.createRadialGradient(100,60,0,100,60,60);
+    halo.addColorStop(0, haloCol+'33');
+    halo.addColorStop(1, 'transparent');
+    gc.fillStyle=halo; gc.fillRect(0,0,200,120);
+    // Ship image — PNG preferred, procedural fallback
+    const imgMap = {
+      fg_realm:'fg_realm', fg_grey:'fg_grey', fg_cluster:'harvester',
+      fg_krynn:'githyanki', fg_hero:'beholder', fg_dark:'leviathan'
+    };
+    const imgKey = imgMap[site.guardianKey] || site.guardianKey;
+    drawShipImg(imgKey, gc, 100, 60, 140, 88, false, () => {
+      if(site.guardianKey==='fg_realm')       drawSquid(gc,100,60,38,true);
+      else if(site.guardianKey==='fg_grey')    drawHammer(gc,100,60,38,true);
+      else if(site.guardianKey==='fg_krynn')   drawGithyanki(gc,100,60,38);
+      else if(site.guardianKey==='fg_cluster') drawSquid(gc,100,60,38,true);
+      else if(site.guardianKey==='fg_hero')    drawBeholder(gc,100,60,38);
+      else if(site.guardianKey==='fg_dark')    drawLeviathan(gc,100,60,38);
+    });
   }
-  const key = site.guardianKey;
-  if(key==='fg_realm')       drawSquid(gc,100,60,38,true);
-  else if(key==='fg_grey')    drawHammer(gc,100,60,38,true);
-  else if(key==='fg_krynn')   drawGithyanki(gc,100,60,38);
-  else if(key==='fg_cluster') drawSquid(gc,100,60,38,true);
-  else if(key==='fg_hero')    drawBeholder(gc,100,60,38);
-  else if(key==='fg_dark')    drawLeviathan(gc,100,60,38);
+
+  _drawGuardianPreview();
+
+  // Poll until the PNG loads then redraw (handles slow connections)
+  const imgMap2 = {fg_realm:'fg_realm',fg_grey:'fg_grey',fg_cluster:'harvester',
+                   fg_krynn:'githyanki',fg_hero:'beholder',fg_dark:'leviathan'};
+  const waitKey = imgMap2[site.guardianKey] || site.guardianKey;
+  if(!_SHIP_IMG[waitKey]) {
+    let attempts2 = 0;
+    const poll2 = setInterval(() => {
+      attempts2++;
+      if(_SHIP_IMG[waitKey] || attempts2 > 25) { clearInterval(poll2); }
+      if(_SHIP_IMG[waitKey] && document.getElementById('ov-guardian').classList.contains('on')) {
+        _drawGuardianPreview();
+        clearInterval(poll2);
+      }
+    }, 400);
+  }
+
   document.getElementById('ov-guardian').classList.add('on');
-  setAmbient('combat'); // ominous
+  setAmbient('combat');
 }
 
 function confirmGuardianFight(){
@@ -9976,7 +10076,10 @@ function startCombat(key){
   (function _waitForCbtImg() {
     const imgKey = key;
     const shipKey = G.ship?.type;
-    const guardianMap = {fg_krynn:'githyanki', fg_hero:'beholder', fg_dark:'leviathan'};
+    const guardianMap = {
+      fg_realm:'fg_realm', fg_grey:'fg_grey', fg_cluster:'harvester',
+      fg_krynn:'githyanki', fg_hero:'beholder', fg_dark:'leviathan'
+    };
     const resolvedEnemyImg = guardianMap[imgKey] || imgKey;
     if (_SHIP_IMG[resolvedEnemyImg] && _SHIP_IMG[shipKey]) return; // both already loaded
     let attempts = 0;
@@ -10191,90 +10294,52 @@ function updateCbtUI(){
   updateUI();
 }
 
-// ── Draw any enemy ship onto an arbitrary canvas context ──────────────────
-// Used by the multi-enemy stack to render queued enemies at any size.
+// Draw any enemy key onto an arbitrary canvas context (used by stack)
 function _drawEnemyOnCtx(key, ctx, cw, ch, w, h) {
-  ctx.clearRect(0, 0, cw, ch);
-  const cx = cw/2, cy = ch/2;
-  const r  = Math.round(h * 0.47); // fallback procedural draw radius
-  const _eF = (k, flip, fn) => drawShipImg(k, ctx, cx, cy, w, h, flip, fn);
-  if(key==='fg_realm')              _eF('squid',false,             ()=>drawSquid(ctx,cx,cy,r,true));
-  else if(key==='fg_grey')          _eF('hammer',false,            ()=>drawHammer(ctx,cx,cy,r,true));
-  else if(key==='fg_krynn')         _eF('githyanki',false,         ()=>drawGithyanki(ctx,cx,cy,r));
-  else if(key==='fg_cluster')       _eF('squid',false,             ()=>drawSquid(ctx,cx,cy,r,true));
-  else if(key==='fg_hero')          _eF('beholder',false,          ()=>drawBeholder(ctx,cx,cy,r));
-  else if(key==='fg_dark')          _eF('leviathan',false,         ()=>drawLeviathan(ctx,cx,cy,r));
-  else if(key==='corsair')          _eF('corsair',false,           ()=>drawCorsairSloop(ctx,cx,cy,r,true));
-  else if(key==='plunderer')        _eF('plunderer',false,         ()=>drawPlundererBrig(ctx,cx,cy,r,true));
-  else if(key==='blackfleet')       _eF('blackfleet',false,        ()=>drawBlackFleetReaver(ctx,cx,cy,r,true));
-  else if(key==='nautiloid')        _eF('nautiloid',false,         ()=>drawNautiloid(ctx,cx,cy,r));
-  else if(key==='beholder')         _eF('beholder',false,          ()=>drawBeholder(ctx,cx,cy,r));
-  else if(key==='leviathan')        _eF('leviathan',false,         ()=>drawLeviathan(ctx,cx,cy,r));
-  else if(key==='githyanki')        _eF('githyanki',false,         ()=>drawGithyanki(ctx,cx,cy,r));
-  else if(key==='harvester')        _eF('harvester',false,         ()=>drawNeogi(ctx,cx,cy,r));
-  else if(key==='thrikreen')        _eF('thrikreen',false,         ()=>drawThriKreen(ctx,cx,cy,r));
-  else if(key==='vodoniPatrol')     _eF('vodoniPatrol',false,      ()=>drawVodoniWarship(ctx,cx,cy,r));
-  else if(key==='trullBattle')      _eF('trullBattle',false,       ()=>drawTrullBattleCruiser(ctx,cx,cy,r));
-  else if(key==='frStalker')        _eF('frStalker',false,         ()=>drawFarRealmStalker(ctx,cx,cy,r));
-  else if(key==='frHorde')          _eF('frHorde',false,           ()=>drawFarRealmHorde(ctx,cx,cy,r));
-  else if(key==='goblin_cutter')    _eF('goblin_cutter',false,     ()=>drawGoblinCutter(ctx,cx,cy,r));
-  else if(key==='goblin_rocketer')  _eF('goblin_rocketer',false,   ()=>drawGoblinRocketer(ctx,cx,cy,r));
-  else if(key==='goblin_shaman_boat')_eF('goblin_shaman_boat',false,()=>drawGoblinShaman(ctx,cx,cy,r));
-  else if(key==='trull_patrol')     _eF('trull_patrol',false,      ()=>drawTrullPatrol(ctx,cx,cy,r));
-  else if(key==='trull_enforcer')   _eF('trull_enforcer',false,    ()=>drawTrullEnforcer(ctx,cx,cy,r));
-  else if(key==='trull_slaver')     _eF('trull_slaver',false,      ()=>drawTrullSlaver(ctx,cx,cy,r));
-  else if(key==='trull_warship')    _eF('trull_warship',false,     ()=>drawTrullWarship(ctx,cx,cy,r));
-  else if(key==='trull_dreadnought')_eF('trull_dreadnought',false, ()=>drawTrullDreadnought(ctx,cx,cy,r));
-  else if(key==='phlog_mote')       _eF('phlog_mote',false,        ()=>drawPhlogMote(ctx,cx,cy,r));
-  else if(key==='phlog_jellyfish')  _eF('phlog_jellyfish',false,   ()=>drawPhlogJellyfish(ctx,cx,cy,r));
-  else if(key==='phlog_flamewing')  _eF('phlog_flamewing',false,   ()=>drawPhlogFlamewing(ctx,cx,cy,r));
-  else if(key==='phlog_vinecrawler')_eF('phlog_vinecrawler',false, ()=>drawPhlogVinecrawler(ctx,cx,cy,r));
-  else if(key==='void_shark')       _eF('void_shark',false,        ()=>drawVoidShark(ctx,cx,cy,r));
-  else if(key==='wb_grex')          _eF('wb_grex',false,           ()=>drawWarlordGrex(ctx,cx,cy,r));
-  else if(key==='wb_admiral')       _eF('wb_admiral',false,        ()=>drawHollowAdmiral(ctx,cx,cy,r));
-  else if(key==='wb_clutch')        _eF('wb_clutch',false,         ()=>drawClutchMother(ctx,cx,cy,r));
-  else if(key==='wb_murmur')        _eF('wb_murmur',false,         ()=>drawTheMurmur(ctx,cx,cy,r));
-  else drawSquid(ctx, cx, cy, r, true);
+  ctx.clearRect(0,0,cw,ch);
+  const cx=cw/2, cy=ch/2, r=Math.round(h*0.47);
+  const _eF=(k,flip,fn)=>drawShipImg(k,ctx,cx,cy,w,h,flip,fn);
+  if(key==='fg_realm')               _eF('squid',false,              ()=>drawSquid(ctx,cx,cy,r,true));
+  else if(key==='fg_grey')           _eF('hammer',false,             ()=>drawHammer(ctx,cx,cy,r,true));
+  else if(key==='fg_krynn')          _eF('githyanki',false,          ()=>drawGithyanki(ctx,cx,cy,r));
+  else if(key==='fg_cluster')        _eF('squid',false,              ()=>drawSquid(ctx,cx,cy,r,true));
+  else if(key==='fg_hero')           _eF('beholder',false,           ()=>drawBeholder(ctx,cx,cy,r));
+  else if(key==='fg_dark')           _eF('leviathan',false,          ()=>drawLeviathan(ctx,cx,cy,r));
+  else if(key==='corsair')           _eF('corsair',false,            ()=>drawCorsairSloop(ctx,cx,cy,r,true));
+  else if(key==='goblin_cutter')     _eF('goblin_cutter',false,      ()=>drawGoblinCutter(ctx,cx,cy,r));
+  else if(key==='goblin_rocketer')   _eF('goblin_rocketer',false,    ()=>drawGoblinRocketer(ctx,cx,cy,r));
+  else if(key==='goblin_shaman_boat')_eF('goblin_shaman_boat',false, ()=>drawGoblinShaman(ctx,cx,cy,r));
+  else if(key==='trull_patrol')      _eF('trull_patrol',false,       ()=>drawTrullPatrol(ctx,cx,cy,r));
+  else if(key==='phlog_mote')        _eF('phlog_mote',false,         ()=>drawPhlogMote(ctx,cx,cy,r));
+  else if(key==='nautiloid')         _eF('nautiloid',false,          ()=>drawNautiloid(ctx,cx,cy,r));
+  else if(key==='beholder')          _eF('beholder',false,           ()=>drawBeholder(ctx,cx,cy,r));
+  else if(key==='leviathan')         _eF('leviathan',false,          ()=>drawLeviathan(ctx,cx,cy,r));
+  else if(key==='githyanki')         _eF('githyanki',false,          ()=>drawGithyanki(ctx,cx,cy,r));
+  else if(key==='harvester')         _eF('harvester',false,          ()=>drawNeogi(ctx,cx,cy,r));
+  else                               drawSquid(ctx,cx,cy,r,true);
 }
 
-// ── Build / refresh the stacked extra-enemy canvas row ────────────────────
-// Called after startCombat (to show the queue), after each enemy dies
-// (to remove them), and at battle end (to clear).
 function _buildEnemyStack() {
   const stack = document.getElementById('cbt-enemy-stack');
   if(!stack) return;
-  // Remove any previous extra canvases
-  stack.querySelectorAll('.cbt-extra-row').forEach(el => el.remove());
+  stack.querySelectorAll('.cbt-extra-row').forEach(el=>el.remove());
   const queue = G.cbt?._lsExtraQueue;
-  if(!queue || queue.length === 0) return;
-
+  if(!queue||queue.length===0) return;
   const row = document.createElement('div');
   row.className = 'cbt-extra-row';
-
-  queue.forEach((xtra, idx) => {
+  queue.forEach((xtra,idx) => {
     const unit = document.createElement('div');
     unit.className = 'cbt-extra-unit';
-
     const c = document.createElement('canvas');
-    c.width  = 90; c.height = 60;
-    c.className = 'cv-extra-canvas';
-    c.id    = `cv-extra-${idx}`;
-    c.title = xtra.data.name || xtra.key;
+    c.width=90; c.height=60; c.className='cv-extra-canvas';
+    c.id=`cv-extra-${idx}`; c.title=xtra.data.name||xtra.key;
     unit.appendChild(c);
-
     const lbl = document.createElement('div');
-    lbl.className = 'cbt-extra-name';
-    lbl.textContent = xtra.data.name || xtra.key;
+    lbl.className='cbt-extra-name'; lbl.textContent=xtra.data.name||xtra.key;
     unit.appendChild(lbl);
-
     row.appendChild(unit);
-
-    // Draw immediately (on next tick so DOM is attached)
-    requestAnimationFrame(() => {
-      _drawEnemyOnCtx(xtra.key, c.getContext('2d'), 90, 60, 74, 48);
-    });
+    requestAnimationFrame(()=>{ _drawEnemyOnCtx(xtra.key,c.getContext('2d'),90,60,74,48); });
   });
-
   stack.appendChild(row);
 }
 
@@ -12235,7 +12300,7 @@ async function enemyTurn() {
   // playerStunnedNext — mark that NEXT player action is skipped (no extra enemy turn!)
   if (G.cbt.playerStunnedNext) {
     G.cbt.playerStunnedNext = false;
-    G.cbt._playerStunned = true; // doAction will consume this on next click
+    G.cbt._playerStunned = true;
     updateCbtUI();
     await sleep(280);
     if(G.phase !== 'combat') return;
@@ -12244,72 +12309,62 @@ async function enemyTurn() {
     return;
   }
 
-  // ── Extra enemy attacks (multi-enemy stacking) ───────────────────────────
+  // Extra enemy attacks (multi-enemy stacking)
   if(G.cbt._lsExtraQueue && G.cbt._lsExtraQueue.length > 0) {
-    // Tick extra-enemy cooldowns in sync with main enemy
     G.cbt._lsExtraQueue.forEach(xtra => {
       if(xtra._eCds) xtra._eCds = xtra._eCds.map(cd => Math.max(0, cd - 1));
     });
     for(let xi = 0; xi < G.cbt._lsExtraQueue.length; xi++) {
       const xtra = G.cbt._lsExtraQueue[xi];
       if(G.phase !== 'combat') return;
-      const xd    = xtra.data;
-      const xName = xd.name || xtra.key;
-      // Flash the stacked canvas for this enemy
+      const xd = xtra.data; const xName = xd.name || xtra.key;
       const xCanvas = document.getElementById(`cv-extra-${xi}`);
-      if(xCanvas) { xCanvas.classList.add('stack-attacking'); }
-      // Try a weapon with available cooldown first
+      if(xCanvas) xCanvas.classList.add('stack-attacking');
       let fired = false;
       if(xtra._eWpns && xtra._eWpns.length > 0) {
         const avail = xtra._eWpns.map((w,i)=>({w,i})).filter(({i})=>(xtra._eCds[i]||0)===0);
         if(avail.length > 0) {
           const tot = avail.reduce((s,{w})=>s+(w.threat||1),0);
-          let pick = Math.random()*tot, chosen = avail[avail.length-1];
-          for(const en of avail){ pick-=(en.w.threat||1); if(pick<=0){chosen=en;break;} }
-          const {w,i} = chosen;
-          const raw = roll(w.d[0], w.d[1]);
-          const res = (w.pierceres||w.ignoreResist) ? 0 : (G.ship.resist||0);
-          const dmg = Math.max(1, raw - res);
-          xtra._eCds[i] = w.cd || 0;
-          cLogSep(`— ${xName} —`);
-          cLog(`${xName}: ${w.ico||'⚔'} ${w.n} — ${w.txt}`, 'dmg');
-          await sleep(350);
-          if(G.phase !== 'combat') return;
-          triggerAnim(pCV(), 'anim-shake'); snd('player_hit', 0.65);
-          if(!G._godMode) {
-            G.ship.hull -= dmg; floatDmg(pCV(), dmg, false);
-            cLog(`Flanking hit: ${dmg} hull damage!`, 'dmg');
-            if(w.crew) { G.ship.crew = Math.max(0, G.ship.crew - w.crew); cLog(`☠ ${w.crew} crew lost!`, 'dmg'); }
+          let pick=Math.random()*tot, chosen=avail[avail.length-1];
+          for(const en of avail){pick-=(en.w.threat||1);if(pick<=0){chosen=en;break;}}
+          const {w,i}=chosen;
+          const raw=roll(w.d[0],w.d[1]); const res=(w.pierceres||w.ignoreResist)?0:(G.ship.resist||0);
+          const dmg=Math.max(1,raw-res); xtra._eCds[i]=w.cd||0;
+          cLogSep(`\u2014 ${xName} \u2014`);
+          cLog(`${xName}: ${w.ico||'\u2694'} ${w.n} \u2014 ${w.txt}`,'dmg');
+          await sleep(350); if(G.phase!=='combat') return;
+          triggerAnim(pCV(),'anim-shake'); snd('player_hit',0.65);
+          if(!G._godMode){
+            G.ship.hull-=dmg; floatDmg(pCV(),dmg,false);
+            cLog(`Flanking hit: ${dmg} hull damage!`,'dmg');
+            if(w.crew){G.ship.crew=Math.max(0,G.ship.crew-w.crew);cLog(`\u2620 ${w.crew} crew lost!`,'dmg');}
           }
-          fired = true;
+          fired=true;
         }
       }
-      if(!fired) {
-        const xAtks = ENM[xtra.key]?.atk || [{n:'Weapons Fire',d:[1,6],txt:'Fire from the flanking vessel!'}];
-        const xAtk  = xAtks[Math.floor(Math.random()*xAtks.length)];
-        const dmg   = Math.max(1, roll(xAtk.d[0], xAtk.d[1]) - (G.ship.resist||0));
-        cLogSep(`— ${xName} —`);
-        cLog(`${xName}: ${xAtk.n} — ${xAtk.txt}`, 'dmg');
-        await sleep(350);
-        if(G.phase !== 'combat') return;
-        triggerAnim(pCV(), 'anim-shake'); snd('player_hit', 0.65);
-        if(!G._godMode) {
-          G.ship.hull -= dmg; floatDmg(pCV(), dmg, false);
-          cLog(`Flanking hit: ${dmg} hull damage!`, 'dmg');
-          if(xAtk.crew) { G.ship.crew = Math.max(0, G.ship.crew - xAtk.crew); cLog(`☠ ${xAtk.crew} crew lost!`, 'dmg'); }
+      if(!fired){
+        const xAtks=ENM[xtra.key]?.atk||[{n:'Weapons Fire',d:[1,6],txt:'Fire from the flanking vessel!'}];
+        const xAtk=xAtks[Math.floor(Math.random()*xAtks.length)];
+        const dmg=Math.max(1,roll(xAtk.d[0],xAtk.d[1])-(G.ship.resist||0));
+        cLogSep(`\u2014 ${xName} \u2014`);
+        cLog(`${xName}: ${xAtk.n} \u2014 ${xAtk.txt}`,'dmg');
+        await sleep(350); if(G.phase!=='combat') return;
+        triggerAnim(pCV(),'anim-shake'); snd('player_hit',0.65);
+        if(!G._godMode){
+          G.ship.hull-=dmg; floatDmg(pCV(),dmg,false);
+          cLog(`Flanking hit: ${dmg} hull damage!`,'dmg');
+          if(xAtk.crew){G.ship.crew=Math.max(0,G.ship.crew-xAtk.crew);cLog(`\u2620 ${xAtk.crew} crew lost!`,'dmg');}
         }
       }
-      updateCbtUI();
-      await sleep(500);
-      // Remove glow
-      setTimeout(() => { if(xCanvas) xCanvas.classList.remove('stack-attacking'); }, 200);
-      if(G.ship.hull <= 0) { doDefeat('hull_combat'); return; }
-      if(G.ship.crew !== undefined && G.ship.crew <= 0) { doDefeat('crew_combat'); return; }
+      updateCbtUI(); await sleep(500);
+      setTimeout(()=>{if(xCanvas)xCanvas.classList.remove('stack-attacking');},200);
+      if(G.ship.hull<=0){doDefeat('hull_combat');return;}
+      if(G.ship.crew!==undefined&&G.ship.crew<=0){doDefeat('crew_combat');return;}
     }
   }
 
   updateCbtUI();
-  await sleep(700);  // let enemy action visuals settle before player can act
+  await sleep(700);
   if(G.phase !== 'combat') return;
   cLogSep('— YOUR TURN —');
   G.cbt.pTurn = true;
@@ -12346,7 +12401,7 @@ function cbtWin(){
   snd('enemy_explode', 1.0);
   updateCbtUI();
 
-  // ── Multi-enemy queue: advance to next enemy if any remain ────────────
+  // Multi-enemy queue: advance to next if extras remain
   if(G.cbt._lsExtraQueue && G.cbt._lsExtraQueue.length > 0) {
     G.cbt._lsBatchGold  = (G.cbt._lsBatchGold  || 0) + g;
     G.cbt._lsBatchItems = (G.cbt._lsBatchItems || []).concat(items);
@@ -12358,26 +12413,21 @@ function cbtWin(){
     G.cbt.eCds        = next._eCds || nextWpns.map(()=>0);
     G.cbt.eDisabled   = nextWpns.map(()=>0);
     G.cbt.pendingLootKey = next.key;
-    G.cbt.rageStacks  = 0;
-    G.cbt.eStat       = 'normal';
-    G.cbt.pTurn       = true;
-    const remaining   = G.cbt._lsExtraQueue.length;
+    G.cbt.rageStacks  = 0; G.cbt.eStat = 'normal'; G.cbt.pTurn = true;
+    const remaining = G.cbt._lsExtraQueue.length;
     cLog(`☠ ${e.name} destroyed!`, 'gd');
     cLog(`⚔ ${next.data.name} closes in! ${remaining > 0 ? remaining+' more behind them.' : 'Final attacker!'}`, 'dmg');
     document.getElementById('ct-ename').textContent = `${next.data.name} · ${nt.sub}`;
     document.getElementById('ct-title').textContent = `⚔ ${(next.data.name).toUpperCase()} ⚔`;
-    drawCbtShips(next.key);
-    _buildEnemyStack();
-    updateCbtUI(); buildCbtBtns();
-    return;
+    drawCbtShips(next.key); _buildEnemyStack();
+    updateCbtUI(); buildCbtBtns(); return;
   }
 
-  // ── Final enemy — combine batch loot ─────────────────────────────────
   const totalGold  = (G.cbt._lsBatchGold  || 0) + g;
   const totalItems = (G.cbt._lsBatchItems || []).concat(items);
   const wasBatch   = !!(G.cbt._lsBatchGold);
   G.cbt._lsBatchGold = 0; G.cbt._lsBatchItems = [];
-  _buildEnemyStack(); // clear stack
+  _buildEnemyStack();
   document.getElementById('ov-combat').classList.remove('on');
   // Check if this was a fragment guardian fight
   const fragSite = G._pendingFragSite;
@@ -14925,6 +14975,7 @@ const LOCAL_QUEST_DATA = {
         { type:'supply', ico:'💨', name:'Compressed Air Cylinder', desc:'Restores full air supply', cost:42, act:'air' },
         { type:'supply', ico:'👥', name:'IEF Crew Transfer', desc:'Assigns 4 trained crew', cost:60, act:'crew4' },
         { type:'upgrade', ico:'🛡', name:'Reinforced Dwarven Plating', desc:'+50 max hull (forge-certified)', cost:115, act:'upg', upg:'plating' },
+        { type:'upgrade', ico:'⚡', name:'Overclocked Helm Drive', desc:'+2 void speed (req: Speed Engine)', cost:180, act:'upg', upg:'engine2' },
         { type:'upgrade', ico:'🌀', name:'Air Recycler', desc:'Air lasts 2× longer in the void', cost:90, act:'upg', upg:'recycler' },
         { type:'wpn', ico:'⚔', name:'Super Ballista', desc:'Heavy siege ballista — high damage, slower rate (Dwarven forge)', cost:130, wk:'sballista' },
         { type:'wpn', ico:'⚔', name:'Siege Bombard', desc:'Massive hull-cracker cannon. Slow reload, devastating impact', cost:200, wk:'bombard' },
@@ -15028,6 +15079,7 @@ const LOCAL_QUEST_DATA = {
         { type:'usable', ico:'💉', name:'Void Sailer Stimpack',        desc:'Use: Restores 6 crew in combat',          cost:70,  itemKey:'stimpack' },
         { type:'usable', ico:'🌀', name:'Phase Disruptor',             desc:'Disable one enemy weapon for 2 turns',    cost:90,  itemKey:'phasedis' },
         { type:'upgrade', ico:'🔁', name:'Rapid Fire Mount',           desc:'Ballista-type weapons fire twice per action', cost:270, act:'upg', upg:'rapidfire' },
+        { type:'upgrade', ico:'⚡', name:'Overclocked Helm Drive', desc:'+2 void speed (req: Speed Engine)', cost:180, act:'upg', upg:'engine2' },
         { type:'wpn', ico:'⚔️', name:'Superior Ballista',              desc:'3d6 · fires every round · elven-forged, never jams', cost:145, wk:'sballista' },
         { type:'wpn', ico:'🧠', name:'Psionic Lance',                  desc:'3d6 · hits crew directly · 3-round reload (Steel Dragon grade)', cost:680, wk:'psylance' },
       ]
@@ -15323,6 +15375,7 @@ const LOCAL_QUEST_DATA = {
         { type:'wpn', ico:'💥', name:'Pre-Sundering Bombard',      desc:'4d10 · 5-round reload · ancient siege weapon', cost:420, wk:'bombard' },
         { type:'wpn', ico:'💀', name:'Nether Cannon',              desc:'4d8 · 4-round reload · void-forged dissolution round', cost:380, wk:'nether' },
         { type:'upgrade', ico:'🔀', name:'Volley System',          desc:'Fire ALL ready weapons simultaneously', cost:350, act:'upg', upg:'volley' },
+        { type:'upgrade', ico:'⚡', name:'Void-Runner Core', desc:'+2 void speed to max (req: Overclocked Drive)', cost:320, act:'upg', upg:'engine3' },
       ]
     }
   },
@@ -15426,6 +15479,7 @@ const LOCAL_QUEST_DATA = {
         { type:'wpn', ico:'⚡', name:'Star Elven Ballista',        desc:'3d6 · 0-round reload · elven-forged, fires every turn', cost:440, wk:'sballista' },
         { type:'wpn', ico:'🌀', name:'Void Cannon',                desc:'6d8 · 6-round reload · endgame annihilation round', cost:520, wk:'voidcann' },
         { type:'upgrade', ico:'🔫', name:'Rapid-Fire System',      desc:'Reduce all weapon reload times by 1', cost:320, act:'upg', upg:'rapidfire' },
+        { type:'upgrade', ico:'⚡', name:'Void-Runner Core', desc:'+2 void speed to max (req: Overclocked Drive)', cost:320, act:'upg', upg:'engine3' },
       ]
     }
   }
@@ -15968,18 +16022,20 @@ function openLocalSpace() {
   ensureLqState();
   snd('sphere_arrive', 0.5);
 
-  // Initialize world on first entry OR sphere changed OR if 30+ days since last spawn
+  // Initialize world on first entry OR sphere changed (different POI layouts)
   const sphereId = G.ship.loc || 'realm';
   const dayNow   = G.watch?.day || 1;
   if(!G._lsLastSpawn) G._lsLastSpawn = {};
   const lastSpawn   = G._lsLastSpawn[sphereId] || 0;
-  // Force re-init if the sphere changed since last open (different POI layouts)
+  // Force layout re-init if sphere changed — but NOT enemy respawn
   if(LS._lastSphereId && LS._lastSphereId !== sphereId) {
     LS._firstEntry = true;
-    LS.W = 2400; LS.H = 2400; // reset to default; openLocalSpace will resize for refuge
+    LS.W = 2400; LS.H = 2400;
   }
   LS._lastSphereId = sphereId;
-  const needsRespawn = LS._firstEntry || (dayNow - lastSpawn >= 30);
+  // Enemy respawn only on first-ever visit OR after 10 game days — never on overlay return
+  const ENEMY_RESPAWN_DAYS = 10;
+  const needsRespawn = !G._lsLastSpawn[sphereId] || (dayNow - lastSpawn >= ENEMY_RESPAWN_DAYS);
 
   if(LS._firstEntry) {
     LS._firstEntry = false;
@@ -16577,8 +16633,9 @@ function _lsBuildQmShop() {
   let anyVisible = false;
 
   items.forEach(item => {
-    // Always-hide: upgrades already owned, weapons already equipped or have better
     if(item.act === 'upg' && G.ship.upgrades.includes(item.upg)) return;
+    if(item.act === 'upg' && item.upg === 'engine2' && !G.ship.upgrades.includes('engine')) return;
+    if(item.act === 'upg' && item.upg === 'engine3' && !G.ship.upgrades.includes('engine2')) return;
     const wKey = item.wk || (item.act === 'wpn' ? item.wpnKey : null);
     if(wKey && G.ship.wpns.includes(wKey)) return;
     if(wKey && wpnHasBetter(wKey, G.ship.wpns)) return;
@@ -16958,24 +17015,21 @@ function _lsUpdateEnemies(dt) {
 }
 
 function _lsTriggerCombat(enemy) {
-  // Remove the triggering enemy from local space
   LS.enemies = LS.enemies.filter(e => e.uid !== enemy.uid);
 
-  // ── Multi-enemy bundling: find other enemies within aggro range ──
+  // Bundle nearby enemies within 280px into the same combat
   const BUNDLE_RANGE = 280;
   const extras = [];
   LS.enemies = LS.enemies.filter(e => {
     const dx = e.x - enemy.x, dy = e.y - enemy.y;
-    if(Math.sqrt(dx*dx+dy*dy) < BUNDLE_RANGE && ENM[e.key]) {
-      extras.push(e); return false;
-    }
+    if(Math.sqrt(dx*dx+dy*dy) < BUNDLE_RANGE && ENM[e.key]) { extras.push(e); return false; }
     return true;
   });
 
   if(extras.length > 0) {
-    _lsLog(`⚔ INTERCEPT — ${1 + extras.length} ENEMIES ENGAGING!`, 'danger');
+    _lsLog(`\u2694 INTERCEPT \u2014 ${1 + extras.length} ENEMIES ENGAGING!`, 'danger');
   } else {
-    _lsLog('⚔ INTERCEPT — BATTLE STATIONS!', 'danger');
+    _lsLog('\u2694 INTERCEPT \u2014 BATTLE STATIONS!', 'danger');
   }
 
   setTimeout(() => {
@@ -16983,35 +17037,27 @@ function _lsTriggerCombat(enemy) {
     if(LS._humActive) { stopTravelHum(); LS._humActive = false; }
     G.phase = 'map';
     _lsPendingReturn = true;
-    if(extras.length > 0) {
-      _lsStartMultiCombat(enemy, extras);
-    } else {
-      startCombat(enemy.key);
-    }
+    if(extras.length > 0) { _lsStartMultiCombat(enemy, extras); }
+    else { startCombat(enemy.key); }
   }, 600);
 }
 
-// ── Multi-enemy combat ─────────────────────────────────────────────────────
 function _lsStartMultiCombat(primary, extras) {
   startCombat(primary.key);
   G.cbt._lsExtraQueue = extras.map(e => {
     const t = ENM[e.key];
     const eWpns = (t.wpns||[]).map(w=>({...w}));
-    return {
-      key: e.key,
-      data: {...t, hp:t.maxHp, crew:t.crew!==undefined?t.crew:undefined,
+    return { key:e.key,
+      data:{...t, hp:t.maxHp, crew:t.crew!==undefined?t.crew:undefined,
         burnLeft:0, stunsNext:false, _key:e.key, _healUsed:false,
-        _buffResist:0, _buffResistTurns:0, _buffAtk:0, _buffAtkTurns:0},
-      _eWpns: eWpns,
-      _eCds:  eWpns.map(()=>0)
-    };
+        _buffResist:0,_buffResistTurns:0,_buffAtk:0,_buffAtkTurns:0},
+      _eWpns:eWpns, _eCds:eWpns.map(()=>0) };
   });
-  G.cbt._lsBatchGold  = 0;
-  G.cbt._lsBatchItems = [];
+  G.cbt._lsBatchGold = 0; G.cbt._lsBatchItems = [];
   setTimeout(() => {
     const names = extras.map(e => ENM[e.key]?.name || e.key).join(', ');
-    cLog(`⚠ MULTIPLE HOSTILES: ${names} also engage!`, 'dmg');
-    cLog(`Enemy formation: ${1 + extras.length} ships. Each attacks on the enemy turn.`, 'dmg');
+    cLog(`\u26a0 MULTIPLE HOSTILES: ${names} also engage!`, 'dmg');
+    cLog(`Enemy formation: ${1+extras.length} ships. Each attacks on the enemy turn.`, 'dmg');
     _buildEnemyStack();
   }, 900);
 }
@@ -17124,8 +17170,8 @@ function _lsShowInteract(poi) {
         `${fs.n} crackles with hostile energy. A guardian vessel — ${guardian?.name || 'unknown'} — blocks access to the Fragment.`;
       const fightBtn = document.createElement('button');
       fightBtn.className='btn'; fightBtn.style.color='#ffdd44';
-      // Realm uses the dungeon approach; other spheres go direct (for now)
-      if(fs.id === 'fs_realm') {
+      // Realm + Grey use the dungeon approach; other spheres go direct (for now)
+      if(fs.id === 'fs_realm' || fs.id === 'fs_grey') {
         fightBtn.textContent='🔮 Enter the Site';
         fightBtn.onclick = () => {
           panel.classList.remove('on');
@@ -18355,9 +18401,9 @@ function showLqShop(npc) {
   grid.innerHTML = '';
 
   stock.items.forEach(item => {
-    // Hide upgrades the player already has
     if(item.act === 'upg' && G.ship.upgrades.includes(item.upg)) return;
-    // Hide weapons already owned
+    if(item.act === 'upg' && item.upg === 'engine2' && !G.ship.upgrades.includes('engine')) return;
+    if(item.act === 'upg' && item.upg === 'engine3' && !G.ship.upgrades.includes('engine2')) return;
     if((item.act === 'wpn' || item.wk) && G.ship.wpns.includes(item.wk || item.act)) return;
     // Hide weapons where player already has something equal or better in the same family
     const wKey = item.wk || (item.act === 'wpn' ? item.wpnKey : null);
@@ -18403,6 +18449,8 @@ function showLqShop(npc) {
             G.ship.upgrades.push(item.upg);
             if(item.upg==='plating'){G.ship.maxHull+=50;G.ship.hull+=50;}
             if(item.upg==='engine'){G.ship.speed+=2;}
+            if(item.upg==='engine2'){G.ship.speed+=2;}
+            if(item.upg==='engine3'){G.ship.speed+=2;}
             if(item.upg==='quarters'){G.ship.maxCrew+=8;G.ship.crew=G.ship.maxCrew;}
             if(item.upg==='recycler'){
               G.ship.maxAir = (G.ship.maxAir||12) * 2;
@@ -18463,6 +18511,20 @@ const FD_CONFIGS = {
     lootTable: [
       {id:'plunder',c:0.85},{id:'repkit',c:0.70},{id:'crewmead',c:0.60},
       {id:'starcoin',c:0.75},{id:'corskit',c:0.50},{id:'beacon',c:0.22},
+    ],
+  },
+  grey: {
+    name: 'The Dwarven Vault',
+    entryLog: 'Entering the Dwarven Vault. Rune-wards flicker in the darkness. Stone guardians stir from their alcoves.',
+    guardianWarning: "Iron Warden Drekk stands between you and the Navigation Core — an ancient forge-construct armoured in siege-grade dwarven plate. Its rune sentinels have already been activated.",
+    floorColor:   '#0f1408',
+    accentColor:  '#88aa44',
+    minRooms: 5, maxRooms: 7,
+    enemies:       ['fd_grey_golem','fd_grey_rune'],
+    enemyWeights:  [2, 3],
+    lootTable: [
+      {id:'arccore',c:0.80},{id:'repkit',c:0.70},{id:'runeshard',c:0.75},
+      {id:'starcoin',c:0.65},{id:'levblood',c:0.35},{id:'beacon',c:0.20},
     ],
   },
 };
@@ -18575,50 +18637,174 @@ function closeFragDungeon() {
   setTimeout(()=>openLocalSpace(), 300);
 }
 
-// ── Room generation ────────────────────────────────────────────────────────
-function _fdGenLayout(nRooms) {
-  const CORR_H=64, GAP_MIN=70, GAP_MAX=140;
-  const SIZES=[{w:280,h:230},{w:320,h:250},{w:360,h:265},{w:400,h:280},{w:450,h:300}];
-  const rooms=[], corridors=[];
-  let curX=160, curCY=FD.H/2;
+// ── Corridor segment helper (supports L-shaped / multi-segment corridors) ──
+function _fdCorrSegs(c) { return c.segs || [{x:c.x, y:c.y, w:c.w, h:c.h}]; }
 
-  for(let i=0;i<nRooms;i++){
-    const sz=SIZES[Math.floor(Math.random()*SIZES.length)];
-    const type = i===0?'entry':i===nRooms-1?'guardian':Math.random()<0.55?'encounter':'loot';
-    const room={
-      id:i, type,
-      x:curX, y:curCY-sz.h/2, w:sz.w, h:sz.h,
-      cx:curX+sz.w/2, cy:curCY,
-      revealed:false, visible:false,
-      enemies:[], loots:[], guardianDefeated:false,
-    };
-    rooms.push(room);
+// ── Room factory ───────────────────────────────────────────────────────────
+const FD_ROOM_SIZES = [
+  {w:240,h:200},{w:280,h:230},{w:320,h:250},{w:360,h:265},
+  {w:400,h:280},{w:450,h:300},{w:500,h:320},{w:320,h:300}
+];
+function _fdPickSz(){ return FD_ROOM_SIZES[Math.floor(Math.random()*FD_ROOM_SIZES.length)]; }
+function _fdMakeRoom(id, type, x, y, sz) {
+  return { id, type, x, y, w:sz.w, h:sz.h, cx:x+sz.w/2, cy:y+sz.h/2,
+           revealed:false, visible:false, enemies:[], loots:[], guardianDefeated:false, _branch:false };
+}
 
-    if(i>0){
-      const prev=rooms[i-1];
-      const oTop=Math.max(prev.y,room.y)+8;
-      const oBot=Math.min(prev.y+prev.h,room.y+room.h)-8;
-      const overlap=oBot-oTop;
-      const corrH=overlap>=CORR_H?CORR_H:Math.max(overlap,24);
-      const corrY=overlap>=corrH
-        ?(oTop+oBot)/2-corrH/2
-        :(prev.cy+room.cy)/2-corrH/2;
-      corridors.push({
-        id:i-1,
-        x:prev.x+prev.w,
-        y:corrY,
-        w:room.x-(prev.x+prev.w),
-        h:corrH,
-        roomA:i-1, roomB:i,
-        revealed:false, visible:false,
-      });
+// ── Corridor factory — builds 1 or 2-segment (L-shaped) connections ────────
+function _fdMakeCorr(roomA, roomB, id) {
+  const CW = 58 + Math.floor(Math.random()*14); // corridor width 58–72px
+  const aRX = roomA.x + roomA.w;  // right edge of A
+  const aCY = roomA.cy;
+  const bLX = roomB.x;            // left edge of B
+  const bCY = roomB.cy;
+  const bCX = roomB.cx;
+
+  // ── Horizontal connection (B is to the right of A) ──────────────────────
+  if(bLX >= aRX - 10) {
+    const gap = bLX - aRX;
+    const yDiff = Math.abs(aCY - bCY);
+    if(yDiff <= CW + 4) {
+      // Nearly same height — single straight horizontal segment
+      const cy = (aCY + bCY)/2 - CW/2;
+      const seg = {x:aRX, y:cy, w:Math.max(10,gap), h:CW};
+      return {id, roomA:roomA.id, roomB:roomB.id, revealed:false, visible:false, x:seg.x, y:seg.y, w:seg.w, h:seg.h, segs:[seg]};
+    } else {
+      // L-shape: horizontal arm to bCX, then vertical arm to bCY
+      const hSeg = {x:aRX, y:aCY-CW/2, w:Math.max(CW, bCX-aRX), h:CW};
+      const vTop = Math.min(aCY, bCY) - CW/2;
+      const vBot = Math.max(aCY, bCY) + CW/2;
+      const vSeg = {x:bCX-CW/2, y:vTop, w:CW, h:vBot-vTop};
+      return {id, roomA:roomA.id, roomB:roomB.id, revealed:false, visible:false, x:hSeg.x, y:hSeg.y, w:hSeg.w, h:hSeg.h, segs:[hSeg, vSeg]};
     }
-
-    const gap=GAP_MIN+Math.floor(Math.random()*(GAP_MAX-GAP_MIN));
-    curX+=sz.w+gap;
-    const dy=(Math.random()-0.5)*110;
-    curCY=Math.max(sz.h/2+80, Math.min(FD.H-sz.h/2-80, curCY+dy));
   }
+
+  // ── Vertical connection (B is below A) ─────────────────────────────────
+  if(roomB.y >= roomA.y + roomA.h - 10) {
+    const gap = roomB.y - (roomA.y + roomA.h);
+    const xDiff = Math.abs(roomA.cx - bCX);
+    if(xDiff <= CW + 4) {
+      // Nearly aligned — single vertical segment
+      const cx = (roomA.cx + bCX)/2 - CW/2;
+      const seg = {x:cx, y:roomA.y+roomA.h, w:CW, h:Math.max(10,gap)};
+      return {id, roomA:roomA.id, roomB:roomB.id, revealed:false, visible:false, x:seg.x, y:seg.y, w:seg.w, h:seg.h, segs:[seg]};
+    } else {
+      // L-shape: vertical arm down to bCY, then horizontal arm to bCX
+      const vSeg = {x:roomA.cx-CW/2, y:roomA.y+roomA.h, w:CW, h:bCY-(roomA.y+roomA.h)};
+      const hLeft = Math.min(roomA.cx, bCX) - CW/2;
+      const hRight = Math.max(roomA.cx, bCX) + CW/2;
+      const hSeg = {x:hLeft, y:bCY-CW/2, w:hRight-hLeft, h:CW};
+      return {id, roomA:roomA.id, roomB:roomB.id, revealed:false, visible:false, x:vSeg.x, y:vSeg.y, w:vSeg.w, h:vSeg.h, segs:[vSeg, hSeg]};
+    }
+  }
+
+  // ── Fallback — minimal horizontal bridge ──────────────────────────────
+  const seg = {x:aRX, y:aCY-CW/2, w:Math.max(20, bLX-aRX), h:CW};
+  return {id, roomA:roomA.id, roomB:roomB.id, revealed:false, visible:false, x:seg.x, y:seg.y, w:seg.w, h:seg.h, segs:[seg]};
+}
+
+// ── Layout generator — 4 templates chosen randomly each run ───────────────
+function _fdGenLayout(nRooms) {
+  const TEMPLATES = ['linear','lshape','branch','zigzag'];
+  const tpl = TEMPLATES[Math.floor(Math.random()*TEMPLATES.length)];
+  const rooms=[], corridors=[];
+  const GAP = 70 + Math.floor(Math.random()*80);
+  const MX = FD.W, MY = FD.H;
+
+  // ── TEMPLATE: LINEAR ──────────────────────────────────────────────────
+  // Rooms go left to right with larger Y swings than before
+  if(tpl === 'linear') {
+    let rx=180, ry=MY*0.5;
+    for(let i=0;i<nRooms;i++){
+      const sz=_fdPickSz();
+      const type=i===0?'entry':i===nRooms-1?'guardian':Math.random()<0.55?'encounter':'loot';
+      ry=Math.max(sz.h/2+100,Math.min(MY-sz.h/2-100,ry+(Math.random()-0.5)*340));
+      rooms.push(_fdMakeRoom(i,type,rx,ry-sz.h/2,sz));
+      rx+=sz.w+GAP+Math.floor(Math.random()*60);
+    }
+  }
+
+  // ── TEMPLATE: L-SHAPE ────────────────────────────────────────────────
+  // First half goes right, then pivots and goes down-right
+  else if(tpl === 'lshape') {
+    const pivot=Math.ceil(nRooms/2);
+    let rx=180, ry=MY*0.32;
+    for(let i=0;i<pivot;i++){
+      const sz=_fdPickSz();
+      const type=i===0?'entry':Math.random()<0.5?'encounter':'loot';
+      rooms.push(_fdMakeRoom(i,type,rx,ry-sz.h/2,sz));
+      rx+=sz.w+GAP+Math.floor(Math.random()*50);
+      ry=Math.max(sz.h/2+100,Math.min(MY*0.5,ry+(Math.random()-0.5)*120));
+    }
+    // Pivot point: last right-going room defines where we go down
+    const pivotRoom=rooms[pivot-1];
+    let dx=pivotRoom.cx-80+Math.floor((Math.random()-0.5)*160);
+    let dy=pivotRoom.y+pivotRoom.h+GAP;
+    for(let i=pivot;i<nRooms;i++){
+      const sz=_fdPickSz();
+      const type=i===nRooms-1?'guardian':Math.random()<0.5?'encounter':'loot';
+      dx=Math.max(200,Math.min(MX-sz.w-200,dx+(Math.random()-0.5)*280));
+      rooms.push(_fdMakeRoom(i,type,dx-sz.w/2,dy,sz));
+      dy+=sz.h+GAP+Math.floor(Math.random()*60);
+    }
+  }
+
+  // ── TEMPLATE: BRANCH ─────────────────────────────────────────────────
+  // Main path left-to-right + 1 dead-end loot room branching off a middle room
+  else if(tpl === 'branch') {
+    let rx=180, ry=MY*0.5;
+    for(let i=0;i<nRooms;i++){
+      const sz=_fdPickSz();
+      const type=i===0?'entry':i===nRooms-1?'guardian':Math.random()<0.55?'encounter':'loot';
+      ry=Math.max(sz.h/2+100,Math.min(MY-sz.h/2-100,ry+(Math.random()-0.5)*220));
+      rooms.push(_fdMakeRoom(i,type,rx,ry-sz.h/2,sz));
+      rx+=sz.w+GAP+Math.floor(Math.random()*60);
+    }
+    // Pick a middle main-path room to branch from (avoid entry/guardian)
+    if(nRooms >= 4) {
+      const srcIdx=1+Math.floor(Math.random()*(nRooms-3));
+      const src=rooms[srcIdx];
+      const bSz=FD_ROOM_SIZES[Math.floor(Math.random()*4)];
+      const goUp=src.cy > MY*0.5;
+      const bY=goUp ? src.y-bSz.h-GAP*0.8 : src.y+src.h+GAP*0.8;
+      const bX=Math.max(100,Math.min(MX-bSz.w-100,src.cx-bSz.w/2));
+      const bRoom=_fdMakeRoom(rooms.length,'loot',bX,bY,bSz);
+      bRoom._branch=true;
+      rooms.push(bRoom);
+      // Branch corridor inserted after main-path corridors are built
+    }
+  }
+
+  // ── TEMPLATE: ZIGZAG ─────────────────────────────────────────────────
+  // Rooms alternate high/low, forcing L-shaped corridors
+  else {
+    const topBand=MY*0.18, botBand=MY*0.62;
+    let rx=180;
+    for(let i=0;i<nRooms;i++){
+      const sz=_fdPickSz();
+      const type=i===0?'entry':i===nRooms-1?'guardian':Math.random()<0.55?'encounter':'loot';
+      const baseY=i%2===0?topBand:botBand;
+      const jitter=(Math.random()-0.5)*120;
+      const ry=Math.max(60,Math.min(MY-sz.h-60,baseY+jitter));
+      rooms.push(_fdMakeRoom(i,type,rx,ry,sz));
+      rx+=sz.w+GAP+Math.floor(Math.random()*80);
+    }
+  }
+
+  // ── Build corridors for main path (non-branch rooms in order) ─────────
+  const mainRooms=rooms.filter(r=>!r._branch);
+  for(let i=1;i<mainRooms.length;i++){
+    corridors.push(_fdMakeCorr(mainRooms[i-1],mainRooms[i],corridors.length));
+  }
+  // Branch corridor (if branch template produced a branch room)
+  const branchRoom=rooms.find(r=>r._branch);
+  if(branchRoom){
+    const srcIdx=rooms.findIndex(r=>!r._branch&&r.type!=='entry'&&r.type!=='guardian'&&
+      Math.abs(r.cx-branchRoom.cx)<500);
+    const src=srcIdx>=0?rooms[srcIdx]:mainRooms[Math.floor(mainRooms.length/2)];
+    corridors.push(_fdMakeCorr(src,branchRoom,corridors.length));
+  }
+
   return {rooms,corridors};
 }
 
@@ -18657,7 +18843,7 @@ function _fdPopulateRooms(cfg){
 // ── Helpers ────────────────────────────────────────────────────────────────
 function _fdIsInFloor(wx,wy){
   for(const r of FD.rooms)    if(wx>=r.x&&wx<=r.x+r.w&&wy>=r.y&&wy<=r.y+r.h) return true;
-  for(const c of FD.corridors)if(wx>=c.x&&wx<=c.x+c.w&&wy>=c.y&&wy<=c.y+c.h) return true;
+  for(const c of FD.corridors)for(const s of _fdCorrSegs(c))if(wx>=s.x&&wx<=s.x+s.w&&wy>=s.y&&wy<=s.y+s.h) return true;
   return false;
 }
 
@@ -18681,9 +18867,14 @@ function _fdUpdateVisibility(){
     r.visible=los; if(los) r.revealed=true;
   });
   FD.corridors.forEach(c=>{
-    const dx=(c.x+c.w/2)-FD.px, dy=(c.y+c.h/2)-FD.py;
-    const inRange=Math.sqrt(dx*dx+dy*dy)<R+Math.max(c.w,c.h)*0.6;
-    const los=inRange&&_fdLOS(FD.px,FD.py,c.x+c.w/2,c.y+c.h/2);
+    // Visibility check uses bounding centre of all segments
+    const segs=_fdCorrSegs(c);
+    const inRange=segs.some(s=>{
+      const dx=(s.x+s.w/2)-FD.px, dy=(s.y+s.h/2)-FD.py;
+      return Math.sqrt(dx*dx+dy*dy)<R+Math.max(s.w,s.h)*0.6;
+    });
+    const midSeg=segs[Math.floor(segs.length/2)];
+    const los=inRange&&_fdLOS(FD.px,FD.py,midSeg.x+midSeg.w/2,midSeg.y+midSeg.h/2);
     c.visible=los; if(los) c.revealed=true;
   });
 }
@@ -18901,18 +19092,19 @@ function _fdRender(cx,cW,cH){
   // Revealed floors (dim history)
   cx.fillStyle='#130d06';
   FD.rooms.forEach(r=>{if(r.revealed&&!r.visible)cx.fillRect(r.x,r.y,r.w,r.h);});
-  FD.corridors.forEach(c=>{if(c.revealed&&!c.visible)cx.fillRect(c.x,c.y,c.w,c.h);});
+  FD.corridors.forEach(c=>{if(c.revealed&&!c.visible)_fdCorrSegs(c).forEach(s=>cx.fillRect(s.x,s.y,s.w,s.h));});
 
   // Visible floors (fully lit)
   FD.rooms.forEach(r=>{
     if(!r.visible) return;
-    cx.fillStyle=r.type==='guardian'?'#2a1508':r.type==='loot'?'#1e180a':'#201408';
+    const cfg=FD.config; const fc2=cfg?.floorColor||'#201408'; const ac=cfg?.accentColor||'#443318';
+    cx.fillStyle=r.type==='guardian'?'#2a1508':r.type==='loot'?'#1e180a':fc2;
     cx.fillRect(r.x,r.y,r.w,r.h);
     // Grid lines
-    cx.strokeStyle='#2a1c0a'; cx.lineWidth=1;
+    cx.strokeStyle=ac+'44'; cx.lineWidth=1;
     for(let lx=r.x+40;lx<r.x+r.w;lx+=40){cx.beginPath();cx.moveTo(lx,r.y);cx.lineTo(lx,r.y+r.h);cx.stroke();}
     for(let ly=r.y+40;ly<r.y+r.h;ly+=40){cx.beginPath();cx.moveTo(r.x,ly);cx.lineTo(r.x+r.w,ly);cx.stroke();}
-    cx.strokeStyle='#443318'; cx.lineWidth=3; cx.strokeRect(r.x+1,r.y+1,r.w-2,r.h-2);
+    cx.strokeStyle=ac; cx.lineWidth=3; cx.strokeRect(r.x+1,r.y+1,r.w-2,r.h-2);
     // Type ambiance
     if(r.type==='guardian'){
       const g=cx.createRadialGradient(r.x+r.w/2,r.y+r.h/2,20,r.x+r.w/2,r.y+r.h/2,r.w*0.55);
@@ -18928,8 +19120,11 @@ function _fdRender(cx,cW,cH){
   });
   FD.corridors.forEach(c=>{
     if(!c.visible)return;
-    cx.fillStyle='#1a1006';cx.fillRect(c.x,c.y,c.w,c.h);
-    cx.strokeStyle='#332211';cx.lineWidth=2;cx.strokeRect(c.x,c.y,c.w,c.h);
+    const floorCol = FD.config?.floorColor || '#1a1006';
+    _fdCorrSegs(c).forEach(s=>{
+      cx.fillStyle=floorCol; cx.fillRect(s.x,s.y,s.w,s.h);
+      cx.strokeStyle='#332211'; cx.lineWidth=2; cx.strokeRect(s.x,s.y,s.w,s.h);
+    });
   });
 
   // POIs in visible rooms
@@ -19032,7 +19227,7 @@ function _fdApplyFog(cx,cW,cH){
   fc.save();
   fc.beginPath();
   FD.rooms.forEach(r=>{ if(r.visible) fc.rect(r.x-FD.camX,r.y-FD.camY,r.w,r.h); });
-  FD.corridors.forEach(c=>{ if(c.visible) fc.rect(c.x-FD.camX,c.y-FD.camY,c.w,c.h); });
+  FD.corridors.forEach(c=>{ if(c.visible) _fdCorrSegs(c).forEach(s=>fc.rect(s.x-FD.camX,s.y-FD.camY,s.w,s.h)); });
   fc.clip();
   fc.globalCompositeOperation='destination-out';
   const px=FD.px-FD.camX,py=FD.py-FD.camY,R=FD_VISION_R;
@@ -19047,7 +19242,7 @@ function _fdApplyFog(cx,cW,cH){
   fc.save();
   fc.beginPath();
   FD.rooms.forEach(r=>{ if(r.revealed&&!r.visible) fc.rect(r.x-FD.camX,r.y-FD.camY,r.w,r.h); });
-  FD.corridors.forEach(c=>{ if(c.revealed&&!c.visible) fc.rect(c.x-FD.camX,c.y-FD.camY,c.w,c.h); });
+  FD.corridors.forEach(c=>{ if(c.revealed&&!c.visible) _fdCorrSegs(c).forEach(s=>fc.rect(s.x-FD.camX,s.y-FD.camY,s.w,s.h)); });
   fc.clip();
   fc.globalCompositeOperation='source-over';
   fc.fillStyle='rgba(6,2,1,0.65)'; fc.fillRect(0,0,cW,cH);
@@ -19071,8 +19266,11 @@ function _fdRenderMinimap(){
   });
   FD.corridors.forEach(c=>{
     if(!c.revealed)return;
-    mx.fillStyle=c.visible?'#886644':'#332211';
-    mx.fillRect(ox+c.x*scX,oy+c.y*scY,c.w*scX,c.h*scY);
+    const col=c.visible?'#886644':'#332211';
+    _fdCorrSegs(c).forEach(s=>{
+      mx.fillStyle=col;
+      mx.fillRect(ox+s.x*scX,oy+s.y*scY,Math.max(1,s.w*scX),Math.max(1,s.h*scY));
+    });
   });
   mx.fillStyle='#4488ff';
   mx.beginPath();mx.arc(ox+FD.px*scX,oy+FD.py*scY,3,0,Math.PI*2);mx.fill();
