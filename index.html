@@ -1812,7 +1812,7 @@ body {
 </div>
 
 <!-- FONT SCALE PANEL -->
-<div id="font-panel" style="display:none;position:fixed;top:50px;right:10px;z-index:200;background:rgba(5,0,18,0.97);border:1px solid #5522aa88;border-radius:7px;padding:16px 18px;min-width:220px;box-shadow:0 0 30px #33006644;">
+<div id="font-panel" style="display:none;position:fixed;top:50px;right:10px;z-index:300;background:rgba(5,0,18,0.97);border:1px solid #5522aa88;border-radius:7px;padding:16px 18px;min-width:220px;box-shadow:0 0 30px #33006644;">
   <div style="font-family:'Cinzel',serif;font-size:0.75em;color:#aa88ff;letter-spacing:2px;margin-bottom:12px;">🔠 TEXT SIZE</div>
   <div style="display:flex;gap:6px;justify-content:center;margin-bottom:10px;" id="font-btns">
     <button onclick="setFontScale(0.85)" class="fs-btn" data-scale="0.85" style="font-family:'Cinzel',serif;font-size:0.688em;padding:7px 12px;border:1px solid #44228866;border-radius:4px;background:rgba(15,5,35,0.9);color:#8866aa;cursor:pointer;letter-spacing:1px;">A−</button>
@@ -9333,11 +9333,16 @@ function buildCbtInvOverlay() {
         <div class="cbt-u-desc">${item.desc ? item.desc.split('.')[0] : ''}</div>
         <span class="cbt-use-label">USE</span>`;
 
-      // Click to use
+      // Click to use — works in combat (pTurn check) and during travel/map
       el.addEventListener('click', () => {
-        if (!G.cbt?.pTurn) return;
-        closeCbtInv();
-        doAction('item', 0, item.uid);
+        if (G.phase === 'combat') {
+          if (!G.cbt?.pTurn) return;
+          closeCbtInv();
+          doAction('item', 0, item.uid);
+        } else {
+          // Outside combat — use travel-safe handler
+          useTravelItem(item.uid);
+        }
       });
 
       // Drag to reorder
@@ -11571,6 +11576,50 @@ async function resolveTargeting(idx) {
 }
 
 // ── PLAYER ACTION (async) ─────────────────────────────
+// ── Use a usable item outside of combat (travel, map, etc.) ───────────────
+function useTravelItem(itemUid) {
+  const item = G.ship.inv.find(i => i.uid === itemUid);
+  if(!item || !item.use) return;
+  const use = item.use;
+
+  // Combat-only items — cannot be used outside combat
+  const combatOnly = ['disable','disable2','disable3','stun','stundmg','beacon'];
+  if(combatOnly.some(k => use.startsWith(k))) {
+    addLog(`${item.ico} ${item.n} can only be used in combat.`, '');
+    return;
+  }
+
+  // Healing
+  if(use === 'hp20' || use === 'hp30' || use === 'hp50' || use === 'hp100') {
+    const cap = use === 'hp20' ? 20 : use === 'hp30' ? 30 : use === 'hp50' ? 50 : 100;
+    const gain = Math.min(cap, G.ship.maxHull - G.ship.hull);
+    if(gain === 0) { addLog(`Hull already at maximum.`, ''); return; }
+    G.ship.hull += gain;
+    snd('heal_item', 0.9);
+    addLog(`🧪 ${item.n}: +${gain} hull restored.`, 'gd');
+  } else if(use === 'crew3' || use === 'crew6' || use === 'crew10') {
+    const cap = use === 'crew3' ? 3 : use === 'crew6' ? 6 : 10;
+    const gain = Math.min(cap, G.ship.maxCrew - G.ship.crew);
+    if(gain === 0) { addLog(`Crew already at maximum.`, ''); return; }
+    G.ship.crew += gain;
+    snd('heal_item', 0.8);
+    addLog(`${item.ico} ${item.n}: +${gain} crew recovered.`, 'gd');
+  } else if(use === 'hp20crew1') {
+    const hgain = Math.min(20, G.ship.maxHull - G.ship.hull);
+    const cgain = Math.min(1, G.ship.maxCrew - G.ship.crew);
+    G.ship.hull += hgain; G.ship.crew += cgain;
+    snd('heal_item', 0.85);
+    addLog(`🩹 ${item.n}: +${hgain} hull, +${cgain} crew.`, 'gd');
+  } else {
+    addLog(`${item.ico} ${item.n} cannot be used here.`, '');
+    return;
+  }
+
+  G.ship.inv = G.ship.inv.filter(i => i.uid !== itemUid);
+  updateUI();
+  buildCbtInvOverlay(); // refresh the panel
+}
+
 async function doAction(type, idx, itemUid) {
   if (!G.cbt.pTurn || G.phase !== 'combat') return;
   G.cbt.pTurn = false;
