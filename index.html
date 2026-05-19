@@ -7130,13 +7130,16 @@ function arrive(id){
     addLog('Breach lanes navigable. Return to the Trull Defector Commander at Voidhaven to report.', 'gd');
   }
   if(_LS_SPHERES.has(id)) {
-    // Idle bounce — skip local space, just resupply and re-depart
-    if(G._idleMode && G._idleBounce) { _writeAutoSave(); _idleOnArrive(id); return; }
     addLog(`Arrived at ${sph.n}. Entering local space…`, '');
-    // If a cargo quest turn-in is pending let the msgbox show first, then open LS
     const hasTurnin = G.quests.some(q=>q.turnin===id&&q.state==='active'&&G.ship.inv.some(i=>i.id===q.cargo.id));
     if(hasTurnin) {
-      G._afterTurninCb = () => { setTimeout(()=>openLocalSpace(), 300); };
+      // In idle bounce, skip popup and just set callback to open LS
+      if(G._idleMode && G._idleBounce) {
+        G._afterTurninCb = null;
+        setTimeout(()=>openLocalSpace(), 400);
+      } else {
+        G._afterTurninCb = () => { setTimeout(()=>openLocalSpace(), 300); };
+      }
     } else {
       setTimeout(() => openLocalSpace(), 400);
     }
@@ -7144,7 +7147,7 @@ function arrive(id){
     return;
   }
   addLog(`Click the sphere again to dock at ${sph.n}.`,'');
-  // Idle bounce on a non-LS sphere
+  // Idle bounce on a non-LS sphere — resupply programmatically and depart
   if(G._idleMode && G._idleBounce) { _writeAutoSave(); _idleOnArrive(id); return; }
   _writeAutoSave();
 }
@@ -16018,8 +16021,6 @@ function _lsSpawnInitialEnemies(sphereId) {
 
 // ── OPEN / CLOSE ──────────────────────────────────────────────────────────
 function openLocalSpace() {
-  // Idle bounce — never open local space; departure is scheduled by _idleOnArrive
-  if(G._idleMode && G._idleBounce) return;
   ensureLqState();
   snd('sphere_arrive', 0.5);
 
@@ -16119,6 +16120,11 @@ function openLocalSpace() {
   if(LS.animId) cancelAnimationFrame(LS.animId);
   LS.lastTs = 0;
   LS.animId = requestAnimationFrame(_lsLoop);
+
+  // Idle bounce — auto-navigate to dock, resupply, and depart
+  if(G._idleMode && G._idleBounce) {
+    setTimeout(() => _idleStartLsAutoRun(), 900);
+  }
 
   // Hide sidebar Local Quest button for realm (LS replaces it)
   const sLqBtn = document.getElementById('sidebar-lq-btn');
@@ -19980,6 +19986,8 @@ function toggleIdleMode() {
   _idleUpdateUI();
   if(!G._idleMode) {
     _idleStopCombatLoop();
+    if(_idleLsPollTimer)   { clearInterval(_idleLsPollTimer);  _idleLsPollTimer  = null; }
+    if(_idleLsSafetyTimer) { clearTimeout(_idleLsSafetyTimer); _idleLsSafetyTimer = null; }
     G._idleBounce = false;
     _idleReleaseWakeLock();
     addLog('⚙ Idle mode disabled.', '');
@@ -20177,58 +20185,158 @@ function _idleBounceDepart() {
   startTravel(dest);
 }
 
-// Called from arrive() when idle bounce is active
-function _idleOnArrive(sphereId) {
+// ── LS auto-run: navigate to dock, resupply, exit, depart ─────────────────
+// Called from openLocalSpace when bounce is active.
+let _idleLsPollTimer = null;
+let _idleLsSafetyTimer = null;
+
+function _idleStartLsAutoRun() {
   if(!G._idleMode || !G._idleBounce) return;
-  // ── Resupply: hull, air, crew ────────────────────────────────────────
+  if(!document.getElementById('ov-localspace')?.classList.contains('on')) return;
+
+  const dock = LS.pois?.find(p => p.id === 'dock');
+  if(!dock) {
+    addLog('⚙ Idle: no dock found in local space — departing without resupply.', 'dmg');
+    _idleFlipAndDepart();
+    return;
+  }
+
+  addLog(`⚙ Idle: navigating to dock…`, '');
+  // Point ship at dock using click-to-move
+  LS.pTargetX = dock.x;
+  LS.pTargetY = dock.y;
+  LS.interactOpen = false;
+
+  // Clear any stale timers
+  if(_idleLsPollTimer)   { clearInterval(_idleLsPollTimer);  _idleLsPollTimer  = null; }
+  if(_idleLsSafetyTimer) { clearTimeout(_idleLsSafetyTimer); _idleLsSafetyTimer = null; }
+
+  // Poll until we're within interaction range of the dock
+  _idleLsPollTimer = setInterval(() => {
+    if(!G._idleMode || !G._idleBounce) {
+      clearInterval(_idleLsPollTimer); _idleLsPollTimer = null; return;
+    }
+    if(!document.getElementById('ov-localspace')?.classList.contains('on')) {
+      clearInterval(_idleLsPollTimer); _idleLsPollTimer = null; return;
+    }
+    // Keep nudging target in case it got cleared
+    LS.pTargetX = dock.x; LS.pTargetY = dock.y;
+
+    const dx = LS.px - dock.x, dy = LS.py - dock.y;
+    if(Math.sqrt(dx*dx + dy*dy) <= dock.r + 40) {
+      clearInterval(_idleLsPollTimer); _idleLsPollTimer = null;
+      clearTimeout(_idleLsSafetyTimer); _idleLsSafetyTimer = null;
+      _idleAutoResupplyAndDepart();
+    }
+  }, 400);
+
+  // Safety: if we can't reach dock in 45s, just resupply and depart anyway
+  _idleLsSafetyTimer = setTimeout(() => {
+    clearInterval(_idleLsPollTimer); _idleLsPollTimer = null;
+    if(G._idleMode && G._idleBounce &&
+       document.getElementById('ov-localspace')?.classList.contains('on')) {
+      addLog('⚙ Idle: dock navigation timed out — resupplying and departing.', 'dmg');
+      _idleAutoResupplyAndDepart();
+    }
+  }, 45000);
+}
+
+function _idleAutoResupplyAndDepart() {
+  if(!G._idleMode || !G._idleBounce) return;
   const s = G.ship;
-  let spent = 0;
-  // Hull repair at port rates: 0.5 TS per hull point
+  let totalCost = 0;
+  const repairs = [];
+
+  // Calculate what's needed at standard dock rates
   if(s.hull < s.maxHull) {
     const cost = Math.floor((s.maxHull - s.hull) * 0.5);
-    if(s.gold >= cost) {
-      s.gold -= cost; s.hull = s.maxHull; spent += cost;
-      addLog(`⚙ Idle: hull repaired (−${cost} TS).`, 'gd');
-    } else {
-      addLog('⚙ Idle: not enough TS to repair hull — disabling idle.', 'dmg');
-      toggleIdleMode(); return;
-    }
+    repairs.push({ label:'hull', cost, apply:()=>{ s.hull = s.maxHull; } });
   }
-  // Air refill
   const maxAir = s.maxAir || 12;
   if(s.air < maxAir) {
     const cost = Math.floor((maxAir - s.air) * 0.6);
-    if(s.gold >= cost) {
-      s.gold -= cost; s.air = maxAir; spent += cost;
-      addLog(`⚙ Idle: air refilled (−${cost} TS).`, 'gd');
-    } else {
-      addLog('⚙ Idle: not enough TS to refill air — disabling idle.', 'dmg');
-      toggleIdleMode(); return;
-    }
+    repairs.push({ label:'air', cost, apply:()=>{ s.air = maxAir; } });
   }
-  // Crew hire
   if(s.crew < s.maxCrew) {
     const cost = (s.maxCrew - s.crew) * 3;
-    if(s.gold >= cost) {
-      s.gold -= cost; s.crew = s.maxCrew; spent += cost;
-      addLog(`⚙ Idle: crew hired (−${cost} TS).`, 'gd');
-    } else {
-      addLog('⚙ Idle: not enough TS to hire crew — disabling idle.', 'dmg');
-      toggleIdleMode(); return;
-    }
+    repairs.push({ label:'crew', cost, apply:()=>{ s.crew = s.maxCrew; } });
   }
-  if(spent > 0) snd('purchase', 0.5);
+
+  totalCost = repairs.reduce((sum, r) => sum + r.cost, 0);
+
+  if(totalCost > s.gold) {
+    addLog(`⚙ Idle: need ${totalCost} TS for resupply but only have ${s.gold} TS — disabling idle.`, 'dmg');
+    toggleIdleMode();
+    return;
+  }
+
+  if(repairs.length > 0) {
+    repairs.forEach(r => { s.gold -= r.cost; r.apply(); });
+    snd('repair_hull', 0.6);
+    snd('purchase', 0.5);
+    addLog(`⚙ Idle: docked & resupplied — hull, air, crew restored (−${totalCost} TS).`, 'gd');
+  } else {
+    addLog('⚙ Idle: ship at full readiness — no resupply needed.', '');
+  }
   updateUI();
 
-  // ── Flip destination and depart ────────────────────────────────────
-  const prev = G._idleBounceTo;
+  // Brief docked pause, then exit LS and depart
+  setTimeout(() => _idleExitLsAndDepart(), 800);
+}
+
+function _idleExitLsAndDepart() {
+  if(!G._idleMode || !G._idleBounce) return;
+  if(document.getElementById('ov-localspace')?.classList.contains('on')) {
+    closeLsOverlay();
+  }
+  setTimeout(() => _idleFlipAndDepart(), 600);
+}
+
+function _idleFlipAndDepart() {
+  if(!G._idleMode || !G._idleBounce) return;
+  // Flip destinations for the return leg
+  const prev       = G._idleBounceTo;
   G._idleBounceTo  = G._idleBounceAlt;
   G._idleBounceAlt = prev;
-
-  // Brief pause so the arrival sequence can finish, then depart
   setTimeout(() => {
     if(G._idleMode && G._idleBounce) _idleBounceDepart();
-  }, 1800);
+  }, 400);
+}
+
+// Called from arrive() for non-LS spheres only
+// (LS spheres use openLocalSpace → _idleStartLsAutoRun → _idleAutoResupplyAndDepart)
+function _idleOnArrive(sphereId) {
+  if(!G._idleMode || !G._idleBounce) return;
+  const s = G.ship;
+  let totalCost = 0;
+  const repairs = [];
+
+  if(s.hull < s.maxHull) {
+    const cost = Math.floor((s.maxHull - s.hull) * 0.5);
+    repairs.push({ label:'hull', cost, apply:()=>{ s.hull = s.maxHull; } });
+  }
+  const maxAir = s.maxAir || 12;
+  if(s.air < maxAir) {
+    const cost = Math.floor((maxAir - s.air) * 0.6);
+    repairs.push({ label:'air', cost, apply:()=>{ s.air = maxAir; } });
+  }
+  if(s.crew < s.maxCrew) {
+    const cost = (s.maxCrew - s.crew) * 3;
+    repairs.push({ label:'crew', cost, apply:()=>{ s.crew = s.maxCrew; } });
+  }
+  totalCost = repairs.reduce((sum, r) => sum + r.cost, 0);
+
+  if(totalCost > s.gold) {
+    addLog(`⚙ Idle: need ${totalCost} TS but only have ${s.gold} TS — disabling idle.`, 'dmg');
+    toggleIdleMode(); return;
+  }
+  if(repairs.length > 0) {
+    repairs.forEach(r => { s.gold -= r.cost; r.apply(); });
+    snd('purchase', 0.5);
+    addLog(`⚙ Idle: resupplied at port (−${totalCost} TS).`, 'gd');
+  }
+  updateUI();
+  _idleFlipAndDepart();
 }
 
 // ── Background operation — Wake Lock + Page Visibility ────────────────────
