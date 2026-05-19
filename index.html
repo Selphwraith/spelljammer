@@ -16138,6 +16138,7 @@ function closeLsOverlay() {
   document.getElementById('ls-npc-dialog')?.classList.remove('on');
   if(LS.animId) { cancelAnimationFrame(LS.animId); LS.animId = null; }
   LS.keys = {};
+  LS._idleAutoDock = null; // clear any pending auto-dock
   if(LS._humActive) { stopTravelHum(); LS._humActive = false; }
   setTag('Navigation'); updateUI();
   _syncWatchHudVisibility();
@@ -16784,6 +16785,33 @@ function _lsLoop(ts) {
   const dt = Math.min((ts - (LS.lastTs||ts)) / 1000, 0.05);
   LS.lastTs = ts;
   LS.t = ts / 1000;
+
+  // ── Idle auto-dock: runs every frame when bounce is active in LS ─────────
+  if(LS._idleAutoDock && !LS._idleAutoDock.done && G._idleMode && G._idleBounce) {
+    const ad = LS._idleAutoDock;
+    const dock = ad.dock;
+    const dx = LS.px - dock.x, dy = LS.py - dock.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+
+    if(ad.phase === 'nav') {
+      // Force click-to-move toward dock every frame — overrides any clearance
+      LS.pTargetX = dock.x;
+      LS.pTargetY = dock.y;
+      LS.dockOpen = false;     // ensure movement isn't blocked
+      LS.interactOpen = false; // don't let interact panel interfere
+
+      if(dist <= dock.r + 20) {
+        // Arrived — stop ship and transition to resupply
+        ad.phase = 'arrived';
+        ad.done  = true;
+        LS.pTargetX = null; LS.pTargetY = null;
+        LS.pvx = 0; LS.pvy = 0;
+        if(_idleLsSafetyTimer) { clearTimeout(_idleLsSafetyTimer); _idleLsSafetyTimer = null; }
+        addLog('⚙ Idle: docked.', '');
+        setTimeout(() => _idleAutoResupplyAndDepart(), 300);
+      }
+    }
+  }
 
   if(!LS.dockOpen) {
     _lsUpdatePlayer(dt);
@@ -19988,6 +20016,7 @@ function toggleIdleMode() {
     _idleStopCombatLoop();
     if(_idleLsPollTimer)   { clearInterval(_idleLsPollTimer);  _idleLsPollTimer  = null; }
     if(_idleLsSafetyTimer) { clearTimeout(_idleLsSafetyTimer); _idleLsSafetyTimer = null; }
+    LS._idleAutoDock = null;
     G._idleBounce = false;
     _idleReleaseWakeLock();
     addLog('⚙ Idle mode disabled.', '');
@@ -20186,59 +20215,36 @@ function _idleBounceDepart() {
 }
 
 // ── LS auto-run: navigate to dock, resupply, exit, depart ─────────────────
-// Called from openLocalSpace when bounce is active.
-let _idleLsPollTimer = null;
+// Instead of polling, we set a flag on LS that _lsLoop checks every frame.
+// This is much more reliable than a separate timer fighting with the game loop.
 let _idleLsSafetyTimer = null;
+// _idleLsPollTimer kept for cleanup compatibility
+let _idleLsPollTimer = null;
 
 function _idleStartLsAutoRun() {
   if(!G._idleMode || !G._idleBounce) return;
-  if(!document.getElementById('ov-localspace')?.classList.contains('on')) return;
 
   const dock = LS.pois?.find(p => p.id === 'dock');
   if(!dock) {
-    addLog('⚙ Idle: no dock found in local space — departing without resupply.', 'dmg');
+    addLog('⚙ Idle: no dock found — departing without resupply.', 'dmg');
     _idleFlipAndDepart();
     return;
   }
 
-  addLog(`⚙ Idle: navigating to dock…`, '');
-  // Point ship at dock using click-to-move
-  LS.pTargetX = dock.x;
-  LS.pTargetY = dock.y;
-  LS.interactOpen = false;
+  addLog('⚙ Idle: auto-piloting to dock…', '');
 
-  // Clear any stale timers
-  if(_idleLsPollTimer)   { clearInterval(_idleLsPollTimer);  _idleLsPollTimer  = null; }
-  if(_idleLsSafetyTimer) { clearTimeout(_idleLsSafetyTimer); _idleLsSafetyTimer = null; }
+  // Set flag on LS — _lsLoop will act on this every frame
+  LS._idleAutoDock = { dock, phase: 'nav', done: false };
 
-  // Poll until we're within interaction range of the dock
-  _idleLsPollTimer = setInterval(() => {
-    if(!G._idleMode || !G._idleBounce) {
-      clearInterval(_idleLsPollTimer); _idleLsPollTimer = null; return;
-    }
-    if(!document.getElementById('ov-localspace')?.classList.contains('on')) {
-      clearInterval(_idleLsPollTimer); _idleLsPollTimer = null; return;
-    }
-    // Keep nudging target in case it got cleared
-    LS.pTargetX = dock.x; LS.pTargetY = dock.y;
-
-    const dx = LS.px - dock.x, dy = LS.py - dock.y;
-    if(Math.sqrt(dx*dx + dy*dy) <= dock.r + 40) {
-      clearInterval(_idleLsPollTimer); _idleLsPollTimer = null;
-      clearTimeout(_idleLsSafetyTimer); _idleLsSafetyTimer = null;
-      _idleAutoResupplyAndDepart();
-    }
-  }, 400);
-
-  // Safety: if we can't reach dock in 45s, just resupply and depart anyway
+  // Safety timeout — if we haven't docked in 60s, force the resupply
+  if(_idleLsSafetyTimer) clearTimeout(_idleLsSafetyTimer);
   _idleLsSafetyTimer = setTimeout(() => {
-    clearInterval(_idleLsPollTimer); _idleLsPollTimer = null;
-    if(G._idleMode && G._idleBounce &&
-       document.getElementById('ov-localspace')?.classList.contains('on')) {
-      addLog('⚙ Idle: dock navigation timed out — resupplying and departing.', 'dmg');
-      _idleAutoResupplyAndDepart();
-    }
-  }, 45000);
+    _idleLsSafetyTimer = null;
+    if(!LS._idleAutoDock || LS._idleAutoDock.done) return;
+    LS._idleAutoDock = null;
+    addLog('⚙ Idle: dock timeout — resupplying and departing.', 'dmg');
+    _idleAutoResupplyAndDepart();
+  }, 60000);
 }
 
 function _idleAutoResupplyAndDepart() {
