@@ -4923,7 +4923,8 @@ function loadShipImages() {
         // Map guardian keys to the image key they use in drawCbtShips
         const guardianImgKey = {fg_krynn:'githyanki', fg_hero:'beholder', fg_dark:'leviathan'};
         const resolvedEnemyImgKey = guardianImgKey[enemyKey] || enemyKey;
-        if(key === resolvedEnemyImgKey || key === G.ship?.type) {
+        // fd_ dungeon enemy keys use themselves as the image key — always redraw on load
+        if(key === resolvedEnemyImgKey || key === G.ship?.type || key.startsWith('fd_')) {
           drawCbtShips(enemyKey);
         }
       }
@@ -9110,6 +9111,16 @@ function tsResolveEvent(ev) {
     if (alertEl) { alertEl.textContent = '⚔ INTERCEPT'; alertEl.className = 'show'; }
     setTimeout(() => {
       if (alertEl) alertEl.className = '';
+      // Save travel resume state BEFORE switching phase — mirrors the waystation path.
+      // Without this, if G.tvl is touched during combat, endCbt has no fallback and
+      // drops the player back to their origin sphere instead of resuming the voyage.
+      if (G.tvl?.to && !G._resumeTravel) {
+        const laneOrigin = G.tvl._laneOrigin || G.tvl.fromPos || {x:.5,y:.5};
+        const destSph = G.spheres?.find(s=>s.id===G.tvl.to) || {x:.5,y:.5};
+        const pg = (G.tvl.prog || 50) / 100;
+        const pausedPos = { x: laneOrigin.x + (destSph.x-laneOrigin.x)*pg, y: laneOrigin.y + (destSph.y-laneOrigin.y)*pg };
+        G._resumeTravel = { toId:G.tvl.to, watchesRemaining:G.tvl._watchesLeft||0, pausedPos, pausedProg:G.tvl.prog, laneOrigin };
+      }
       // Set phase back to map so startCombat's phase check passes
       // (we left it as 'traveling' while the enemy was approaching)
       G.phase = 'map';
@@ -12737,10 +12748,26 @@ function endCbt(won){
     return;
   }
   if(!G.tvl.to){
+    // If we have a saved resume state from tsResolveEvent, use it
+    if(G._resumeTravel){
+      const rt=G._resumeTravel; G._resumeTravel=null;
+      if(won) addLog('Enemy destroyed. Resuming voyage.','gd');
+      G.ship.midLanePos=rt.pausedPos||null;
+      startTravel(rt.toId, rt.watchesRemaining, rt.pausedPos, rt.pausedProg, rt.laneOrigin);
+      return;
+    }
     G.phase='map'; setTag('Navigation'); updateUI();
     updateWatchHUD();
     if(won) addLog('Enemy destroyed. Returning to navigation.','gd');
     _lsCheckReturnAfterCombat();
+    return;
+  }
+  // Use _resumeTravel if available for mid-lane combat (gives exact position back)
+  if(G._resumeTravel){
+    const rt=G._resumeTravel; G._resumeTravel=null;
+    if(won) addLog('Resuming voyage.','');
+    G.ship.midLanePos=rt.pausedPos||null;
+    startTravel(rt.toId, rt.watchesRemaining, rt.pausedPos, rt.pausedProg, rt.laneOrigin);
     return;
   }
   G.phase='traveling'; setTag(`Traveling → ${G.spheres.find(s=>s.id===G.tvl.to)?.n||''}`);
@@ -12830,6 +12857,10 @@ function showLootOverlay(key, gold, items){
   else if(key==='wb_clutch')   _lF('wb_clutch',false,   ()=>drawClutchMother(lc,90,55,32));
   else if(key==='wb_murmur')   _lF('wb_murmur',false,   ()=>drawTheMurmur(lc,90,55,32));
   else if(key==='shothothug')  _lF('wb_murmur',false,   ()=>drawTheMurmur(lc,90,55,32));
+  else if(key==='fd_realm_drone')    _lF('fd_realm_drone',false,    ()=>drawGoblinCutter(lc,90,55,32));
+  else if(key==='fd_realm_scout')    _lF('fd_realm_scout',false,    ()=>drawCorsairSloop(lc,90,55,32,true));
+  else if(key==='fd_grey_construct') _lF('fd_grey_construct',false, ()=>drawHammer(lc,90,55,32,true));
+  else if(key==='fd_grey_marine')    _lF('fd_grey_marine',false,    ()=>drawTrullPatrol(lc,90,55,32));
   else drawSquid(lc,90,55,32,true);
   // X over it
   lc.strokeStyle='rgba(255,50,50,0.6)'; lc.lineWidth=4;
