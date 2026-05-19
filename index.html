@@ -15001,10 +15001,10 @@ const LOCAL_QUEST_DATA = {
             id: 'realm_q1',
             title: 'Signal Interference',
             desc: 'A harvester psychic field is corrupting IEF navigation crystals in the local lanes. The relay buoy in the outer arc needs purging before more ships go blind.',
-            task: 'Travel to the outer arc and defeat the harvester disruption vessel before returning.',
+            task: 'Defeat a harvester ship in the Fentheris System lanes or on the route to Korreth, then return.',
             reward: '🔷 80 TS + 💨 Full Air Supply',
             type: 'combat',
-            checkDesc: 'Defeat a harvester ship in the Drift and return.',
+            checkDesc: 'Defeat 1 harvester in the local lanes and return.',
             check: (G) => (G.localQuests?.realm_q1_kills || 0) >= 1,
             rewardFn: (G) => {
               G.ship.gold += 80;
@@ -15020,21 +15020,21 @@ const LOCAL_QUEST_DATA = {
         name: 'Tomas Wrenfold',
         role: 'Licensed Merchant — Toril Trading Co.',
         portrait: '🧑‍💼', color: '#ffcc66',
-        greet: "Ah, an IEF vessel. Good — I have a problem that requires someone with more weapons than a trade cog. Pirates. Not the usual opportunists — this is organized. Black Fleet Reavers have been intercepting my shipments along the Mystara lanes. If you discourage them, there's TS in it for you.",
+        greet: "Ah, an IEF vessel. Good — I have a problem that requires someone with more weapons than a trade cog. Pirates. Not the usual opportunists — this is organized. Corsair warbands and plunderer brigantines have been intercepting my shipments along the Fentheris System lanes. If you discourage them, there's TS in it for you.",
         quests: [
           {
             id: 'realm_q2',
             title: 'Clear the Lanes',
-            desc: 'Black Fleet Reavers are systematically intercepting merchant convoys on the Mystara Flow. Wrenfold needs them pushed back before his next shipment.',
-            task: 'Destroy 2 Black Fleet ships on the Fentheris System lanes.',
-            reward: '🔷 120 TS + 🔧 Hull Repair Kit (restores 30 hull in combat)',
+            desc: 'Corsair warbands and plunderer brigantines are systematically raiding merchant convoys on the Fentheris System inner lanes. Wrenfold needs them thinned before his next shipment departs.',
+            task: 'Destroy 2 Corsair or Plunderer ships on the Fentheris System lanes.',
+            reward: '🔷 120 TS + 🔧 Emergency Repair Kit (restores 30 hull in combat)',
             type: 'combat',
-            checkDesc: 'Defeat 2 Black Fleet Reavers and return.',
+            checkDesc: 'Defeat 2 Corsair or Plunderer ships and return.',
             check: (G) => (G.localQuests?.realm_q2_kills || 0) >= 2,
             rewardFn: (G) => {
               G.ship.gold += 120;
-              G.ship.inv.push({...ITEMS['levblood'], uid: uid(), n: 'Hull Repair Kit', desc:'Use: Restores 30 hull in combat (merchant grade).', use:'hp30'});
-              addLog("Wrenfold counts out 120 TS and passes over a hull repair kit. 'The lanes are breathing again. Much obliged, Captain.'", 'gd');
+              G.ship.inv.push({...ITEMS['repkit'], uid: uid(), n: 'Emergency Repair Kit', desc:'Use: Restores 30 hull in combat (merchant grade).', use:'hp30'});
+              addLog("Wrenfold counts out 120 TS and passes over a repair kit. 'The lanes are breathing again. Much obliged, Captain.'", 'gd');
             },
             trigger: (G) => { G.localQuests.realm_q2_kills = 0; }
           }
@@ -15045,23 +15045,23 @@ const LOCAL_QUEST_DATA = {
         name: 'Archivist Pell Dusan',
         role: 'Toril Academy — Void Studies',
         portrait: '📚', color: '#cc88ff',
-        greet: "Extraordinary timing. I've been studying the planar resonance of the Fragment sites — the artifacts you're collecting aren't just navigation tools. They're keys. Each one resonates at a frequency tied to the sphere it was sealed in. I need a Sentinel Optical Array for a resonance calibrator. Do you happen to have one — or could you acquire one?",
+        greet: "Extraordinary timing. I've been studying the planar resonance of the Fragment sites — the artifacts you're collecting aren't just navigation tools. They're keys. I need intact samples of Corsair navigational equipment to calibrate my resonance scanner. Plunderers and corsairs on the local lanes carry pieces of it. Do you have any — or could you acquire some?",
         quests: [
           {
             id: 'realm_q3',
             title: 'Resonance Components',
-            desc: "The Archivist needs a Sentinel Optical Array to calibrate his Fragment resonance scanner. Sentinel Drone Carriers patrol the Cluster-Realm war lane — a dangerous but reliable source.",
-            task: 'Bring Archivist Dusan a Sentinel Optical Array from your cargo.',
+            desc: "The Archivist needs Corsair navigational components — corsair gear fragments or goblin plunder that sometimes contains salvaged helm parts — to calibrate his Fragment resonance scanner. These drop from raiders on the local Fentheris System lanes.",
+            task: "Bring Archivist Dusan a Corsair Gear Fragment or Goblin Plunder Sack from your cargo.",
             reward: '🔷 60 TS + 🔮 Psionic Amplifier (stuns enemy next action)',
             type: 'delivery',
-            checkDesc: 'Have a Sentinel Optical Array in cargo.',
-            check: (G) => G.ship.inv.some(i => i.uid && i.n === 'Sentinel Optical Array'),
+            checkDesc: 'Have a Corsair Gear Fragment or Goblin Plunder Sack in cargo.',
+            check: (G) => G.ship.inv.some(i => i.id === 'corsscrap' || i.id === 'gobsack'),
             rewardFn: (G) => {
-              const idx = G.ship.inv.findIndex(i => i.n === 'Sentinel Optical Array');
+              const idx = G.ship.inv.findIndex(i => i.id === 'corsscrap' || i.id === 'gobsack');
               if(idx >= 0) G.ship.inv.splice(idx, 1);
               G.ship.gold += 60;
               G.ship.inv.push({...ITEMS['psiamp'], uid: uid()});
-              addLog("Dusan snatches the eye stalk with undisguised excitement. 'Remarkable! Here — this amplifier is more useful to you than me.'", 'gd');
+              addLog("Dusan snatches the component with undisguised excitement. 'The resonance signature is there — faint but measurable! Here — this amplifier is more useful to you than me.'", 'gd');
             },
             trigger: () => {}
           }
@@ -15072,16 +15072,16 @@ const LOCAL_QUEST_DATA = {
         name: 'Commander Aeva Thessan',
         role: 'IEF Strike Wing — Fentheris System Command',
         portrait: '🎖️', color: '#44ffcc',
-        greet: "We've tracked an Veilborn scouting party into the local lanes — three Shell Drifter hulls, probably running reconnaissance for the Trull Overmind's breach operation. We can't spare a wing right now. But you're here. And you're armed. I'll make it worth your while.",
+        greet: "Captain — I have a standing tasking. Goblin raider clans have been using the Fentheris System outer arc as a staging ground — three cutter squadrons and at least one shaman boat operating out of a drift debris field. We can't spare a wing right now. But you're here. And you're armed. I'll make it worth your while.",
         quests: [
           {
             id: 'realm_q4',
             title: 'Operation Mindbreak',
-            desc: 'Three Shell Drifter scouts have been spotted in local space running reconnaissance for the Trull Overmind. Commander Thessan needs them eliminated before they can relay targeting data.',
-            task: 'Destroy 3 void ships and return to Commander Thessan.',
+            desc: 'Goblin raider clans are staging from a debris field in the Fentheris System outer arc. Commander Thessan needs three of their vessels eliminated before they can coordinate a larger assault on the station approach.',
+            task: 'Destroy 3 goblin raider ships or phlog creatures in the local lanes and return.',
             reward: '🔷 150 TS + ⚙️ Rapid Reload Component (−1 weapon cooldown)',
             type: 'combat',
-            checkDesc: 'Defeat 3 Shell Drifters in the Drift.',
+            checkDesc: 'Defeat 3 goblin raiders or phlog creatures in the Fentheris System lanes.',
             check: (G) => (G.localQuests?.realm_q4_kills || 0) >= 3,
             rewardFn: (G) => {
               G.ship.gold += 150;
@@ -15137,19 +15137,19 @@ const LOCAL_QUEST_DATA = {
         name: 'Forgemaster Gordin Ashveil',
         role: 'Ironhaven Weapons Guild — Master Smith',
         portrait: '⚒️', color: '#ffaa44',
-        greet: "An elven comet, aye? Fine hull. Could be finer. We've been forging a siege bombard — the biggest one ever fitted to a ship this class — but we need a component only found in the void. Sentinel Drones leave behind chitin plating when they die. It's dense enough to form the breach block. Bring me some and I'll finish the forge.",
+        greet: "An elven comet, aye? Fine hull. Could be finer. We've been forging a siege bombard — the biggest one ever fitted to a ship this class — but we need a component only found in the void. Harvesters leave behind neogi venom membranes when they die. Dense and heat-resistant enough to form the breach block. Bring me one and I'll finish the forge.",
         quests: [
           {
             id: 'grey_q1',
             title: 'The Siege Bombard',
-            desc: "Forgemaster Ashveil is building a custom Siege Bombard — but the breach block requires Sentinel Drone chitin, which only comes from destroyed Tyrant Ships. The weapon would be a formidable addition to any hold.",
-            task: 'Bring Forgemaster Ashveil a Sentinel Optical Array (Sentinel Drone chitin component).',
+            desc: "Forgemaster Ashveil is building a custom Siege Bombard — the breach block requires a Neogi Venom Membrane harvested from a destroyed Harvester vessel. Harvesters are common on the Korreth lanes and the route to Fentheris System.",
+            task: 'Bring Forgemaster Ashveil a Neogi Venom Membrane (ngvnm) from a harvester kill.',
             reward: '⚔ Siege Bombard (exclusive weapon — massive damage, slow reload)',
             type: 'delivery',
-            checkDesc: 'Have a Sentinel Optical Array in cargo.',
-            check: (G) => G.ship.inv.some(i => i.n === 'Sentinel Optical Array'),
+            checkDesc: 'Have a Neogi Venom Membrane in cargo.',
+            check: (G) => G.ship.inv.some(i => i.id === 'ngvnm'),
             rewardFn: (G) => {
-              const idx = G.ship.inv.findIndex(i => i.n === 'Sentinel Optical Array');
+              const idx = G.ship.inv.findIndex(i => i.id === 'ngvnm');
               if(idx >= 0) G.ship.inv.splice(idx, 1);
               // Grant bombard weapon
               const slots = ({pinnace:2,squid:3,hammer:4,manow:5})[G.ship.type] || 2;
@@ -15171,23 +15171,23 @@ const LOCAL_QUEST_DATA = {
         name: 'Bram Hollick',
         role: 'Deep-Void Prospector — Independent',
         portrait: '⛏️', color: '#aabb88',
-        greet: "Aye, I've been out in the deep lanes between Korreth and Vael. Found something strange — a debris field with what looked like pre-Sundering hull plating. Could be valuable salvage. Could be a harvester trap. I'm too old for it — but you're not. I'll split whatever you find if you bring me the log beacon from the wreck.",
+        greet: "Aye, I've been out in the deep lanes between Korreth and Vael. Found something strange — a debris field with what looked like pre-Sundering hull plating. Could be valuable salvage. Could be a harvester trap. I'm too old for it — but you're not. I'll split whatever you find if you bring me the Neogi Venom Membrane or a Trull dogtag from the wreck guards.",
         quests: [
           {
             id: 'grey_q2',
             title: "The Prospector's Wreck",
-            desc: "Old Bram found a pre-Sundering debris field in the deep lanes but won't risk his cog to investigate. He wants the wreck's log beacon — which would require cutting through whatever is guarding it.",
-            task: 'Fight through the Drift lanes and bring back an Astral Silk or Arcane Core component.',
-            reward: '🔷 90 TS + ⚙️ Void Sailing Core Shard',
+            desc: "Old Bram found a pre-Sundering debris field but won't risk his cog to investigate. The wreck is guarded — likely harvesters or trull slavers, both common on the Korreth lanes. He wants proof you cleared them out.",
+            task: 'Bring Bram a Neogi Venom Membrane or Trull Identification Disc from the Korreth lanes.',
+            reward: '🔷 90 TS + ⚙️ Arcane Core Fragment',
             type: 'delivery',
-            checkDesc: 'Have Astral Silk or a Void Sailing Core Shard in cargo.',
-            check: (G) => G.ship.inv.some(i => i.n === 'Astral Silk' || i.n === 'Void Sailing Core Shard'),
+            checkDesc: 'Have a Neogi Venom Membrane or Trull Identification Disc in cargo.',
+            check: (G) => G.ship.inv.some(i => i.id === 'ngvnm' || i.id === 'trlldogtag'),
             rewardFn: (G) => {
-              const idx = G.ship.inv.findIndex(i => i.n === 'Astral Silk' || i.n === 'Void Sailing Core Shard');
+              const idx = G.ship.inv.findIndex(i => i.id === 'ngvnm' || i.id === 'trlldogtag');
               if(idx >= 0) G.ship.inv.splice(idx, 1);
               G.ship.gold += 90;
               G.ship.inv.push({...ITEMS['arccore'], uid: uid()});
-              addLog("Bram's eyes light up. 'That's from the wreck, alright. Here — the core shard is worth more to a fighting ship than a prospector.'", 'gd');
+              addLog("Bram's eyes light up. 'That's from the wreck, alright. The guards are gone — good. Here — the arcane core shard is worth more to a fighting ship than a prospector.'", 'gd');
             },
             trigger: () => {}
           }
@@ -15466,11 +15466,11 @@ const LOCAL_QUEST_DATA = {
           {
             id: 'refuge_q1',
             title: "The Admiral's Debt",
-            desc: "A Drift Corsair raider has been systematically targeting IEF supply runs from Refuge. Three crews lost, two helm cores stolen. Admiral Soreth wants retribution — and the cores back.",
-            task: 'Destroy 2 Drift Corsair ships on any lane and return to Admiral Soreth.',
+            desc: "A Drift Corsair raider has been systematically targeting IEF supply runs from Refuge. Three crews lost, two helm cores stolen. Admiral Soreth wants retribution — and the lanes cleared.",
+            task: 'Destroy 2 Corsair ships on any lane and return to Admiral Soreth.',
             reward: '🔷 200 TS + 🗡️ Silver Astral Blade Fragment (artifact)',
             type: 'combat',
-            checkDesc: 'Destroy 2 Drift Corsair warships.',
+            checkDesc: 'Destroy 2 Corsair ships.',
             check: (G) => (G.localQuests?.refuge_q1_kills || 0) >= 2,
             rewardFn: (G) => {
               G.ship.gold += 200;
@@ -19643,12 +19643,12 @@ function lqTrackKill(enemyKey) {
   if(!G.localQuests) return;
   const trackers = [
     { qid:'realm_q1_kills',  condition: (k) => k==='harvester' },
-    { qid:'realm_q2_kills',  condition: (k) => k==='blackfleet' },
-    { qid:'realm_q4_kills',  condition: (k) => k==='nautiloid' },
+    { qid:'realm_q2_kills',  condition: (k) => k==='corsair' || k==='plunderer' },
+    { qid:'realm_q4_kills',  condition: (k) => k==='goblin_cutter' || k==='goblin_rocketer' || k==='goblin_shaman_boat' || k==='phlog_mote' || k==='phlog_jellyfish' || k==='phlog_flamewing' || k==='phlog_vinecrawler' },
     { qid:'grey_q3_kills',   condition: (k) => k==='harvester' || k==='trull_slaver' },
     { qid:'cluster_q2_kills', condition: (k) => k==='harvester' },
     { qid:'krynn_q2_kills',   condition: (k) => k==='githyanki' },
-    { qid:'refuge_q1_kills', condition: (k) => k==='githyanki' },
+    { qid:'refuge_q1_kills', condition: (k) => k==='corsair' },
     { qid:'hero_q2_kills',   condition: (k) => k==='beholder' },
     { qid:'dark_q2_kills',   condition: (k) => k==='leviathan' || k==='frStalker' },
   ];
