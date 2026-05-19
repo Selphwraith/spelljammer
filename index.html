@@ -1301,6 +1301,37 @@ body {
 }
 #ov-travel-seq.on { display: flex; }
 
+/* ── Travel sequence top bar — mirrors the main header ── */
+#ts-topbar {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 30;
+  background: linear-gradient(90deg,#07001a,#160038,#07001a);
+  border-bottom: 1px solid #44118844;
+  padding: 0 16px; height: 42px;
+  display: flex; align-items: center; justify-content: space-between;
+  pointer-events: all;
+}
+#ts-topbar-title {
+  font-family:'Cinzel',serif; font-size: 1em; font-weight: 900; letter-spacing: 2px;
+  background: linear-gradient(135deg,#ffd700,#ff8c00,#ffe066);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.ts-tbtn {
+  font-family:'Cinzel',serif; font-size: 0.625em; letter-spacing: 1px;
+  padding: 4px 10px; border: 1px solid #44118866; border-radius: 3px;
+  background: rgba(15,3,35,0.8); color: #9977cc; cursor: pointer;
+}
+.ts-tbtn:hover { border-color: #7755cc; color: #ccaaff; background: rgba(30,8,60,0.9); }
+#ts-phase-tag {
+  font-family:'Cinzel',serif; font-size: 0.625em; color: #9966dd;
+  letter-spacing: 2px; text-transform: uppercase;
+}
+@media (max-width: 700px) {
+  #ts-topbar { padding: 0 6px; gap: 4px; height: 38px; }
+  #ts-topbar-title { display: none; }
+  .ts-tbtn { font-size: 0.563em; padding: 3px 7px; }
+  #ts-phase-tag { font-size: 0.563em; }
+}
+
 /* Main travel canvas fills the screen */
 #ts-canvas {
   position: absolute; inset: 0;
@@ -1643,14 +1674,14 @@ body {
 
 /* ── WATCH / FATIGUE SYSTEM ── */
 #watch-hud {
-  position:fixed; top:52px; right:14px; left:auto; transform:none;
+  position:fixed; top:230px; right:14px; left:auto; transform:none;
   background:rgba(4,0,14,0.94); border:1px solid #44118866; border-radius:6px;
   padding:6px 14px; display:none; flex-direction:column; align-items:flex-start; gap:3px;
   z-index:900; min-width:190px; max-width:280px; width:fit-content; pointer-events:none;
 }
 @media (max-width: 700px) {
   #watch-hud {
-    top: 72px;
+    top: 130px;
     right: 8px;
     left: auto;
     transform: none;
@@ -2244,6 +2275,19 @@ body {
 
   <!-- ══ PHLOGISTON TRAVEL SEQUENCE OVERLAY ══════════════════════════ -->
   <div id="ov-travel-seq">
+
+    <!-- TS top bar — mirrors main header, sits above canvas during travel -->
+    <div id="ts-topbar">
+      <h1 id="ts-topbar-title">⚓ Fentheris<span class="hdr-long">: Voyage Through the Drift</span></h1>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <button class="ts-tbtn" onclick="showMainMenu()">☰ Menu</button>
+        <button class="ts-tbtn" id="ts-mute-btn" onclick="toggleVolPanel(event)">🔊 Sound</button>
+        <button class="ts-tbtn" onclick="showFontPanel()">🔠 Text</button>
+        <button class="ts-tbtn" onclick="openCbtInv()" title="Open cargo — use items during travel">🎒 Items</button>
+        <div id="ts-phase-tag">Traveling</div>
+      </div>
+    </div>
+
     <canvas id="ts-canvas"></canvas>
 
     <div id="ts-controls">
@@ -4664,6 +4708,8 @@ function applyVolumes() {
   if (_victoryEl) _victoryEl.volume = Math.min(1, _VOL.master * _VOL.music * 1.0);
   const btn = document.getElementById('mute-btn');
   if (btn) btn.textContent = _VOL.master === 0 ? '🔇 Sound' : '🔊 Sound';
+  const tsBtn = document.getElementById('ts-mute-btn');
+  if (tsBtn) tsBtn.textContent = _VOL.master === 0 ? '🔇 Sound' : '🔊 Sound';
 }
 
 function setAllVol(pct) {
@@ -13362,7 +13408,11 @@ function updateFragUI(){
 }
 
 function $id(id,val){ const el=document.getElementById(id); if(el)el.textContent=val; }
-function setTag(t){ document.getElementById('phase-tag').textContent=t; }
+function setTag(t){
+  document.getElementById('phase-tag').textContent=t;
+  const tsTag = document.getElementById('ts-phase-tag');
+  if(tsTag) tsTag.textContent = t;
+}
 function uid(){ return Math.random().toString(36).slice(2)+Date.now().toString(36); }
 function roll(n,s){ let t=0; for(let i=0;i<n;i++)t+=Math.floor(Math.random()*s)+1; return t; }
 
