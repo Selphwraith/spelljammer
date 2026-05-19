@@ -3192,6 +3192,10 @@ const ITEMS = {
   driftjunk: { n:'Drift Junk',               ico:'🗑️', type:'trade',     val:4,   desc:'A handful of miscellaneous scrap. It\'s rubbish, but a fence will pay something for the metal weight.' },
   sparelens: { n:'Cracked Navigation Lens',  ico:'🔭', type:'component', val:12,  desc:'A cracked optics lens from a wrecked void-sailer\'s helm array. Still usable if you squint.' },
   corsscrap: { n:'Corsair Gear Fragment',    ico:'⚓', type:'component', val:18,  desc:'A piece of broken corsair equipment. Recognisable enough to sell to a fence at port.' },
+  // ── Dwarven Vault dungeon salvage — vault rubble and broken dwarven gear ─
+  vaultdust: { n:'Vault Stone Dust',         ico:'🪨', type:'trade',     val:7,   desc:'Pulverised stone from a shattered golem or vault wall. Dwarven artificers pay a small amount for it.' },
+  ruinstone: { n:'Ruin-Carved Stone Shard',  ico:'🔷', type:'trade',     val:9,   desc:'A fragment of carved vault stone. The rune markings are too damaged to be useful, but the stone itself has some resale value.' },
+  forgescrap:{ n:'Dwarven Forge Scrap',      ico:'⚒️', type:'component', val:16,  desc:'Broken fragments of dwarven-forged equipment. The alloy is recognisably high quality even in pieces.' },
   gobteeth:  { n:'Goblin Tooth Necklace',    ico:'🦷', type:'trade',     val:12,  desc:"A string of goblin teeth. Goblins consider it an insult. Their chieftains consider it a declaration of war." },
   gobsack:   { n:'Goblin Plunder Sack',      ico:'💼', type:'trade',     val:20,  desc:"A jumbled sack of stolen trinkets and tools. Mostly junk but there's always something worth keeping." },
   trlldogtag:{ n:'Trull Identification Disc',     ico:'🔖', type:'artifact',  val:30,  desc:"An engraved Trull identification disc. IEF intelligence pays a bounty per confirmed Trull kill." },
@@ -3230,11 +3234,29 @@ const LOOT = {
   fg_cluster: [{id:'ngvnm',c:0.80},{id:'starcoin',c:0.70},{id:'thrallring',c:0.45},{id:'crewmead',c:0.55},{id:'antimag',c:0.25}],
   fg_hero:    [{id:'bheye',c:0.85},{id:'antimag',c:0.50},{id:'runeshard',c:0.45},{id:'psiamp',c:0.55},{id:'voidchart',c:0.35}],
   fg_dark:    [{id:'levscal',c:0.85},{id:'levblood',c:0.65},{id:'voidchart',c:0.50},{id:'arccore',c:0.45},{id:'antimag',c:0.40}],
-  // ── Fragment Dungeon Minion loot ─────────────────────────────────────────
+  // ── Grey sphere (Korreth — The Dwarven Vault) dungeon minions ────────────
+  fd_grey_construct: { name:'Vault-Stone Golem', sub:'Dwarven Vault — Bound Construct', hp:55, maxHp:55, crew:0, maxCrew:0, g:[6,14],
+    atk:[{n:'Stone Fist',d:[2,6],txt:'The golem slams its carved-stone fists into your hull plating!'},{n:'Rune Detonation',d:[1,8],txt:'A detonation rune carved into the golem\'s chest fires!'}],
+    sp:{n:'Rubble Hail',c:0.25,txt:'The golem tears chunks from the vault ceiling — a hail of rubble hammers your hull!',fx:'summon',d:[1,6]},col:'#998866',diff:2,
+    wpns:[
+      { n:'Stone Fist Slam',    ico:'🪨', d:[2,6], cd:0, threat:2, txt:'Carved stone fists — fires every round.' },
+      { n:'Rune Detonation',    ico:'💥', d:[1,8], cd:2, threat:3, txt:'Chest-mounted detonation rune — blast radius hits your helm.' }
+    ]},
+  fd_grey_marine: { name:'Ironhaven Vault Marine', sub:'Dwarven Vault — Armoured Guard', hp:72, maxHp:72, crew:5, maxCrew:5, g:[12,24],
+    atk:[{n:'Cannon Volley',d:[2,8],txt:'The marines fire a disciplined cannon volley from the vault battlements!'},{n:'Boarding Axe',d:[2,6],txt:'Dwarven boarding axes bite into your hull — crew dragged to the deck!',crew:1}],
+    sp:{n:'Shield Wall',c:0.28,txt:'The marines lock tower shields — incoming fire deflects!',fx:'dodge'},col:'#aa7722',diff:2,
+    wpns:[
+      { n:'Vault Cannon',      ico:'🏰', d:[2,8], cd:1, threat:3, txt:'Dwarven vault cannon — punishing and methodical.' },
+      { n:'Boarding Axe Rush', ico:'🪓', d:[2,6], cd:2, threat:4, txt:'Armoured marines board — 1 crew lost.', crew:1 }
+    ]},
   // Drones: mostly worthless wreck debris, very rare anything useful
   fd_realm_drone:  [{id:'driftjunk',c:0.80},{id:'wreckcable',c:0.65},{id:'scrapplat',c:0.55},{id:'moteash',c:0.30},{id:'sparelens',c:0.15},{id:'repkit',c:0.08}],
   // Scouts: slightly better — corsair gear, occasional coin, rare usable
   fd_realm_scout:  [{id:'corsscrap',c:0.70},{id:'wreckcable',c:0.50},{id:'scrapplat',c:0.40},{id:'moteash',c:0.35},{id:'gobsack',c:0.25},{id:'crewmead',c:0.12},{id:'plunder',c:0.10}],
+  // Golems: vault rubble and rune fragments — mostly junk but occasionally a live rune
+  fd_grey_construct:[{id:'vaultdust',c:0.80},{id:'ruinstone',c:0.65},{id:'forgescrap',c:0.55},{id:'runeshard',c:0.18},{id:'repkit',c:0.12},{id:'arccore',c:0.06}],
+  // Marines: better — dwarven gear, occasional coin, rare combat usable
+  fd_grey_marine:  [{id:'forgescrap',c:0.70},{id:'trlldogtag',c:0.45},{id:'ruinstone',c:0.40},{id:'starcoin',c:0.28},{id:'corskit',c:0.20},{id:'crewmead',c:0.15},{id:'repkit',c:0.18}],
   // ── Void Rift enemy loot ─────────────────────────────────────────────
   vodoniPatrol:[{id:'vodeml',c:0.55},{id:'starcoin',c:0.75},{id:'arccore',c:0.30},{id:'repkit',c:0.45},{id:'crewmead',c:0.25},{id:'vodncore',c:0.08}],
   scroBattle:  [{id:'trulltrophy',c:0.70},{id:'plunder',c:0.65},{id:'crewmead',c:0.40},{id:'starcoin',c:0.55},{id:'arccore',c:0.22}],
@@ -4875,8 +4897,10 @@ const SHIP_IMAGE_DATA = {
   'frHorde':     'images/ship_frhorde.png?v=2',
   'elder':       'images/ship_elder.png?v=2',
   // ── Fragment dungeon enemies ──────────────────────────────────────────────
-  'fd_realm_drone':  'images/ship_fd_realm_drone.png?v=1',
-  'fd_realm_scout':  'images/ship_fd_realm_scout.png?v=1',
+  'fd_realm_drone':    'images/fd_realm_drone.png?v=1',
+  'fd_realm_scout':    'images/fd_realm_scout.png?v=1',
+  'fd_grey_construct': 'images/fd_grey_construct.png?v=1',
+  'fd_grey_marine':    'images/fd_grey_marine.png?v=1',
   'wb_grex':     'images/ship_wb_grex.png?v=2',
   'wb_admiral':  'images/ship_wb_admiral.png?v=2',
   'wb_clutch':   'images/ship_wb_clutch.png?v=2',
@@ -17414,8 +17438,8 @@ function _lsShowInteract(poi) {
         `${fs.n} crackles with hostile energy. A guardian vessel — ${guardian?.name || 'unknown'} — blocks access to the Fragment.`;
       const fightBtn = document.createElement('button');
       fightBtn.className='btn'; fightBtn.style.color='#ffdd44';
-      // Realm uses the dungeon approach; other spheres go direct (for now)
-      if(fs.id === 'fs_realm') {
+      // Realm and Grey use the dungeon approach; other spheres go direct (for now)
+      if(fs.id === 'fs_realm' || fs.id === 'fs_grey') {
         fightBtn.textContent='🔮 Enter the Site';
         fightBtn.onclick = () => {
           panel.classList.remove('on');
@@ -18768,6 +18792,23 @@ const FD_CONFIGS = {
       {id:'repkit',c:0.18},{id:'plunder',c:0.12},{id:'crewmead',c:0.10},
     ],
   },
+  grey: {
+    id:   'grey',
+    name: 'The Dwarven Vault',
+    entryLog: 'Entering the Dwarven Vault. Rune-carved stone corridors close in. Golem sentinels stir in the dark ahead.',
+    guardianWarning: "Iron Warden Drekk holds this vault with stone golems and armoured marines. The Navigation Core is sealed in the Warden's Chamber at the far end. Nothing here died without purpose.",
+    floorImg:     'images/fd_floor_grey.png',
+    floorColor:   '#1a1610',
+    accentColor:  '#aa7722',
+    minRooms: 5, maxRooms: 7,
+    enemies:       ['fd_grey_construct','fd_grey_marine'],
+    enemyWeights:  [3, 2],
+    lootTable: [
+      {id:'vaultdust',c:0.80},{id:'ruinstone',c:0.70},{id:'forgescrap',c:0.60},
+      {id:'trlldogtag',c:0.35},{id:'runeshard',c:0.22},{id:'starcoin',c:0.18},
+      {id:'repkit',c:0.25},{id:'corskit',c:0.15},{id:'crewmead',c:0.15},
+    ],
+  },
 };
 
 const FD = {
@@ -19009,10 +19050,60 @@ function _fdRealmLayout(){
   return{rooms:R,corridors:C};
 }
 
+// ── Fixed layout — The Dwarven Vault (Korreth / Greyspace) ───────────────
+// Topology: a fortified dwarven vault with a gatehouse entry, main nave,
+// two flanking guard halls, a deep forge chamber, and the Warden's Chamber.
+//
+//         [Entry Gate]
+//              |
+//       [Guard Post L]──[Grand Nave]──[Guard Post R]
+//                            |
+//                   [Armoury]──[Forge Hall]
+//                                  |
+//                           [Deep Vault]
+//                                  |
+//                       [Warden's Chamber ●]
+//
+function _fdGreyLayout(){
+  const R=[], C=[];
+  function mkR(id,type,x,y,w,h){
+    return{id,type,x:Math.round(x),y:Math.round(y),w,h,
+           cx:Math.round(x+w/2),cy:Math.round(y+h/2),
+           revealed:false,visible:false,enemies:[],loots:[],
+           guardianDefeated:false,_branch:false};
+  }
+  //                        id   type           x     y     w    h
+  R.push(mkR( 0,'entry',    880,   60, 140, 120)); // Entry Gate — narrow gatehouse
+  R.push(mkR( 1,'encounter',310,  280, 340, 260)); // Guard Post Left — flanking hall
+  R.push(mkR( 2,'encounter',700,  240, 560, 320)); // Grand Nave — central hall
+  R.push(mkR( 3,'encounter',1340, 280, 340, 260)); // Guard Post Right — flanking hall
+  R.push(mkR( 4,'loot',     460,  680, 320, 240)); // Armoury — branch off nave
+  R.push(mkR( 5,'encounter',860,  680, 420, 280)); // Forge Hall — main advance
+  R.push(mkR( 6,'loot',     780, 1060, 360, 240)); // Deep Vault — ante-chamber
+  R.push(mkR( 7,'loot',     300,  680, 100, 160)); // Side alcove — small cache
+  R.push(mkR( 8,'guardian',1700, 1220, 540, 460)); // Warden's Chamber — boss arena
+
+  R[4]._branch=true; R[7]._branch=true;
+
+  const CONN=[
+    [0, 2],  // entry gate → grand nave (vertical)
+    [1, 2],  // guard post L → grand nave (horizontal)
+    [2, 3],  // grand nave → guard post R (horizontal)
+    [2, 4],  // grand nave → armoury (down-left)
+    [2, 5],  // grand nave → forge hall (vertical)
+    [1, 7],  // guard post L → side alcove (short branch)
+    [5, 6],  // forge hall → deep vault (vertical)
+    [6, 8],  // deep vault → warden's chamber (right+down)
+  ];
+  CONN.forEach(([a,b],i)=>C.push(_fdMakeCorr(R[a],R[b],i)));
+  return{rooms:R,corridors:C};
+}
+
 // ── Layout generator — procedural multi-directional with branch rooms ──────
 function _fdGenLayout(nRooms) {
   // Use fixed hand-authored layouts for specific spheres
   if(FD.config?.id==='realm') return _fdRealmLayout();
+  if(FD.config?.id==='grey')  return _fdGreyLayout();
 
   const rooms=[], corridors=[];
   const MX=FD.W, MY=FD.H;
