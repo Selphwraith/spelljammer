@@ -16236,7 +16236,8 @@ function closeLsOverlay() {
   document.getElementById('ls-npc-dialog')?.classList.remove('on');
   if(LS.animId) { cancelAnimationFrame(LS.animId); LS.animId = null; }
   LS.keys = {};
-  LS._idleAutoDock = null; // clear any pending auto-dock
+  if(_idleLsNavTimer) { clearInterval(_idleLsNavTimer); _idleLsNavTimer = null; }
+  _idleLsStatusMsg(''); // clear status
   if(LS._humActive) { stopTravelHum(); LS._humActive = false; }
   setTag('Navigation'); updateUI();
   _syncWatchHudVisibility();
@@ -16862,33 +16863,6 @@ function _lsLoop(ts) {
   const dt = Math.min((ts - (LS.lastTs||ts)) / 1000, 0.05);
   LS.lastTs = ts;
   LS.t = ts / 1000;
-
-  // ── Idle auto-dock: runs every frame when bounce is active in LS ─────────
-  if(LS._idleAutoDock && !LS._idleAutoDock.done && G._idleMode && G._idleBounce) {
-    const ad = LS._idleAutoDock;
-    const dock = ad.dock;
-    const dx = LS.px - dock.x, dy = LS.py - dock.y;
-    const dist = Math.sqrt(dx*dx + dy*dy);
-
-    if(ad.phase === 'nav') {
-      // Force click-to-move toward dock every frame — overrides any clearance
-      LS.pTargetX = dock.x;
-      LS.pTargetY = dock.y;
-      LS.dockOpen = false;     // ensure movement isn't blocked
-      LS.interactOpen = false; // don't let interact panel interfere
-
-      if(dist <= dock.r + 20) {
-        // Arrived — stop ship and transition to resupply
-        ad.phase = 'arrived';
-        ad.done  = true;
-        LS.pTargetX = null; LS.pTargetY = null;
-        LS.pvx = 0; LS.pvy = 0;
-        if(_idleLsSafetyTimer) { clearTimeout(_idleLsSafetyTimer); _idleLsSafetyTimer = null; }
-        addLog('⚙ Idle: docked.', '');
-        setTimeout(() => _idleAutoResupplyAndDepart(), 300);
-      }
-    }
-  }
 
   if(!LS.dockOpen) {
     _lsUpdatePlayer(dt);
@@ -20101,6 +20075,7 @@ function toggleIdleMode() {
     _idleStopCombatLoop();
     if(_idleLsPollTimer)   { clearInterval(_idleLsPollTimer);  _idleLsPollTimer  = null; }
     if(_idleLsSafetyTimer) { clearTimeout(_idleLsSafetyTimer); _idleLsSafetyTimer = null; }
+    if(_idleLsNavTimer)    { clearInterval(_idleLsNavTimer);   _idleLsNavTimer   = null; }
     LS._idleAutoDock = null;
     G._idleBounce = false;
     _idleReleaseWakeLock();
@@ -20300,14 +20275,16 @@ function _idleBounceDepart() {
 }
 
 // ── LS auto-run: navigate to dock, resupply, exit, depart ─────────────────
-// Instead of polling, we set a flag on LS that _lsLoop checks every frame.
-// This is much more reliable than a separate timer fighting with the game loop.
 let _idleLsSafetyTimer = null;
-// _idleLsPollTimer kept for cleanup compatibility
-let _idleLsPollTimer = null;
+let _idleLsPollTimer   = null;  // kept for cleanup compat
+let _idleLsNavTimer    = null;  // the actual nav driver
 
 function _idleStartLsAutoRun() {
   if(!G._idleMode || !G._idleBounce) return;
+
+  // Clear any stale nav timer
+  if(_idleLsNavTimer) { clearInterval(_idleLsNavTimer); _idleLsNavTimer = null; }
+  if(_idleLsSafetyTimer) { clearTimeout(_idleLsSafetyTimer); _idleLsSafetyTimer = null; }
 
   const dock = LS.pois?.find(p => p.id === 'dock');
   if(!dock) {
@@ -20316,20 +20293,87 @@ function _idleStartLsAutoRun() {
     return;
   }
 
-  addLog('⚙ Idle: auto-piloting to dock…', '');
+  _idleLsStatusMsg('Idle: navigating to dock…');
+  addLog('⚙ Idle: navigating to dock…', '');
 
-  // Set flag on LS — _lsLoop will act on this every frame
-  LS._idleAutoDock = { dock, phase: 'nav', done: false };
+  let arrived = false;
 
-  // Safety timeout — if we haven't docked in 60s, force the resupply
-  if(_idleLsSafetyTimer) clearTimeout(_idleLsSafetyTimer);
+  // Drive ship directly every 50ms — bypasses all input/autopilot systems
+  _idleLsNavTimer = setInterval(() => {
+    if(!G._idleMode || !G._idleBounce) {
+      clearInterval(_idleLsNavTimer); _idleLsNavTimer = null; return;
+    }
+    if(!document.getElementById('ov-localspace')?.classList.contains('on')) {
+      clearInterval(_idleLsNavTimer); _idleLsNavTimer = null; return;
+    }
+    if(arrived) return;
+
+    const dx = dock.x - LS.px;
+    const dy = dock.y - LS.py;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+
+    if(dist <= dock.r + 15) {
+      // Arrived at dock
+      arrived = true;
+      clearInterval(_idleLsNavTimer); _idleLsNavTimer = null;
+      clearTimeout(_idleLsSafetyTimer); _idleLsSafetyTimer = null;
+      LS.pvx = 0; LS.pvy = 0;
+      LS.pTargetX = null; LS.pTargetY = null;
+      _idleLsStatusMsg('Idle: docked — resupplying…');
+      addLog('⚙ Idle: arrived at dock.', '');
+      setTimeout(() => _idleAutoResupplyAndDepart(), 400);
+      return;
+    }
+
+    // Move ship directly — step toward dock at 180 px/s
+    const SPEED = 180; // px per second
+    const step  = SPEED * 0.05; // 50ms tick
+    const nx = LS.px + (dx/dist) * Math.min(step, dist);
+    const ny = LS.py + (dy/dist) * Math.min(step, dist);
+
+    // Wall clamp — stay within LS boundary
+    const _maxR = Math.min(LS.W, LS.H) * 0.498 - 55;
+    const _cx = LS.W/2, _cy = LS.H/2;
+    const _ddx = nx - _cx, _ddy = ny - _cy;
+    const _ddist = Math.sqrt(_ddx*_ddx + _ddy*_ddy);
+    if(_ddist <= _maxR) {
+      LS.px = nx; LS.py = ny;
+    }
+    LS.pAngle = Math.atan2(dy, dx);
+    // Keep velocity consistent with movement so engine hum fires
+    LS.pvx = (dx/dist) * SPEED;
+    LS.pvy = (dy/dist) * SPEED;
+
+    // Suppress dock panel from auto-opening
+    LS.dockOpen = false;
+    LS.interactOpen = false;
+
+  }, 50); // 20 ticks/second — smooth enough, light on CPU
+
+  // Safety: 60s hard timeout
   _idleLsSafetyTimer = setTimeout(() => {
-    _idleLsSafetyTimer = null;
-    if(!LS._idleAutoDock || LS._idleAutoDock.done) return;
-    LS._idleAutoDock = null;
-    addLog('⚙ Idle: dock timeout — resupplying and departing.', 'dmg');
-    _idleAutoResupplyAndDepart();
+    if(_idleLsNavTimer) { clearInterval(_idleLsNavTimer); _idleLsNavTimer = null; }
+    if(!arrived && G._idleMode && G._idleBounce) {
+      addLog('⚙ Idle: dock nav timed out — resupplying in place.', 'dmg');
+      _idleAutoResupplyAndDepart();
+    }
   }, 60000);
+}
+
+// Small on-screen status display for idle mode
+function _idleLsStatusMsg(msg) {
+  let el = document.getElementById('idle-ls-status');
+  if(!el) {
+    el = document.createElement('div');
+    el.id = 'idle-ls-status';
+    el.style.cssText = 'position:absolute;bottom:54px;left:50%;transform:translateX(-50%);' +
+      'background:rgba(0,10,30,0.88);border:1px solid #5522aa66;border-radius:4px;' +
+      'font-family:Cinzel,serif;font-size:9px;color:#aabbff;padding:4px 14px;' +
+      'pointer-events:none;z-index:200;letter-spacing:1px;white-space:nowrap;';
+    document.getElementById('ov-localspace')?.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
 }
 
 function _idleAutoResupplyAndDepart() {
@@ -20372,6 +20416,7 @@ function _idleAutoResupplyAndDepart() {
   updateUI();
 
   // Brief docked pause, then exit LS and depart
+  _idleLsStatusMsg('Idle: resupplied — departing…');
   setTimeout(() => _idleExitLsAndDepart(), 800);
 }
 
