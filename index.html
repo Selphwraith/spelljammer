@@ -12731,10 +12731,16 @@ function endCbt(won){
   const invPanel = document.getElementById('cbt-inv-panel');
   if (invPanel) invPanel.classList.remove('on');
   setAmbient('map');
-  // Local space combat — return to LS instead of resuming travel
+  // Local space / dungeon combat — return to LS instead of resuming travel
   if(_lsPendingReturn) {
     G.phase = 'map'; setTag('Navigation'); updateUI();
     _lsCheckReturnAfterCombat();
+    return;
+  }
+  // Belt-and-suspenders: if G.tvl is somehow null at this point, go to map safely
+  if(!G.tvl){
+    G.phase='map'; setTag('Navigation'); updateUI(); updateWatchHUD();
+    if(won) addLog('Enemy destroyed. Returning to navigation.','gd');
     return;
   }
   if(G.tvl.toFragSite){
@@ -12742,7 +12748,8 @@ function endCbt(won){
     setTag(`Traveling → ${G.tvl.toFragSite.n}`);
     if(won) addLog('Enemy destroyed. Resuming course to '+G.tvl.toFragSite.n+'…','gd');
     document.getElementById('tvlbar').classList.add('on');
-    if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); startTravelHum(); startLiveClock(); resetLiveClock();
+    if(G.tvl){ G.tvl._eventLocked=false; G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); }
+    startTravelHum(); startLiveClock(); resetLiveClock(G.tvl ? G.tvl.prog/100 : 0);
     updateWatchHUD();
     tsOpen(G.tvl.lane);
     return;
@@ -12773,7 +12780,8 @@ function endCbt(won){
   G.phase='traveling'; setTag(`Traveling → ${G.spheres.find(s=>s.id===G.tvl.to)?.n||''}`);
   if(won)addLog('Resuming voyage.','');
   document.getElementById('tvlbar').classList.add('on');
-  if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); startTravelHum(); startLiveClock(); resetLiveClock();
+  if(G.tvl){ G.tvl._eventLocked=false; G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); }
+  startTravelHum(); startLiveClock(); resetLiveClock(G.tvl ? G.tvl.prog/100 : 0);
   updateWatchHUD();
   tsOpen(G.tvl.lane);
 }
