@@ -2247,13 +2247,13 @@ body {
     <div id="ts-controls">
       <button id="ts-speed-btn" onclick="tsToggleSpeed()">▶▶ Fast</button>
       <button id="ts-skip-btn" onclick="tsSkip()">⏭ Skip to Next</button>
-      <button id="idle-toggle-btn" onclick="toggleIdleMode()" title="Idle Mode: AI handles combat, waystations, and anchoring automatically">⚙ Idle: OFF</button>
+      <button id="idle-toggle-btn" onclick="toggleIdleMode()" title="Idle: ON during travel = auto-combat, auto-rest, auto-bounce. Turn on while traveling to start immediately.">⚙ Idle: OFF</button>
     </div>
 
     <!-- Bounce config panel — shown when idle is active at map phase -->
     <div id="idle-bounce-panel" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(6,2,18,0.97);border:1px solid #5522aa88;border-radius:8px;padding:20px 24px;z-index:300;min-width:260px;text-align:center;font-family:'Cinzel',serif;gap:10px;display:none;flex-direction:column;align-items:center;">
-      <div style="color:#aa88ff;font-size:13px;letter-spacing:2px;margin-bottom:6px;">⚙ IDLE BOUNCE</div>
-      <div style="color:#665599;font-size:10px;margin-bottom:8px;">Ship will travel perpetually between two spheres,<br>auto-fighting and resupplying on arrival.</div>
+      <div style="color:#aa88ff;font-size:13px;letter-spacing:2px;margin-bottom:6px;">⚙ START IDLE BOUNCE</div>
+      <div style="color:#665599;font-size:10px;margin-bottom:8px;">Pick a destination. The ship will travel back and forth<br>automatically, resupplying at each end.</div>
       <div style="display:flex;gap:8px;align-items:center;justify-content:center;width:100%;">
         <span style="color:#8866cc;font-size:10px;">FROM</span>
         <span id="idle-bounce-from" style="color:#ccaaff;font-size:11px;background:rgba(40,20,80,0.6);padding:3px 10px;border-radius:3px;border:1px solid #44228844;">—</span>
@@ -7186,7 +7186,10 @@ let _portSphere=null;
 function enterPort(sph){
   if(sph.boss)return;
   // ── REALMSPACE: redirect to Local Space overlay ──────────
-  if(sph.id === 'realm' || sph.id === 'refuge' || sph.id === 'grey' || sph.id === 'cluster' || sph.id === 'krynn' || sph.id === 'hero' || sph.id === 'dark') { openLocalSpace(); return; }
+  if(sph.id === 'realm' || sph.id === 'refuge' || sph.id === 'grey' || sph.id === 'cluster' || sph.id === 'krynn' || sph.id === 'hero' || sph.id === 'dark') {
+    if(G._idleMode && G._idleBounce) { _idleAutoDockOverlay(sph.id); return; }
+    openLocalSpace(); return;
+  }
   // ── the Scar-Wraith confrontation at The Shatter ───────────────
   if(sph.id === 'baresun' && G.shothothuqUnlocked && !(G.worldBossDefeated && G.worldBossDefeated.has('shothothug'))){
     addLog('⬡ The The Shatter scar screams. Something vast is coming through.','dmg');
@@ -16151,6 +16154,11 @@ function _lsSpawnInitialEnemies(sphereId) {
 
 // ── OPEN / CLOSE ──────────────────────────────────────────────────────────
 function openLocalSpace() {
+  // Final backstop — if idle bounce is active, never open LS; show dock overlay instead
+  if(G._idleMode && G._idleBounce) {
+    _idleAutoDockOverlay(G.ship.loc || 'realm');
+    return;
+  }
   ensureLqState();
   snd('sphere_arrive', 0.5);
 
@@ -20102,19 +20110,47 @@ document.addEventListener('DOMContentLoaded', () => {
 function toggleIdleMode() {
   G._idleMode = !G._idleMode;
   _idleUpdateUI();
+
   if(!G._idleMode) {
     _idleStopCombatLoop();
     if(_idleLsPollTimer)   { clearInterval(_idleLsPollTimer);  _idleLsPollTimer  = null; }
     if(_idleLsSafetyTimer) { clearTimeout(_idleLsSafetyTimer); _idleLsSafetyTimer = null; }
     _idleCloseDockOverlay();
-    G._idleBounce = false;
+    G._idleBounce    = false;
+    G._idleBounceTo  = null;
+    G._idleBounceAlt = null;
     _idleReleaseWakeLock();
     addLog('⚙ Idle mode disabled.', '');
+    return;
+  }
+
+  // ── Idle ON ────────────────────────────────────────────────────────────
+  _idleRequestWakeLock();
+
+  // Handle combat — start AI regardless of phase
+  if(G.phase === 'combat' && G.cbt?.pTurn) _idleStartCombatLoop();
+
+  // ── Auto-configure bounce based on current phase ────────────────────────
+  if(G.phase === 'traveling' && G.tvl?.to && G.tvl?.from) {
+    // Mid-journey: use current route as the first leg, return on arrival
+    const destId = G.tvl.to;
+    const homeId = G.tvl.from || G.ship.loc;
+    const destSph = G.spheres?.find(s => s.id === destId);
+    const homeSph = G.spheres?.find(s => s.id === homeId);
+    G._idleBounce    = true;
+    G._idleBounceTo  = destId;
+    G._idleBounceAlt = homeId;
+    G._autoRest = true; // auto-anchor on every watch during this journey
+    addLog(`⚙ Idle Bounce active: ${homeSph?.n || homeId} ↔ ${destSph?.n || destId}. AI handling all encounters.`, 'imp');
+
+  } else if(G.phase === 'map' && G.ship.loc) {
+    // On the map — show the destination picker
+    _idleShowBouncePanel();
+    addLog('⚙ Idle enabled — select a destination to start bouncing.', 'imp');
+
   } else {
-    _idleRequestWakeLock();
-    addLog('⚙ Idle mode enabled. AI will handle combat, waystations, and anchoring.', 'imp');
-    if(G.phase === 'combat' && G.cbt?.pTurn) _idleStartCombatLoop();
-    if(G.phase === 'map') _idleShowBouncePanel();
+    // Combat, LS, dungeon, etc — idle is on for AI but no bounce yet
+    addLog('⚙ Idle mode enabled. AI handling combat. Start travel to enable bounce.', 'imp');
   }
 }
 
@@ -20257,22 +20293,22 @@ function _idleShowBouncePanel() {
   const fromSph = G.spheres?.find(s => s.id === fromId);
   document.getElementById('idle-bounce-from').textContent = fromSph?.n || fromId;
 
-  // Populate destination dropdown — accessible non-boss spheres the player can reach
   const sel = document.getElementById('idle-bounce-to-sel');
   sel.innerHTML = '';
-  // Get spheres reachable from current location via a defined lane
   const reachable = G.spheres?.filter(s =>
-    s.id !== fromId && s.vis && !s.boss &&
-    getLane(fromId, s.id)
+    s.id !== fromId && s.vis && !s.boss && getLane(fromId, s.id)
   ) || [];
   if(reachable.length === 0) {
     panel.style.display = 'none';
-    addLog('⚙ Idle: no reachable spheres for bounce from current location.', 'dmg');
+    addLog('⚙ Idle: no reachable spheres to bounce to from here.', 'dmg');
     return;
   }
+  // Pre-select current travel destination if en route
+  const preferDest = G.tvl?.to;
   reachable.forEach(s => {
     const opt = document.createElement('option');
     opt.value = s.id; opt.textContent = s.n;
+    if(s.id === preferDest) opt.selected = true;
     sel.appendChild(opt);
   });
 
