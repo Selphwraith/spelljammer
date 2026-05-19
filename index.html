@@ -3082,14 +3082,14 @@ const ENM = {
 
   // ── Fragment Dungeon Minions ────────────────────────────────────────────────
   // Realm (Flotsam Field) — automated salvage drones and corsair advance scouts
-  fd_realm_drone: { name:'Wreck-Salvage Drone', sub:'Flotsam Field — Autonomous Unit', hp:32, maxHp:32, crew:0, maxCrew:0, g:[12,22],
+  fd_realm_drone: { name:'Wreck-Salvage Drone', sub:'Flotsam Field — Autonomous Unit', hp:32, maxHp:32, crew:0, maxCrew:0, g:[3,8],
     atk:[{n:'Hull Grinder',  d:[1,6], txt:'Automated grinder arms tear across your hull plating!'},{n:'Debris Barrage',d:[1,4],txt:'The drone launches a burst of compressed debris fragments!'}],
     sp:{n:'Overload Burst',c:0.22,txt:'The drone enters overload — raw energy discharges across your hull!',fx:'summon',d:[1,6]},col:'#aabb66',diff:1,
     wpns:[
       { n:'Grinder Array',    ico:'⚙️', d:[1,6], cd:0, threat:1, txt:'Automated grinder — fires every round.' },
       { n:'Debris Launcher',  ico:'💥', d:[1,4], cd:2, threat:2, txt:'Compresses wreckage into high-velocity slugs.' }
     ]},
-  fd_realm_scout: { name:'Corsair Advance Scout', sub:'Flotsam Field — Patrol', hp:55, maxHp:55, crew:4, maxCrew:4, g:[20,35],
+  fd_realm_scout: { name:'Corsair Advance Scout', sub:'Flotsam Field — Patrol', hp:55, maxHp:55, crew:4, maxCrew:4, g:[8,18],
     atk:[{n:'Crossbow Volley',  d:[2,6], txt:"The scout's crew unleashes a trained bolt volley!"},{n:'Boarding Grapple',d:[1,6],txt:'A grapple punches into your hull — crew dragged toward the scout!',crew:1}],
     sp:{n:'Corsair Feint',c:0.25,txt:'The scout breaks off then loops back — a flanking pass that bypasses your forward shields!',fx:'dodge'},col:'#cc8833',diff:2,
     wpns:[
@@ -3186,6 +3186,12 @@ const ITEMS = {
   vinespore: { n:'Vinecrawler Spore Pod',    ico:'🌿', type:'component', val:30,  desc:'Sealed spore pod from a drift vinecrawler. Plant scholars pay absurd sums for living specimens.' },
   flamequil: { n:'Flamewing Quill',          ico:'🔥', type:'component', val:42,  desc:'A crystalline quill shed by a drift flamewing. Still holds a charge of drift fire.' },
   moteash:   { n:'Mote Swarm Ash',           ico:'✨', type:'component', val:15,  desc:'Fine ash residue left by a drift mote swarm. Trace alchemical components remain.' },
+  // ── Flotsam Field dungeon salvage — cheap wreck debris ──────────────────
+  scrapplat: { n:'Scrap Hull Plating',       ico:'🔩', type:'trade',     val:6,   desc:'Bent and corroded hull plate stripped from a derelict. Worth almost nothing, but something.' },
+  wreckcable:{ n:'Wreck Wiring Bundle',      ico:'🪛', type:'trade',     val:5,   desc:'Coil of scorched cabling pulled from a gutted ship. Copper core still intact.' },
+  driftjunk: { n:'Drift Junk',               ico:'🗑️', type:'trade',     val:4,   desc:'A handful of miscellaneous scrap. It\'s rubbish, but a fence will pay something for the metal weight.' },
+  sparelens: { n:'Cracked Navigation Lens',  ico:'🔭', type:'component', val:12,  desc:'A cracked optics lens from a wrecked void-sailer\'s helm array. Still usable if you squint.' },
+  corsscrap: { n:'Corsair Gear Fragment',    ico:'⚓', type:'component', val:18,  desc:'A piece of broken corsair equipment. Recognisable enough to sell to a fence at port.' },
   gobteeth:  { n:'Goblin Tooth Necklace',    ico:'🦷', type:'trade',     val:12,  desc:"A string of goblin teeth. Goblins consider it an insult. Their chieftains consider it a declaration of war." },
   gobsack:   { n:'Goblin Plunder Sack',      ico:'💼', type:'trade',     val:20,  desc:"A jumbled sack of stolen trinkets and tools. Mostly junk but there's always something worth keeping." },
   trlldogtag:{ n:'Trull Identification Disc',     ico:'🔖', type:'artifact',  val:30,  desc:"An engraved Trull identification disc. IEF intelligence pays a bounty per confirmed Trull kill." },
@@ -3218,15 +3224,17 @@ const LOOT = {
   leviathan: [{id:'levscal',c:0.80},{id:'levblood',c:0.45},{id:'voidchart',c:0.22},{id:'arccore',c:0.25},{id:'astralge',c:0.10},{id:'voidwelder',c:0.20}],
   elder:     [{id:'ebtiss',c:1.0},{id:'antimag',c:0.55},{id:'voidchart',c:0.60},{id:'arccore',c:0.50},{id:'psiamp',c:0.40},{id:'levblood',c:0.50},{id:'astralge',c:0.35},{id:'voidjam',c:0.25},{id:'voidwelder',c:0.50}],
   // ── Fragment guardian loot (generous — they're bosses) ───
-  fg_realm:   [{id:'starcoin',c:0.90},{id:'plunder',c:0.80},{id:'repkit',c:0.60},{id:'crewmead',c:0.50},{id:'bfmanif',c:0.40}],
+  fg_realm:   [{id:'starcoin',c:1.0},{id:'corskit',c:0.90},{id:'plunder',c:0.85},{id:'silksw',c:0.65},{id:'repkit',c:0.70},{id:'crewmead',c:0.65},{id:'bfmanif',c:0.45},{id:'beacon',c:0.30}],
   fg_grey:    [{id:'starcoin',c:0.90},{id:'arccore',c:0.55},{id:'corskit',c:0.70},{id:'levblood',c:0.40},{id:'runeshard',c:0.30}],
   fg_krynn:   [{id:'silksw',c:0.80},{id:'astsil',c:0.75},{id:'starcoin',c:0.70},{id:'psiamp',c:0.45},{id:'silblade',c:0.25}],
   fg_cluster: [{id:'ngvnm',c:0.80},{id:'starcoin',c:0.70},{id:'thrallring',c:0.45},{id:'crewmead',c:0.55},{id:'antimag',c:0.25}],
   fg_hero:    [{id:'bheye',c:0.85},{id:'antimag',c:0.50},{id:'runeshard',c:0.45},{id:'psiamp',c:0.55},{id:'voidchart',c:0.35}],
   fg_dark:    [{id:'levscal',c:0.85},{id:'levblood',c:0.65},{id:'voidchart',c:0.50},{id:'arccore',c:0.45},{id:'antimag',c:0.40}],
   // ── Fragment Dungeon Minion loot ─────────────────────────────────────────
-  fd_realm_drone:  [{id:'moteash',c:0.70},{id:'repkit',c:0.55},{id:'starcoin',c:0.40},{id:'gobsack',c:0.35}],
-  fd_realm_scout:  [{id:'plunder',c:0.75},{id:'silksw',c:0.60},{id:'crewmead',c:0.45},{id:'starcoin',c:0.50},{id:'corskit',c:0.35}],
+  // Drones: mostly worthless wreck debris, very rare anything useful
+  fd_realm_drone:  [{id:'driftjunk',c:0.80},{id:'wreckcable',c:0.65},{id:'scrapplat',c:0.55},{id:'moteash',c:0.30},{id:'sparelens',c:0.15},{id:'repkit',c:0.08}],
+  // Scouts: slightly better — corsair gear, occasional coin, rare usable
+  fd_realm_scout:  [{id:'corsscrap',c:0.70},{id:'wreckcable',c:0.50},{id:'scrapplat',c:0.40},{id:'moteash',c:0.35},{id:'gobsack',c:0.25},{id:'crewmead',c:0.12},{id:'plunder',c:0.10}],
   // ── Void Rift enemy loot ─────────────────────────────────────────────
   vodoniPatrol:[{id:'vodeml',c:0.55},{id:'starcoin',c:0.75},{id:'arccore',c:0.30},{id:'repkit',c:0.45},{id:'crewmead',c:0.25},{id:'vodncore',c:0.08}],
   scroBattle:  [{id:'trulltrophy',c:0.70},{id:'plunder',c:0.65},{id:'crewmead',c:0.40},{id:'starcoin',c:0.55},{id:'arccore',c:0.22}],
@@ -4866,6 +4874,9 @@ const SHIP_IMAGE_DATA = {
   'frStalker':   'images/ship_frstalker.png?v=2',
   'frHorde':     'images/ship_frhorde.png?v=2',
   'elder':       'images/ship_elder.png?v=2',
+  // ── Fragment dungeon enemies ──────────────────────────────────────────────
+  'fd_realm_drone':  'images/ship_fd_realm_drone.png?v=1',
+  'fd_realm_scout':  'images/ship_fd_realm_scout.png?v=1',
   'wb_grex':     'images/ship_wb_grex.png?v=2',
   'wb_admiral':  'images/ship_wb_admiral.png?v=2',
   'wb_clutch':   'images/ship_wb_clutch.png?v=2',
@@ -18752,8 +18763,9 @@ const FD_CONFIGS = {
     enemies:       ['fd_realm_drone','fd_realm_scout'],
     enemyWeights:  [3, 2],
     lootTable: [
-      {id:'plunder',c:0.85},{id:'repkit',c:0.70},{id:'crewmead',c:0.60},
-      {id:'starcoin',c:0.75},{id:'corskit',c:0.50},{id:'beacon',c:0.22},
+      {id:'scrapplat',c:0.85},{id:'wreckcable',c:0.75},{id:'driftjunk',c:0.70},
+      {id:'moteash',c:0.50},{id:'sparelens',c:0.35},{id:'corsscrap',c:0.30},
+      {id:'repkit',c:0.18},{id:'plunder',c:0.12},{id:'crewmead',c:0.10},
     ],
   },
 };
