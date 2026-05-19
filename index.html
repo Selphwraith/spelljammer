@@ -1641,10 +1641,10 @@ body {
 
 /* ── WATCH / FATIGUE SYSTEM ── */
 #watch-hud {
-  position:absolute; top:12px; left:50%; transform:translateX(-50%);
+  position:fixed; top:12px; left:50%; transform:translateX(-50%);
   background:rgba(4,0,14,0.94); border:1px solid #44118866; border-radius:6px;
   padding:6px 14px; display:none; flex-direction:column; align-items:center; gap:3px;
-  z-index:260; min-width:210px; max-width:320px; width:fit-content; pointer-events:none;
+  z-index:900; min-width:210px; max-width:320px; width:fit-content; pointer-events:none;
 }
 @media (max-width: 700px) {
   #watch-hud {
@@ -1897,6 +1897,19 @@ body {
 
 <!-- MAIN -->
 <div id="main">
+  <!-- WATCH HUD — fixed position, floats above all overlays including LS -->
+  <div id="watch-hud">
+    <div class="wh-row">
+      <span class="wh-label">Time</span>
+      <span class="wh-val" id="wh-day">Day 1 — 06:00</span>
+      <div class="wh-pips" id="wh-pips"></div>
+    </div>
+    <div class="wh-row">
+      <span class="wh-label">Move</span>
+      <span class="wh-val" id="wh-move">—</span>
+      <span id="fatigue-badge" class="fatigue-fresh">Fresh</span>
+    </div>
+  </div>
   <canvas id="gc"></canvas>
   <!-- Zoom HUD — DOM element pinned to bottom-right, always in screen space -->
   <div id="zoom-hud" style="position:absolute;bottom:10px;right:10px;z-index:5;background:rgba(5,0,18,0.88);border:1px solid #44118866;border-radius:7px;padding:6px 8px;display:none;user-select:none;">
@@ -2261,19 +2274,6 @@ body {
       <div id="ts-watch-label"></div>
     </div>
 
-    <!-- WATCH HUD — inside travel overlay so it renders above the canvas -->
-    <div id="watch-hud">
-      <div class="wh-row">
-        <span class="wh-label">Time</span>
-        <span class="wh-val" id="wh-day">Day 1 — 06:00</span>
-        <div class="wh-pips" id="wh-pips"></div>
-      </div>
-      <div class="wh-row">
-        <span class="wh-label">Move</span>
-        <span class="wh-val" id="wh-move">—</span>
-        <span id="fatigue-badge" class="fatigue-fresh">Fresh</span>
-      </div>
-    </div>
   </div>
 
   <!-- LANE / WAYPOINT HOVER TOOLTIP -->
@@ -12723,14 +12723,19 @@ const OVERLAY_HUD_HIDE = ['inv','wpn','shp','qlog','journal','armory','port','do
 function _syncWatchHudVisibility() {
   const hud = document.getElementById('watch-hud');
   if(!hud) return;
-  // Never hide during traveling — that's the main purpose of the watch HUD
+  // Show during travel, map, and local space — the clock is always relevant
   if(G.phase === 'traveling' || G.phase === 'map') {
     hud.classList.remove('hidden-by-overlay');
     return;
   }
+  const lsOpen = document.getElementById('ov-localspace')?.classList.contains('on');
+  if(lsOpen) {
+    // Show during local space so the player can see the day counter
+    hud.classList.remove('hidden-by-overlay');
+    return;
+  }
   const anyOpen = OVERLAY_HUD_HIDE.some(id => document.getElementById('ov-'+id)?.classList.contains('on'));
-  const lsOpen  = document.getElementById('ov-localspace')?.classList.contains('on');
-  hud.classList.toggle('hidden-by-overlay', anyOpen || lsOpen);
+  hud.classList.toggle('hidden-by-overlay', anyOpen);
 }
 
 function _closeSidebarOverlays() {
@@ -15658,7 +15663,7 @@ const LS = {
 
   // spawn timers
   _enemySpawnTimer: 0,
-  _enemySpawnInterval: 22,   // seconds between new enemy spawns
+  _enemySpawnInterval: 90,   // seconds between passive enemy spawns (within 10-day window only)
 
   // joystick state (mobile)
   joystickActive: false,
@@ -16122,9 +16127,15 @@ function openLocalSpace() {
     LS.W = 2400; LS.H = 2400;
   }
   LS._lastSphereId = sphereId;
-  // Enemy respawn only on first-ever visit OR after 10 game days — never on overlay return
+  // Enemy respawn uses 10-day buckets anchored to day 1 (day 0 base).
+  // Bucket = Math.floor((day - 1) / 10). Respawn fires when bucket has changed
+  // since last spawn, regardless of how many overlays or combats were entered.
+  // This means: spawn on day 1, 11, 21, 31 etc. — never in between.
   const ENEMY_RESPAWN_DAYS = 10;
-  const needsRespawn = !G._lsLastSpawn[sphereId] || (dayNow - lastSpawn >= ENEMY_RESPAWN_DAYS);
+  const _dayBucket = (d) => Math.floor(Math.max(0, d - 1) / ENEMY_RESPAWN_DAYS);
+  const lastSpawnBucket = _dayBucket(lastSpawn);
+  const nowBucket       = _dayBucket(dayNow);
+  const needsRespawn    = !G._lsLastSpawn[sphereId] || (nowBucket > lastSpawnBucket);
 
   if(LS._firstEntry) {
     LS._firstEntry = false;
@@ -17436,6 +17447,14 @@ function _lsEnemySpawnTick(dt) {
   LS._enemySpawnTimer += dt;
   if(LS._enemySpawnTimer < LS._enemySpawnInterval) return;
   LS._enemySpawnTimer = 0;
+
+  // Only spawn new enemies during the active 10-day spawn window for this sphere.
+  // Once the window expires, no new enemies appear until the player returns after day +10.
+  const _spSphId  = G.ship?.loc || 'realm';
+  const _spDay    = G.watch?.day || 1;
+  const _spLast   = G._lsLastSpawn?.[_spSphId] || 0;
+  const _spWindow = 10; // must match ENEMY_RESPAWN_DAYS
+  if(_spLast > 0 && (_spDay - _spLast) >= _spWindow) return; // window expired — no new spawns
 
   // Don't overcrowd
   if(LS.enemies.length >= 8) return;
