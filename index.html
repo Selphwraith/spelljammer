@@ -4369,13 +4369,16 @@ function doRest() {
           `Day ${G.watch.day}, 06:00. ${dn} — ${rt.watchesRemaining} leg${rt.watchesRemaining>1?'s':''} remaining.`,
           '⛵ Resume Course', resumeFn);
         // Auto-resume countdown — only when auto-rest is enabled
-        if (G._autoRest) _restAutoCountdown(resumeFn, 3);
+        // In idle bounce, skip the countdown entirely and resume immediately
+        if(G._idleMode && G._idleBounce) { setTimeout(resumeFn, 400); }
+        else if (G._autoRest) _restAutoCountdown(resumeFn, 3);
       } else if (G.tvl?.prog < 100 && (G.tvl?.to || G.tvl?.toWp || G.tvl?.toFragSite)) {
         const dn = G.tvl.to ? G.spheres?.find(s=>s.id===G.tvl.to)?.n : (G.tvl.toWp?.n||G.tvl.toFragSite?.n||'destination');
         const resumeFn2 = () => { G.phase='traveling'; startTravelHum(); startLiveClock(); resetLiveClock(); if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer=setInterval(travelTick,G.tvl.tickMs||100); tsOpen(getLane(G.tvl.from, G.tvl.to)); };
         showMsg('⚓ Rested — Ready to Sail', `${dn} awaits. Day ${G.watch.day}, 06:00.`,
           '⛵ Resume Course', resumeFn2);
-        if (G._autoRest) _restAutoCountdown(resumeFn2, 3);
+        if(G._idleMode && G._idleBounce) { setTimeout(resumeFn2, 400); }
+        else if (G._autoRest) _restAutoCountdown(resumeFn2, 3);
       }
     }, 800);
   }, 2000);
@@ -13898,9 +13901,15 @@ function checkQuestTurnin(sphereId){
     addLog(`✅ MISSION COMPLETE: ${q.title} — Reward: ${q.reward} TS.`,'imp');
     snd('fragment_collect', 0.9);
     updateUI();
-    setTimeout(()=>showMsg(`✅ Mission Complete`,`"${q.title}" delivered successfully.\n\nReward: ${q.reward} TS\n${FACTIONS[q.faction].n} reputation increased.`,'Excellent!',()=>{
-      if(G._afterTurninCb){ const cb=G._afterTurninCb; G._afterTurninCb=null; cb(); }
-    }),400);
+    // In idle bounce, skip the turnin popup — just log the reward and keep moving
+    if(G._idleMode && G._idleBounce) {
+      addLog(`✅ Idle: auto-collected mission reward — ${q.title} (+${q.reward} TS).`, 'gd');
+      G._afterTurninCb = null; // clear any stale callback
+    } else {
+      setTimeout(()=>showMsg(`✅ Mission Complete`,`"${q.title}" delivered successfully.\n\nReward: ${q.reward} TS\n${FACTIONS[q.faction].n} reputation increased.`,'Excellent!',()=>{
+        if(G._afterTurninCb){ const cb=G._afterTurninCb; G._afterTurninCb=null; cb(); }
+      }),400);
+    }
   });
 }
 
@@ -16009,6 +16018,8 @@ function _lsSpawnInitialEnemies(sphereId) {
 
 // ── OPEN / CLOSE ──────────────────────────────────────────────────────────
 function openLocalSpace() {
+  // Idle bounce — never open local space; departure is scheduled by _idleOnArrive
+  if(G._idleMode && G._idleBounce) return;
   ensureLqState();
   snd('sphere_arrive', 0.5);
 
@@ -19970,12 +19981,12 @@ function toggleIdleMode() {
   if(!G._idleMode) {
     _idleStopCombatLoop();
     G._idleBounce = false;
+    _idleReleaseWakeLock();
     addLog('⚙ Idle mode disabled.', '');
   } else {
+    _idleRequestWakeLock();
     addLog('⚙ Idle mode enabled. AI will handle combat, waystations, and anchoring.', 'imp');
-    // If we're mid-combat right now, start the AI immediately
     if(G.phase === 'combat' && G.cbt?.pTurn) _idleStartCombatLoop();
-    // If on map, show the bounce config
     if(G.phase === 'map') _idleShowBouncePanel();
   }
 }
@@ -20220,10 +20231,57 @@ function _idleOnArrive(sphereId) {
   }, 1800);
 }
 
-// ── Hooks into existing functions ─────────────────────────────────────────
-// These are called from the relevant functions when G._idleMode is true.
-// The hook points are patched into startCombat, showWaystationOffer,
-// watchExpiredMidJourney, and arrive below.
+// ── Background operation — Wake Lock + Page Visibility ────────────────────
+// When idle is ON: request a screen wake lock so the phone doesn't suspend.
+// When the page regains visibility (alarm dismissed, app switch back), resume
+// any intervals that may have been frozen.
+
+let _idleWakeLock = null;
+
+async function _idleRequestWakeLock() {
+  if(!G._idleMode) return;
+  try {
+    if('wakeLock' in navigator) {
+      _idleWakeLock = await navigator.wakeLock.request('screen');
+      _idleWakeLock.addEventListener('release', () => { _idleWakeLock = null; });
+    }
+  } catch(e) { /* wake lock not available or denied — silent fail */ }
+}
+
+function _idleReleaseWakeLock() {
+  if(_idleWakeLock) { _idleWakeLock.release(); _idleWakeLock = null; }
+}
+
+// When the page becomes visible again after being hidden (alarm, app switch, lock screen)
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden) {
+    // Page going to background — nothing to do, setInterval keeps running
+    return;
+  }
+  // Page coming back into view
+  if(!G?._idleMode) return;
+
+  // Re-request wake lock (it's released when page is hidden)
+  _idleRequestWakeLock();
+
+  // Restart any animation loops that use requestAnimationFrame (they stop when hidden)
+  if(G.phase === 'traveling' && TS.active && !TS.animId) {
+    TS.animId = requestAnimationFrame(tsRender);
+  }
+  // Ensure travelTick interval is running
+  if(G.phase === 'traveling' && G.tvl && !G.tvl.timer && !G.tvl._eventLocked) {
+    G.tvl.timer = setInterval(travelTick, G.tvl.tickMs || 100);
+  }
+  // Restart combat AI if we're mid-combat with player's turn
+  if(G.phase === 'combat' && G.cbt?.pTurn && !G._idleCbtTimer) {
+    _idleStartCombatLoop();
+  }
+  // Restart live clock if traveling
+  if(G.phase === 'traveling') {
+    startLiveClock();
+  }
+  addLog('⚙ Idle: page resumed — continuing.', '');
+});
 
 </script>
 <!-- ═══ SPLASH SCREEN ═══ -->
