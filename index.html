@@ -936,7 +936,7 @@ body {
 #ls-hud {
   position:absolute; top:0; left:0; right:0;
   display:flex; align-items:center; justify-content:space-between;
-  padding:8px 130px 8px 14px; z-index:10; pointer-events:none;
+  padding:8px 14px; z-index:10; pointer-events:none;
   background:linear-gradient(180deg,rgba(2,0,16,0.85) 0%,transparent 100%);
 }
 @media (max-width:700px) {
@@ -981,22 +981,24 @@ body {
   pointer-events:none;
 }
 
-/* ── Close/Exit button ── */
+/* ── Close/Exit button — bottom-right, just above the minimap ── */
 #ls-close {
-  position:absolute; top:10px; right:14px; background:rgba(30,12,8,0.88);
-  border:1px solid #aa663355; border-radius:3px; color:#ddaa77;
-  font-size:0.75em; padding:4px 10px; cursor:pointer;
+  position:absolute; bottom:170px; right:14px;
+  background:rgba(30,12,8,0.92);
+  border:1px solid #aa663355; border-radius:4px; color:#ddaa77;
+  font-size:0.688em; padding:6px 14px; cursor:pointer;
   font-family:'Cinzel',serif; letter-spacing:1px; z-index:20;
+  white-space:nowrap;
 }
-#ls-close:hover { border-color:#ffaa55; color:#ffcc88; background:rgba(70,28,8,0.9); }
+#ls-close:hover { border-color:#ffaa55; color:#ffcc88; background:rgba(70,28,8,0.95); }
 @media (max-width:700px) {
   #ls-close {
-    top: auto;
-    bottom: 8px;
-    right: 50%;
-    transform: translateX(50%);
-    font-size:0.625em;
-    padding: 6px 18px;
+    bottom: 158px;
+    right: 8px;
+    left: auto;
+    transform: none;
+    font-size: 0.625em;
+    padding: 5px 12px;
   }
 }
 
@@ -1641,20 +1643,20 @@ body {
 
 /* ── WATCH / FATIGUE SYSTEM ── */
 #watch-hud {
-  position:fixed; top:12px; left:50%; transform:translateX(-50%);
+  position:fixed; top:52px; right:14px; left:auto; transform:none;
   background:rgba(4,0,14,0.94); border:1px solid #44118866; border-radius:6px;
-  padding:6px 14px; display:none; flex-direction:column; align-items:center; gap:3px;
-  z-index:900; min-width:210px; max-width:320px; width:fit-content; pointer-events:none;
+  padding:6px 14px; display:none; flex-direction:column; align-items:flex-start; gap:3px;
+  z-index:900; min-width:190px; max-width:280px; width:fit-content; pointer-events:none;
 }
 @media (max-width: 700px) {
   #watch-hud {
-    top: 10px;
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
+    top: 72px;
+    right: 8px;
+    left: auto;
+    transform: none;
     min-width: 0;
-    max-width: 220px;
-    padding: 4px 12px;
+    max-width: 200px;
+    padding: 4px 10px;
     gap: 2px;
     font-size: 0.75em;
   }
@@ -4395,17 +4397,14 @@ function doRest() {
         showMsg('⚓ Rested — Ready to Sail',
           `Day ${G.watch.day}, 06:00. ${dn} — ${rt.watchesRemaining} leg${rt.watchesRemaining>1?'s':''} remaining.`,
           '⛵ Resume Course', resumeFn);
-        // Auto-resume countdown — only when auto-rest is enabled
-        // In idle bounce, skip the countdown entirely and resume immediately
-        if(G._idleMode && G._idleBounce) { setTimeout(resumeFn, 400); }
-        else if (G._autoRest) _restAutoCountdown(resumeFn, 3);
+        // Auto-resume countdown for both idle and manual auto-rest
+        if(G._idleMode || G._autoRest) _restAutoCountdown(resumeFn, G._idleMode ? 2 : 3);
       } else if (G.tvl?.prog < 100 && (G.tvl?.to || G.tvl?.toWp || G.tvl?.toFragSite)) {
         const dn = G.tvl.to ? G.spheres?.find(s=>s.id===G.tvl.to)?.n : (G.tvl.toWp?.n||G.tvl.toFragSite?.n||'destination');
         const resumeFn2 = () => { G.phase='traveling'; startTravelHum(); startLiveClock(); resetLiveClock(); if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer=setInterval(travelTick,G.tvl.tickMs||100); tsOpen(getLane(G.tvl.from, G.tvl.to)); };
         showMsg('⚓ Rested — Ready to Sail', `${dn} awaits. Day ${G.watch.day}, 06:00.`,
           '⛵ Resume Course', resumeFn2);
-        if(G._idleMode && G._idleBounce) { setTimeout(resumeFn2, 400); }
-        else if (G._autoRest) _restAutoCountdown(resumeFn2, 3);
+        if(G._idleMode || G._autoRest) _restAutoCountdown(resumeFn2, G._idleMode ? 2 : 3);
       }
     }, 800);
   }, 2000);
@@ -20343,6 +20342,18 @@ function _idleBounceDepart() {
 // ── Idle Auto-Dock Overlay (Option A) ────────────────────────────────────
 let _idleLsPollTimer   = null; // kept for cleanup compat
 let _idleLsSafetyTimer = null; // kept for cleanup compat
+
+// Flip bounce destinations and depart on the return leg
+function _idleFlipAndDepart() {
+  if(!G._idleMode || !G._idleBounce) return;
+  const prev       = G._idleBounceTo;
+  G._idleBounceTo  = G._idleBounceAlt;
+  G._idleBounceAlt = prev;
+  // Small delay so UI settles before travel starts
+  setTimeout(() => {
+    if(G._idleMode && G._idleBounce) _idleBounceDepart();
+  }, 300);
+}
 // Called from arrive() when idle bounce is active — for ALL sphere types.
 // Never opens local space. Shows a brief overlay, resupplies, departs.
 function _idleAutoDockOverlay(sphereId) {
