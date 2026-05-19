@@ -18735,6 +18735,7 @@ function closeLqShop() {
 
 const FD_CONFIGS = {
   realm: {
+    id:   'realm',
     name: 'The Flotsam Field',
     entryLog: 'Entering the Flotsam Field. Wreckage closes in on all sides. Automated sentinels are active.',
     guardianWarning: "Corsair Captain Aldren commands this site with a full complement of advance scouts and automated wreck-sentinels. The Navigation Core is at the far end of the field.",
@@ -18936,8 +18937,65 @@ function _fdMakeCorr(rA,rB,id){
   return mk([h,v]);
 }
 
+// ── Fixed layout — The Flotsam Field (Fentheris System) ───────────────────
+// Faithfully reproduces the hand-drawn map:
+//   Entrance stub → Entry Hall → Round Chamber / Main Hall → mid cluster → Boss
+//
+//   [stub]
+//   [Entry Hall ]──[Round]──[Main Hall──────────][Top-Right]
+//      |                        |
+//   [Mid-Left]──[Mid-Center]──[Mid-Right]
+//                   |
+//               [Lower]──[Boss Chamber]
+//               [Bottom]
+//
+function _fdRealmLayout(){
+  const R=[], C=[];
+  function mkR(id,type,x,y,w,h){
+    return{id,type,x:Math.round(x),y:Math.round(y),w,h,
+           cx:Math.round(x+w/2),cy:Math.round(y+h/2),
+           revealed:false,visible:false,enemies:[],loots:[],
+           guardianDefeated:false,_branch:false};
+  }
+  // ── Rooms ─────────────────────────────────────────────────────────────────
+  //                         id   type          x     y     w    h
+  R.push(mkR( 0, 'entry',    430,  120,  120, 150)); // Entry airlock stub
+  R.push(mkR( 1, 'encounter',150,  360,  600, 500)); // Entry Hall (large left)
+  R.push(mkR( 2, 'loot',     870,  100,  360, 360)); // Round Chamber (top branch)
+  R.push(mkR( 3, 'encounter',1330, 340,  820, 380)); // Main Hall (large upper-center)
+  R.push(mkR( 4, 'loot',     2250, 240,  340, 280)); // Top-Right Room (branch)
+  R.push(mkR( 5, 'encounter', 380, 940,  380, 320)); // Mid-Left Room
+  R.push(mkR( 6, 'encounter', 870, 880,  380, 360)); // Mid-Center Room
+  R.push(mkR( 7, 'loot',     1360,1120,  400, 300)); // Mid-Right Room (branch)
+  R.push(mkR( 8, 'encounter', 870,1360,  380, 300)); // Lower Room
+  R.push(mkR( 9, 'loot',      890,1780,  280, 240)); // Bottom Room (small)
+  R.push(mkR(10, 'guardian', 1900,1480,  520, 520)); // Boss Chamber
+  // Mark branch rooms
+  R[2]._branch=true; R[4]._branch=true; R[7]._branch=true;
+
+  // ── Corridors — auto L-shape via _fdMakeCorr ──────────────────────────────
+  const CONN=[
+    [0, 1],   // stub → entry hall (vertical)
+    [1, 2],   // entry hall → round chamber (right+up L)
+    [2, 3],   // round chamber → main hall (right+down L)
+    [3, 4],   // main hall → top-right room (horizontal)
+    [1, 5],   // entry hall → mid-left (down L)
+    [3, 6],   // main hall → mid-center (down L via right side)
+    [5, 6],   // mid-left → mid-center (horizontal)
+    [6, 7],   // mid-center → mid-right (horizontal)
+    [6, 8],   // mid-center → lower room (vertical)
+    [8, 9],   // lower → bottom (vertical)
+    [7,10],   // mid-right → boss chamber (right+down L)
+  ];
+  CONN.forEach(([a,b],i)=>C.push(_fdMakeCorr(R[a],R[b],i)));
+  return{rooms:R,corridors:C};
+}
+
 // ── Layout generator — procedural multi-directional with branch rooms ──────
 function _fdGenLayout(nRooms) {
+  // Use fixed hand-authored layouts for specific spheres
+  if(FD.config?.id==='realm') return _fdRealmLayout();
+
   const rooms=[], corridors=[];
   const MX=FD.W, MY=FD.H;
   const GAP_MIN=65, GAP_MAX=130;
@@ -19059,9 +19117,20 @@ function _fdPopulateRooms(cfg){
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function _fdIsInFloor(wx,wy){
-  for(const r of FD.rooms) if(wx>=r.x&&wx<=r.x+r.w&&wy>=r.y&&wy<=r.y+r.h) return true;
-  for(const c of FD.corridors) for(const s of _fdCorrSegs(c)) if(wx>=s.x&&wx<=s.x+s.w&&wy>=s.y&&wy<=s.y+s.h) return true;
+  // Small epsilon bridges 1-pixel floating-point seams at room/corridor junctions
+  const E=3;
+  for(const r of FD.rooms) if(wx>=r.x-E&&wx<=r.x+r.w+E&&wy>=r.y-E&&wy<=r.y+r.h+E) return true;
+  for(const c of FD.corridors) for(const s of _fdCorrSegs(c)) if(wx>=s.x-E&&wx<=s.x+s.w+E&&wy>=s.y-E&&wy<=s.y+s.h+E) return true;
   return false;
+}
+
+// Player collision uses a small radius so they can't squeeze through 1-px gaps at corners
+const FD_PLAYER_R=10;
+function _fdPlayerInFloor(x,y){
+  const R=FD_PLAYER_R;
+  return _fdIsInFloor(x,y)
+      && _fdIsInFloor(x+R,y) && _fdIsInFloor(x-R,y)
+      && _fdIsInFloor(x,y+R) && _fdIsInFloor(x,y-R);
 }
 
 function _fdLOS(x1,y1,x2,y2){
@@ -19127,10 +19196,10 @@ function _fdUpdatePlayer(dt){
   FD.pvx*=FD.pFriction; FD.pvy*=FD.pFriction;
 
   const nx=FD.px+FD.pvx*dt, ny=FD.py+FD.pvy*dt;
-  if(_fdIsInFloor(nx,ny))       {FD.px=nx;FD.py=ny;}
-  else if(_fdIsInFloor(nx,FD.py)){FD.px=nx;FD.pvy=0;}
-  else if(_fdIsInFloor(FD.px,ny)){FD.py=ny;FD.pvx=0;}
-  else                           {FD.pvx=0;FD.pvy=0;}
+  if(_fdPlayerInFloor(nx,ny))       {FD.px=nx;FD.py=ny;}
+  else if(_fdPlayerInFloor(nx,FD.py)){FD.px=nx;FD.pvy=0;}
+  else if(_fdPlayerInFloor(FD.px,ny)){FD.py=ny;FD.pvx=0;}
+  else                               {FD.pvx=0;FD.pvy=0;}
 
   // Engine hum in dungeon
   const _fdSpd=Math.sqrt(FD.pvx*FD.pvx+FD.pvy*FD.pvy);
@@ -19546,7 +19615,7 @@ function _fdHandleClick(e){
   const scX=FD.canvas.width/rect.width,scY=FD.canvas.height/rect.height;
   const wx=(e.clientX-rect.left)*scX+FD.camX;
   const wy=(e.clientY-rect.top)*scY+FD.camY;
-  if(_fdIsInFloor(wx,wy)){FD.pTargetX=wx;FD.pTargetY=wy;}
+  if(_fdPlayerInFloor(wx,wy)){FD.pTargetX=wx;FD.pTargetY=wy;}
 }
 function _fdKeyDown(e){FD.keys[e.key]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault();}
 function _fdKeyUp(e){FD.keys[e.key]=false;}
