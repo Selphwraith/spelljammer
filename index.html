@@ -17259,6 +17259,8 @@ function _lsTriggerCombat(enemy) {
 
   setTimeout(() => {
     document.getElementById('ov-localspace').classList.remove('on');
+    if(LS.animId){cancelAnimationFrame(LS.animId);LS.animId=null;}
+    LS.keys={};
     if(LS._humActive) { stopTravelHum(); LS._humActive = false; }
     G.phase = 'map';
     _lsPendingReturn = true;
@@ -18811,6 +18813,11 @@ function openFragDungeon(fs) {
 
   const ov=document.getElementById('ov-fragsitee');
   ov.classList.add('on');
+  // Pause LS — dungeon sits on top visually but ov-localspace must also be hidden
+  // or its keydown handler will keep firing and move the hidden LS player
+  document.getElementById('ov-localspace').classList.remove('on');
+  if(LS.animId){cancelAnimationFrame(LS.animId);LS.animId=null;}
+  LS.keys={};
   document.getElementById('fd-hud-title').textContent='🔮 '+cfg.name.toUpperCase();
   document.getElementById('fd-interact-panel').classList.remove('on');
   _fdLog(cfg.entryLog); _fdUpdateHud();
@@ -19193,6 +19200,11 @@ function _fdTriggerCombat(idx){
   document.removeEventListener('keydown',_fdKeyDown);
   document.removeEventListener('keyup',_fdKeyUp);
   document.getElementById('ov-fragsitee').classList.remove('on');
+  // Also ensure LS is fully stopped — it was hidden when entering the dungeon
+  // but belt-and-suspenders: kill the loop and clear keys so WASD can't bleed through
+  document.getElementById('ov-localspace').classList.remove('on');
+  if(LS.animId){cancelAnimationFrame(LS.animId);LS.animId=null;}
+  LS.keys={};
   setTimeout(()=>{_lsPendingReturn=true;startCombat(e.key);},400);
 }
 
