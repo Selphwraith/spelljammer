@@ -1675,15 +1675,15 @@ body {
 
 /* ── WATCH / FATIGUE SYSTEM ── */
 #watch-hud {
-  position:fixed; top:100px; right:14px; left:auto; transform:none;
+  position:fixed; top:48px; right:6px; left:auto; transform:none;
   background:rgba(4,0,14,0.94); border:1px solid #44118866; border-radius:6px;
   padding:6px 14px; display:none; flex-direction:column; align-items:flex-start; gap:3px;
-  z-index:900; min-width:190px; max-width:280px; width:fit-content; pointer-events:none;
+  z-index:1100; min-width:190px; max-width:280px; width:fit-content; pointer-events:none;
 }
 @media (max-width: 700px) {
   #watch-hud {
-    top: 78px;
-    right: 8px;
+    top: 44px;
+    right: 6px;
     left: auto;
     transform: none;
     min-width: 0;
@@ -2286,6 +2286,7 @@ body {
         <button class="ts-tbtn" id="ts-mute-btn" onclick="toggleVolPanel(event)">🔊 Sound</button>
         <button class="ts-tbtn" onclick="showFontPanel()">🔠 Text</button>
         <button class="ts-tbtn" onclick="openCbtInv()" title="Open cargo — use items during travel">🎒 Items</button>
+        <button class="ts-tbtn" onclick="toggleStatsDrawer()" title="Ship stats">⊞ Stats</button>
         <div id="ts-phase-tag">Traveling</div>
       </div>
     </div>
@@ -8958,6 +8959,11 @@ function tsDrawEvent(ctx, ev, W, H) {
     ctx.save();
     ctx.translate(ev.x, ev.y);
     ctx.rotate(angle);
+    // Pirate ships (sloop / plunderer / blackfleet) are drawn nose-right natively
+    // and face correctly after rotate(angle). All other procedural ships are drawn
+    // nose-up, so add π to flip them so they face toward the player ship.
+    const _pirateKeys = new Set(['sloop','plunderer','blackfleet']);
+    if(!_pirateKeys.has(ev.key)) ctx.rotate(Math.PI);
     const [ew, eh] = [80, 50];
     ctx.shadowColor = '#ff4422'; ctx.shadowBlur = 20;
     drawShipImg(ev.key, ctx, 0, 0, ew, eh, false, () => {
