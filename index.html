@@ -2882,8 +2882,8 @@ const ENM = {
     atk:[{n:'Bolt Volley',d:[1,6],txt:'Disciplined crossbow teams fire from the broadside ports in unison!'},{n:'Boarding Axe Team',d:[1,4],txt:'Trull marines throw grapples and charge across — hull gouged by battle-axes!',crew:1}],
     sp:{n:'Iron Discipline',c:0.20,txt:'The Trull captain orders a disciplined volley at point-blank range — concentrated fire!',fx:'summon',d:[1,6]},col:'#774411',diff:1,
     wpns:[
-      { n:'Bolt Thrower Array',  ico:'🏹', d:[1,6], cd:0, threat:1, txt:'Military crossbow teams — disciplined fire every round.' },
-      { n:'Boarding Axe Volley', ico:'🪓', d:[1,4], cd:1, threat:2, txt:'Grapple-and-board — deals hull damage and 1 crew loss.', crew:1 }
+      { n:'Bolt Thrower Array',  ico:'🏹', d:[1,6], cd:0, threat:1, txt:'Military crossbow teams — disciplined fire every round.', fx:'fx_bolt' },
+      { n:'Boarding Axe Volley', ico:'🪓', d:[1,4], cd:1, threat:2, txt:'Grapple-and-board — deals hull damage and 1 crew loss.', crew:1, fx:'fx_axes' }
     ]},
 
 
@@ -12385,6 +12385,69 @@ function _fxGrapple(src, dst) {
   _fxKick();
 }
 
+// AXES — Boarding Axe Volley: several tumbling axes arc across the gap
+function _fxAxes(src, dst) {
+  _fxInit(); _fxResize();
+  const count = 4 + Math.floor(Math.random() * 3); // 4–6 axes
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      // Each axe slightly offset vertically so they fan out
+      const offsetY = (i - count / 2) * 14 + (Math.random() - 0.5) * 10;
+      const ex = dst.x + (Math.random() - 0.5) * 28;
+      const ey = dst.y + offsetY;
+      // Muzzle kick from thrower
+      _fxFlash(src.x, src.y, '#cc8833', '#332200', 16, 4, 0.12, 0.7);
+      // Spinning axe — drawn as a short rotating line-particle sequence
+      let prog = 0;
+      const totalDist = Math.hypot(ex - src.x, ey - src.y);
+      const nx = (ex - src.x) / totalDist;
+      const ny = (ey - src.y) / totalDist;
+      const speed = 420 + Math.random() * 120;
+      let ax = src.x, ay = src.y;
+      let angle = Math.random() * Math.PI * 2;
+      const spinRate = (Math.random() > 0.5 ? 1 : -1) * (18 + Math.random() * 12);
+      function axeTick(ts) {
+        const step = speed * 0.016;
+        ax += nx * step; ay += ny * step;
+        prog += step;
+        angle += spinRate * 0.016;
+        // Draw axe as two short crossed lines (tumbling)
+        const hl = 7; // half-length
+        const ctx = _FX.ctx;
+        if (!ctx) return;
+        // Blade line
+        _FX.particles.push({
+          x: ax, y: ay, vx: 0, vy: 0,
+          col: '#cc8833', r: 2.5,
+          maxLife: 0.07, life: 0.07,
+          alpha: 0.9, drag: 1, glow: 5, gravity: 0, shape: 'circle'
+        });
+        // Trail sparkle
+        _FX.particles.push({
+          x: ax - nx * 5 + (Math.random()-0.5)*4,
+          y: ay - ny * 5 + (Math.random()-0.5)*4,
+          vx: 0, vy: 0,
+          col: '#885522', r: 1.5,
+          maxLife: 0.12, life: 0.12,
+          alpha: 0.6, drag: 1, glow: 3, gravity: 0, shape: 'circle'
+        });
+        _fxKick();
+        if (prog < totalDist - 4) {
+          requestAnimationFrame(axeTick);
+        } else {
+          // Impact — metal clang flash + sparks
+          _fxFlash(ax, ay, '#ffdd88', '#441100', 22, 5, 0.2, 0.9);
+          _fxSparks(ax, ay, '#cc8822', 8, 80, 0.3, Math.PI * 1.0);
+          _fxSparks(ax, ay, '#ffcc55', 4, 50, 0.2, Math.PI * 0.6);
+          _fxKick();
+        }
+      }
+      requestAnimationFrame(axeTick);
+      _fxKick();
+    }, i * 90);
+  }
+}
+
 // HEAL / REPAIR — green glow on the healer
 function _fxHeal(target) {
   _fxInit(); _fxResize();
@@ -12453,6 +12516,7 @@ function _cbtFX(wk, fromPlayer) {
     case 'fx_psi':     _fxPsi(src, dst, fromPlayer); break;
     case 'fx_eyeray':  _fxEyeRays(src, dst); break;
     case 'fx_grapple': _fxGrapple(src, dst); break;
+    case 'fx_axes':    _fxAxes(src, dst); break;
     case 'fx_silver':  _fxSilver(src, dst, fromPlayer); break;
     case 'fx_nether':  _fxNether(src, dst, fromPlayer); break;
     case 'fx_nova':    _fxNova(src); break;
@@ -12465,6 +12529,8 @@ function _cbtFX(wk, fromPlayer) {
 // Map enemy weapon object + enemy key to an FX type string
 function _fxTypeFromEnemyW(w, eKey) {
   if (!w) return 'fx_bolt';
+  // Honour explicit fx tag on the weapon definition
+  if (w.fx) return w.fx;
   // Weapon-property based routing first
   if (w.webdisable)    return 'fx_web';
   if (w.cooldowncurse) return 'fx_void';
@@ -15890,6 +15956,7 @@ function _buildSaveEntry(slot, name) {
       localQuests: G.localQuests || {},
       lsQmStock: G._lsQmStock || null,
       lsLastSpawn: G._lsLastSpawn || {},
+      lsLastVisit: G._lsLastVisit || {},
       lsState: (typeof LS !== 'undefined' && document.getElementById('ov-localspace')?.classList.contains('on')) ? {
         inLocalSpace: true,
         px: LS.px, py: LS.py, pAngle: LS.pAngle,
@@ -15977,6 +16044,7 @@ function _applyLoad(save) {
     G.localQuests = state.localQuests || {};
     G._lsQmStock   = state.lsQmStock   || null;
     G._lsLastSpawn = state.lsLastSpawn || {};
+    G._lsLastVisit = state.lsLastVisit || {};
     // ── Restore local space position if saved inside it ────────
     const savedLs = state.lsState;
     if(savedLs?.inLocalSpace) {
@@ -17473,22 +17541,24 @@ function openLocalSpace() {
   const sphereId = G.ship.loc || 'realm';
   const dayNow   = G.watch?.day || 1;
   if(!G._lsLastSpawn) G._lsLastSpawn = {};
-  const lastSpawn   = G._lsLastSpawn[sphereId] || 0;
+  if(!G._lsLastVisit) G._lsLastVisit = {};
   // Force layout re-init if sphere changed — but NOT enemy respawn
   if(LS._lastSphereId && LS._lastSphereId !== sphereId) {
     LS._firstEntry = true;
     LS.W = 2400; LS.H = 2400;
   }
   LS._lastSphereId = sphereId;
-  // Enemy respawn uses 10-day buckets anchored to day 1 (day 0 base).
-  // Bucket = Math.floor((day - 1) / 10). Respawn fires when bucket has changed
-  // since last spawn, regardless of how many overlays or combats were entered.
-  // This means: spawn on day 1, 11, 21, 31 etc. — never in between.
+  // ── Enemy respawn guard ───────────────────────────────────────────────────
+  // Enemies only fully reset when the player returns AND it has been at least
+  // 10 days since their last visit to this sphere. Enemies killed in a previous
+  // visit persist as-is until the 10-day window has elapsed.
+  //   • first visit ever → spawn immediately
+  //   • return visit, < 10 days since last → keep existing enemies (no respawn)
+  //   • return visit, ≥ 10 days since last → wipe and respawn fresh
   const ENEMY_RESPAWN_DAYS = 10;
-  const _dayBucket = (d) => Math.floor(Math.max(0, d - 1) / ENEMY_RESPAWN_DAYS);
-  const lastSpawnBucket = _dayBucket(lastSpawn);
-  const nowBucket       = _dayBucket(dayNow);
-  const needsRespawn    = !G._lsLastSpawn[sphereId] || (nowBucket > lastSpawnBucket);
+  const lastVisitDay = G._lsLastVisit?.[sphereId] ?? null;
+  const daysSinceVisit = lastVisitDay !== null ? (dayNow - lastVisitDay) : Infinity;
+  const needsRespawn = lastVisitDay === null || daysSinceVisit >= ENEMY_RESPAWN_DAYS;
 
   if(LS._firstEntry) {
     LS._firstEntry = false;
@@ -17536,7 +17606,17 @@ function openLocalSpace() {
   if(needsRespawn) {
     LS.enemies = [];
     _lsSpawnInitialEnemies(sphereId);
+    // Record the day of this full respawn
+    if(!G._lsLastVisit) G._lsLastVisit = {};
+    G._lsLastVisit[sphereId] = dayNow;
+    // Keep _lsLastSpawn in sync for the roaming spawn tick
     G._lsLastSpawn[sphereId] = dayNow;
+  } else {
+    // Returning within the 10-day window — keep surviving enemies as-is.
+    // Do NOT update _lsLastVisit here — the 10-day clock must keep running from
+    // the original visit day, not reset on every return visit.
+    // (Only needsRespawn=true updates _lsLastVisit above.)
+    G._lsLastSpawn[sphereId] = G._lsLastSpawn[sphereId] ?? dayNow; // preserve existing
   }
 
   // Reset per-session transient state
