@@ -17132,10 +17132,10 @@ function _lsLog(msg, cls='') {
 // Speed 10 = noticeably faster, reward for max upgrade
 function _lsShipMoveStats() {
   const s = G.ship?.speed || 4;
-  if      (s >= 10) return { pSpeed:200, pAccel:640 };
-  else if (s >= 8)  return { pSpeed:150, pAccel:520 };
-  else if (s >= 6)  return { pSpeed:110, pAccel:420 };
-  else              return { pSpeed: 70, pAccel:300 };
+  if      (s >= 10) return { pSpeed:200, pAccel:1200 };
+  else if (s >= 8)  return { pSpeed:150, pAccel:1000 };
+  else if (s >= 6)  return { pSpeed:110, pAccel:820 };
+  else              return { pSpeed: 70, pAccel:600 };
 }
 function _lsLoop(ts) {
   LS.animId = requestAnimationFrame(_lsLoop);
@@ -17204,9 +17204,9 @@ function _lsUpdatePlayer(dt) {
 
   if(j) { ax += LS.joystickX; ay += LS.joystickY; }
 
-  // Normalize diagonal
+  // Always normalise to unit vector so partial thumbstick deflection gives full speed
   const mag = Math.sqrt(ax*ax+ay*ay);
-  if(mag > 1) { ax/=mag; ay/=mag; }
+  if(mag > 0.05) { ax/=mag; ay/=mag; }
 
   const hasInput = (mag > 0.05);
 
@@ -19391,7 +19391,9 @@ function _fdUpdatePlayer(dt){
   if(FD.joystickActive){ax+=FD.joystickX;ay+=FD.joystickY;}
 
   const mag=Math.sqrt(ax*ax+ay*ay);
-  if(mag>1){ax/=mag;ay/=mag;}
+  // Always normalise direction so partial thumbstick deflection still gives full speed.
+  // Without this, a stick reporting 0.85 at full push gives 85% of pAccel — never reaching pSpeed.
+  if(mag>0.05){ax/=mag;ay/=mag;}
   const hasInput=mag>0.05;
 
   if(hasInput){
