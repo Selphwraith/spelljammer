@@ -4314,9 +4314,11 @@ function watchExpiredMidJourney() {
   G.watch._pauseShown = true;
   clearInterval(G.tvl.timer); G.tvl.timer = null;
   stopLiveClock();
-  // Capture before zeroing — anchorCb and pushCb need these
-  const _savedProg         = G.tvl?.prog ?? 0;
-  const _savedWatchesLeft  = G.tvl?._watchesLeft ?? 0;
+  // Capture before zeroing — anchorCb and pushCb need these.
+  // _watchesRemaining is already set correctly by travelTick's segment-complete handler;
+  // fall back to _watchesLeft only if travelTick didn't set it (e.g. called from elsewhere).
+  const _savedProg        = G.tvl?.prog ?? 0;
+  const _savedWatchesLeft = G.tvl?._watchesRemaining ?? G.tvl?._watchesLeft ?? 0;
   if (G.tvl) {
     G.tvl._pausedProg       = _savedProg;
     G.tvl._watchesRemaining = _savedWatchesLeft;
