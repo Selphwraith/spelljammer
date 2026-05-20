@@ -4211,8 +4211,8 @@ function getWatchRealMs() {
 // Lane base legs scaled so Refuge→Realm (d:1, against flow) = 7 days
 // Multiplier ≈ 7/3 applied and rounded to clean integers
 // d:1 base=5, d:2 base=7, d:3 base=7, d:4 base=9, d:5 base=14
-const LANE_BASE_LEGS  = { 1: 12, 2: 14, 3: 14, 4: 18, 5: 28, 6: 34 };
-const LANE_MAX_LEGS   = 44; // cap for against-flow extreme lanes
+const LANE_BASE_LEGS  = { 1: 10, 2: 12, 3: 12, 4: 15, 5: 23, 6: 28 };
+const LANE_MAX_LEGS   = 36;
 
 function laneWatchCost(lane, ship) {
   let cost = LANE_BASE_LEGS[lane.d] || 3;
@@ -5924,8 +5924,8 @@ function renderLoop(ts=0) {
 
     const laneAB = getLane(a, b);
     const laneBA = getLane(b, a);
-    const daysAB = Math.ceil(laneWatchCost(laneAB, G.ship) * 0.75);
-    const daysBA = Math.ceil(laneWatchCost(laneBA, G.ship) * 0.75);
+    const daysAB = Math.round(laneWatchCost(laneAB, G.ship) / 1.6);
+    const daysBA = Math.round(laneWatchCost(laneBA, G.ship) / 1.6);
 
     const badges = [
       { t: 0.25, days: daysAB, warzone: laneAB.warzone },
