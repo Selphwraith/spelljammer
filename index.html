@@ -4211,8 +4211,8 @@ function getWatchRealMs() {
 // Lane base legs scaled so Refuge→Realm (d:1, against flow) = 7 days
 // Multiplier ≈ 7/3 applied and rounded to clean integers
 // d:1 base=5, d:2 base=7, d:3 base=7, d:4 base=9, d:5 base=14
-const LANE_BASE_LEGS  = { 1: 6, 2: 7, 3: 7, 4: 9, 5: 14, 6: 17 };
-const LANE_MAX_LEGS   = 22; // cap for against-flow extreme lanes
+const LANE_BASE_LEGS  = { 1: 12, 2: 14, 3: 14, 4: 18, 5: 28, 6: 34 };
+const LANE_MAX_LEGS   = 44; // cap for against-flow extreme lanes
 
 function laneWatchCost(lane, ship) {
   let cost = LANE_BASE_LEGS[lane.d] || 3;
@@ -5430,15 +5430,28 @@ function _titlePlayTrack(key, _isFallback) {
   } catch(_) {}
 }
 
-function playTitle() {
+function playTitle(){
   if (_muted) return;
   if (_titleEl && !_titleEl.paused) {
     _titleVolume(G?.phase === 'combat' ? 0.00 : 0.35);
     return;
   }
-  if (_titleShuffled.length === 0) _titleShuffle();
-  const key = _titleShuffled[_titleTrackIdx] || _titleNextTrack();
+  // Always start with the original title track — first impression matters.
+  // Subsequent tracks (once the game is running) shuffle through all 5.
+  const key = (_titleShuffled.length === 0) ? 'title' : (_titleShuffled[_titleTrackIdx] || 'title');
   _titlePlayTrack(key);
+}
+
+// Called once the game actually starts (New Game / Continue) — kick off in-game shuffle
+function _titleStartGamePlaylist() {
+  stopTitle();
+  _titleShuffle();
+  // Ensure 'title' doesn't play again immediately as the first shuffled track
+  if (_titleShuffled[0] === 'title' && _titleShuffled.length > 1) {
+    [_titleShuffled[0], _titleShuffled[1]] = [_titleShuffled[1], _titleShuffled[0]];
+  }
+  _titleTrackIdx = 0;
+  if (!_muted) _titlePlayTrack(_titleShuffled[0]);
 }
 
 function stopTitle() {
@@ -5494,6 +5507,8 @@ function initGame() {
   if(G.tvl&&G.tvl.timer) clearInterval(G.tvl.timer);
   if(G.animId) cancelAnimationFrame(G.animId);
   _stopLoop();
+  // Transition from title track to in-game shuffle playlist
+  _titleStartGamePlaylist();
 
   // ── Global travel watchdog — polls every 5s ──────────────────────────────
   // If travel is active but G.tvl.timer is null (cleared by encounter that
@@ -5559,7 +5574,7 @@ function initGame() {
     phase:'map',
     ship:{
       type:'pinnace', name:'IEF Vanguard',
-      hull:65, maxHull:65, crew:6, maxCrew:6, air:12, maxAir:12, gold:150, speed:4,
+      hull:65, maxHull:65, crew:6, maxCrew:6, air:10, maxAir:10, gold:150, speed:4,
       resist:0, wpns:['ballista'], upgrades:[], inv:[],
       loc:'refuge', atWp:null, sigTier:null,
     },
@@ -5895,27 +5910,38 @@ function renderLoop(ts=0) {
     // ── Flow arrow REMOVED — direction shown by lane particles ──
 
     // ── Travel days badges at 25% and 75% along the lane ─────────────────
-    // Placed off-centre so they don't overlap waypoint icons at the midpoint.
-    // Each badge is nudged a few pixels perpendicular to the lane direction.
+    // Each badge shows the travel time for that DIRECTION of travel:
+    //   25% badge (near sphere A) = days traveling A → B
+    //   75% badge (near sphere B) = days traveling B → A
+    // Conversion: laneWatchCost returns legs; legs ÷ 2 = actual game days
+    // (each 2-leg+rest cycle = exactly 24 game hours at standard pace)
     cx.globalAlpha = 1;
-    const days    = laneWatchCost(lane, G.ship);
-    const dayLabel = lane.warzone ? `⚔ ${days}d` : `${days}d`;
-    const pillW   = lane.warzone ? 30 : (days >= 10 ? 24 : 20);
-    const pillH   = 13;
 
-    // Perpendicular offset — nudge badge away from the lane line
     const ldx = pb.x - pa.x, ldy = pb.y - pa.y;
     const llen = Math.hypot(ldx, ldy) || 1;
-    const perpX = -ldy / llen, perpY = ldx / llen; // unit normal
-    const nudge = 10; // px off the lane
+    const perpX = -ldy / llen, perpY = ldx / llen;
+    const nudge = 10;
 
-    for (const t of [0.25, 0.75]) {
-      const bx = pa.x + ldx * t + perpX * nudge;
-      const by = pa.y + ldy * t + perpY * nudge;
+    const laneAB = getLane(a, b);
+    const laneBA = getLane(b, a);
+    const daysAB = Math.ceil(laneWatchCost(laneAB, G.ship) / 2);
+    const daysBA = Math.ceil(laneWatchCost(laneBA, G.ship) / 2);
+
+    const badges = [
+      { t: 0.25, days: daysAB, warzone: laneAB.warzone },
+      { t: 0.75, days: daysBA, warzone: laneBA.warzone },
+    ];
+
+    for (const badge of badges) {
+      const bx = pa.x + ldx * badge.t + perpX * nudge;
+      const by = pa.y + ldy * badge.t + perpY * nudge;
+      const label = badge.warzone ? `⚔ ${badge.days}d` : `${badge.days}d`;
+      const pillW = badge.warzone ? 30 : (badge.days >= 10 ? 24 : 20);
+      const pillH = 13;
 
       // Glow halo
       const bg = cx.createRadialGradient(bx, by, 0, bx, by, 13);
-      bg.addColorStop(0, hexA(col,'66')); bg.addColorStop(1, hexA(col,'00'));
+      bg.addColorStop(0, hexA(col,'55')); bg.addColorStop(1, hexA(col,'00'));
       cx.fillStyle = bg; cx.beginPath(); cx.arc(bx, by, 13, 0, Math.PI * 2); cx.fill();
 
       // Pill
@@ -5928,7 +5954,7 @@ function renderLoop(ts=0) {
       cx.fillStyle = col;
       cx.font = 'bold 10px "Cinzel",serif';
       cx.textAlign = 'center'; cx.textBaseline = 'middle';
-      cx.fillText(dayLabel, bx, by);
+      cx.fillText(label, bx, by);
     }
   });
   cx.globalAlpha=1; cx.textBaseline='alphabetic';
@@ -10271,14 +10297,29 @@ function buy(item){
           s.maxCrew += 8; s.crew = s.maxCrew;
           addLog(`Crew Quarters installed: +8 max crew.`, 'gd'); break;
         case 'recycler':
-          s.maxAir = (s.maxAir || 12) * 2;
-          s.air    = s.maxAir; // top up to new max
+          s.maxAir = (s.maxAir || 10) * 2;
+          s.air    = s.maxAir;
           addLog(`Air Recycler installed: air capacity doubled to ${s.maxAir} days!`, 'gd');
           break;
         case 'airtank':
-          s.maxAir = (s.maxAir || 12) + 12;
+          s.maxAir = (s.maxAir || 10) + 12;
           s.air    = s.maxAir;
           addLog(`Extended Air Reservoir installed: +12 air capacity (now ${s.maxAir} days)!`, 'gd');
+          break;
+        case 'airtier1':
+          s.maxAir = (s.maxAir || 10) + 6;
+          s.air    = s.maxAir;
+          addLog(`Air Cell Array installed: +6 air capacity (now ${s.maxAir} days). Safe for mid-sphere runs.`, 'gd');
+          break;
+        case 'airtier2':
+          s.maxAir = (s.maxAir || 10) + 6;
+          s.air    = s.maxAir;
+          addLog(`Pressurized Air Module installed: +6 air capacity (now ${s.maxAir} days). Outer void reached.`, 'gd');
+          break;
+        case 'airtier3':
+          s.maxAir = (s.maxAir || 10) + 12;
+          s.air    = s.maxAir;
+          addLog(`Void Scrubber Array installed: +12 air capacity (now ${s.maxAir} days). Deep void runs unlocked.`, 'gd');
           break;
         case 'cdreduce':
           s.cdBonus = (s.cdBonus||0) + 1;
@@ -15970,7 +16011,7 @@ function menuNewGame() {
 function menuContinue() {
   if (!_gameActive) return;
   hideMainMenu();
-  // If in combat, restore combat ambient — otherwise title already playing
+  _titleStartGamePlaylist();
   if (G.phase === 'combat') setTimeout(() => setAmbient('combat'), 100);
   setTag(G.phase === 'port' ? `Port — ${G.spheres.find(s=>s.id===G.ship.loc)?.n||''}` : 'Navigation');
 }
@@ -16613,7 +16654,7 @@ const LOCAL_QUEST_DATA = {
         { type:'upgrade', ico:'🛡', name:'Reinforced Dwarven Plating', desc:'+50 max hull (forge-certified)', cost:115, act:'upg', upg:'plating' },
         { type:'upgrade', ico:'⚡', name:'Overclocked Helm Drive', desc:'+2 void speed (req: Speed Engine)', cost:180, act:'upg', upg:'engine2' },
         { type:'upgrade', ico:'🌀', name:'Air Recycler', desc:'Air lasts 2× longer in the void', cost:90, act:'upg', upg:'recycler' },
-        { type:'upgrade', ico:'💨', name:'Extended Air Reservoir', desc:'+12 days air capacity (dwarven pressure-forged)', cost:160, act:'upg', upg:'airtank' },
+        { type:'upgrade', ico:'💨', name:'Air Cell Array', desc:'+6 days air capacity — safe for mid-sphere runs', cost:95, act:'upg', upg:'airtier1' },
         { type:'wpn', ico:'⚔', name:'Super Ballista', desc:'Heavy siege ballista — high damage, slower rate (Dwarven forge)', cost:130, wk:'sballista' },
         { type:'wpn', ico:'⚔', name:'Siege Bombard', desc:'Massive hull-cracker cannon. Slow reload, devastating impact', cost:200, wk:'bombard' },
       ]
@@ -16818,6 +16859,7 @@ const LOCAL_QUEST_DATA = {
         { type:'supply', ico:'👥', name:'Crew Hire (Freeport)',       desc:'+4 crew from the docks',            cost:65,  act:'crew4' },
         { type:'usable', ico:'🍺', name:"Crew's Courage Mead",        desc:"Use: Restores 3 crew in combat",    cost:55,  itemKey:'crewmead' },
         { type:'upgrade', ico:'💥', name:'Chain Reaction Crystal',    desc:'30% chance of free bonus shot on any hit', cost:300, act:'upg', upg:'chainreact' },
+        { type:'upgrade', ico:'💨', name:'Pressurized Air Module', desc:'+6 days air capacity — reaches the outer void', cost:150, act:'upg', upg:'airtier2' },
         { type:'wpn', ico:'⚙️', name:'Void Sailing Ram',              desc:'5d6 · 4-round reload · bone-shattering impact (salvaged)', cost:320, wk:'ram' },
         { type:'wpn', ico:'💥', name:'Force Cannon',                  desc:'4d8 · 3-round reload · heavy shot (freeport surplus)',      cost:265, wk:'fcannon' },
       ]
@@ -16908,7 +16950,7 @@ const LOCAL_QUEST_DATA = {
         { type:'upgrade', ico:'🛡', name:'Hull Plating', desc:'+50 max hull', cost:100, act:'upg', upg:'plating' },
         { type:'upgrade', ico:'⚡', name:'Speed Engine', desc:'+2 void sailing speed', cost:80, act:'upg', upg:'engine' },
         { type:'upgrade', ico:'🏠', name:'Crew Quarters', desc:'+8 max crew', cost:65, act:'upg', upg:'quarters' },
-        { type:'upgrade', ico:'🌀', name:'Air Recycler', desc:'Air lasts 2× longer', cost:90, act:'upg', upg:'recycler' },
+        { type:'upgrade', ico:'💨', name:'Pressurized Air Module', desc:'+6 days air capacity — reaches the outer void', cost:150, act:'upg', upg:'airtier2' },
       ]
     }
   },
@@ -17013,7 +17055,7 @@ const LOCAL_QUEST_DATA = {
         { type:'wpn', ico:'💀', name:'Nether Cannon',              desc:'4d8 · 4-round reload · void-forged dissolution round', cost:380, wk:'nether' },
         { type:'upgrade', ico:'🔀', name:'Volley System',          desc:'Fire ALL ready weapons simultaneously', cost:350, act:'upg', upg:'volley' },
         { type:'upgrade', ico:'⚡', name:'Void-Runner Core', desc:'+2 void speed to max (req: Overclocked Drive)', cost:320, act:'upg', upg:'engine3' },
-        { type:'upgrade', ico:'💨', name:'Extended Air Reservoir', desc:'+12 days air capacity (dwarven pressure-forged)', cost:160, act:'upg', upg:'airtank' },
+        { type:'upgrade', ico:'🌬️', name:'Void Scrubber Array', desc:'+12 days air capacity — required for the deepest void runs', cost:260, act:'upg', upg:'airtier3' },
       ]
     }
   },
@@ -17118,6 +17160,7 @@ const LOCAL_QUEST_DATA = {
         { type:'wpn', ico:'🌀', name:'Void Cannon',                desc:'6d8 · 6-round reload · endgame annihilation round', cost:520, wk:'voidcann' },
         { type:'upgrade', ico:'🔫', name:'Rapid-Fire System',      desc:'Reduce all weapon reload times by 1', cost:320, act:'upg', upg:'rapidfire' },
         { type:'upgrade', ico:'⚡', name:'Void-Runner Core', desc:'+2 void speed to max (req: Overclocked Drive)', cost:320, act:'upg', upg:'engine3' },
+        { type:'upgrade', ico:'🌬️', name:'Void Scrubber Array', desc:'+12 days air capacity — required for the deepest void runs', cost:260, act:'upg', upg:'airtier3' },
       ]
     }
   }
@@ -18369,8 +18412,11 @@ function _lsBuildQmShop() {
               if(item.upg==='plating'){G.ship.maxHull+=50;G.ship.hull+=50;}
               if(item.upg==='engine'){G.ship.speed+=2;}
               if(item.upg==='quarters'){G.ship.maxCrew+=8;G.ship.crew=G.ship.maxCrew;}
-              if(item.upg==='recycler'){G.ship.maxAir=(G.ship.maxAir||12)*2;G.ship.air=G.ship.maxAir;}
-              if(item.upg==='airtank'){G.ship.maxAir=(G.ship.maxAir||12)+12;G.ship.air=G.ship.maxAir;}
+              if(item.upg==='recycler'){G.ship.maxAir=(G.ship.maxAir||10)*2;G.ship.air=G.ship.maxAir;}
+              if(item.upg==='airtank'){G.ship.maxAir=(G.ship.maxAir||10)+12;G.ship.air=G.ship.maxAir;}
+              if(item.upg==='airtier1'){G.ship.maxAir=(G.ship.maxAir||10)+6;G.ship.air=G.ship.maxAir;}
+              if(item.upg==='airtier2'){G.ship.maxAir=(G.ship.maxAir||10)+6;G.ship.air=G.ship.maxAir;}
+              if(item.upg==='airtier3'){G.ship.maxAir=(G.ship.maxAir||10)+12;G.ship.air=G.ship.maxAir;}
               msg=item.name+' installed!'; snd('ship_upgrade',0.85);
             }
             break;
@@ -20138,14 +20184,29 @@ function showLqShop(npc) {
             if(item.upg==='engine3'){G.ship.speed+=2;}
             if(item.upg==='quarters'){G.ship.maxCrew+=8;G.ship.crew=G.ship.maxCrew;}
             if(item.upg==='recycler'){
-              G.ship.maxAir = (G.ship.maxAir||12) * 2;
+              G.ship.maxAir = (G.ship.maxAir||10) * 2;
               G.ship.air    = G.ship.maxAir;
               addLog(`Air Recycler installed: air capacity doubled to ${G.ship.maxAir} days!`,'gd');
             }
             if(item.upg==='airtank'){
-              G.ship.maxAir = (G.ship.maxAir||12) + 12;
+              G.ship.maxAir = (G.ship.maxAir||10) + 12;
               G.ship.air    = G.ship.maxAir;
               addLog(`Extended Air Reservoir installed: +12 air capacity (now ${G.ship.maxAir} days)!`,'gd');
+            }
+            if(item.upg==='airtier1'){
+              G.ship.maxAir = (G.ship.maxAir||10) + 6;
+              G.ship.air    = G.ship.maxAir;
+              addLog(`Air Cell Array installed: +6 air capacity (now ${G.ship.maxAir} days).`,'gd');
+            }
+            if(item.upg==='airtier2'){
+              G.ship.maxAir = (G.ship.maxAir||10) + 6;
+              G.ship.air    = G.ship.maxAir;
+              addLog(`Pressurized Air Module installed: +6 air capacity (now ${G.ship.maxAir} days).`,'gd');
+            }
+            if(item.upg==='airtier3'){
+              G.ship.maxAir = (G.ship.maxAir||10) + 12;
+              G.ship.air    = G.ship.maxAir;
+              addLog(`Void Scrubber Array installed: +12 air capacity (now ${G.ship.maxAir} days).`,'gd');
             }
             msg = item.name + ' installed!';
             snd('purchase', 0.9); snd('ship_upgrade', 0.85);
