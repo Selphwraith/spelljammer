@@ -1704,6 +1704,17 @@ body {
 }
 #watch-hud.on { display:flex; }
 #watch-hud.hidden-by-overlay { display:none !important; }
+/* In local space, drop below the sphere title + stats row */
+#watch-hud.ls-mode {
+  top: 130px !important;
+  right: 6px !important;
+}
+@media (max-width: 700px) {
+  #watch-hud.ls-mode {
+    top: 124px !important;
+    right: 6px !important;
+  }
+}
 .wh-row { display:flex; align-items:center; gap:8px; }
 .wh-label { font-family:'Cinzel',serif; font-size:0.688em; color:#7755aa; letter-spacing:2px; text-transform:uppercase; }
 .wh-val   { font-family:'Cinzel',serif; font-size:0.813em; color:#ccaaff; letter-spacing:1px; }
@@ -16461,6 +16472,9 @@ function openLocalSpace() {
   LS.lastTs = 0;
   LS.animId = requestAnimationFrame(_lsLoop);
 
+  // Reposition watch HUD below the LS stat bar so it doesn't clash
+  document.getElementById('watch-hud')?.classList.add('ls-mode');
+
   // Hide sidebar Local Quest button for realm (LS replaces it)
   const sLqBtn = document.getElementById('sidebar-lq-btn');
   if(sLqBtn) sLqBtn.style.display = 'none';
@@ -16474,6 +16488,7 @@ function closeLsOverlay() {
   if(LS.animId) { cancelAnimationFrame(LS.animId); LS.animId = null; }
   LS.keys = {};
   if(LS._humActive) { stopTravelHum(); LS._humActive = false; }
+  document.getElementById('watch-hud')?.classList.remove('ls-mode');
   setTag('Navigation'); updateUI();
   _syncWatchHudVisibility();
 }
