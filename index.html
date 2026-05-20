@@ -5890,17 +5890,33 @@ function renderLoop(ts=0) {
 
     // ── Flow arrow REMOVED — direction shown by lane particles ──
 
-    // Danger badge at midpoint
-    cx.globalAlpha=1;
-    const r=8;
-    const bg=cx.createRadialGradient(mx,my,0,mx,my,r);
-    bg.addColorStop(0,hexA(col,'88')); bg.addColorStop(1,hexA(col,'00'));
-    cx.fillStyle=bg; cx.beginPath(); cx.arc(mx,my,r,0,Math.PI*2); cx.fill();
-    cx.fillStyle=col; cx.font='bold 13px "Cinzel",serif'; cx.textAlign='center'; cx.textBaseline='middle';
-    cx.fillText(lane.warzone?'⚔':lane.d, mx, my);
-    if(lane.warzone){
-      cx.font='7px Arial'; cx.fillStyle=hexA(col,'cc');
-      cx.fillText('WAR',mx,my+10);
+    // ── Travel days badge at midpoint ────────────────────────────────────
+    // Shows estimated days for the player's current ship+engine — updates live
+    cx.globalAlpha = 1;
+    const r = 9;
+    const days = laneWatchCost(lane, G.ship);
+    const dayLabel = lane.warzone ? `⚔` : `${days}d`;
+    // Glow halo
+    const bg = cx.createRadialGradient(mx, my, 0, mx, my, r + 4);
+    bg.addColorStop(0, hexA(col,'99')); bg.addColorStop(1, hexA(col,'00'));
+    cx.fillStyle = bg; cx.beginPath(); cx.arc(mx, my, r + 4, 0, Math.PI * 2); cx.fill();
+    // Pill background
+    const pillW = lane.warzone ? 18 : (days >= 10 ? 24 : 20);
+    const pillH = 13;
+    cx.fillStyle = 'rgba(4,0,14,0.82)';
+    cx.beginPath();
+    cx.roundRect(mx - pillW/2, my - pillH/2, pillW, pillH, 4);
+    cx.fill();
+    // Label
+    cx.fillStyle = col;
+    cx.font = `bold ${lane.warzone ? 11 : 10}px "Cinzel",serif`;
+    cx.textAlign = 'center'; cx.textBaseline = 'middle';
+    cx.fillText(dayLabel, mx, my);
+    // "WAR" sub-label for warzones
+    if (lane.warzone) {
+      const daysSubLabel = `${days}d`;
+      cx.font = '7px Arial'; cx.fillStyle = hexA(col,'cc');
+      cx.fillText(daysSubLabel, mx, my + 11);
     }
   });
   cx.globalAlpha=1; cx.textBaseline='alphabetic';
@@ -6961,85 +6977,9 @@ cv.addEventListener('click',e=>{
       showMsg('No Direct Route', `There is no direct lane from ${fromName} to ${sph.n}. Navigate through connecting spheres.`);
       return;
     }
-    showTravelWarning(sph.id, () => startTravel(sph.id));
+    startTravel(sph.id);
   });
 });
-
-// ── Pre-travel warning dialog ─────────────────────────────────────────────
-// Shows estimated journey time and air supply status before committing to travel.
-function showTravelWarning(toId, onConfirm) {
-  const s    = G.ship;
-  const from = s.loc || 'refuge';
-  const lane = getLane(from, toId);
-  const dest = G.spheres.find(sp => sp.id === toId);
-  const destName = dest?.n || toId;
-
-  const watches = laneWatchCost(lane, s);
-  const air     = s.air  || 0;
-  const maxAir  = s.maxAir || 12;
-
-  const flowDesc = lane.flow === +1
-    ? `✦ ${lane.flowName} carries you forward`
-    : lane.flow === -1
-    ? `✦ Fighting ${lane.flowName}`
-    : null;
-
-  const airColor = air < watches       ? '#ff4444'
-                 : air < watches * 1.5 ? '#ffaa22'
-                 : '#44cc88';
-  const airWarn  = air < watches
-    ? `⚠ You may run out of air before arriving!`
-    : air < watches * 1.5
-    ? `⚠ Air will be low on arrival — consider refilling.`
-    : `Air supply sufficient for this journey.`;
-
-  const warWarn = lane.warzone ? `⚔ WARNING: This lane is an active war zone.` : null;
-
-  const box    = document.getElementById('msgbox');
-  const title  = document.getElementById('msgtitle');
-  const body   = document.getElementById('msgbody');
-  const btn    = document.getElementById('msgbtn');
-  const btn2   = document.getElementById('msgbtn2');
-  if (!box || !title || !body || !btn) { onConfirm(); return; }
-
-  if (_restCountdownTimer) { clearInterval(_restCountdownTimer); _restCountdownTimer = null; }
-
-  title.textContent = `⚓ Set Course — ${destName}`;
-
-  const lines = [
-    `Destination: ${destName}`,
-    `Estimated travel: ~${watches} day${watches !== 1 ? 's' : ''}`,
-    flowDesc,
-    ``,
-    `Air Supply: ${air} / ${maxAir} days`,
-  ].filter(l => l !== null).join('\n');
-
-  body.innerHTML = lines.replace(/\n/g, '<br>')
-    + `<br><span style="color:${airColor}">${airWarn}</span>`
-    + (warWarn ? `<br><span style="color:#ff8844">${warWarn}</span>` : '');
-
-  // Primary — Set Course
-  btn.textContent = '⚓ Set Course';
-  btn.onclick = () => {
-    box.classList.remove('on');
-    btn2.style.display = 'none';
-    onConfirm();
-  };
-
-  // Secondary — Stay
-  if (btn2) {
-    btn2.textContent = '← Stay';
-    btn2.style.display = 'inline-block';
-    btn2.style.color = '#886655';
-    btn2.style.borderColor = 'rgba(88,44,17,0.3)';
-    btn2.onclick = () => {
-      box.classList.remove('on');
-      btn2.style.display = 'none';
-    };
-  }
-
-  box.classList.add('on');
-}
 
 // Returns normalised {x,y} of where the ship currently sits
 function getShipPos(){
