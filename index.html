@@ -2618,7 +2618,7 @@ body {
   </div>
 
   <!-- MSG -->
-  <div id="msgbox"><div id="msgtitle"></div><div id="msgbody"></div><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;"><button class="btn" id="msgbtn" onclick="dismissMsg()">Continue</button><button class="btn" id="msgbtn2" onclick="dismissMsg2()" style="display:none;border-color:rgba(51,102,68,0.33);color:#44bb88;"></button></div></div>
+  <div id="msgbox"><div id="msgtitle"></div><div id="msgbody"></div><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;"><button class="btn" id="msgbtn">Continue</button><button class="btn" id="msgbtn2" style="display:none;border-color:rgba(51,102,68,0.33);color:#44bb88;"></button></div></div>
 
   <!-- END SCREENS -->
   <div class="endscr" id="scr-defeat">
@@ -4945,7 +4945,11 @@ const SOUND_DATA = {
   'purchase': 'sounds/purchase.mp3',
   'ship_upgrade': 'sounds/ship_upgrade.mp3',
   'loot_open': 'sounds/loot_open.mp3',
-  'title': 'sounds/title.mp3',
+  'title':   'sounds/title.mp3',
+  'title_2': 'sounds/title_2.mp3',
+  'title_3': 'sounds/title_3.mp3',
+  'title_4': 'sounds/title_4.mp3',
+  'title_5': 'sounds/title_5.mp3',
   'travel_hum': 'sounds/travel_hum.mp3',
   'elder_theme': 'sounds/elder_theme.mp3',
   'caiphon_reveal': 'sounds/caiphon_reveal.mp3',
@@ -5369,37 +5373,77 @@ function sndVoice(vol = 1.0) {
   } catch(_) {}
 }
 
-let _titleEl = null;
-function playTitle(){
-  if(_muted || !_SFX['title']) return;
-  if(_titleEl && !_titleEl.paused){
-    // Already playing — just make sure volume is right for current context
+// ── Title music — 5-track shuffle cycling playlist ───────────────────────
+const _TITLE_TRACKS = ['title','title_2','title_3','title_4','title_5'];
+let _titleEl        = null;  // currently playing Audio element
+let _titleTrackIdx  = -1;    // index of current track in _titleShuffled
+let _titleShuffled  = [];    // shuffled copy of _TITLE_TRACKS
+let _titleFading    = false;
+
+function _titleShuffle() {
+  // Fisher-Yates shuffle, ensuring the first track after a reshuffle
+  // is never the same as the last track of the previous run
+  const arr = [..._TITLE_TRACKS];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  // If the first entry matches the last played, swap it with the second
+  if (_titleShuffled.length && arr[0] === _titleShuffled[_titleShuffled.length - 1] && arr.length > 1) {
+    [arr[0], arr[1]] = [arr[1], arr[0]];
+  }
+  _titleShuffled = arr;
+  _titleTrackIdx = 0;
+}
+
+function _titleNextTrack() {
+  _titleTrackIdx++;
+  if (_titleTrackIdx >= _titleShuffled.length) _titleShuffle();
+  return _titleShuffled[_titleTrackIdx] || 'title';
+}
+
+function _titlePlayTrack(key) {
+  const src = _SFX[key];
+  if (!src) { // file not loaded yet — fall back to title
+    _titlePlayTrack('title');
+    return;
+  }
+  try {
+    const a = src.cloneNode();
+    a.loop = false;
+    a.volume = Math.min(1, 0.35 * (_VOL?.master||1) * (_VOL?.music||1));
+    a.play().catch(()=>{});
+    // When this track ends, cross-fade into the next one
+    a.addEventListener('ended', () => {
+      if (_titleEl !== a) return; // superseded
+      _titleEl = null;
+      if (!_muted) {
+        const nextKey = _titleNextTrack();
+        _titlePlayTrack(nextKey);
+      }
+    });
+    _titleEl = a;
+  } catch(_) {}
+}
+
+function playTitle() {
+  if (_muted) return;
+  if (_titleEl && !_titleEl.paused) {
     _titleVolume(G?.phase === 'combat' ? 0.00 : 0.35);
     return;
   }
-  if(!_titleEl){
-    try {
-      const a = _SFX['title'].cloneNode();
-      a.loop = true;
-      a.volume = Math.min(1, 0.35 * (_VOL?.master||1) * (_VOL?.music||1));
-      a.play().catch(()=>{});
-      _titleEl = a;
-    } catch(_){}
-  } else {
-    try {
-      _titleEl.volume = Math.min(1, 0.35 * (_VOL?.master||1) * (_VOL?.music||1));
-      _titleEl.play().catch(()=>{});
-    } catch(_){}
-  }
+  if (_titleShuffled.length === 0) _titleShuffle();
+  const key = _titleShuffled[_titleTrackIdx] || _titleNextTrack();
+  _titlePlayTrack(key);
 }
 
-function stopTitle(){
-  if(_titleEl){ try{ _titleEl.pause(); }catch(_){} }
+function stopTitle() {
+  if (_titleEl) { try { _titleEl.pause(); } catch(_) {} _titleEl = null; }
 }
 
-function _titleVolume(vol){
-  if(_titleEl){
-    try{ _titleEl.volume = Math.min(1, Math.max(0, vol * (_VOL?.master||1) * (_VOL?.music||1))); }catch(_){}
+function _titleVolume(vol) {
+  if (_titleEl) {
+    try { _titleEl.volume = Math.min(1, Math.max(0, vol * (_VOL?.master||1) * (_VOL?.music||1))); } catch(_) {}
   }
 }
 
@@ -14893,13 +14937,15 @@ function showMsg(title,body,btn,cb,btn2,cb2){
   if(_staleRestRow) _staleRestRow.remove();
   document.getElementById('msgtitle').textContent=title;
   document.getElementById('msgbody').textContent=body;
-  document.getElementById('msgbtn').textContent=btn||'Continue';
+  const _mb1 = document.getElementById('msgbtn');
+  _mb1.textContent = btn||'Continue';
+  _mb1.onclick = dismissMsg;
   document.getElementById('msgbox').classList.add('on');
   G._msgCb=cb||null;
   const btn2El = document.getElementById('msgbtn2');
   if(btn2El){
-    if(btn2){ btn2El.textContent=btn2; btn2El.style.display=''; G._msgCb2=cb2||null; }
-    else    { btn2El.style.display='none'; G._msgCb2=null; }
+    if(btn2){ btn2El.textContent=btn2; btn2El.style.display=''; btn2El.onclick=dismissMsg2; G._msgCb2=cb2||null; }
+    else    { btn2El.style.display='none'; btn2El.onclick=null; G._msgCb2=null; }
   }
 }
 function dismissMsg(){
