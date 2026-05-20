@@ -15579,7 +15579,7 @@ let _drawerOpen = false;
 function toggleStatsDrawer(e){
   // Stop the click from bubbling to the document outside-tap handler,
   // which would immediately close the drawer we just opened.
-  if(e) e.stopPropagation();
+  if(e && e.stopPropagation) e.stopPropagation();
   _drawerOpen = !_drawerOpen;
   const d = document.getElementById('stats-drawer');
   if(!d) return;
