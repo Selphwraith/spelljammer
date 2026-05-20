@@ -20592,6 +20592,20 @@ document.addEventListener('DOMContentLoaded', () => {
   drawMenuShip();
   showMainMenu();
 
+  // Hide watch HUD behind any LS sub-panel (dock, interact, npc dialog)
+  // Uses MutationObserver so we don't need to patch every open/close call.
+  const _whHud = document.getElementById('watch-hud');
+  const _lsSubPanels = ['ls-dock-panel','ls-interact-panel','ls-npc-dialog'];
+  const _lsSubObs = new MutationObserver(() => {
+    if(!_whHud) return;
+    const anyOpen = _lsSubPanels.some(id => document.getElementById(id)?.classList.contains('on'));
+    _whHud.classList.toggle('hidden-by-overlay', anyOpen);
+  });
+  _lsSubPanels.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) _lsSubObs.observe(el, { attributes: true, attributeFilter: ['class'] });
+  });
+
   // Splash dismiss — prompt blink
   const spPrompt = document.getElementById('sp-prompt');
   if(spPrompt){
