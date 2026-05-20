@@ -4043,16 +4043,16 @@ const LANES_DIR = {
   'realm->refuge': { d:1, label:'IEF Patrol Route (Inner Arc)',       lore:'The Arcane Inner Flow carries you inward toward Refuge. Smooth sailing on the current.',                      pool:['corsair','goblin_cutter','goblin_rocketer','trull_patrol','phlog_mote'],                       rate:0.140, warzone:false, flow:+1, flowName:'Arcane Inner Flow' },
 
   // REFUGE ↔ GREY   (Mystara Flow: refuge→grey WITH flow eastward)
-  'refuge->grey':  { d:2, label:'Merchant Route (Mystara Flow)',      lore:'The Mystara Flow sweeps eastward — you ride it toward Korreth. Fast passage, but pirates know it too.',    pool:['corsair','plunderer','trull_patrol','trull_slaver','goblin_shaman_boat','harvester','void_shark','phlog_jellyfish','phlog_flamewing'],     rate:0.220, warzone:false, flow:+1, flowName:'Mystara Flow' },
-  'grey->refuge':  { d:2, label:'Merchant Route (Mystara Flow)',      lore:'You push against the Mystara Flow heading back to Refuge. Dwarven trade vessels slow the lanes further.',    pool:['corsair','plunderer','trull_patrol','trull_slaver','goblin_shaman_boat','harvester','void_shark','phlog_jellyfish','phlog_flamewing'],     rate:0.220, warzone:false, flow:-1, flowName:'Mystara Flow' },
+  'refuge->grey':  { d:3, label:'Merchant Route (Mystara Flow)',      lore:'The Mystara Flow sweeps eastward — you ride it toward Korreth. Fast passage, but pirates know it too.',    pool:['corsair','plunderer','trull_patrol','trull_slaver','goblin_shaman_boat','harvester','void_shark','phlog_jellyfish','phlog_flamewing'],     rate:0.220, warzone:false, flow:+1, flowName:'Mystara Flow' },
+  'grey->refuge':  { d:3, label:'Merchant Route (Mystara Flow)',      lore:'You push against the Mystara Flow heading back to Refuge. Dwarven trade vessels slow the lanes further.',    pool:['corsair','plunderer','trull_patrol','trull_slaver','goblin_shaman_boat','harvester','void_shark','phlog_jellyfish','phlog_flamewing'],     rate:0.220, warzone:false, flow:-1, flowName:'Mystara Flow' },
 
   // REFUGE ↔ CLUSTER  (Arcane Inner Flow: cluster→refuge WITH flow inward)
   'refuge->cluster':{ d:2, label:'Freeport Corridor (Inner Arc)',     lore:'You push outward against the Arcane Inner Flow toward Varuun. Heavy pirate traffic.',                   pool:['goblin_cutter','goblin_rocketer','goblin_shaman_boat','corsair','trull_patrol','trull_enforcer','trull_slaver','plunderer','void_shark','phlog_vinecrawler'],              rate:0.220, warzone:false, flow:-1, flowName:'Arcane Inner Flow' },
   'cluster->refuge':{ d:2, label:'Freeport Corridor (Inner Arc)',     lore:'The Arcane Inner Flow carries you inward to Refuge. Plunderer fleets ride the same current.',                pool:['goblin_cutter','goblin_rocketer','goblin_shaman_boat','corsair','trull_patrol','trull_enforcer','trull_slaver','plunderer','void_shark','phlog_vinecrawler'],              rate:0.220, warzone:false, flow:+1, flowName:'Arcane Inner Flow' },
 
   // REALM ↔ GREY    (Arcane Inner Flow: grey→realm WITH flow inward)
-  'realm->grey':   { d:2, label:'Inner Sphere Route (Inner Arc)',     lore:'You push outward against the Arcane Inner Flow. Harvester slavers patrol this lane heavily.',                    pool:['corsair','plunderer','trull_warship','trull_slaver','harvester','phlog_jellyfish','phlog_flamewing','phlog_vinecrawler'],                rate:0.240, warzone:false, flow:-1, flowName:'Arcane Inner Flow' },
-  'grey->realm':   { d:2, label:'Inner Sphere Route (Inner Arc)',     lore:'The Arcane Inner Flow carries you inward toward Fentheris System. Corsairs and harvester slavers ride the same current.', pool:['corsair','plunderer','trull_warship','trull_slaver','harvester','phlog_jellyfish','phlog_flamewing','phlog_vinecrawler'],                rate:0.240, warzone:false, flow:+1, flowName:'Arcane Inner Flow' },
+  'realm->grey':   { d:3, label:'Inner Sphere Route (Inner Arc)',     lore:'You push outward against the Arcane Inner Flow. Harvester slavers patrol this lane heavily.',                    pool:['corsair','plunderer','trull_warship','trull_slaver','harvester','phlog_jellyfish','phlog_flamewing','phlog_vinecrawler'],                rate:0.240, warzone:false, flow:-1, flowName:'Arcane Inner Flow' },
+  'grey->realm':   { d:3, label:'Inner Sphere Route (Inner Arc)',     lore:'The Arcane Inner Flow carries you inward toward Fentheris System. Corsairs and harvester slavers ride the same current.', pool:['corsair','plunderer','trull_warship','trull_slaver','harvester','phlog_jellyfish','phlog_flamewing','phlog_vinecrawler'],                rate:0.240, warzone:false, flow:+1, flowName:'Arcane Inner Flow' },
 
   // REALM ↔ CLUSTER  (War zone — crossflow, no major river eases this crossing)
   'realm->cluster':{ d:3, label:'⚔ ILLITHID/GITH WAR ZONE',          lore:'The ancient war rages here. No flow river crosses this zone — both factions attack any vessel.',             pool:['nautiloid','nautiloid','githyanki','githyanki','nautiloid'], rate:0.460, warzone:true,  flow:0, flowName:null },
@@ -4067,12 +4067,12 @@ const LANES_DIR = {
   'cluster->grey': { d:2, label:'Salvage Passage',                    lore:'Crossflow region — no major river aids this route. Harvester have claimed several derelicts here.',              pool:['plunderer','plunderer','harvester'],                     rate:0.250, warzone:false, flow:0,  flowName:null },
 
   // GREY ↔ KRYNN   (Mystara Flow: grey→krynn WITH flow eastward)
-  'grey->krynn':   { d:3, label:'Dragon Passage (Mystara Flow)',       lore:'The Mystara Flow rushes you eastward toward Vael. Black Fleet Reavers ride it too.',                  pool:['plunderer','trull_warship','trull_dreadnought','blackfleet','harvester'],            rate:0.320, warzone:false, flow:+1, flowName:'Mystara Flow' },
-  'krynn->grey':   { d:3, label:'Dragon Passage (Mystara Flow)',       lore:'You fight the Mystara Flow heading back toward Korreth. Drift Corsair warbands ambush those slowed by it.',  pool:['plunderer','trull_warship','trull_dreadnought','blackfleet','harvester'],            rate:0.320, warzone:false, flow:-1, flowName:'Mystara Flow' },
+  'grey->krynn':   { d:5, label:'Dragon Passage (Mystara Flow)',       lore:'The Mystara Flow rushes you eastward toward Vael. Black Fleet Reavers ride it too.',                  pool:['plunderer','trull_warship','trull_dreadnought','blackfleet','harvester'],            rate:0.320, warzone:false, flow:+1, flowName:'Mystara Flow' },
+  'krynn->grey':   { d:5, label:'Dragon Passage (Mystara Flow)',       lore:'You fight the Mystara Flow heading back toward Korreth. Drift Corsair warbands ambush those slowed by it.',  pool:['plunderer','trull_warship','trull_dreadnought','blackfleet','harvester'],            rate:0.320, warzone:false, flow:-1, flowName:'Mystara Flow' },
 
   // GREY ↔ DARK    (Pillar Flow: grey→dark WITH flow into the deep void)
-  'grey->dark':    { d:4, label:'Void Crossing (Pillar Flow)',         lore:'The Pillar Flow drags you down into the deep void toward Serath. Leviathans follow the same current.',   pool:['leviathan','beholder','blackfleet'],                  rate:0.400, warzone:false, flow:+1, flowName:'Pillar Flow' },
-  'dark->grey':    { d:4, label:'Void Crossing (Pillar Flow)',         lore:'You fight the Pillar Flow surging upward out of Serath. Sentinel Drones nest in the churn and turbulence.',    pool:['leviathan','beholder','blackfleet'],                  rate:0.400, warzone:false, flow:-1, flowName:'Pillar Flow' },
+  'grey->dark':    { d:5, label:'Void Crossing (Pillar Flow)',         lore:'The Pillar Flow drags you down into the deep void toward Serath. Leviathans follow the same current.',   pool:['leviathan','beholder','blackfleet'],                  rate:0.400, warzone:false, flow:+1, flowName:'Pillar Flow' },
+  'dark->grey':    { d:5, label:'Void Crossing (Pillar Flow)',         lore:'You fight the Pillar Flow surging upward out of Serath. Sentinel Drones nest in the churn and turbulence.',    pool:['leviathan','beholder','blackfleet'],                  rate:0.400, warzone:false, flow:-1, flowName:'Pillar Flow' },
 
   // KRYNN ↔ HERO   (Radiant Triangle Flow: hero→krynn WITH flow clockwise)
   'hero->krynn':   { d:3, label:'Twin-Sun Approach (Radiant Triangle)', lore:'The Radiant Triangle Flow sweeps you onward toward Vael. Elite pirates ride the same river.',       pool:['blackfleet','blackfleet','beholder','githyanki'],     rate:0.340, warzone:false, flow:+1, flowName:'Radiant Triangle Flow' },
@@ -4082,17 +4082,17 @@ const LANES_DIR = {
   'krynn->dark':   { d:4, label:'Shadow Approach',                    lore:'Crossflow region. Drift Corsair and leviathans contest this lawless stretch of void.',                           pool:['leviathan','beholder','githyanki'],                   rate:0.380, warzone:false, flow:0,  flowName:null },
   'dark->krynn':   { d:4, label:'Shadow Approach',                    lore:'Crossflow region. Sentinel Drone tyrants nest along the turbulent approach to Vael.',                        pool:['leviathan','beholder','githyanki'],                   rate:0.380, warzone:false, flow:0,  flowName:null },
 
-  // CLUSTER ↔ HERO  (crossflow)
-  'cluster->hero': { d:3, label:"Relic Hunters' Route",               lore:'Crossflow region. Black Fleet Reavers hunt for pre-Sundering artifacts in the debris fields.',              pool:['blackfleet','trull_dreadnought','githyanki','nautiloid','harvester'], rate:0.330, warzone:false, flow:0,  flowName:null },
-  'hero->cluster': { d:3, label:"Relic Hunters' Route",               lore:'Crossflow region. Drift Corsair raiders and shell_drifters actively hunt returning relic-laden vessels.',           pool:['blackfleet','githyanki','nautiloid','harvester'],         rate:0.330, warzone:false, flow:0,  flowName:null },
+  // CLUSTER ↔ HERO  (crossflow — longest lane on the map)
+  'cluster->hero': { d:5, label:"Relic Hunters' Route",               lore:'Crossflow region — the longest unbroken stretch of open Drift on any chart. Black Fleet Reavers hunt the debris fields.',  pool:['blackfleet','trull_dreadnought','githyanki','nautiloid','harvester'], rate:0.330, warzone:false, flow:0, flowName:null },
+  'hero->cluster': { d:5, label:"Relic Hunters' Route",               lore:'Crossflow region — a brutal crossing back toward Varuun. Drift Corsair raiders exploit the exhaustion of returning crews.',  pool:['blackfleet','githyanki','nautiloid','harvester'],     rate:0.330, warzone:false, flow:0, flowName:null },
 
   // CLUSTER ↔ DARK  (Black Flow: dark→cluster WITH flow upward)
-  'cluster->dark': { d:4, label:'The Deep Dark (Black Flow)',          lore:'You fight the Black Flow surging upward from Serath. Void creatures hunt in the churning currents.',     pool:['leviathan','beholder','beholder'],                    rate:0.430, warzone:false, flow:-1, flowName:'Black Flow' },
-  'dark->cluster': { d:4, label:'The Deep Dark (Black Flow)',          lore:'The Black Flow carries you upward from Serath toward Varuun. Leviathans rise with the current.',   pool:['leviathan','beholder','beholder'],                    rate:0.430, warzone:false, flow:+1, flowName:'Black Flow' },
+  'cluster->dark': { d:5, label:'The Deep Dark (Black Flow)',          lore:'You fight the Black Flow surging upward from Serath. Void creatures hunt in the churning currents.',     pool:['leviathan','beholder','beholder'],                    rate:0.430, warzone:false, flow:-1, flowName:'Black Flow' },
+  'dark->cluster': { d:5, label:'The Deep Dark (Black Flow)',          lore:'The Black Flow carries you upward from Serath toward Varuun. Leviathans rise with the current.',   pool:['leviathan','beholder','beholder'],                    rate:0.430, warzone:false, flow:+1, flowName:'Black Flow' },
 
   // HERO ↔ DARK    (Hammer Flow: hero→dark WITH flow southward)
-  'hero->dark':    { d:4, label:'Lightless Passage (Hammer Flow)',     lore:'The Hammer Flow drives you down into Serath. Astral leviathans ride the same deep current.',            pool:['leviathan','beholder','blackfleet','githyanki'],      rate:0.400, warzone:false, flow:+1, flowName:'Hammer Flow' },
-  'dark->hero':    { d:4, label:'Lightless Passage (Hammer Flow)',     lore:'You fight the Hammer Flow pushing back up toward Thyss. The turbulence batters the hull.',              pool:['leviathan','beholder','blackfleet','githyanki'],      rate:0.400, warzone:false, flow:-1, flowName:'Hammer Flow' },
+  'hero->dark':    { d:3, label:'Lightless Passage (Hammer Flow)',     lore:'The Hammer Flow drives you down into Serath. Astral leviathans ride the same deep current.',            pool:['leviathan','beholder','blackfleet','githyanki'],      rate:0.400, warzone:false, flow:+1, flowName:'Hammer Flow' },
+  'dark->hero':    { d:3, label:'Lightless Passage (Hammer Flow)',     lore:'You fight the Hammer Flow pushing back up toward Thyss. The turbulence batters the hull.',              pool:['leviathan','beholder','blackfleet','githyanki'],      rate:0.400, warzone:false, flow:-1, flowName:'Hammer Flow' },
 
   // DARK ↔ ELDER   (Danger 5 — no flow, pure psychic void)
   'dark->elder':   { d:5, label:'Elder Approach',                      lore:"The Trull Overmind's psychic shadow blankets this region. No flow river touches The Far Dark — it consumes them.", pool:['leviathan','beholder','nautiloid'],               rate:0.520, warzone:false, flow:0,  flowName:null },
@@ -4210,8 +4210,8 @@ function getWatchRealMs() {
 // Lane base legs scaled so Refuge→Realm (d:1, against flow) = 7 days
 // Multiplier ≈ 7/3 applied and rounded to clean integers
 // d:1 base=5, d:2 base=7, d:3 base=7, d:4 base=9, d:5 base=14
-const LANE_BASE_LEGS = { 1: 6, 2: 7, 3: 7, 4: 9, 5: 14 };
-const LANE_MAX_LEGS  = 18; // cap for against-flow extreme lanes
+const LANE_BASE_LEGS  = { 1: 6, 2: 7, 3: 7, 4: 9, 5: 14, 6: 17 };
+const LANE_MAX_LEGS   = 22; // cap for against-flow extreme lanes
 
 function laneWatchCost(lane, ship) {
   let cost = LANE_BASE_LEGS[lane.d] || 3;
@@ -6916,13 +6916,98 @@ cv.addEventListener('click',e=>{
       showMsg('No Direct Route', `There is no direct lane from ${fromName} to ${sph.n}. Navigate through connecting spheres.`);
       return;
     }
-    startTravel(sph.id);
+    showTravelWarning(sph.id, () => startTravel(sph.id));
   });
 });
 
-// ╔══════════════════════════════════════════════════════╗
-// ║  TRAVEL                                              ║
-// ╚══════════════════════════════════════════════════════╝
+// ── Pre-travel warning dialog ─────────────────────────────────────────────
+// Shows estimated journey time and air supply status before committing to travel.
+function showTravelWarning(toId, onConfirm) {
+  const s    = G.ship;
+  const from = s.loc || 'refuge';
+  const lane = getLane(from, toId);
+  const dest = G.spheres.find(sp => sp.id === toId);
+  const destName = dest?.n || toId;
+
+  // Calculate estimated watches using the same formula as laneWatchCost
+  const watches = laneWatchCost(lane, s);
+  const air     = s.air  || 0;
+  const maxAir  = s.maxAir || 12;
+
+  // Flow description
+  const flowDesc = lane.flow === +1
+    ? `✦ ${lane.flowName} carries you forward`
+    : lane.flow === -1
+    ? `✦ Fighting ${lane.flowName}`
+    : null;
+
+  // Air status
+  const airPct   = air / maxAir;
+  const airColor = air < watches       ? '#ff4444'
+                 : air < watches * 1.5 ? '#ffaa22'
+                 : '#44cc88';
+  const airWarn  = air < watches
+    ? `⚠ You may run out of air before arriving!`
+    : air < watches * 1.5
+    ? `⚠ Air will be low on arrival — consider refilling.`
+    : `Air supply sufficient for this journey.`;
+
+  // Warzone warning
+  const warWarn = lane.warzone ? `\n⚔ WARNING: This lane is an active war zone.` : '';
+
+  const body = [
+    `Destination: ${destName}`,
+    `Estimated travel: ~${watches} day${watches !== 1 ? 's' : ''}`,
+    flowDesc || null,
+    ``,
+    `Air Supply: ${air} / ${maxAir} days`,
+    airWarn,
+    warWarn || null,
+  ].filter(l => l !== null).join('\n');
+
+  // Build custom msg with two buttons
+  const box = document.getElementById('msgbox');
+  const title = document.getElementById('msg-title');
+  const text  = document.getElementById('msg-text');
+  const btn   = document.getElementById('msgbtn');
+  if (!box || !title || !text || !btn) { onConfirm(); return; }
+
+  // Clear any stale countdown timer
+  if (_restCountdownTimer) { clearInterval(_restCountdownTimer); _restCountdownTimer = null; }
+
+  title.textContent = `⚓ Set Course — ${destName}`;
+  text.textContent  = body;
+  // Colour the air line
+  text.innerHTML = text.innerHTML.replace(
+    airWarn, `<span style="color:${airColor}">${airWarn}</span>`
+  );
+
+  // Primary button — Set Course
+  btn.textContent = '⚓ Set Course';
+  btn.onclick = () => {
+    box.classList.remove('on');
+    onConfirm();
+  };
+
+  // Add a Cancel button if it doesn't already exist
+  let cancelBtn = document.getElementById('msg-cancel-btn');
+  if (!cancelBtn) {
+    cancelBtn = document.createElement('button');
+    cancelBtn.id = 'msg-cancel-btn';
+    cancelBtn.className = 'btn';
+    cancelBtn.style.cssText = 'margin-top:6px;color:#886655;border-color:rgba(88,44,17,0.3);';
+    btn.parentNode.insertBefore(cancelBtn, btn.nextSibling);
+  }
+  cancelBtn.textContent = '← Stay';
+  cancelBtn.style.display = 'inline-block';
+  cancelBtn.onclick = () => {
+    box.classList.remove('on');
+    cancelBtn.style.display = 'none';
+  };
+
+  box.classList.add('on');
+}
+
 // Returns normalised {x,y} of where the ship currently sits
 function getShipPos(){
   if(G.ship.atFragSite) return {x:G.ship.atFragSite.x, y:G.ship.atFragSite.y};
@@ -9182,12 +9267,16 @@ function tsDrawEvent(ctx, ev, W, H) {
     ctx.translate(ev.x, ev.y);
     ctx.rotate(angle);
     // Pirate ships (sloop / plunderer / blackfleet) are drawn nose-right natively
-    // and face correctly after rotate(angle). All other procedural ships are drawn
-    // nose-up, so add π to flip them so they face toward the player ship.
-    const _pirateKeys = new Set(['sloop','plunderer','blackfleet']);
+    // PNG ships (nose faces LEFT per project convention) need flip:true to face toward player.
+    // Procedural ships are drawn nose-up, so rotate(π) makes them face toward the player.
+    // Pirate ships (corsair, plunderer, blackfleet) are procedurally drawn nose-RIGHT,
+    // so they do NOT need the π rotation — they already face the right way.
+    const _pirateKeys = new Set(['corsair','plunderer','blackfleet']);
     if(!_pirateKeys.has(ev.key)) ctx.rotate(Math.PI);
     const [ew, eh] = [80, 50];
     ctx.shadowColor = '#ff4422'; ctx.shadowBlur = 20;
+    // For PNG ships: nose faces left, so flip:true points them toward the player (right side)
+    const _needsFlip = !!(ev.key && !_pirateKeys.has(ev.key));
     drawShipImg(ev.key, ctx, 0, 0, ew, eh, false, () => {
       // Per-enemy fallback — matches drawCbtShips procedural draws
       const k = ev.key;
@@ -10060,6 +10149,11 @@ function buy(item){
           s.maxAir = (s.maxAir || 12) * 2;
           s.air    = s.maxAir; // top up to new max
           addLog(`Air Recycler installed: air capacity doubled to ${s.maxAir} days!`, 'gd');
+          break;
+        case 'airtank':
+          s.maxAir = (s.maxAir || 12) + 12;
+          s.air    = s.maxAir;
+          addLog(`Extended Air Reservoir installed: +12 air capacity (now ${s.maxAir} days)!`, 'gd');
           break;
         case 'cdreduce':
           s.cdBonus = (s.cdBonus||0) + 1;
@@ -13797,6 +13891,9 @@ function showMsg(title,body,btn,cb,btn2,cb2){
   document.getElementById('msgbody').textContent=body;
   document.getElementById('msgbtn').textContent=btn||'Continue';
   document.getElementById('msgbox').classList.add('on');
+  // Hide travel-warning cancel button if present
+  const _cancelBtn = document.getElementById('msg-cancel-btn');
+  if(_cancelBtn) _cancelBtn.style.display='none';
   G._msgCb=cb||null;
   const btn2El = document.getElementById('msgbtn2');
   if(btn2El){
@@ -15512,6 +15609,7 @@ const LOCAL_QUEST_DATA = {
         { type:'upgrade', ico:'🛡', name:'Reinforced Dwarven Plating', desc:'+50 max hull (forge-certified)', cost:115, act:'upg', upg:'plating' },
         { type:'upgrade', ico:'⚡', name:'Overclocked Helm Drive', desc:'+2 void speed (req: Speed Engine)', cost:180, act:'upg', upg:'engine2' },
         { type:'upgrade', ico:'🌀', name:'Air Recycler', desc:'Air lasts 2× longer in the void', cost:90, act:'upg', upg:'recycler' },
+        { type:'upgrade', ico:'💨', name:'Extended Air Reservoir', desc:'+12 days air capacity (dwarven pressure-forged)', cost:160, act:'upg', upg:'airtank' },
         { type:'wpn', ico:'⚔', name:'Super Ballista', desc:'Heavy siege ballista — high damage, slower rate (Dwarven forge)', cost:130, wk:'sballista' },
         { type:'wpn', ico:'⚔', name:'Siege Bombard', desc:'Massive hull-cracker cannon. Slow reload, devastating impact', cost:200, wk:'bombard' },
       ]
@@ -15911,6 +16009,7 @@ const LOCAL_QUEST_DATA = {
         { type:'wpn', ico:'💀', name:'Nether Cannon',              desc:'4d8 · 4-round reload · void-forged dissolution round', cost:380, wk:'nether' },
         { type:'upgrade', ico:'🔀', name:'Volley System',          desc:'Fire ALL ready weapons simultaneously', cost:350, act:'upg', upg:'volley' },
         { type:'upgrade', ico:'⚡', name:'Void-Runner Core', desc:'+2 void speed to max (req: Overclocked Drive)', cost:320, act:'upg', upg:'engine3' },
+        { type:'upgrade', ico:'💨', name:'Extended Air Reservoir', desc:'+12 days air capacity (dwarven pressure-forged)', cost:160, act:'upg', upg:'airtank' },
       ]
     }
   },
@@ -17255,6 +17354,7 @@ function _lsBuildQmShop() {
               if(item.upg==='engine'){G.ship.speed+=2;}
               if(item.upg==='quarters'){G.ship.maxCrew+=8;G.ship.crew=G.ship.maxCrew;}
               if(item.upg==='recycler'){G.ship.maxAir=(G.ship.maxAir||12)*2;G.ship.air=G.ship.maxAir;}
+              if(item.upg==='airtank'){G.ship.maxAir=(G.ship.maxAir||12)+12;G.ship.air=G.ship.maxAir;}
               msg=item.name+' installed!'; snd('ship_upgrade',0.85);
             }
             break;
@@ -18126,11 +18226,13 @@ function _lsRender(cx, W, H, dt) {
     }
 
     // Ship body — use actual PNG, fall back to procedural silhouette
+    // PNG ships have nose facing LEFT; rotation angle points nose toward movement direction.
+    // flip:true mirrors the PNG so nose faces RIGHT, matching the rotation convention.
     cx.save(); cx.translate(e.x,e.y); cx.rotate(e.angle);
     cx.globalAlpha=blinkAlpha;
     cx.shadowColor=isChasing?'#ff4422':ec; cx.shadowBlur=isChasing?16:8;
     const _lsEw=32, _lsEh=20;
-    drawShipImg(e.key, cx, 0, 0, _lsEw, _lsEh, false, () => {
+    drawShipImg(e.key, cx, 0, 0, _lsEw, _lsEh, true, () => {
       cx.fillStyle=isChasing?'#ff6644':ec;
       _lsDrawShipSilhouette(cx, e.key);
     });
@@ -19023,6 +19125,11 @@ function showLqShop(npc) {
               G.ship.maxAir = (G.ship.maxAir||12) * 2;
               G.ship.air    = G.ship.maxAir;
               addLog(`Air Recycler installed: air capacity doubled to ${G.ship.maxAir} days!`,'gd');
+            }
+            if(item.upg==='airtank'){
+              G.ship.maxAir = (G.ship.maxAir||12) + 12;
+              G.ship.air    = G.ship.maxAir;
+              addLog(`Extended Air Reservoir installed: +12 air capacity (now ${G.ship.maxAir} days)!`,'gd');
             }
             msg = item.name + ' installed!';
             snd('purchase', 0.9); snd('ship_upgrade', 0.85);
@@ -20176,7 +20283,7 @@ function _fdRender(cx,cW,cH){
     if(!room?.visible)return;
     cx.save();cx.translate(e.x,e.y);cx.rotate(e._facingAngle||0);
     cx.shadowColor=ENM[e.key]?.col||'#cc8833';cx.shadowBlur=8;
-    drawShipImg(e.key,cx,0,0,26,16,false,()=>{
+    drawShipImg(e.key,cx,0,0,26,16,true,()=>{
       cx.fillStyle=ENM[e.key]?.col||'#cc8833';
       cx.beginPath();cx.moveTo(-11,0);cx.lineTo(4,-5);cx.lineTo(7,-8);
       cx.lineTo(5,0);cx.lineTo(7,8);cx.lineTo(4,5);cx.closePath();cx.fill();
