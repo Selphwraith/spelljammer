@@ -1864,14 +1864,14 @@ body {
     <div class="mhud-frags" id="mhud-frags"></div>
     <span class="mhud-lbl">FRAGS</span>
   </div>
-  <button id="btn-stats-drawer" onclick="toggleStatsDrawer()">⊞ Stats</button>
+  <button id="btn-stats-drawer" onclick="toggleStatsDrawer(event)">⊞ Stats</button>
   <!-- Hidden 5-tap debug trigger — tap FRAGS label 5 times quickly -->
   <span id="debug-tap-zone" style="position:absolute;left:0;top:0;width:60px;height:100%;opacity:0;cursor:default;" ontouchstart="_dbTap()"></span>
 </div>
 
 <!-- STATS DRAWER (mobile) -->
 <div id="stats-drawer">
-  <button id="stats-drawer-close" onclick="toggleStatsDrawer()">✕ Close</button>
+  <button id="stats-drawer-close" onclick="toggleStatsDrawer(event)">✕ Close</button>
   <div class="pbox">
     <div class="ptitle">⛵ Your Vessel</div>
     <div class="srow"><span class="slabel">Ship</span><span class="sval" id="sd-name">—</span></div>
@@ -1899,10 +1899,10 @@ body {
     <div class="drawer-ovl-btns">
       <button class="drawer-ovl-btn" onclick="openOverlay('inv')">📦 Cargo</button>
       <button class="drawer-ovl-btn" onclick="openOverlay('wpn')">⚔ Weapons</button>
-      <button class="drawer-ovl-btn" onclick="toggleStatsDrawer();openOverlay('shp')">🚀 Ship</button>
-      <button class="drawer-ovl-btn" onclick="toggleStatsDrawer();openOverlay('qlog')" style="color:#ffcc66;">📜 Quests</button>
-      <button class="drawer-ovl-btn" id="mobile-lq-btn" onclick="toggleStatsDrawer();openLocalQuest()" style="display:none;color:#44ffcc;">🌌 Local</button>
-      <button class="drawer-ovl-btn" onclick="toggleStatsDrawer();openOverlay('journal')" style="color:#d4a96a;">📖 Log</button>
+      <button class="drawer-ovl-btn" onclick="toggleStatsDrawer(event);openOverlay('shp')">🚀 Ship</button>
+      <button class="drawer-ovl-btn" onclick="toggleStatsDrawer(event);openOverlay('qlog')" style="color:#ffcc66;">📜 Quests</button>
+      <button class="drawer-ovl-btn" id="mobile-lq-btn" onclick="toggleStatsDrawer(event);openLocalQuest()" style="display:none;color:#44ffcc;">🌌 Local</button>
+      <button class="drawer-ovl-btn" onclick="toggleStatsDrawer(event);openOverlay('journal')" style="color:#d4a96a;">📖 Log</button>
     </div>
   </div>
 </div>
@@ -2307,7 +2307,7 @@ body {
         <button class="ts-tbtn" id="ts-mute-btn" onclick="toggleVolPanel(event)">🔊 Sound</button>
         <button class="ts-tbtn" onclick="showFontPanel()">🔠 Text</button>
         <button class="ts-tbtn" onclick="openCbtInv()" title="Open cargo — use items during travel">🎒 Items</button>
-        <button class="ts-tbtn" onclick="toggleStatsDrawer()" title="Ship stats">⊞ Stats</button>
+        <button class="ts-tbtn" onclick="toggleStatsDrawer(event)" title="Ship stats">⊞ Stats</button>
         <div id="ts-phase-tag">Traveling</div>
       </div>
     </div>
@@ -8439,11 +8439,18 @@ const TS = {
 
 // ── Image preload registry ──────────────────────────────────────────────
 const TS_IMGS = [
+  // Original set
   'env_asteroid','env_crystal_spire','env_void_boulder','env_rock_ring',
   'env_wreck_hull','env_wreck_prow','env_debris_field',
   'env_void_jellyfish','env_mote_cluster','env_leviathan_bones',
   'env_beacon_buoy','env_cargo_drift','env_nav_marker',
   'env_elven_ruin','env_void_vault','env_phlog_eddy',
+  // New variety
+  'env_asteroid_small','env_asteroid_cluster','env_asteroid_flat',
+  'env_ice_comet','env_void_urchin',
+  'env_jelly_bloom','env_jelly_arc',
+  'env_skeleton_helm','env_skeleton_ribcage',
+  'env_ruined_column',
 ];
 
 function tsPreloadImgs() {
@@ -8460,22 +8467,37 @@ function tsPreloadImgs() {
 // Each entry: { key, side ('L'|'R'|'C'), weight, rare }
 // side L/R = flanking objects; C = center-ish (wrecks, beacons)
 const TS_CATALOG = [
-  { key:'env_asteroid',      side:'LR', weight:18 },  // was 8 — much more common
-  { key:'env_crystal_spire', side:'LR', weight:6  },
-  { key:'env_void_boulder',  side:'LR', weight:15 },  // was 7 — much more common
-  { key:'env_rock_ring',     side:'LR', weight:7  },  // was 4
-  { key:'env_wreck_hull',    side:'C',  weight:3  },
-  { key:'env_wreck_prow',    side:'C',  weight:3  },
-  { key:'env_debris_field',  side:'LR', weight:8  },  // was 5
-  { key:'env_void_jellyfish',side:'C',  weight:3  },
-  { key:'env_mote_cluster',  side:'LR', weight:4  },
-  { key:'env_leviathan_bones',side:'C', weight:1, rare:true },
-  { key:'env_beacon_buoy',   side:'LR', weight:1  },  // was 2 — rarer now they're smaller
-  { key:'env_cargo_drift',   side:'C',  weight:3  },
-  { key:'env_nav_marker',    side:'LR', weight:2  },  // was 3
-  { key:'env_elven_ruin',    side:'C',  weight:1, rare:true },
-  { key:'env_void_vault',    side:'C',  weight:1, rare:true },
-  { key:'env_phlog_eddy',    side:'LR', weight:5  },
+  // ── Asteroids & rocks ──
+  { key:'env_asteroid',        side:'LR', weight:16 },
+  { key:'env_asteroid_small',  side:'LR', weight:20 }, // small, common
+  { key:'env_asteroid_cluster',side:'LR', weight:10 }, // tight group of 3-4
+  { key:'env_asteroid_flat',   side:'LR', weight:8  }, // disc-shaped
+  { key:'env_void_boulder',    side:'LR', weight:12 },
+  { key:'env_rock_ring',       side:'LR', weight:6  },
+  { key:'env_ice_comet',       side:'LR', weight:5  }, // icy tail trailing
+  // ── Jellyfish & creatures ──
+  { key:'env_void_jellyfish',  side:'C',  weight:5  },
+  { key:'env_jelly_bloom',     side:'C',  weight:4  }, // cluster of small jellies
+  { key:'env_jelly_arc',       side:'LR', weight:3  }, // single arcing jelly
+  // ── Wrecks & debris ──
+  { key:'env_wreck_hull',      side:'C',  weight:3  },
+  { key:'env_wreck_prow',      side:'C',  weight:3  },
+  { key:'env_debris_field',    side:'LR', weight:7  },
+  { key:'env_cargo_drift',     side:'C',  weight:3  },
+  // ── Skeletons & bones ──
+  { key:'env_leviathan_bones', side:'C',  weight:1, rare:true },
+  { key:'env_skeleton_helm',   side:'C',  weight:2  }, // giant creature skull
+  { key:'env_skeleton_ribcage',side:'C',  weight:1, rare:true }, // exposed ribcage arch
+  // ── Crystal & phenomena ──
+  { key:'env_crystal_spire',   side:'LR', weight:5  },
+  { key:'env_mote_cluster',    side:'LR', weight:4  },
+  { key:'env_phlog_eddy',      side:'LR', weight:5  },
+  // ── Structures & ruins ──
+  { key:'env_beacon_buoy',     side:'LR', weight:1  },
+  { key:'env_nav_marker',      side:'LR', weight:2  },
+  { key:'env_elven_ruin',      side:'C',  weight:1, rare:true },
+  { key:'env_ruined_column',   side:'LR', weight:2  }, // single broken column
+  { key:'env_void_vault',      side:'C',  weight:1, rare:true },
 ];
 
 // weight-based random pick, scaling rare objects up on high-danger lanes
@@ -8512,25 +8534,40 @@ function tsSpawnObject(cv, forced) {
   const k = entry.key;
   let baseW, baseH, scaleMin, scaleMax;
   if (k === 'env_beacon_buoy' || k === 'env_nav_marker') {
-    // Small navigation markers — should look like distant beacons, not skyscrapers
-    baseW = 28; baseH = 44; scaleMin = 0.6; scaleMax = 1.1;
+    baseW = 18; baseH = 28; scaleMin = 0.5; scaleMax = 0.9;
   } else if (k === 'env_asteroid') {
-    baseW = 180; baseH = 140; scaleMin = 0.6; scaleMax = 1.8;
+    baseW = 90; baseH = 70; scaleMin = 0.5; scaleMax = 1.4;
+  } else if (k === 'env_asteroid_small') {
+    baseW = 45; baseH = 38; scaleMin = 0.4; scaleMax = 1.0;
+  } else if (k === 'env_asteroid_cluster') {
+    baseW = 110; baseH = 80; scaleMin = 0.5; scaleMax = 1.1;
+  } else if (k === 'env_asteroid_flat') {
+    baseW = 100; baseH = 40; scaleMin = 0.5; scaleMax = 1.2;
   } else if (k === 'env_void_boulder') {
-    baseW = 150; baseH = 120; scaleMin = 0.5; scaleMax = 1.6;
+    baseW = 75; baseH = 60; scaleMin = 0.4; scaleMax = 1.2;
   } else if (k === 'env_rock_ring') {
-    baseW = 200; baseH = 200; scaleMin = 0.7; scaleMax = 1.4;
+    baseW = 100; baseH = 100; scaleMin = 0.5; scaleMax = 1.1;
   } else if (k === 'env_crystal_spire') {
-    baseW = 90;  baseH = 180; scaleMin = 0.6; scaleMax = 1.3;
+    baseW = 50; baseH = 90; scaleMin = 0.5; scaleMax = 1.1;
+  } else if (k === 'env_ice_comet') {
+    baseW = 80; baseH = 40; scaleMin = 0.5; scaleMax = 1.0;
   } else if (k === 'env_cargo_drift') {
-    baseW = 80;  baseH = 50;  scaleMin = 0.6; scaleMax = 1.1;
+    baseW = 50; baseH = 32; scaleMin = 0.5; scaleMax = 0.9;
   } else if (k === 'env_wreck_hull' || k === 'env_wreck_prow') {
-    baseW = 200; baseH = 110; scaleMin = 0.7; scaleMax = 1.4;
+    baseW = 110; baseH = 60; scaleMin = 0.55; scaleMax = 1.1;
   } else if (k === 'env_debris_field') {
-    baseW = 220; baseH = 130; scaleMin = 0.8; scaleMax = 1.5;
+    baseW = 120; baseH = 70; scaleMin = 0.6; scaleMax = 1.1;
+  } else if (k === 'env_void_jellyfish' || k === 'env_jelly_bloom' || k === 'env_jelly_arc') {
+    baseW = 70; baseH = 90; scaleMin = 0.4; scaleMax = 1.0;
+  } else if (k === 'env_leviathan_bones' || k === 'env_skeleton_ribcage') {
+    baseW = 130; baseH = 80; scaleMin = 0.6; scaleMax = 1.2;
+  } else if (k === 'env_skeleton_helm') {
+    baseW = 80; baseH = 75; scaleMin = 0.5; scaleMax = 1.0;
+  } else if (k === 'env_ruined_column') {
+    baseW = 35; baseH = 100; scaleMin = 0.5; scaleMax = 1.0;
   } else {
-    // Default: jellyfish, motes, phlog eddy, ruins, vault, bones
-    baseW = 200; baseH = 120; scaleMin = 0.55; scaleMax = 1.25;
+    // Default: motes, phlog eddy, ruins, vault
+    baseW = 90; baseH = 60; scaleMin = 0.45; scaleMax = 1.0;
   }
 
   const scale = scaleMin + Math.random() * (scaleMax - scaleMin);
@@ -9204,7 +9241,110 @@ function tsRender(timestamp) {
 function tsFallbackDraw(ctx, key, w, h, glowCol) {
   ctx.strokeStyle = hexA(glowCol, '55');
   ctx.lineWidth = 1.5;
-  if (key.includes('asteroid') || key.includes('boulder')) {
+  if (key === 'env_asteroid_small') {
+    // Small irregular rock
+    ctx.fillStyle = '#16161f';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, w*0.38, h*0.32, 0.6, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#101018';
+    ctx.beginPath(); ctx.ellipse(w*0.08, -h*0.04, w*0.08, h*0.07, 0, 0, Math.PI*2); ctx.fill();
+  } else if (key === 'env_asteroid_cluster') {
+    // 3 rocks packed together
+    ctx.fillStyle = '#1a1a2a';
+    for (const [ox,oy,rx,ry] of [[-w*0.18,-h*0.05,w*0.22,h*0.2],[w*0.12,-h*0.1,w*0.18,h*0.17],[w*0.05,h*0.12,w*0.14,h*0.13]]) {
+      ctx.beginPath(); ctx.ellipse(ox, oy, rx, ry, Math.random()*0.5, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    }
+  } else if (key === 'env_asteroid_flat') {
+    // Disc-shaped, wide and thin
+    ctx.fillStyle = '#18181e';
+    ctx.beginPath(); ctx.ellipse(0, 0, w*0.45, h*0.18, 0.15, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#111118';
+    ctx.beginPath(); ctx.ellipse(-w*0.12, 0, w*0.1, h*0.07, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(w*0.18, h*0.02, w*0.07, h*0.05, 0, 0, Math.PI*2); ctx.fill();
+  } else if (key === 'env_ice_comet') {
+    // Icy core + trailing tail
+    ctx.fillStyle = '#1a2a3a';
+    ctx.beginPath(); ctx.ellipse(-w*0.1, 0, w*0.2, h*0.18, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    // Tail
+    const tg = ctx.createLinearGradient(-w*0.1, 0, w*0.4, 0);
+    tg.addColorStop(0, 'rgba(160,210,255,0.35)'); tg.addColorStop(1, 'transparent');
+    ctx.fillStyle = tg;
+    ctx.beginPath(); ctx.moveTo(-w*0.08,-h*0.06); ctx.lineTo(w*0.42,0); ctx.lineTo(-w*0.08,h*0.06); ctx.closePath(); ctx.fill();
+    // Ice glint
+    ctx.fillStyle = 'rgba(200,230,255,0.5)';
+    ctx.beginPath(); ctx.ellipse(-w*0.12, -h*0.04, w*0.04, h*0.04, 0, 0, Math.PI*2); ctx.fill();
+  } else if (key === 'env_jelly_bloom') {
+    // 3 small jellies in a loose cluster
+    const jCols = ['#4488cc','#6644aa','#44aa88'];
+    for (let ji = 0; ji < 3; ji++) {
+      const jx = (ji-1)*w*0.25, jy = Math.sin(ji*2.1)*h*0.18;
+      const jr = w*0.14;
+      const jg = ctx.createRadialGradient(jx,jy,0,jx,jy,jr);
+      jg.addColorStop(0, jCols[ji]+'55'); jg.addColorStop(1, 'transparent');
+      ctx.fillStyle = jg; ctx.beginPath(); ctx.arc(jx, jy, jr, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = jCols[ji]+'44'; ctx.lineWidth = 0.8;
+      for (let ti = 0; ti < 3; ti++) {
+        const ta = (ti/3)*Math.PI*2;
+        ctx.beginPath(); ctx.moveTo(jx+Math.cos(ta)*jr*0.5, jy+Math.sin(ta)*jr*0.5);
+        ctx.lineTo(jx+Math.cos(ta)*jr*0.95, jy+Math.sin(ta)*jr*0.95); ctx.stroke();
+      }
+    }
+  } else if (key === 'env_jelly_arc') {
+    // Single elongated jelly drifting sideways
+    const jg = ctx.createRadialGradient(0,0,0,0,0,w*0.32);
+    jg.addColorStop(0, hexA(glowCol,'44')); jg.addColorStop(1, 'transparent');
+    ctx.fillStyle = jg;
+    ctx.beginPath(); ctx.ellipse(0, 0, w*0.32, h*0.22, 0.5, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = hexA(glowCol,'33'); ctx.lineWidth = 0.8;
+    for (let i = 0; i < 6; i++) {
+      const a = -Math.PI*0.3 + (i/5)*Math.PI*0.6;
+      ctx.beginPath(); ctx.moveTo(Math.cos(a)*w*0.22, Math.sin(a)*h*0.16);
+      ctx.quadraticCurveTo(Math.cos(a+0.4)*w*0.35, Math.sin(a+0.4)*h*0.3+h*0.1,
+                           Math.cos(a+0.8)*w*0.32, Math.sin(a+0.8)*h*0.38+h*0.18); ctx.stroke();
+    }
+  } else if (key === 'env_skeleton_helm') {
+    // Giant creature skull — two hollow eye sockets, cracked dome
+    ctx.fillStyle = '#1c1c1a';
+    ctx.beginPath(); ctx.ellipse(0, 0, w*0.38, h*0.42, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#080808';
+    ctx.beginPath(); ctx.ellipse(-w*0.14, -h*0.04, w*0.1, h*0.12, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(w*0.14, -h*0.04, w*0.1, h*0.12, 0, 0, Math.PI*2); ctx.fill();
+    // Crack
+    ctx.strokeStyle = '#333330'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(w*0.04, -h*0.4); ctx.lineTo(w*0.01, -h*0.1); ctx.lineTo(w*0.06, h*0.05); ctx.stroke();
+  } else if (key === 'env_skeleton_ribcage') {
+    // Arch of exposed ribs — 5 curved bones
+    ctx.strokeStyle = '#2a2a22'; ctx.lineWidth = 2.5;
+    for (let i = 0; i < 5; i++) {
+      const t = (i / 4) - 0.5;
+      const bx = t * w * 0.7;
+      const topY = -h * 0.35 + Math.abs(t) * h * 0.15;
+      ctx.beginPath();
+      ctx.moveTo(bx, h*0.1);
+      ctx.quadraticCurveTo(bx + w*0.06, topY, bx - w*0.04, topY - h*0.05);
+      ctx.stroke();
+    }
+    // Spine
+    ctx.strokeStyle = '#222218'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(0, -h*0.38); ctx.lineTo(0, h*0.12); ctx.stroke();
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 6; i++) {
+      const sy = -h*0.32 + i * h*0.08;
+      ctx.beginPath(); ctx.moveTo(-w*0.04, sy); ctx.lineTo(w*0.04, sy); ctx.stroke();
+    }
+  } else if (key === 'env_ruined_column') {
+    // Single broken stone column
+    ctx.fillStyle = '#1e1e22';
+    ctx.beginPath(); ctx.rect(-w*0.18, -h*0.42, w*0.36, h*0.55); ctx.fill(); ctx.stroke();
+    // Capital at top
+    ctx.beginPath(); ctx.rect(-w*0.22, -h*0.44, w*0.44, h*0.06); ctx.fill(); ctx.stroke();
+    // Break line halfway up
+    ctx.strokeStyle = '#33333a'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(-w*0.18, h*0.02); ctx.lineTo(w*0.18, h*0.02); ctx.stroke();
+    // Floating broken top piece drifted slightly
+    ctx.fillStyle = '#1a1a1e';
+    ctx.beginPath(); ctx.rect(-w*0.16, -h*0.38, w*0.3, h*0.18); ctx.fill();
+  } else if (key.includes('asteroid') || key.includes('boulder')) {
     ctx.fillStyle = '#1a1a2a'; ctx.beginPath();
     ctx.ellipse(0, 0, w*0.4, h*0.38, 0.3, 0, Math.PI*2); ctx.fill(); ctx.stroke();
     // Craters
@@ -12644,14 +12784,16 @@ function buildCbtPanels() {
       const ready = cd === 0;
       const card = document.createElement('div');
       card.className = 'cbt-wpn-card ' + (ready ? 'ready' : 'on-cooldown') + (inTargeting ? ' targeting-select' : '');
-      const cdFillPct = w.cd > 0 ? Math.max(0, ((w.cd - cd) / w.cd) * 100) : 100;
+      const cdBonus    = G.ship.cdBonus || 0;
+      const effectiveCd = w.cd > 0 ? Math.max(1, w.cd - cdBonus) : 0;
+      const cdFillPct   = effectiveCd > 0 ? Math.max(0, ((effectiveCd - cd) / effectiveCd) * 100) : 100;
       card.innerHTML =
         '<div class="cbt-wpn-card-name ' + (ready?'ready-name':'') + '">' + (ready?'🔥':'🔄') + ' ' + w.n + '</div>' +
         '<div class="cbt-wpn-card-info">' + w.d[0] + 'd' + w.d[1] + ' · ' + w.info + '</div>' +
-        (w.cd > 0 ? '<div class="cbt-wpn-cd-bar"><div class="cbt-wpn-cd-fill" style="width:' + cdFillPct + '%"></div></div>' : '') +
+        (effectiveCd > 0 ? '<div class="cbt-wpn-cd-bar"><div class="cbt-wpn-cd-fill" style="width:' + cdFillPct + '%"></div></div>' : '') +
         (cd > 0 ? '<div class="cbt-cd-pip">' + cd + '</div>' : '');
       if (!inTargeting && ready) card.onclick = () => doAction('wpn', i);
-      else if (!ready) card.title = 'Reloading — ' + cd + ' round' + (cd>1?'s':'') + ' remaining';
+      else if (!ready) card.title = 'Reloading — ' + cd + ' round' + (cd>1?'s':'') + ' remaining (base ' + w.cd + ', −' + cdBonus + ' reload bonus)';
       playerPanel.appendChild(card);
     });
   }
@@ -12884,7 +13026,7 @@ async function doAction(type, idx, itemUid) {
       // Null Bolt jam check (20%) — happens before firing
       if(wk === 'nullbolt' && Math.random() < 0.20){
         G.cbt.cds[idx] = w.cd > 0 ? Math.max(1, w.cd - (G.ship.cdBonus||0)) : 0;
-        cLog(`⚠ Null Bolt JAMS — the resonance field collapses before firing! (${w.cd}-round cooldown)`, 'dmg');
+        cLog(`⚠ Null Bolt JAMS — the resonance field collapses before firing! (${Math.max(1, w.cd - (G.ship.cdBonus||0))}-round cooldown)`, 'dmg');
         updateCbtUI(); await sleep(500);
         break;
       }
@@ -15463,7 +15605,10 @@ function closeDockmaster() {
 
 // ── MOBILE ──────────────────────────────────────────────
 let _drawerOpen = false;
-function toggleStatsDrawer(){
+function toggleStatsDrawer(e){
+  // Stop the click from bubbling to the document outside-tap handler,
+  // which would immediately close the drawer we just opened.
+  if(e) e.stopPropagation();
   _drawerOpen = !_drawerOpen;
   const d = document.getElementById('stats-drawer');
   if(!d) return;
