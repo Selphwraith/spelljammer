@@ -2010,7 +2010,8 @@ body {
     </div>
 
     <!-- Two-column battle arena — on mobile becomes true left/right split -->
-    <div class="cbt-arena">
+    <div class="cbt-arena" style="position:relative;">
+      <canvas id="cv-fx" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:20;" width="780" height="400"></canvas>
 
       <!-- LEFT COLUMN — player side -->
       <div class="cbt-col cbt-col-player">
@@ -11721,6 +11722,807 @@ function triggerAnim(el, cls) {
 function pCV() { return document.getElementById('cv-player'); }
 function eCV() { return document.getElementById('cv-enemy'); }
 
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║  COMBAT VFX ENGINE                                                       ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+const _FX = {
+  canvas: null, ctx: null, animId: null,
+  particles: [], beams: [], flashes: [],
+  t: 0, lastTs: 0,
+};
+
+function _fxInit() {
+  _FX.canvas = document.getElementById('cv-fx');
+  if (!_FX.canvas) return;
+  _FX.ctx = _FX.canvas.getContext('2d');
+}
+
+function _fxResize() {
+  const c = _FX.canvas; if (!c) return;
+  const arena = document.querySelector('.cbt-arena');
+  if (!arena) return;
+  c.width  = arena.offsetWidth  || 780;
+  c.height = arena.offsetHeight || 400;
+}
+
+// Returns the centre of cv-player or cv-enemy in arena-space coords
+function _fxPos(forPlayer) {
+  const id  = forPlayer ? 'cv-player' : 'cv-enemy';
+  const cvEl = document.getElementById(id);
+  const arena = document.querySelector('.cbt-arena');
+  if (!cvEl || !arena) return { x: forPlayer ? 120 : 420, y: 65 };
+  const cr = cvEl.getBoundingClientRect();
+  const ar = arena.getBoundingClientRect();
+  return { x: cr.left - ar.left + cr.width * 0.5,
+           y: cr.top  - ar.top  + cr.height * 0.5 };
+}
+
+// Nose of the ship — used for breath weapons. Enemy faces LEFT, player faces RIGHT.
+function _fxNose(forPlayer) {
+  const id  = forPlayer ? 'cv-player' : 'cv-enemy';
+  const cvEl = document.getElementById(id);
+  const arena = document.querySelector('.cbt-arena');
+  if (!cvEl || !arena) return _fxPos(forPlayer);
+  const cr = cvEl.getBoundingClientRect();
+  const ar = arena.getBoundingClientRect();
+  // Player nose = right edge; Enemy nose = left edge
+  const nx = forPlayer
+    ? (cr.left - ar.left + cr.width * 0.82)
+    : (cr.left - ar.left + cr.width * 0.18);
+  return { x: nx, y: cr.top - ar.top + cr.height * 0.5 };
+}
+
+function _fxTick(ts) {
+  if (!_FX.ctx || !_FX.canvas) return;
+  const dt = Math.min((ts - (_FX.lastTs || ts)) / 1000, 0.05);
+  _FX.lastTs = ts;
+  _FX.t += dt;
+
+  const ctx = _FX.ctx;
+  ctx.clearRect(0, 0, _FX.canvas.width, _FX.canvas.height);
+
+  // ── Beams (instant line effects) ──
+  _FX.beams = _FX.beams.filter(b => {
+    b.life -= dt;
+    if (b.life <= 0) return false;
+    const a = Math.max(0, b.life / b.maxLife);
+    ctx.save();
+    ctx.globalAlpha = a * b.alpha;
+    ctx.strokeStyle = b.col;
+    ctx.lineWidth   = b.w * a;
+    ctx.shadowColor = b.col;
+    ctx.shadowBlur  = b.glow * a;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    if (b.zigzag) {
+      // Lightning zigzag
+      const segs = b.segs || 8;
+      const dx = (b.x2 - b.x1) / segs, dy = (b.y2 - b.y1) / segs;
+      ctx.moveTo(b.x1, b.y1);
+      for (let i = 1; i < segs; i++) {
+        const jitter = (Math.random() - 0.5) * b.jitterAmt;
+        const px = b.x1 + dx * i + (dy !== 0 ? jitter : 0);
+        const py = b.y1 + dy * i + (dx !== 0 ? jitter : 0);
+        ctx.lineTo(px, py);
+      }
+      ctx.lineTo(b.x2, b.y2);
+    } else {
+      ctx.moveTo(b.x1, b.y1);
+      ctx.lineTo(b.x2, b.y2);
+    }
+    ctx.stroke();
+    ctx.restore();
+    return true;
+  });
+
+  // ── Flashes (radial glow bursts) ──
+  _FX.flashes = _FX.flashes.filter(f => {
+    f.life -= dt;
+    if (f.life <= 0) return false;
+    const a = Math.max(0, f.life / f.maxLife);
+    const r = f.r * (1 - f.life / f.maxLife) + f.rMin;
+    ctx.save();
+    ctx.globalAlpha = a * f.alpha;
+    const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, r);
+    g.addColorStop(0, f.col1);
+    g.addColorStop(0.4, f.col2 || f.col1);
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(f.x, f.y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    return true;
+  });
+
+  // ── Particles ──
+  _FX.particles = _FX.particles.filter(p => {
+    p.x  += p.vx * dt;
+    p.y  += p.vy * dt;
+    p.vx *= p.drag || 0.94;
+    p.vy *= p.drag || 0.94;
+    p.vy += (p.gravity || 0) * dt;
+    p.life -= dt;
+    if (p.life <= 0) return false;
+    const a = Math.max(0, p.life / p.maxLife);
+    ctx.save();
+    ctx.globalAlpha = a * (p.alpha || 1);
+    ctx.shadowColor = p.col;
+    ctx.shadowBlur  = p.glow || 0;
+    if (p.shape === 'line') {
+      ctx.strokeStyle = p.col;
+      ctx.lineWidth = p.r * 0.4;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.x - p.vx * dt * 6, p.y - p.vy * dt * 6);
+      ctx.stroke();
+    } else if (p.shape === 'ring') {
+      ctx.strokeStyle = p.col;
+      ctx.lineWidth = p.r * 0.15;
+      const rr = p.rBase + (1 - a) * p.rMax;
+      ctx.beginPath(); ctx.arc(p.x, p.y, rr, 0, Math.PI * 2); ctx.stroke();
+    } else {
+      ctx.fillStyle = p.col;
+      const pr = Math.max(0.5, p.r * a);
+      ctx.beginPath(); ctx.arc(p.x, p.y, pr, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+    return true;
+  });
+
+  const anyActive = _FX.particles.length || _FX.beams.length || _FX.flashes.length;
+  if (anyActive) {
+    _FX.animId = requestAnimationFrame(_fxTick);
+  } else {
+    _FX.animId = null;
+    _FX.t = 0;
+  }
+}
+
+function _fxKick() {
+  if (!_FX.animId) {
+    _FX.lastTs = 0;
+    _FX.animId = requestAnimationFrame(_fxTick);
+  }
+}
+
+// ── Particle spawners ──
+function _fxFlash(x, y, col1, col2, r, rMin, life, alpha) {
+  _FX.flashes.push({ x, y, col1, col2: col2||col1, r, rMin: rMin||4, maxLife: life, life, alpha: alpha||1 });
+}
+function _fxParticle(x, y, vx, vy, col, r, life, opts={}) {
+  _FX.particles.push({ x, y, vx, vy, col, r, maxLife: life, life,
+    alpha: opts.alpha||1, drag: opts.drag||0.92, glow: opts.glow||6,
+    gravity: opts.gravity||0, shape: opts.shape||'circle' });
+}
+function _fxBeam(x1, y1, x2, y2, col, w, life, opts={}) {
+  _FX.beams.push({ x1, y1, x2, y2, col, w, maxLife: life, life,
+    alpha: opts.alpha||1, glow: opts.glow||12,
+    zigzag: opts.zigzag||false, jitterAmt: opts.jitterAmt||30, segs: opts.segs||10 });
+}
+
+// Spawn a burst of sparks from (x,y)
+function _fxSparks(x, y, col, n, speed, life, spread=Math.PI*2) {
+  for (let i = 0; i < n; i++) {
+    const a  = (Math.random() - 0.5) * spread;
+    const sp = speed * (0.5 + Math.random() * 0.8);
+    _fxParticle(x, y, Math.cos(a)*sp, Math.sin(a)*sp, col,
+      2 + Math.random()*3, life * (0.5 + Math.random()*0.6),
+      { glow: 8, drag: 0.88, shape: 'line' });
+  }
+}
+
+// ── Effect: travelling projectile (calls onHit when it arrives) ──
+function _fxProjectile(sx, sy, tx, ty, col, r, speed, onHit, opts={}) {
+  const dx = tx - sx, dy = ty - sy;
+  const dist = Math.hypot(dx, dy) || 1;
+  const nx = dx / dist, ny = dy / dist;
+  let x = sx, y = sy;
+  let travelled = 0;
+  const glow = opts.glow || 14;
+  const trail = opts.trail || [];
+  const drag  = opts.drag || 1;
+  let frameSpeed = speed;
+
+  function tick(ts) {
+    if (!_FX.ctx) return;
+    const now = ts;
+    const step = Math.min(frameSpeed * 0.016, dist - travelled);
+    x += nx * step; y += ny * step;
+    travelled += step;
+    frameSpeed *= drag;
+
+    // Trail
+    _FX.particles.push({ x, y, vx: 0, vy: 0, col: opts.trailCol || col,
+      r: r * 0.65, maxLife: 0.22, life: 0.22, alpha: 0.7, drag: 0.99,
+      glow: glow * 0.5, gravity: 0, shape: 'circle' });
+
+    // Projectile dot flash
+    _FX.flashes.push({ x, y, col1: col, col2: opts.coreCol || '#fff',
+      r: r * 2.5, rMin: r, maxLife: 0.05, life: 0.05, alpha: 0.9 });
+
+    if (travelled >= dist - 2) {
+      onHit(x, y);
+      return;
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EFFECT FUNCTIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+// BOLT — Ballista, Super Ballista, Heavy Ballista
+function _fxBolt(src, dst, fromPlayer, col='#ffaa33', r=5) {
+  _fxInit(); _fxResize();
+  // Muzzle flash at attacker
+  _fxFlash(src.x, src.y, '#ffdd88', '#ff8822', 28, 6, 0.18, 0.9);
+  _fxSparks(src.x, src.y, col, 6, 90, 0.25, Math.PI * 0.6);
+  _fxKick();
+  // Bolt travels
+  setTimeout(() => {
+    _fxProjectile(src.x, src.y, dst.x, dst.y, col, r, 900, (hx, hy) => {
+      _fxFlash(hx, hy, '#ffffff', '#ffcc44', 40, 8, 0.25, 1.0);
+      _fxSparks(hx, hy, '#ffdd66', 18, 130, 0.45);
+      _fxSparks(hx, hy, '#ff8822', 10, 70, 0.30);
+      _fxKick();
+    }, { glow: 18, trailCol: '#ffcc4488', coreCol: '#ffffcc' });
+    _fxKick();
+  }, 60);
+}
+
+// RAPID FIRE BOLT — Rball: 2 quick bolts
+function _fxRapidBolt(src, dst) {
+  _fxBolt(src, dst, true, '#ff8833', 4);
+  setTimeout(() => _fxBolt(src, dst, true, '#ffaa55', 4), 200);
+}
+
+// CANNON — Standard cannon, Light Cannon
+function _fxCannon(src, dst, fromPlayer) {
+  _fxInit(); _fxResize();
+  // Heavy muzzle flash + smoke puff
+  _fxFlash(src.x, src.y, '#ffee88', '#ff6600', 42, 10, 0.22, 1.0);
+  _fxSparks(src.x, src.y, '#ffbb44', 8, 70, 0.35, Math.PI * 0.5);
+  // Smoke cloud particles
+  for (let i = 0; i < 12; i++) {
+    const a = (Math.random()-0.5)*0.8 + (fromPlayer ? 0 : Math.PI);
+    _fxParticle(src.x, src.y,
+      Math.cos(a) * (20+Math.random()*30), Math.sin(a) * (15+Math.random()*20),
+      `rgba(${160+Math.random()*40|0},${150+Math.random()*30|0},${120+Math.random()*20|0},0.7)`,
+      8 + Math.random()*8, 0.55 + Math.random()*0.25,
+      { drag: 0.85, glow: 0, alpha: 0.55 });
+  }
+  _fxKick();
+  setTimeout(() => {
+    _fxProjectile(src.x, src.y, dst.x, dst.y, '#997755', 8, 650, (hx, hy) => {
+      _fxFlash(hx, hy, '#ffbb44', '#ff4400', 55, 12, 0.32, 1.0);
+      _fxFlash(hx, hy, '#ff8800', '#330000', 35, 6,  0.45, 0.7);
+      _fxSparks(hx, hy, '#ffcc55', 22, 150, 0.5);
+      _fxSparks(hx, hy, '#ff6600', 14, 90, 0.4);
+      // Debris
+      for (let i = 0; i < 8; i++) {
+        const a = Math.random()*Math.PI*2;
+        _fxParticle(hx, hy, Math.cos(a)*60, Math.sin(a)*40, '#886644',
+          4+Math.random()*3, 0.6, { drag: 0.85, gravity: 80, glow: 4 });
+      }
+      _fxKick();
+    }, { glow: 10, trailCol: '#66443388', coreCol: '#ccaa77' });
+    _fxKick();
+  }, 55);
+}
+
+// SIEGE BOMBARD — Massive, devastating
+function _fxBombard(src, dst, fromPlayer) {
+  _fxInit(); _fxResize();
+  _fxFlash(src.x, src.y, '#ffffff', '#ffaa00', 65, 15, 0.28, 1.0);
+  _fxFlash(src.x, src.y, '#ff8800', '#220000', 45, 8,  0.45, 0.8);
+  for (let i = 0; i < 20; i++) {
+    const a = (Math.random()-0.5)*1.0 + (fromPlayer ? 0 : Math.PI);
+    _fxParticle(src.x, src.y,
+      Math.cos(a)*(30+Math.random()*60), Math.sin(a)*(20+Math.random()*35),
+      `rgba(${180+Math.random()*40|0},${140+Math.random()*40|0},100,0.8)`,
+      10+Math.random()*10, 0.7+Math.random()*0.3, { drag: 0.82, glow:0, alpha:0.6 });
+  }
+  _fxKick();
+  setTimeout(() => {
+    _fxProjectile(src.x, src.y, dst.x, dst.y, '#664422', 13, 500, (hx, hy) => {
+      // Massive explosion
+      _fxFlash(hx, hy, '#ffffff', '#ffdd00', 90, 20, 0.15, 1.0);
+      _fxFlash(hx, hy, '#ff6600', '#aa0000', 70, 14, 0.45, 1.0);
+      _fxFlash(hx, hy, '#440000', '#110000', 50, 10, 0.65, 0.7);
+      _fxSparks(hx, hy, '#ffee44', 30, 200, 0.7);
+      _fxSparks(hx, hy, '#ff6622', 20, 130, 0.55);
+      _fxSparks(hx, hy, '#884422', 14, 80, 0.5);
+      // Shockwave ring
+      _FX.particles.push({ x: hx, y: hy, vx:0, vy:0, col:'#ffaa4488',
+        r:0, rBase:5, rMax:65, maxLife:0.35, life:0.35,
+        alpha:0.8, drag:1, glow:0, gravity:0, shape:'ring' });
+      // Heavy debris
+      for (let i = 0; i < 14; i++) {
+        const a = Math.random()*Math.PI*2;
+        _fxParticle(hx, hy, Math.cos(a)*110, Math.sin(a)*80, '#774422',
+          5+Math.random()*4, 0.85, { drag:0.82, gravity:100, glow:3 });
+      }
+      _fxKick();
+    }, { glow: 16, trailCol: '#88552288', coreCol: '#ddaa66' });
+    _fxKick();
+  }, 55);
+}
+
+// FLAME — Phlog Torch (player fires forward cone), Flame Wings breath (enemy fires left-sweeping cone)
+function _fxFlame(src, dst, fromPlayer, col1='#ff6600', col2='#ffcc00', isBreath=false) {
+  _fxInit(); _fxResize();
+  const dir = fromPlayer ? 0 : Math.PI; // player fires right, enemy fires left
+  const coneSpread = isBreath ? 0.65 : 0.45;
+  const speed = isBreath ? 130 : 160;
+  const count = isBreath ? 40 : 28;
+  _fxFlash(src.x, src.y, col2, col1, 35, 8, 0.2, 1.0);
+  for (let i = 0; i < count; i++) {
+    const a = dir + (Math.random()-0.5)*coneSpread*2;
+    const sp = speed * (0.4 + Math.random()*0.9);
+    const life = 0.35 + Math.random()*0.45;
+    const hot  = Math.random() < 0.4;
+    _fxParticle(src.x, src.y, Math.cos(a)*sp, Math.sin(a)*sp,
+      hot ? col2 : col1,
+      (isBreath ? 6 : 4) + Math.random()*7, life,
+      { drag: 0.83, glow: 14, alpha: 0.85, gravity: -18 });
+  }
+  // Linger embers
+  setTimeout(() => {
+    const nx = src.x + Math.cos(dir)*(isBreath?60:40);
+    const ny = src.y;
+    for (let i = 0; i < 14; i++) {
+      const a = dir + (Math.random()-0.5)*coneSpread*1.4;
+      _fxParticle(nx, ny, Math.cos(a)*(speed*0.5), Math.sin(a)*(speed*0.4),
+        '#ff4400', 3+Math.random()*4, 0.3+Math.random()*0.35,
+        { drag:0.80, glow:10, alpha:0.7, gravity:-12 });
+    }
+    // Hit flash at destination
+    _fxFlash(dst.x, dst.y, '#ff6600', '#440000', 45, 8, 0.3, 0.8);
+    _fxSparks(dst.x, dst.y, '#ff8833', 12, 80, 0.4, Math.PI*0.8);
+    _fxKick();
+  }, 260);
+  _fxKick();
+}
+
+// FLAME BREATH — special version for phlog_flamewing, sprays from enemy nose across player panel
+function _fxFlameBreath(nosePos, playerPos) {
+  _fxInit(); _fxResize();
+  // Wide sweeping cone from enemy nose toward player panel
+  _fxFlash(nosePos.x, nosePos.y, '#ffee44', '#ff5500', 40, 8, 0.22, 1.0);
+  for (let wave = 0; wave < 3; wave++) {
+    setTimeout(() => {
+      for (let i = 0; i < 22; i++) {
+        const baseAngle = Math.PI; // fire leftward
+        const a = baseAngle + (Math.random()-0.5)*0.9;
+        const sp = 120 + Math.random()*160;
+        const hot = Math.random() < 0.35;
+        _fxParticle(nosePos.x, nosePos.y,
+          Math.cos(a)*sp, Math.sin(a)*sp,
+          hot ? '#ffee22' : (Math.random()<0.5 ? '#ff5500' : '#ff8833'),
+          5 + Math.random()*9, 0.4 + Math.random()*0.5,
+          { drag:0.80, glow:16, alpha:0.9, gravity:-15 });
+      }
+      _fxKick();
+    }, wave * 130);
+  }
+  // Splash on player
+  setTimeout(() => {
+    _fxFlash(playerPos.x, playerPos.y, '#ff7700', '#220000', 55, 10, 0.4, 0.85);
+    _fxSparks(playerPos.x, playerPos.y, '#ff9933', 16, 100, 0.45, Math.PI*0.9);
+    _fxSparks(playerPos.x, playerPos.y, '#ffcc44', 8, 60, 0.35, Math.PI*0.6);
+    _fxKick();
+  }, 420);
+  _fxKick();
+}
+
+// LIGHTNING — instant arc
+function _fxLightning(src, dst, fromPlayer) {
+  _fxInit(); _fxResize();
+  // Main bolt
+  _fxBeam(src.x, src.y, dst.x, dst.y, '#aaddff', 3, 0.20,
+    { glow:22, zigzag:true, jitterAmt:38, segs:12, alpha:0.95 });
+  // Secondary branch
+  const mx = (src.x+dst.x)/2 + (Math.random()-0.5)*60;
+  const my = (src.y+dst.y)/2 + (Math.random()-0.5)*60;
+  _fxBeam(src.x, src.y, mx, my, '#88bbff', 1.5, 0.14,
+    { glow:14, zigzag:true, jitterAmt:25, segs:7, alpha:0.7 });
+  _fxFlash(src.x, src.y, '#ffffff', '#88ddff', 32, 8, 0.18, 0.9);
+  _fxFlash(dst.x, dst.y, '#aaddff', '#0033aa', 48, 10, 0.30, 1.0);
+  _fxSparks(dst.x, dst.y, '#aaddff', 16, 120, 0.4);
+  // Electric shimmer at hit
+  for (let i = 0; i < 5; i++) {
+    setTimeout(() => {
+      _fxBeam(dst.x+(Math.random()-0.5)*24, dst.y+(Math.random()-0.5)*24,
+               dst.x+(Math.random()-0.5)*40, dst.y+(Math.random()-0.5)*40,
+               '#88ccff', 1, 0.08, { glow:10, zigzag:false, alpha:0.8 });
+      _fxKick();
+    }, i*45);
+  }
+  _fxKick();
+}
+
+// PSI LANCE / PSIONIC — concentric rings + purple wave
+function _fxPsi(src, dst, fromPlayer) {
+  _fxInit(); _fxResize();
+  _fxFlash(src.x, src.y, '#cc88ff', '#440088', 28, 6, 0.22, 0.9);
+  // Pulse rings expanding outward
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+      _FX.particles.push({ x: src.x, y: src.y, vx:0, vy:0,
+        col:'#aa55ff88', r:0, rBase:4, rMax:40, maxLife:0.4, life:0.4,
+        alpha:0.85, drag:1, glow:0, gravity:0, shape:'ring' });
+      _fxKick();
+    }, i*90);
+  }
+  // Beam
+  _fxBeam(src.x, src.y, dst.x, dst.y, '#bb66ff', 2.5, 0.28,
+    { glow:18, zigzag:false, alpha:0.85 });
+  setTimeout(() => {
+    _fxFlash(dst.x, dst.y, '#dd99ff', '#220044', 50, 10, 0.35, 1.0);
+    _fxSparks(dst.x, dst.y, '#cc66ff', 14, 110, 0.45);
+    // Psi shatter
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => {
+        _FX.particles.push({ x: dst.x, y: dst.y, vx:0, vy:0,
+          col:'#cc55ff66', r:0, rBase:3, rMax:28+(i*14), maxLife:0.28, life:0.28,
+          alpha:0.7, drag:1, glow:0, gravity:0, shape:'ring' });
+        _fxKick();
+      }, i*70);
+    }
+    _fxKick();
+  }, 240);
+  _fxKick();
+}
+
+// WEB CANNON — threads fanning from enemy to player
+function _fxWeb(src, dst) {
+  _fxInit(); _fxResize();
+  const dir = Math.atan2(dst.y - src.y, dst.x - src.x);
+  // Fan of sticky thread lines
+  for (let i = 0; i < 7; i++) {
+    const a = dir + (i-3)*0.18;
+    const endX = src.x + Math.cos(a)*Math.hypot(dst.x-src.x, dst.y-src.y)*0.9;
+    const endY = src.y + Math.sin(a)*Math.hypot(dst.x-src.x, dst.y-src.y)*0.9;
+    setTimeout(() => {
+      _fxBeam(src.x, src.y, endX, endY, '#88aa44', 1.5, 0.55,
+        { glow:4, zigzag:true, jitterAmt:12, segs:8, alpha:0.85 });
+      _fxKick();
+    }, i*20);
+  }
+  setTimeout(() => {
+    _fxFlash(dst.x, dst.y, '#aabb55', '#334400', 42, 8, 0.4, 0.85);
+    _fxSparks(dst.x, dst.y, '#99bb44', 10, 70, 0.5, Math.PI*1.2);
+    for (let i = 0; i < 5; i++) {
+      const a = Math.random()*Math.PI*2;
+      _fxParticle(dst.x, dst.y, Math.cos(a)*40, Math.sin(a)*30,
+        '#88aa44', 3, 0.6, { drag:0.78, glow:3, alpha:0.8 });
+    }
+    _fxKick();
+  }, 300);
+  _fxKick();
+}
+
+// VOID PULSE — Leviathan breath, void stalker, dark attacks
+function _fxVoid(src, dst, fromPlayer, col='#6600cc') {
+  _fxInit(); _fxResize();
+  _fxFlash(src.x, src.y, col, '#110022', 36, 8, 0.25, 0.9);
+  // Dark expanding rings
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+      _FX.particles.push({ x: src.x+(Math.random()-0.5)*20, y: src.y+(Math.random()-0.5)*10,
+        vx:0, vy:0, col: col+'88', r:0, rBase:6, rMax:50+i*20,
+        maxLife:0.5, life:0.5, alpha:0.75, drag:1, glow:0, gravity:0, shape:'ring' });
+      _fxKick();
+    }, i*100);
+  }
+  setTimeout(() => {
+    _fxProjectile(src.x, src.y, dst.x, dst.y, col, 9, 520, (hx, hy) => {
+      _fxFlash(hx, hy, '#aa44ff', '#110022', 55, 10, 0.38, 1.0);
+      _fxSparks(hx, hy, col, 14, 100, 0.5);
+      _FX.particles.push({ x: hx, y: hy, vx:0, vy:0, col:'#7722cc66',
+        r:0, rBase:8, rMax:60, maxLife:0.4, life:0.4,
+        alpha:0.8, drag:1, glow:0, gravity:0, shape:'ring' });
+      _fxKick();
+    }, { glow:18, trailCol:col+'55', coreCol:'#cc88ff' });
+    _fxKick();
+  }, 80);
+  _fxKick();
+}
+
+// EYE RAYS — Beholder: 3 simultaneous coloured beams
+function _fxEyeRays(src, dst) {
+  _fxInit(); _fxResize();
+  const rayData = [
+    { col:'#ff4444', dy:-14, delay:0   },
+    { col:'#44aaff', dy:0,   delay:60  },
+    { col:'#44ff88', dy:14,  delay:120 },
+  ];
+  rayData.forEach(r => {
+    setTimeout(() => {
+      _fxBeam(src.x, src.y, dst.x, dst.y + r.dy, r.col, 2, 0.28,
+        { glow:16, zigzag:false, alpha:0.9 });
+      _fxFlash(src.x, src.y, r.col, '#000', 18, 4, 0.12, 0.8);
+      _fxKick();
+    }, r.delay);
+  });
+  setTimeout(() => {
+    _fxFlash(dst.x, dst.y, '#ffffff', '#884400', 50, 10, 0.3, 1.0);
+    _fxSparks(dst.x, dst.y, '#ffaa44', 12, 100, 0.4);
+    _fxSparks(dst.x, dst.y, '#44aaff', 8, 80, 0.35);
+    _fxKick();
+  }, 280);
+  _fxKick();
+}
+
+// RAM / COLLISION — lunge effect from enemy toward player
+function _fxRam(src, dst, fromPlayer) {
+  _fxInit(); _fxResize();
+  const dir = Math.atan2(dst.y-src.y, dst.x-src.x);
+  // Motion blur streaks from attacker
+  for (let i = 0; i < 8; i++) {
+    const a = dir + (Math.random()-0.5)*0.3;
+    _fxParticle(src.x, src.y, Math.cos(a)*200, Math.sin(a)*120, '#886644',
+      3+Math.random()*3, 0.25, { drag:0.82, glow:6, alpha:0.7, shape:'line' });
+  }
+  setTimeout(() => {
+    _fxFlash(dst.x, dst.y, '#ffaa44', '#441100', 60, 12, 0.32, 1.0);
+    _fxSparks(dst.x, dst.y, '#ffcc55', 20, 160, 0.5);
+    _fxSparks(dst.x, dst.y, '#884422', 12, 90, 0.4);
+    for (let i = 0; i < 6; i++) {
+      const a = Math.random()*Math.PI*2;
+      _fxParticle(dst.x, dst.y, Math.cos(a)*80, Math.sin(a)*60, '#775533',
+        4+Math.random()*3, 0.55, { drag:0.84, gravity:60, glow:5 });
+    }
+    _fxKick();
+  }, 220);
+  _fxKick();
+}
+
+// NETHER CANNON — void beam, black core with purple corona
+function _fxNether(src, dst, fromPlayer) {
+  _fxInit(); _fxResize();
+  _fxFlash(src.x, src.y, '#aa44cc', '#000011', 30, 7, 0.22, 0.9);
+  _fxBeam(src.x, src.y, dst.x, dst.y, '#8800cc', 4, 0.3, { glow:24, alpha:0.9 });
+  _fxBeam(src.x, src.y, dst.x, dst.y, '#220044', 8, 0.2, { glow:0,  alpha:0.7 });
+  setTimeout(() => {
+    _fxFlash(dst.x, dst.y, '#cc66ff', '#110022', 58, 12, 0.38, 1.0);
+    _fxSparks(dst.x, dst.y, '#aa44ff', 16, 130, 0.5);
+    for (let i = 0; i < 4; i++) {
+      _FX.particles.push({ x: dst.x+(Math.random()-0.5)*20,
+        y: dst.y+(Math.random()-0.5)*15, vx:0, vy:0,
+        col:'#6600aa55', r:0, rBase:3, rMax:20+i*10,
+        maxLife:0.3, life:0.3, alpha:0.7, drag:1, glow:0, gravity:0, shape:'ring' });
+    }
+    _fxKick();
+  }, 200);
+  _fxKick();
+}
+
+// DISSOLVE / ACID RAY — green corrosive beam
+function _fxDissolve(src, dst, fromPlayer) {
+  _fxInit(); _fxResize();
+  _fxFlash(src.x, src.y, '#88ff44', '#224400', 25, 6, 0.2, 0.9);
+  _fxBeam(src.x, src.y, dst.x, dst.y, '#55cc22', 3, 0.28, { glow:16, alpha:0.85 });
+  setTimeout(() => {
+    _fxFlash(dst.x, dst.y, '#88ff44', '#224400', 45, 9, 0.35, 0.9);
+    _fxSparks(dst.x, dst.y, '#66dd22', 14, 90, 0.45);
+    for (let i = 0; i < 10; i++) {
+      _fxParticle(dst.x+(Math.random()-0.5)*24, dst.y+(Math.random()-0.5)*18,
+        (Math.random()-0.5)*40, Math.random()*30+10, '#44aa11',
+        3+Math.random()*3, 0.6, { drag:0.82, gravity:40, glow:6 });
+    }
+    _fxKick();
+  }, 220);
+  _fxKick();
+}
+
+// DRAIN / PHASE STRIKE — ghostly tendrils pulling life
+function _fxDrain(src, dst, fromPlayer) {
+  _fxInit(); _fxResize();
+  // Tendrils emanating from attacker toward target
+  for (let i = 0; i < 5; i++) {
+    setTimeout(() => {
+      const ox = dst.x + (Math.random()-0.5)*30;
+      const oy = dst.y + (Math.random()-0.5)*20;
+      _fxBeam(dst.x, dst.y, src.x+(Math.random()-0.5)*20, src.y+(Math.random()-0.5)*15,
+        '#8844cc', 1.5, 0.4, { glow:12, zigzag:true, jitterAmt:18, segs:7, alpha:0.75 });
+      _fxFlash(ox, oy, '#aa66ff', '#110022', 16, 4, 0.18, 0.8);
+      _fxKick();
+    }, i*60);
+  }
+  setTimeout(() => {
+    _fxFlash(dst.x, dst.y, '#cc88ff', '#110022', 40, 8, 0.3, 0.9);
+    _fxSparks(dst.x, dst.y, '#9944cc', 10, 80, 0.4);
+    _fxFlash(src.x, src.y, '#66ff99', '#002211', 28, 6, 0.25, 0.75);
+    _fxKick();
+  }, 360);
+  _fxKick();
+}
+
+// NOVA / STELLAR PULSE — the Unnamed
+function _fxNova(src) {
+  _fxInit(); _fxResize();
+  _fxFlash(src.x, src.y, '#ffffff', '#9900ff', 80, 20, 0.2, 1.0);
+  _fxFlash(src.x, src.y, '#cc66ff', '#220044', 55, 12, 0.55, 0.9);
+  for (let i = 0; i < 5; i++) {
+    setTimeout(() => {
+      _FX.particles.push({ x: src.x, y: src.y, vx:0, vy:0,
+        col:'#cc55ff66', r:0, rBase:10, rMax:80+i*25,
+        maxLife:0.45, life:0.45, alpha:0.8, drag:1, glow:0, gravity:0, shape:'ring' });
+      _fxSparks(src.x, src.y, i%2===0?'#ffffff':'#aa44ff', 8, 180, 0.55);
+      _fxKick();
+    }, i*80);
+  }
+  _fxKick();
+}
+
+// SILVER BLADE — Githyanki silver cannon
+function _fxSilver(src, dst, fromPlayer) {
+  _fxInit(); _fxResize();
+  _fxFlash(src.x, src.y, '#ffffff', '#aaccff', 24, 6, 0.18, 0.9);
+  _fxProjectile(src.x, src.y, dst.x, dst.y, '#ddeeff', 6, 820, (hx, hy) => {
+    _fxFlash(hx, hy, '#ffffff', '#88aacc', 44, 10, 0.28, 1.0);
+    _fxSparks(hx, hy, '#ccddff', 16, 130, 0.4);
+    _fxSparks(hx, hy, '#ffffff', 8, 80, 0.3);
+    _fxKick();
+  }, { glow:20, trailCol:'#aaccff44', coreCol:'#ffffff' });
+  _fxKick();
+}
+
+// GRAPPLE / TENTACLE — squid tentacle, tentacle lash
+function _fxGrapple(src, dst) {
+  _fxInit(); _fxResize();
+  _fxBeam(src.x, src.y, dst.x, dst.y, '#885533', 4, 0.45,
+    { glow:6, zigzag:true, jitterAmt:20, segs:10, alpha:0.9 });
+  _fxBeam(src.x, src.y, dst.x, dst.y, '#663311', 2, 0.55,
+    { glow:0, zigzag:true, jitterAmt:14, segs:8, alpha:0.7 });
+  setTimeout(() => {
+    _fxFlash(dst.x, dst.y, '#aa7744', '#221100', 38, 8, 0.3, 0.85);
+    _fxSparks(dst.x, dst.y, '#886633', 10, 70, 0.4, Math.PI*1.2);
+    _fxKick();
+  }, 250);
+  _fxKick();
+}
+
+// HEAL / REPAIR — green glow on the healer
+function _fxHeal(target) {
+  _fxInit(); _fxResize();
+  _fxFlash(target.x, target.y, '#44ff88', '#004422', 50, 10, 0.4, 0.85);
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+      _FX.particles.push({ x: target.x, y: target.y, vx:0, vy:0,
+        col:'#44ff8866', r:0, rBase:4, rMax:35+i*10,
+        maxLife:0.38, life:0.38, alpha:0.7, drag:1, glow:0, gravity:0, shape:'ring' });
+      _fxKick();
+    }, i*100);
+  }
+  _fxSparks(target.x, target.y, '#66ff99', 10, 60, 0.5);
+  _fxKick();
+}
+
+// STUN — electric crackle on target
+function _fxStun(target) {
+  _fxInit(); _fxResize();
+  for (let i = 0; i < 6; i++) {
+    setTimeout(() => {
+      _fxBeam(target.x+(Math.random()-0.5)*35, target.y+(Math.random()-0.5)*25,
+               target.x+(Math.random()-0.5)*35, target.y+(Math.random()-0.5)*25,
+               '#ffdd44', 1.5, 0.12, { glow:14, zigzag:false, alpha:0.9 });
+      _fxKick();
+    }, i*55);
+  }
+  _fxFlash(target.x, target.y, '#ffee88', '#442200', 36, 8, 0.25, 0.9);
+  _fxKick();
+}
+
+// ── Main dispatcher ──────────────────────────────────────────────────────────
+// wk = weapon key (player) or _fxTypeFromEnemyW() result (enemy)
+// fromPlayer = true if player is the attacker
+function _cbtFX(wk, fromPlayer) {
+  if (!document.getElementById('ov-combat')?.classList.contains('on')) return;
+  _fxInit(); _fxResize();
+  if (!_FX.ctx) return;
+  const src = _fxPos(fromPlayer);
+  const dst = _fxPos(!fromPlayer);
+  switch (wk) {
+    // ── Player weapons ──
+    case 'ballista': case 'hball': case 'sballista': _fxBolt(src, dst, fromPlayer); break;
+    case 'rball':    _fxRapidBolt(src, dst); break;
+    case 'cannon':   case 'lcannon': _fxCannon(src, dst, fromPlayer); break;
+    case 'bombard':  _fxBombard(src, dst, fromPlayer); break;
+    case 'phlogtorch': _fxFlame(src, dst, fromPlayer); break;
+    case 'lightning':  _fxLightning(src, dst, fromPlayer); break;
+    case 'psylance':   _fxPsi(src, dst, fromPlayer); break;
+    case 'nullbolt':   _fxVoid(src, dst, fromPlayer, '#334488'); break;
+    case 'realspike':  _fxLightning(src, dst, fromPlayer); break;
+    case 'dissray':    _fxDissolve(src, dst, fromPlayer); break;
+    case 'warpcann':   _fxVoid(src, dst, fromPlayer, '#2244aa'); break;
+    case 'nether':     _fxNether(src, dst, fromPlayer); break;
+    case 'entropic':   _fxVoid(src, dst, fromPlayer, '#882200'); break;
+    // ── Enemy FX types (resolved by _fxTypeFromEnemyW) ──
+    case 'fx_bolt':    _fxBolt(src, dst, fromPlayer); break;
+    case 'fx_cannon':  _fxCannon(src, dst, fromPlayer); break;
+    case 'fx_ram':     _fxRam(src, dst, fromPlayer); break;
+    case 'fx_flame':
+      const nosePos = _fxNose(fromPlayer);
+      _fxFlameBreath(nosePos, dst); break;
+    case 'fx_web':     _fxWeb(src, dst); break;
+    case 'fx_void':    _fxVoid(src, dst, fromPlayer); break;
+    case 'fx_drain':   _fxDrain(src, dst, fromPlayer); break;
+    case 'fx_psi':     _fxPsi(src, dst, fromPlayer); break;
+    case 'fx_eyeray':  _fxEyeRays(src, dst); break;
+    case 'fx_grapple': _fxGrapple(src, dst); break;
+    case 'fx_silver':  _fxSilver(src, dst, fromPlayer); break;
+    case 'fx_nether':  _fxNether(src, dst, fromPlayer); break;
+    case 'fx_nova':    _fxNova(src); break;
+    case 'fx_stun':    _fxStun(dst); break;
+    case 'fx_heal':    _fxHeal(src); break;
+    default:           _fxBolt(src, dst, fromPlayer, '#cc9955', 4); break;
+  }
+}
+
+// Map enemy weapon object + enemy key to an FX type string
+function _fxTypeFromEnemyW(w, eKey) {
+  if (!w) return 'fx_bolt';
+  // Weapon-property based routing first
+  if (w.webdisable)    return 'fx_web';
+  if (w.cooldowncurse) return 'fx_void';
+  if (w.maxhullshred && eKey === 'fd_dark_stalker') return 'fx_drain';
+  if (w.maxhullshred)  return 'fx_void';
+  if (w.psistun || w.special === 'stun') return 'fx_psi';
+  if (w.special === 'rage')   return 'fx_cannon';
+  if (w.special === 'corrode') return 'fx_dissolve';
+  if (w.disarmall || w.disarmPlayer || w.sabotage) return 'fx_psi';
+  if (w.crew && w.crew >= 3)  return 'fx_grapple';
+  // Enemy-key based routing
+  switch (eKey) {
+    case 'phlog_flamewing':  return 'fx_flame';
+    case 'phlog_jellyfish':  return 'fx_flame';
+    case 'phlog_vinecrawler':return 'fx_void';
+    case 'phlog_mote':       return 'fx_void';
+    case 'leviathan': case 'fd_dark_leviathan': return 'fx_void';
+    case 'beholder':         return 'fx_eyeray';
+    case 'harvester':        return 'fx_web';
+    case 'nautiloid':        return 'fx_psi';
+    case 'githyanki': case 'fd_krynn_githyanki': return 'fx_silver';
+    case 'fd_dark_stalker':  return 'fx_drain';
+    case 'fd_grey_construct':return 'fx_ram';
+    case 'trull_warship': case 'trull_dreadnought': return 'fx_cannon';
+    case 'blackfleet': case 'fd_cluster_blackfleet': return 'fx_cannon';
+    case 'corsair': case 'plunderer': case 'fd_krynn_skirmisher': return 'fx_bolt';
+    case 'elder':            return 'fx_nova';
+    case 'frStalker':        return 'fx_drain';
+    case 'frHorde':          return 'fx_void';
+    case 'void_shark':       return 'fx_ram';
+    case 'wb_grex':          return 'fx_cannon';
+    case 'wb_admiral':       return 'fx_nether';
+    case 'wb_clutch':        return 'fx_web';
+    case 'wb_murmur':        return 'fx_void';
+    default:                 return 'fx_bolt';
+  }
+}
+
+// FX for enemy specials (sp.fx type)
+function _cbtFXSpecial(spFx, fromEnemy) {
+  _fxInit(); _fxResize();
+  if (!_FX.ctx) return;
+  const src = _fxPos(!fromEnemy); // attacker
+  const dst = _fxPos(fromEnemy);  // target
+  switch (spFx) {
+    case 'stun':   _fxStun(dst); break;
+    case 'dodge':  _fxVoid(src, src, true, '#334488'); break;
+    case 'phase':  _fxDrain(src, dst, true); break;
+    case 'crew':   _fxGrapple(src, dst); break;
+    case 'multi':  _fxEyeRays(src, dst); break;
+    case 'summon': _fxRam(src, dst, false); break;
+    case 'heal':   _fxHeal(src); break;
+    case 'nova':   _fxNova(src); break;
+    case 'extra':  _fxVoid(src, dst, false); break;
+    default: break;
+  }
+}
+
 function buildCbtPanels() {
   const playerPanel = document.getElementById('cbt-player-wpns');
   const enemyPanel  = document.getElementById('cbt-enemy-wpns');
@@ -11999,6 +12801,7 @@ async function doAction(type, idx, itemUid) {
       const e = G.cbt.enemy;
       triggerAnim(pCV(), 'anim-flinch-r');
       snd(wpnSound(wk), 0.85);
+      _cbtFX(wk, true);
       await sleep(320);
 
       // Seeking bypasses dodge+phase; nether bypasses phase only; entropic bypasses ALL dodge
@@ -12202,6 +13005,7 @@ async function doAction(type, idx, itemUid) {
       cLog(`🎯 Linked Fire! ${toFire.length} weapon${toFire.length>1?'s':''} firing together!`, 'gd');
       triggerAnim(pCV(), 'anim-flinch-r');
       snd('cannon_fire', 0.9);
+      _cbtFX('cannon', true);
       await sleep(300);
       const lDodged = G.cbt.eStat === 'dodging' || G.cbt.eStat === 'phased';
       G.cbt.eStat = 'normal';
@@ -12238,6 +13042,7 @@ async function doAction(type, idx, itemUid) {
       cLog(`🌊 Volley Fire! All ${ready.length} ready weapon${ready.length>1?'s':''} unleashed!`, 'gd');
       triggerAnim(pCV(), 'anim-flinch-r');
       snd('cannon_fire', 1.0);
+      _cbtFX('bombard', true);
       await sleep(280);
       const vDodged = G.cbt.eStat === 'dodging' || G.cbt.eStat === 'phased';
       G.cbt.eStat = 'normal';
@@ -12599,7 +13404,7 @@ async function enemyTurn() {
       triggerAnim(eCV(), 'anim-flinch-r');
       snd('repair_hull', 0.8);
       if(healDef.fx === 'heal'){
-        if(healDef.crewCost && e.crew !== undefined){
+        _fxHeal(_fxPos(false));        if(healDef.crewCost && e.crew !== undefined){
           e.crew = Math.max(0, e.crew - healDef.crewCost);
           cLog(`${healDef.crewCost} crew sacrificed...`,'dmg');
           updateCbtUI(); await sleep(300);
@@ -12671,6 +13476,7 @@ async function enemyTurn() {
   if (e.sp && Math.random() < e.sp.c && !e._nullified && !(e.crew !== undefined && e.crew <= 0)) {
     usedSpecial = true;
     cLog(`⚡ ${e.name} uses ${e.sp.n}!`, 'dmg');
+    _cbtFXSpecial(e.sp.fx, true);
     await sleep(300);
 
     switch (e.sp.fx) {
@@ -12752,6 +13558,8 @@ async function enemyTurn() {
 
       triggerAnim(eCV(), 'anim-flinch-l');
       await sleep(320);
+      // VFX for this weapon
+      _cbtFX(_fxTypeFromEnemyW(w, e._key), false);
 
       if(ev && Math.random()<0.5 && !w.seeking){
         snd('miss', 0.65);
