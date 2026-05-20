@@ -5387,8 +5387,10 @@ function initGame() {
     window._idleMapWatchdog = setInterval(() => {
       if (!G?._idleMode || !G?._idleBounce) return;
       if (G.phase !== 'map') return;
-      if (G.watch?.restingPhase) return; // rest animation still playing — OK
-      if (G.watch?._pauseShown) return;  // anchor popup showing — OK
+      if (G.watch?.restingPhase) return;  // rest animation still playing — OK
+      if (G.watch?._pauseShown) return;   // anchor popup showing — OK
+      if (_restCountdownTimer) return;    // auto-resume countdown in progress — OK
+      if (G._restResumeBackup) return;    // rest just finished, countdown imminent — OK
       // Dock overlay is open — OK
       const dockOpen = document.getElementById('ov-idle-dock')?.style.display !== 'none';
       if (dockOpen) return;
@@ -6843,6 +6845,9 @@ function getShipPos(){
 
 function startTravel(toId, _resumeWatchesLeft, _pausedPos, _pausedProg, _savedLaneOrigin){
   if(G.phase!=='map')return;
+  // Always kill any existing travel timer before overwriting G.tvl —
+  // prevents orphaned setInterval handles that keep firing after G.tvl is replaced.
+  if(G.tvl?.timer) { clearInterval(G.tvl.timer); G.tvl.timer = null; }
   if(G.tvl) G.tvl._eventLocked = false; // clear any stale lock from previous leg
   if(G.tvl) G.tvl._sphereQueued = false; // allow sphere to re-queue on new approach
   _LP.inited = false; _LP._lastTs = 0; _LP.pools = {}; // reinit lane particles for new game
