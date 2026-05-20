@@ -5894,33 +5894,41 @@ function renderLoop(ts=0) {
 
     // ── Flow arrow REMOVED — direction shown by lane particles ──
 
-    // ── Travel days badge at midpoint ────────────────────────────────────
-    // Shows estimated days for the player's current ship+engine — updates live
+    // ── Travel days badges at 25% and 75% along the lane ─────────────────
+    // Placed off-centre so they don't overlap waypoint icons at the midpoint.
+    // Each badge is nudged a few pixels perpendicular to the lane direction.
     cx.globalAlpha = 1;
-    const r = 9;
-    const days = laneWatchCost(lane, G.ship);
-    const dayLabel = lane.warzone ? `⚔` : `${days}d`;
-    // Glow halo
-    const bg = cx.createRadialGradient(mx, my, 0, mx, my, r + 4);
-    bg.addColorStop(0, hexA(col,'99')); bg.addColorStop(1, hexA(col,'00'));
-    cx.fillStyle = bg; cx.beginPath(); cx.arc(mx, my, r + 4, 0, Math.PI * 2); cx.fill();
-    // Pill background
-    const pillW = lane.warzone ? 18 : (days >= 10 ? 24 : 20);
-    const pillH = 13;
-    cx.fillStyle = 'rgba(4,0,14,0.82)';
-    cx.beginPath();
-    cx.roundRect(mx - pillW/2, my - pillH/2, pillW, pillH, 4);
-    cx.fill();
-    // Label
-    cx.fillStyle = col;
-    cx.font = `bold ${lane.warzone ? 11 : 10}px "Cinzel",serif`;
-    cx.textAlign = 'center'; cx.textBaseline = 'middle';
-    cx.fillText(dayLabel, mx, my);
-    // "WAR" sub-label for warzones
-    if (lane.warzone) {
-      const daysSubLabel = `${days}d`;
-      cx.font = '7px Arial'; cx.fillStyle = hexA(col,'cc');
-      cx.fillText(daysSubLabel, mx, my + 11);
+    const days    = laneWatchCost(lane, G.ship);
+    const dayLabel = lane.warzone ? `⚔ ${days}d` : `${days}d`;
+    const pillW   = lane.warzone ? 30 : (days >= 10 ? 24 : 20);
+    const pillH   = 13;
+
+    // Perpendicular offset — nudge badge away from the lane line
+    const ldx = pb.x - pa.x, ldy = pb.y - pa.y;
+    const llen = Math.hypot(ldx, ldy) || 1;
+    const perpX = -ldy / llen, perpY = ldx / llen; // unit normal
+    const nudge = 10; // px off the lane
+
+    for (const t of [0.25, 0.75]) {
+      const bx = pa.x + ldx * t + perpX * nudge;
+      const by = pa.y + ldy * t + perpY * nudge;
+
+      // Glow halo
+      const bg = cx.createRadialGradient(bx, by, 0, bx, by, 13);
+      bg.addColorStop(0, hexA(col,'66')); bg.addColorStop(1, hexA(col,'00'));
+      cx.fillStyle = bg; cx.beginPath(); cx.arc(bx, by, 13, 0, Math.PI * 2); cx.fill();
+
+      // Pill
+      cx.fillStyle = 'rgba(4,0,14,0.85)';
+      cx.beginPath();
+      cx.roundRect(bx - pillW/2, by - pillH/2, pillW, pillH, 4);
+      cx.fill();
+
+      // Label
+      cx.fillStyle = col;
+      cx.font = 'bold 10px "Cinzel",serif';
+      cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      cx.fillText(dayLabel, bx, by);
     }
   });
   cx.globalAlpha=1; cx.textBaseline='alphabetic';
