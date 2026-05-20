@@ -5924,8 +5924,8 @@ function renderLoop(ts=0) {
 
     const laneAB = getLane(a, b);
     const laneBA = getLane(b, a);
-    const daysAB = Math.ceil(laneWatchCost(laneAB, G.ship) / 2);
-    const daysBA = Math.ceil(laneWatchCost(laneBA, G.ship) / 2);
+    const daysAB = Math.ceil(laneWatchCost(laneAB, G.ship) * 0.75);
+    const daysBA = Math.ceil(laneWatchCost(laneBA, G.ship) * 0.75);
 
     const badges = [
       { t: 0.25, days: daysAB, warzone: laneAB.warzone },
@@ -9417,17 +9417,12 @@ function tsDrawEvent(ctx, ev, W, H) {
     ctx.save();
     ctx.translate(ev.x, ev.y);
     ctx.rotate(angle);
-    // Pirate ships (sloop / plunderer / blackfleet) are drawn nose-right natively
-    // PNG ships (nose faces LEFT per project convention) need flip:true to face toward player.
-    // Procedural ships are drawn nose-up, so rotate(π) makes them face toward the player.
-    // Pirate ships (corsair, plunderer, blackfleet) are procedurally drawn nose-RIGHT,
-    // so they do NOT need the π rotation — they already face the right way.
-    const _pirateKeys = new Set(['corsair','plunderer','blackfleet']);
-    if(!_pirateKeys.has(ev.key)) ctx.rotate(Math.PI);
+    // All procedural ships need rotate(PI) to face toward player (left).
+    // PNG ships (nose faces left) do NOT need rotate(PI) — flip parameter handles them.
+    // We skip rotate(PI) only for PNG-loaded ships that are handled by drawShipImg directly.
+    ctx.rotate(Math.PI);
     const [ew, eh] = [80, 50];
     ctx.shadowColor = '#ff4422'; ctx.shadowBlur = 20;
-    // For PNG ships: nose faces left, so flip:true points them toward the player (right side)
-    const _needsFlip = !!(ev.key && !_pirateKeys.has(ev.key));
     drawShipImg(ev.key, ctx, 0, 0, ew, eh, false, () => {
       // Per-enemy fallback — matches drawCbtShips procedural draws
       const k = ev.key;
@@ -19287,9 +19282,6 @@ function _lsRender(cx, W, H, dt) {
       cx.restore();
     }
 
-    // Ship body — use actual PNG, fall back to procedural silhouette
-    // PNG ships have nose facing LEFT; rotation angle points nose toward movement direction.
-    // flip:true mirrors the PNG so nose faces RIGHT, matching the rotation convention.
     cx.save(); cx.translate(e.x,e.y); cx.rotate(e.angle);
     cx.globalAlpha=blinkAlpha;
     cx.shadowColor=isChasing?'#ff4422':ec; cx.shadowBlur=isChasing?16:8;
