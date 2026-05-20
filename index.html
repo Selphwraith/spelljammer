@@ -4659,9 +4659,9 @@ function updateWatchHUD() {
   const hud = document.getElementById('watch-hud');
   if (!hud) return;
 
-  // Only show on map/traveling phases — hide during combat and all overlays
-  const active = (G.phase === 'map' || G.phase === 'traveling') && G.phase !== 'combat';
-  if(active) hud.classList.remove('hidden-by-overlay'); // clear any overlay-hide flag
+  // Show HUD in map, traveling, port, and LS — hide only when explicitly closed
+  const active = G.phase === 'map' || G.phase === 'traveling' || G.phase === 'port';
+  if(active) hud.classList.remove('hidden-by-overlay');
   hud.classList.toggle('on', active);
 
   document.getElementById('wh-day').textContent = watchTimeStr();
@@ -10700,10 +10700,14 @@ function startCombat(key){
   }
 
   G.phase='combat'; setTag('COMBAT');
-  G.phase='combat'; setTag('COMBAT');
   stopTravelHum(); stopLiveClock();
+  // Save exact clock state so we can restore without replaying from 06:00
+  G._combatClockSave = { hwm: _clockHWM, baseH: _clockBaseH };
   tsClose();
-  document.getElementById('watch-hud')?.classList.remove('on');
+  // Keep watch HUD visible during combat showing frozen time
+  const _wh = document.getElementById('watch-hud');
+  if(_wh) { _wh.classList.add('on'); }
+  document.getElementById('wh-day').textContent = watchTimeStr();
   const eWpns = (t.wpns||[]).map(w=>({...w}));
   const eCds  = eWpns.map(()=>0);
   const eDisabled = eWpns.map(()=>0);
@@ -14084,7 +14088,13 @@ function endCbt(won){
     if(won) addLog('Enemy destroyed. Resuming course to '+G.tvl.toFragSite.n+'…','gd');
     document.getElementById('tvlbar').classList.add('on');
     if(G.tvl){ G.tvl._eventLocked=false; G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); }
-    startTravelHum(); startLiveClock(); resetLiveClock(G.tvl && isFinite(G.tvl.prog) ? G.tvl.prog/100 : 0);
+    // Restore clock from saved state — don't reset or it replays from 06:00
+    if(G._combatClockSave) {
+      _clockBaseH = G._combatClockSave.baseH;
+      _clockHWM   = G._combatClockSave.hwm;
+      G._combatClockSave = null;
+    }
+    startTravelHum(); startLiveClock(); resetLiveClock(G.tvl && isFinite(G.tvl.prog) ? G.tvl.prog/100 : _clockHWM);
     updateWatchHUD();
     tsOpen(G.tvl.lane);
     return;
@@ -14118,7 +14128,12 @@ function endCbt(won){
   if(won)addLog('Resuming voyage.','');
   document.getElementById('tvlbar').classList.add('on');
   if(G.tvl){ G.tvl._eventLocked=false; G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); }
-  startTravelHum(); startLiveClock(); resetLiveClock(G.tvl && isFinite(G.tvl.prog) ? G.tvl.prog/100 : 0);
+  if(G._combatClockSave) {
+    _clockBaseH = G._combatClockSave.baseH;
+    _clockHWM   = G._combatClockSave.hwm;
+    G._combatClockSave = null;
+  }
+  startTravelHum(); startLiveClock(); resetLiveClock(G.tvl && isFinite(G.tvl.prog) ? G.tvl.prog/100 : _clockHWM);
   updateWatchHUD();
   tsOpen(G.tvl.lane);
 }
