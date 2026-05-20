@@ -6993,7 +6993,7 @@ function travelTick(){
   // Advance linearly from segStart to segEnd over `steps` ticks
   G.tvl.prog = segStart + (G.tvl.cur / G.tvl.steps) * watchPct;
   G.tvl.prog = Math.min(G.tvl.prog, segEnd);
-  document.getElementById('tvlf').style.width = G.tvl.prog + '%';
+  document.getElementById('tvlf').style.width = (isFinite(G.tvl.prog) ? G.tvl.prog : 0) + '%';
 
   // ── Planet approach — only queue on the FINAL watch leg ──────────
   // _watchesLeft === 0 means this is the last leg before arrival.
@@ -8947,7 +8947,7 @@ function tsRender(timestamp) {
   // ── Update progress HUD ───────────────────────────────────────────────
   if (G.tvl) {
     const pct = G.tvl.prog || 0;
-    document.getElementById('ts-prog-bar').style.width = pct + '%';
+    document.getElementById('ts-prog-bar').style.width = (isFinite(pct) ? pct : 0) + '%';
     const wl = G.tvl._watchesLeft || 0;
     document.getElementById('ts-watch-label').textContent =
       wl > 0 ? `${wl} leg${wl !== 1 ? 's' : ''} remaining` : 'approaching…';
@@ -10506,11 +10506,11 @@ function updateCbtUI(){
   const s=G.ship,e=G.cbt.enemy;
   document.getElementById('ct-php').textContent=Math.max(0,s.hull);
   document.getElementById('ct-pmhp').textContent=s.maxHull;
-  document.getElementById('ct-pbar').style.width=Math.max(0,(s.hull/s.maxHull)*100)+'%';
+  document.getElementById('ct-pbar').style.width=Math.max(0,isFinite(s.hull/s.maxHull)?(s.hull/s.maxHull)*100:0)+'%';
   document.getElementById('ct-pstat').textContent=G.cbt.pStat;
   document.getElementById('ct-ehp').textContent=Math.max(0,e.hp);
   document.getElementById('ct-emhp').textContent=e.maxHp;
-  document.getElementById('ct-ebar').style.width=Math.max(0,(e.hp/e.maxHp)*100)+'%';
+  document.getElementById('ct-ebar').style.width=Math.max(0,isFinite(e.hp/e.maxHp)?(e.hp/e.maxHp)*100:0)+'%';
   document.getElementById('ct-estat').textContent=G.cbt.eStat;
   // Enemy crew bar
   const eCrewEl = document.getElementById('ct-ecrew');
@@ -13524,9 +13524,9 @@ function updateUI(){
   ['pt-gold','lq-qm-gold','dm-gold-bar','ls-dock-gold','roam-gold-display','ls-hud-gold'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.textContent=s.gold;
   });
-  document.getElementById('b-hull').style.width=Math.max(0,(s.hull/s.maxHull)*100)+'%';
-  document.getElementById('b-crew').style.width=Math.max(0,(s.crew/s.maxCrew)*100)+'%';
-  document.getElementById('b-air').style.width=Math.max(0,(s.air/(s.maxAir||12))*100)+'%';
+  document.getElementById('b-hull').style.width=Math.max(0,isFinite(s.hull/s.maxHull)?(s.hull/s.maxHull)*100:0)+'%';
+  document.getElementById('b-crew').style.width=Math.max(0,isFinite(s.crew/s.maxCrew)?(s.crew/s.maxCrew)*100:0)+'%';
+  document.getElementById('b-air').style.width=Math.max(0,isFinite(s.air/(s.maxAir||12))?(s.air/(s.maxAir||12))*100:0)+'%';
   document.getElementById('w-list').innerHTML=s.wpns.map((k,i)=>{
     const w=WPN[k]; const cd=G.cbt.cds?.[i]||0;
     return `<div class="witem">${cd>0?'🔄':'●'} ${w.n} ${cd>0?`(${cd} rd cooldown)`:`(${w.info})`}</div>`;
@@ -13560,9 +13560,9 @@ function updateMobileHUD(){
   $id('sd-resist',s.resist>0?'-'+s.resist:'—');
   const invValSd=s.inv.reduce((a,i)=>a+i.val,0);
   $id('sd-items',s.inv.length); $id('sd-invval',invValSd);
-  const sdBH=document.getElementById('sd-b-hull'); if(sdBH)sdBH.style.width=Math.max(0,(s.hull/s.maxHull)*100)+'%';
-  const sdBC=document.getElementById('sd-b-crew'); if(sdBC)sdBC.style.width=Math.max(0,(s.crew/s.maxCrew)*100)+'%';
-  const sdBA=document.getElementById('sd-b-air'); if(sdBA)sdBA.style.width=Math.max(0,(s.air/(s.maxAir||12))*100)+'%';
+  const sdBH=document.getElementById('sd-b-hull'); if(sdBH)sdBH.style.width=Math.max(0,isFinite(s.hull/s.maxHull)?(s.hull/s.maxHull)*100:0)+'%';
+  const sdBC=document.getElementById('sd-b-crew'); if(sdBC)sdBC.style.width=Math.max(0,isFinite(s.crew/s.maxCrew)?(s.crew/s.maxCrew)*100:0)+'%';
+  const sdBA=document.getElementById('sd-b-air'); if(sdBA)sdBA.style.width=Math.max(0,isFinite(s.air/(s.maxAir||12))?(s.air/(s.maxAir||12))*100:0)+'%';
   const sdWL=document.getElementById('sd-w-list');
   if(sdWL) sdWL.innerHTML=s.wpns.map((k,i)=>{
     const w=WPN[k]; const cd=G.cbt.cds?.[i]||0;
