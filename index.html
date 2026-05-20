@@ -30,7 +30,7 @@ body {
 #header {
   grid-area: hdr;
   background: linear-gradient(90deg,#07001a,#160038,#07001a);
-  border-bottom: 1px solid #44118844;
+  border-bottom: 1px solid rgba(68,17,136,0.267);
   padding: 0 16px; display: flex; align-items: center; justify-content: space-between;
 }
 #header h1 {
@@ -48,11 +48,11 @@ body {
   padding: 8px; overflow-y:auto;
   display: flex; flex-direction:column; gap:7px;
 }
-.pbox { background:rgba(22,6,50,0.7); border:1px solid #44118855; border-radius:4px; padding:8px; }
+.pbox { background:rgba(22,6,50,0.7); border:1px solid rgba(68,17,136,0.333); border-radius:4px; padding:8px; }
 .ptitle { font-family:'Cinzel',serif; font-size: 0.625em; letter-spacing:2px; color:#9966dd; text-transform:uppercase; margin-bottom:6px; border-bottom:1px solid rgba(51,0,85,0.2); padding-bottom:3px; }
 .srow { display:flex; justify-content:space-between; align-items:center; margin-bottom:3px; font-size: 0.75em; }
 .slabel { color:#7766aa; } .sval { color:#ffd700; font-weight:600; }
-.bw { background:#12002a; border:1px solid #33004433; border-radius:2px; height:6px; margin-top:2px; overflow:hidden; }
+.bw { background:#12002a; border:1px solid rgba(51,0,68,0.2); border-radius:2px; height:6px; margin-top:2px; overflow:hidden; }
 .bf { height:100%; border-radius:2px; transition:width 0.4s; }
 .bh{background:linear-gradient(90deg,#00ee88,#00bb66);} .bc{background:linear-gradient(90deg,#4488ff,#2255dd);} .ba{background:linear-gradient(90deg,#44ffff,#22aacc);}
 .witem { font-size: 0.688em; color:#cc9944; padding:1px 0; }
@@ -63,7 +63,7 @@ body {
 .ovl-btns { display:flex; flex-direction:column; gap:5px; margin-top:2px; }
 .ovl-btn {
   font-family:'Cinzel',serif; font-size: 0.625em; letter-spacing:1px;
-  padding:6px 10px; border:1px solid #6633aa88; border-radius:3px;
+  padding:6px 10px; border:1px solid rgba(102,51,170,0.533); border-radius:3px;
   background:rgba(20,5,45,0.88); color:#ccaaff; cursor:pointer;
   transition:all 0.2s; text-transform:uppercase; text-align:left;
 }
@@ -98,18 +98,18 @@ body {
 .ls-dock-label  { color:#99aacc; }
 .ls-dock-val    { color:#ddeeff; font-weight:500; }
 .ls-dock-section { font-size:0.563em; color:#6688aa; letter-spacing:2px; margin-top:4px; }
-.ovl-close-btn { background:rgba(30,12,8,0.85); border:1px solid #aa663355; border-radius:3px; color:#ddaa77; font-size: 0.75em; padding:4px 8px; cursor:pointer; font-family:'Cinzel',serif; letter-spacing:1px; flex-shrink:0; }
+.ovl-close-btn { background:rgba(30,12,8,0.85); border:1px solid rgba(170,102,51,0.333); border-radius:3px; color:#ddaa77; font-size: 0.75em; padding:4px 8px; cursor:pointer; font-family:'Cinzel',serif; letter-spacing:1px; flex-shrink:0; }
 .ovl-close-btn:hover { border-color:#ffaa55; color:#ffcc88; background:rgba(70,28,8,0.9); }
 .ovl-title-row { display:flex; align-items:center; justify-content:space-between; width:100%; max-width:640px; gap:10px; margin-bottom:2px; }
 
 /* ── LOOT OVERLAY ── */
-.loot-title { font-family:'Cinzel',serif; font-size: 1.625em; font-weight:900; color:#ffd700; text-shadow:0 0 20px #ffd70088; letter-spacing:4px; }
+.loot-title { font-family:'Cinzel',serif; font-size: 1.625em; font-weight:900; color:#ffd700; text-shadow:0 0 20px rgba(255,215,0,0.533); letter-spacing:4px; }
 .loot-sub { font-family:'Cinzel',serif; font-size: 0.813em; color:#9966dd; letter-spacing:2px; }
 .loot-gold { font-size: 1.125em; color:#ffd700; font-weight:600; }
 .loot-manifest { font-family:'Cinzel',serif; font-size: 0.688em; color:#7766aa; letter-spacing:2px; text-transform:uppercase; margin-bottom:4px; }
 .loot-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; max-width:560px; width:100%; }
 .loot-card {
-  background:rgba(20,5,45,0.9); border:1px solid #44118866; border-radius:5px;
+  background:rgba(20,5,45,0.9); border:1px solid rgba(68,17,136,0.4); border-radius:5px;
   padding:10px 8px; text-align:center;
 }
 .loot-ico { font-size: 1.375em; margin-bottom:4px; }
@@ -128,7 +128,7 @@ body {
 .filter-row { display:flex; gap:5px; flex-wrap:wrap; justify-content:center; }
 .fbtn {
   font-family:'Cinzel',serif; font-size: 0.625em; letter-spacing:1px;
-  padding:4px 10px; border:1px solid #33005566; border-radius:2px;
+  padding:4px 10px; border:1px solid rgba(51,0,85,0.4); border-radius:2px;
   background:rgba(15,3,35,0.8); color:#6655aa; cursor:pointer; transition:all 0.15s;
 }
 .fbtn:hover,.fbtn.act { border-color:#9966dd; color:#cc99ff; }
@@ -140,7 +140,7 @@ body {
 .kb-focus {
   outline: 2px solid #ffcc44 !important;
   outline-offset: -2px !important;
-  box-shadow: 0 0 14px #ffcc4455 !important;
+  box-shadow: 0 0 14px rgba(255,204,68,0.333) !important;
   position: relative;
   z-index: 1;
 }
@@ -153,17 +153,17 @@ body {
 }
 
 .inv-item {
-  background:rgba(18,4,40,0.85); border:1px solid #33004466;
+  background:rgba(18,4,40,0.85); border:1px solid rgba(51,0,68,0.4);
   border-radius:4px; padding:8px 5px; text-align:center;
   cursor:pointer; transition:all 0.15s;
 }
 .inv-item:hover { border-color:#7755aa; background:rgba(35,10,75,0.9); }
-.inv-item.sel { border-color:#ffd700; box-shadow:0 0 8px #ffd70044; }
+.inv-item.sel { border-color:#ffd700; box-shadow:0 0 8px rgba(255,215,0,0.267); }
 .inv-ico { font-size: 1.125em; margin-bottom:3px; }
 .inv-iname { font-size: 0.625em; color:#aa99cc; line-height:1.2; }
 .inv-empty { color:#5544aa; font-style:italic; font-size: 0.813em; }
 .inv-detail {
-  width:200px; background:rgba(12,2,30,0.9); border:1px solid #5522aa55;
+  width:200px; background:rgba(12,2,30,0.9); border:1px solid rgba(85,34,170,0.333);
   border-radius:5px; padding:12px; flex-shrink:0;
 }
 .inv-detail-name { font-family:'Cinzel',serif; font-size: 0.813em; color:#cc99ff; margin-bottom:6px; }
@@ -178,7 +178,7 @@ body {
 .wpn-ship-label { font-size: 0.75em; color:#7766aa; font-style:italic; }
 .wpn-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; max-width:580px; width:100%; }
 .wpn-card {
-  background:rgba(20,5,45,0.9); border:1px solid #5522aa55;
+  background:rgba(20,5,45,0.9); border:1px solid rgba(85,34,170,0.333);
   border-radius:5px; padding:12px;
 }
 .wpn-card.empty { border-style:dashed; opacity:0.5; }
@@ -196,15 +196,15 @@ body {
 .shp-header { font-family:'Cinzel',serif; font-size: 1.25em; color:#44ccff; letter-spacing:3px; text-align:left; }
 .shp-type { font-size: 0.75em; color:#7766aa; font-style:italic; margin-bottom:4px; }
 .shp-body { display:flex; gap:20px; max-width:680px; width:100%; align-items:flex-start; }
-.shp-canvas-wrap { background:rgba(8,0,22,0.7); border:1px solid #3311557; border-radius:6px; padding:14px; border-color:#44228855; flex-shrink:0; }
+.shp-canvas-wrap { background:rgba(8,0,22,0.7); border:1px solid #3311557; border-radius:6px; padding:14px; border-color:rgba(68,34,136,0.333); flex-shrink:0; }
 .shp-stats { flex:1; }
-.shp-stat-line { display:flex; justify-content:space-between; font-size: 0.75em; padding:4px 0; border-bottom:1px solid #22003322; }
+.shp-stat-line { display:flex; justify-content:space-between; font-size: 0.75em; padding:4px 0; border-bottom:1px solid rgba(34,0,51,0.133); }
 .shp-stat-line .k { color:#7766aa; } .shp-stat-line .v { color:#ffd700; font-weight:600; }
 .shp-section { font-family:'Cinzel',serif; font-size: 0.625em; color:#5533aa; letter-spacing:2px; text-transform:uppercase; margin:10px 0 5px; }
 .upg-item { font-size: 0.688em; color:#88aaff; padding:2px 0; }
 .ship-upgrade-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:7px; max-width:580px; width:100%; margin-top:6px; }
 .ship-upgrade-card {
-  background:rgba(15,4,35,0.9); border:1px solid #33006655; border-radius:4px;
+  background:rgba(15,4,35,0.9); border:1px solid rgba(51,0,102,0.333); border-radius:4px;
   padding:9px; text-align:center; cursor:pointer; transition:all 0.2s;
 }
 .ship-upgrade-card:hover { border-color:#44aaff; transform:translateY(-2px); }
@@ -214,7 +214,7 @@ body {
 .suc-cost { font-size: 0.75em; color:#ffd700; }
 
 /* ── COMBAT OVERLAY ── */
-.ctitle { font-family:'Cinzel',serif; font-size: 1.25em; color:#ff5544; letter-spacing:3px; text-shadow:0 0 16px #ff554466; }
+.ctitle { font-family:'Cinzel',serif; font-size: 1.25em; color:#ff5544; letter-spacing:3px; text-shadow:0 0 16px rgba(255,85,68,0.4); }
 /* ── COMBAT ARENA — desktop layout (side by side, log below) ── */
 .cbt-arena {
   display: flex;
@@ -247,11 +247,11 @@ body {
 .cblock canvas { width: 200px; height: 130px; display:block; margin: 6px auto; border-radius:4px; border:1px solid rgba(51,0,85,0.2); }
 .cname { font-family:'Cinzel',serif; font-size: 0.688em; color:#9966dd; margin-bottom:5px; }
 .cstat { font-size: 0.688em; color:#8877aa; margin-top:3px; }
-.hpw { background:#12002a; border:1px solid #33004422; border-radius:2px; height:9px; overflow:hidden; margin-top:3px; }
+.hpw { background:#12002a; border:1px solid rgba(51,0,68,0.133); border-radius:2px; height:9px; overflow:hidden; margin-top:3px; }
 .hpf { height:100%; background:linear-gradient(90deg,#ff4444,#ff6644); transition:width 0.5s; }
 .hpf.me { background:linear-gradient(90deg,#00ee77,#44aaff); }
 .cvs { font-family:'Cinzel',serif; font-size: 1.5em; color:#5522aa; font-weight:900; }
-.clog { background:rgba(6,0,18,0.88); border:1px solid #22003322; border-radius:4px; padding:8px 10px; max-width:780px; width:100%; height:120px; overflow-y:auto; font-size: 0.813em; color:#aa99cc; font-style:italic; line-height:1.6; }
+.clog { background:rgba(6,0,18,0.88); border:1px solid rgba(34,0,51,0.133); border-radius:4px; padding:8px 10px; max-width:780px; width:100%; height:120px; overflow-y:auto; font-size: 0.813em; color:#aa99cc; font-style:italic; line-height:1.6; }
 .cacts { display:flex; gap:7px; flex-wrap:wrap; justify-content:center; max-width:780px; }
 /* Weapon button with cooldown pip */
 .wpn-btn-wrap { position:relative; display:inline-block; }
@@ -259,17 +259,17 @@ body {
 
 /* ── COMBAT WEAPON PANELS ── */
 .cbt-panels { display:flex; gap:10px; width:100%; max-width:780px; margin-top:2px; }
-.cbt-wpn-panel { flex:1; background:rgba(8,2,22,0.92); border:1px solid #33005566; border-radius:5px; padding:7px; min-width:0; max-height:200px; overflow-y:auto; }
-.cbt-panel-title { font-family:'Cinzel',serif; font-size: 0.563em; letter-spacing:2px; color:#6644aa; text-transform:uppercase; margin-bottom:5px; padding-bottom:3px; border-bottom:1px solid #22003333; }
+.cbt-wpn-panel { flex:1; background:rgba(8,2,22,0.92); border:1px solid rgba(51,0,85,0.4); border-radius:5px; padding:7px; min-width:0; max-height:200px; overflow-y:auto; }
+.cbt-panel-title { font-family:'Cinzel',serif; font-size: 0.563em; letter-spacing:2px; color:#6644aa; text-transform:uppercase; margin-bottom:5px; padding-bottom:3px; border-bottom:1px solid rgba(34,0,51,0.2); }
 .cbt-panel-title.enemy-title { color:#aa3333; }
 
 /* Player weapon cards in combat */
-.cbt-wpn-card { position:relative; background:rgba(15,4,38,0.9); border:1px solid #44117755; border-radius:4px; padding:6px 8px; margin-bottom:4px; cursor:pointer; transition:all 0.18s; user-select:none; }
+.cbt-wpn-card { position:relative; background:rgba(15,4,38,0.9); border:1px solid rgba(68,17,119,0.333); border-radius:4px; padding:6px 8px; margin-bottom:4px; cursor:pointer; transition:all 0.18s; user-select:none; }
 .cbt-wpn-card:last-child { margin-bottom:0; }
-.cbt-wpn-card.ready { border-color:#33aa6688; }
+.cbt-wpn-card.ready { border-color:rgba(51,170,102,0.533); }
 .cbt-wpn-card.ready:hover { border-color:#44ee88; background:rgba(20,60,40,0.9); transform:translateX(2px); }
-.cbt-wpn-card.on-cooldown { opacity:0.55; cursor:not-allowed; border-color:#44220033; }
-.cbt-wpn-card.targeting-select { border-color:#ffcc00; box-shadow:0 0 10px #ffcc0055; animation:pulse-gold 1.1s ease-in-out infinite; cursor:pointer; }
+.cbt-wpn-card.on-cooldown { opacity:0.55; cursor:not-allowed; border-color:rgba(68,34,0,0.2); }
+.cbt-wpn-card.targeting-select { border-color:#ffcc00; box-shadow:0 0 10px rgba(255,204,0,0.333); animation:pulse-gold 1.1s ease-in-out infinite; cursor:pointer; }
 .cbt-wpn-card-name { font-family:'Cinzel',serif; font-size: 0.625em; color:#cc99ff; word-break:break-word; overflow-wrap:anywhere; }
 .cbt-wpn-card-name.ready-name { color:#88ffbb; }
 .cbt-wpn-card-info { font-size: 0.563em; color:#554477; margin-top:1px; word-break:break-word; overflow-wrap:anywhere; }
@@ -278,13 +278,13 @@ body {
 .cbt-cd-pip { position:absolute; top:-4px; right:-4px; background:#ff7744; color:#fff; font-size:8px; border-radius:50%; width:13px; height:13px; display:flex; align-items:center; justify-content:center; font-family:'Cinzel',serif; font-weight:700; }
 
 /* Enemy weapon cards */
-.cbt-ewpn-card { position:relative; background:rgba(28,4,8,0.9); border:1px solid #55111133; border-radius:4px; padding:6px 8px; margin-bottom:4px; transition:all 0.18s; overflow:hidden; }
+.cbt-ewpn-card { position:relative; background:rgba(28,4,8,0.9); border:1px solid rgba(85,17,17,0.2); border-radius:4px; padding:6px 8px; margin-bottom:4px; transition:all 0.18s; overflow:hidden; }
 .cbt-ewpn-card:last-child { margin-bottom:0; }
-.cbt-ewpn-card.e-active { border-color:#aa222266; box-shadow:0 0 6px #aa222233; }
-.cbt-ewpn-card.e-special { border-color:#ff440066; box-shadow:0 0 8px #ff440044; }
-.cbt-ewpn-card.e-disabled { opacity:0.4; border-color:#22002233; }
+.cbt-ewpn-card.e-active { border-color:rgba(170,34,34,0.4); box-shadow:0 0 6px rgba(170,34,34,0.2); }
+.cbt-ewpn-card.e-special { border-color:rgba(255,68,0,0.4); box-shadow:0 0 8px rgba(255,68,0,0.267); }
+.cbt-ewpn-card.e-disabled { opacity:0.4; border-color:rgba(34,0,34,0.2); }
 .cbt-ewpn-card.e-disabled .cbt-ewpn-name { text-decoration:line-through; color:#443333; }
-.cbt-ewpn-card.e-targetable { border-color:#ffaa00; box-shadow:0 0 12px #ffaa0066; animation:pulse-target 0.9s ease-in-out infinite; cursor:pointer; }
+.cbt-ewpn-card.e-targetable { border-color:#ffaa00; box-shadow:0 0 12px rgba(255,170,0,0.4); animation:pulse-target 0.9s ease-in-out infinite; cursor:pointer; }
 .cbt-ewpn-card.e-targetable:hover { background:rgba(60,30,0,0.95); transform:scale(1.03); }
 .cbt-ewpn-name { font-family:'Cinzel',serif; font-size: 0.625em; color:#ff8888; word-break:break-word; overflow-wrap:anywhere; }
 .cbt-ewpn-info { font-size: 0.563em; color:#553333; margin-top:1px; word-break:break-word; overflow-wrap:anywhere; }
@@ -296,13 +296,13 @@ body {
 #cbt-enemy-stack { display:flex; flex-direction:column; align-items:center; gap:5px; }
 .cbt-extra-row   { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
 .cbt-extra-unit  { display:flex; flex-direction:column; align-items:center; gap:2px; }
-.cv-extra-canvas { border-radius:4px; border:1px solid #aa334455; background:rgba(15,3,38,0.75); transition:transform 0.15s,box-shadow 0.15s; }
+.cv-extra-canvas { border-radius:4px; border:1px solid rgba(170,51,68,0.333); background:rgba(15,3,38,0.75); transition:transform 0.15s,box-shadow 0.15s; }
 .cbt-extra-name  { font-family:'Cinzel',serif; font-size:7px; color:#886655; text-align:center; letter-spacing:0.5px; max-width:88px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 @keyframes extra-attack-flash {
-  0%   { box-shadow:none; transform:scale(1); border-color:#aa334455; }
+  0%   { box-shadow:none; transform:scale(1); border-color:rgba(170,51,68,0.333); }
   25%  { box-shadow:0 0 16px 5px #ff6633,0 0 6px 2px #ff3300; transform:scale(1.22); border-color:#ff6633; }
-  65%  { box-shadow:0 0 10px 3px #ff884488; transform:scale(1.14); border-color:#ff8844; }
-  100% { box-shadow:none; transform:scale(1); border-color:#aa334455; }
+  65%  { box-shadow:0 0 10px 3px rgba(255,136,68,0.533); transform:scale(1.14); border-color:#ff8844; }
+  100% { box-shadow:none; transform:scale(1); border-color:rgba(170,51,68,0.333); }
 }
 .cv-extra-canvas.stack-attacking { animation:extra-attack-flash 0.75s ease-out forwards; }
 
@@ -313,12 +313,12 @@ body {
 .cstat { font-size: 0.75em; color:#8877aa; line-height:1.5; word-break:break-word; }
 
 @keyframes pulse-gold {
-  0%,100% { box-shadow:0 0 6px #ffcc0044; border-color:#ffcc0088; }
-  50%      { box-shadow:0 0 16px #ffcc00aa; border-color:#ffcc00; }
+  0%,100% { box-shadow:0 0 6px rgba(255,204,0,0.267); border-color:rgba(255,204,0,0.533); }
+  50%      { box-shadow:0 0 16px rgba(255,204,0,0.667); border-color:#ffcc00; }
 }
 @keyframes pulse-target {
-  0%,100% { box-shadow:0 0 8px #ffaa0055; border-color:#ffaa0088; }
-  50%      { box-shadow:0 0 18px #ffaa00bb; border-color:#ffaa00; }
+  0%,100% { box-shadow:0 0 8px rgba(255,170,0,0.333); border-color:rgba(255,170,0,0.533); }
+  50%      { box-shadow:0 0 18px rgba(255,170,0,0.733); border-color:#ffaa00; }
 }
 @keyframes flash-disable {
   0%   { background:rgba(255,100,0,0.5); }
@@ -329,14 +329,14 @@ body {
 .ptop { font-family:'Cinzel',serif; font-size: 1.125em; color:#44ffbb; letter-spacing:2px; }
 .pdesc { color:#7766aa; font-size: 0.813em; font-style:italic; max-width:540px; text-align:center; }
 .sgrid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; max-width:660px; width:100%; }
-.sitem { background:rgba(16,4,38,0.88); border:1px solid #44118866; border-radius:4px; padding:8px; text-align:center; cursor:pointer; transition:all 0.2s; }
+.sitem { background:rgba(16,4,38,0.88); border:1px solid rgba(68,17,136,0.4); border-radius:4px; padding:8px; text-align:center; cursor:pointer; transition:all 0.2s; }
 .sitem:hover { border-color:#aa77ff; background:rgba(35,10,75,0.9); transform:translateY(-2px); }
 .sitem.dis { opacity:0.4; cursor:not-allowed; transform:none; }
 .siname { font-family:'Cinzel',serif; font-size: 0.688em; color:#9966dd; margin-bottom:2px; }
 .sidesc { font-size: 0.625em; color:#5544aa; margin-bottom:4px; }
 .sicost { font-size: 0.688em; color:#ffd700; }
 .port-tabs { display:flex; gap:6px; }
-.ptab { font-family:'Cinzel',serif; font-size: 0.625em; letter-spacing:1px; padding:5px 12px; border:1px solid #33005566; border-radius:3px; background:rgba(10,2,28,0.8); color:#6655aa; cursor:pointer; transition:all 0.15s; text-transform:uppercase; }
+.ptab { font-family:'Cinzel',serif; font-size: 0.625em; letter-spacing:1px; padding:5px 12px; border:1px solid rgba(51,0,85,0.4); border-radius:3px; background:rgba(10,2,28,0.8); color:#6655aa; cursor:pointer; transition:all 0.15s; text-transform:uppercase; }
 .ptab:hover,.ptab.act { border-color:#9966dd; color:#cc99ff; background:rgba(40,10,80,0.9); }
 #sell-filter-tabs { display:none; }
 #sell-filter-tabs.on { display:flex !important; }
@@ -349,7 +349,7 @@ body {
 #tvlf { height:100%; background:linear-gradient(90deg,#9933ff,#ff3399); transition:width 0.08s linear; }
 
 /* ── MSG BOX ── */
-#msgbox { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(4,0,13,0.97); border:1px solid #5522aa; border-radius:6px; padding:20px 26px; text-align:center; display:none; z-index:280; max-width:360px; max-height:88vh; overflow-y:auto; box-shadow:0 0 36px #6633aa44; pointer-events:none; -webkit-overflow-scrolling:touch; }
+#msgbox { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(4,0,13,0.97); border:1px solid #5522aa; border-radius:6px; padding:20px 26px; text-align:center; display:none; z-index:280; max-width:360px; max-height:88vh; overflow-y:auto; box-shadow:0 0 36px rgba(102,51,170,0.267); pointer-events:none; -webkit-overflow-scrolling:touch; }
 #msgbox.on { display:block; pointer-events:all; touch-action:manipulation; }
 #msgtitle { font-family:'Cinzel',serif; font-size: 1.063em; color:#ffd700; margin-bottom:8px; }
 #msgbody { font-size: 0.813em; color:#aa99cc; margin-bottom:12px; line-height:1.6; white-space:pre-line; }
@@ -366,19 +366,19 @@ body {
 .etext { font-size: 0.938em; color:#aa9999; max-width:440px; text-align:center; line-height:1.7; }
 
 /* ── LOG ── */
-#logarea { grid-area:log; background:#040010; border-top:1px solid #22003333; padding:4px 12px; overflow-y:auto; display:flex; flex-direction:column; justify-content:flex-end; gap:1px; }
+#logarea { grid-area:log; background:#040010; border-top:1px solid rgba(34,0,51,0.2); padding:4px 12px; overflow-y:auto; display:flex; flex-direction:column; justify-content:flex-end; gap:1px; }
 .le { font-size: 0.688em; color:#554477; } .le.imp { color:#ffcc44; } .le.dmg { color:#ff7755; } .le.gd { color:#44ee88; }
 
 /* ── BUTTONS ── */
 .btn { font-family:'Cinzel',serif; font-size: 0.688em; letter-spacing:1px; padding:7px 13px; border:1px solid #7744cc; border-radius:3px; background:rgba(22,6,50,0.9); color:#e8d4b8; cursor:pointer; transition:all 0.2s; text-transform:uppercase; touch-action:manipulation; }
-.btn:hover { background:rgba(70,25,140,0.92); border-color:#bb88ff; color:#fff; box-shadow:0 0 10px #9966dd55; }
+.btn:hover { background:rgba(70,25,140,0.92); border-color:#bb88ff; color:#fff; box-shadow:0 0 10px rgba(153,102,221,0.333); }
 .btn:disabled { opacity:0.4; cursor:not-allowed; box-shadow:none; }
-.btn.dmg { border-color:#ff4444; color:#ff8877; } .btn.dmg:hover { background:rgba(100,12,12,0.85); box-shadow:0 0 9px #ff444444; }
-.btn.gd  { border-color:#44ee88; color:#66ffaa; } .btn.gd:hover  { background:rgba(12,80,36,0.85);  box-shadow:0 0 9px #44ee8844; }
+.btn.dmg { border-color:#ff4444; color:#ff8877; } .btn.dmg:hover { background:rgba(100,12,12,0.85); box-shadow:0 0 9px rgba(255,68,68,0.267); }
+.btn.gd  { border-color:#44ee88; color:#66ffaa; } .btn.gd:hover  { background:rgba(12,80,36,0.85);  box-shadow:0 0 9px rgba(68,238,136,0.267); }
 .btn.sm  { padding:4px 9px; font-size: 0.625em; }
 /* Exit/depart/return buttons — amber so players always know how to leave a window */
 .btn.exit, button.btn-exit {
-  border-color:#aa663355; color:#ddaa77;
+  border-color:rgba(170,102,51,0.333); color:#ddaa77;
   background:rgba(30,12,8,0.88);
 }
 .btn.exit:hover, button.btn-exit:hover {
@@ -420,7 +420,7 @@ body {
 }
 @keyframes flashgreen {
   0%   { box-shadow:0 0 0 #44ee88; }
-  40%  { box-shadow:0 0 22px #44ee8888; }
+  40%  { box-shadow:0 0 22px rgba(68,238,136,0.533); }
   100% { box-shadow:0 0 0 #44ee88; }
 }
 .anim-shake { animation:shake 0.52s ease-in-out; }
@@ -444,9 +444,9 @@ body {
 .mm-screen.hidden { display:none; }
 .mm-card {
   display:flex; flex-direction:column; align-items:center; gap:14px;
-  background:rgba(10,2,28,0.97); border:1px solid #5522aa55;
+  background:rgba(10,2,28,0.97); border:1px solid rgba(85,34,170,0.333);
   border-radius:8px; padding:36px 44px;
-  box-shadow:0 0 60px #6633aa33, inset 0 0 40px rgba(20,0,50,0.6);
+  box-shadow:0 0 60px rgba(102,51,170,0.2), inset 0 0 40px rgba(20,0,50,0.6);
   min-width:320px; max-height:92vh; overflow-y:auto;
   -webkit-overflow-scrolling:touch;
 }
@@ -458,15 +458,15 @@ body {
   text-align:center; margin:0;
 }
 .mm-sub { font-family:'Cinzel',serif; font-size: 0.688em; color:#6644aa; letter-spacing:3px; margin:-6px 0 4px; }
-.mm-divider { width:100%; height:1px; background:linear-gradient(90deg,transparent,#5522aa44,transparent); }
+.mm-divider { width:100%; height:1px; background:linear-gradient(90deg,transparent,rgba(85,34,170,0.267),transparent); }
 .mm-btn {
   width:100%; font-family:'Cinzel',serif; font-size: 0.813em; letter-spacing:2px;
-  padding:12px 20px; border:1px solid #5522aa66; border-radius:4px;
+  padding:12px 20px; border:1px solid rgba(85,34,170,0.4); border-radius:4px;
   background:rgba(22,6,50,0.9); color:#cc99ff; cursor:pointer;
   transition:all 0.2s; text-transform:uppercase; text-align:left;
   display:flex; align-items:center; gap:10px;
 }
-.mm-btn:hover:not(:disabled) { border-color:#aa66ff; background:rgba(50,15,100,0.9); color:#fff; box-shadow:0 0 14px #9966dd44; transform:translateX(3px); }
+.mm-btn:hover:not(:disabled) { border-color:#aa66ff; background:rgba(50,15,100,0.9); color:#fff; box-shadow:0 0 14px rgba(153,102,221,0.267); transform:translateX(3px); }
 .mm-btn:disabled { opacity:0.3; cursor:not-allowed; }
 .mm-btn .mm-ico { font-size: 1em; width:20px; text-align:center; }
 .mm-btn .mm-desc { font-size: 0.563em; color:#9988bb; letter-spacing:1px; display:block; margin-top:2px; font-family:'Crimson Text',serif; font-style:italic; }
@@ -479,10 +479,10 @@ body {
 }
 .briefing-overlay.hidden { display:none; }
 .briefing-panel {
-  background:rgba(8,2,22,0.98); border:1px solid #44118866;
+  background:rgba(8,2,22,0.98); border:1px solid rgba(68,17,136,0.4);
   border-radius:8px; padding:28px 32px; max-width:700px; width:95%;
   max-height:88vh; display:flex; flex-direction:column; gap:12px;
-  box-shadow:0 0 50px #33006644;
+  box-shadow:0 0 50px rgba(51,0,102,0.267);
 }
 .briefing-title { font-family:'Cinzel',serif; font-size: 1.25em; color:#ffd700; letter-spacing:3px; }
 .briefing-trullll { overflow-y:auto; flex:1; padding-right:8px; display:flex; flex-direction:column; gap:10px; }
@@ -493,13 +493,13 @@ body {
 .b-body em { color:#88aaff; font-style:normal; }
 .b-table { width:100%; border-collapse:collapse; font-size: 0.75em; margin-top:4px; }
 .b-table th { font-family:'Cinzel',serif; font-size: 0.625em; color:#7755aa; letter-spacing:1px; padding:4px 8px; text-align:left; border-bottom:1px solid rgba(51,0,85,0.2); }
-.b-table td { padding:4px 8px; color:#998bbb; border-bottom:1px solid #22003322; }
+.b-table td { padding:4px 8px; color:#998bbb; border-bottom:1px solid rgba(34,0,51,0.133); }
 .b-table td:first-child { color:#cc99ff; }
 
 /* ── SAVE SLOTS ── */
 .save-slot {
   display:flex; justify-content:space-between; align-items:center;
-  background:rgba(15,4,38,0.9); border:1px solid #44118855;
+  background:rgba(15,4,38,0.9); border:1px solid rgba(68,17,136,0.333);
   border-radius:4px; padding:10px 14px; margin-bottom:8px;
 }
 .save-slot.empty { opacity:0.45; border-style:dashed; }
@@ -517,7 +517,7 @@ body {
   display: none;
   grid-area: hdr;          /* will be repositioned on mobile */
   background: rgba(4,0,14,0.96);
-  border-bottom: 1px solid #33005544;
+  border-bottom: 1px solid rgba(51,0,85,0.267);
   padding: 0 8px;
   align-items: center;
   justify-content: space-between;
@@ -535,7 +535,7 @@ body {
 .mhud-fpip.on { background: #ffd700; border-color: #ffd700; }
 #btn-stats-drawer {
   font-family: 'Cinzel', serif; font-size: 0.563em; letter-spacing: 1px;
-  padding: 5px 8px; border: 1px solid #44118866; border-radius: 3px;
+  padding: 5px 8px; border: 1px solid rgba(68,17,136,0.4); border-radius: 3px;
   background: rgba(15,3,35,0.9); color: #9977cc; cursor: pointer;
   white-space: nowrap;
 }
@@ -545,7 +545,7 @@ body {
   display: none;
   position: fixed; bottom: 0; left: 0; right: 0;
   background: rgba(4,0,14,0.98);
-  border-top: 1px solid #5522aa55;
+  border-top: 1px solid rgba(85,34,170,0.333);
   z-index: 1300;
   padding: 12px;
   max-height: 60vh;
@@ -560,22 +560,22 @@ body {
 }
 #stats-drawer-close {
   font-family: 'Cinzel', serif; font-size: 0.625em; letter-spacing: 1px;
-  padding: 6px 14px; border: 1px solid #44118866; border-radius: 3px;
+  padding: 6px 14px; border: 1px solid rgba(68,17,136,0.4); border-radius: 3px;
   background: rgba(15,3,35,0.9); color: #9977cc; cursor: pointer;
   align-self: flex-end;
 }
-#stats-drawer .pbox { background: rgba(22,6,50,0.7); border: 1px solid #44118855; border-radius: 4px; padding: 8px; }
+#stats-drawer .pbox { background: rgba(22,6,50,0.7); border: 1px solid rgba(68,17,136,0.333); border-radius: 4px; padding: 8px; }
 #stats-drawer .ptitle { font-family: 'Cinzel', serif; font-size: 0.625em; letter-spacing: 2px; color: #9966dd; text-transform: uppercase; margin-bottom: 6px; border-bottom: 1px solid rgba(51,0,85,0.2); padding-bottom: 3px; }
 #stats-drawer .srow { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; font-size: 0.75em; }
 #stats-drawer .slabel { color: #7766aa; }
 #stats-drawer .sval { color: #ffd700; font-weight: 600; }
-#stats-drawer .bw { background: #12002a; border: 1px solid #33004433; border-radius: 2px; height: 6px; margin-top: 2px; overflow: hidden; }
+#stats-drawer .bw { background: #12002a; border: 1px solid rgba(51,0,68,0.2); border-radius: 2px; height: 6px; margin-top: 2px; overflow: hidden; }
 #stats-drawer .bf { height: 100%; border-radius: 2px; transition: width 0.4s; }
 #stats-drawer .witem { font-size: 0.688em; color: #cc9944; padding: 1px 0; }
 .drawer-ovl-btns { display: flex; gap: 6px; flex-wrap: wrap; }
 .drawer-ovl-btn {
   font-family: 'Cinzel', serif; font-size: 0.625em; letter-spacing: 1px;
-  padding: 7px 12px; border: 1px solid #44118866; border-radius: 3px;
+  padding: 7px 12px; border: 1px solid rgba(68,17,136,0.4); border-radius: 3px;
   background: rgba(20,5,45,0.8); color: #9977cc; cursor: pointer;
   flex: 1; min-width: 100px; text-align: center;
 }
@@ -653,7 +653,7 @@ body {
     overflow-y: visible;  /* let the parent overlay trullll */
   }
   :root[data-fs="large"] .cbt-col-enemy {
-    border-top: 1px solid #33005544;
+    border-top: 1px solid rgba(51,0,85,0.267);
     padding-top: 6px;
   }
 
@@ -712,7 +712,7 @@ body {
   .cblock {
     padding: 8px 6px;
     background: rgba(8,2,22,0.85);
-    border: 1px solid #33005544;
+    border: 1px solid rgba(51,0,85,0.267);
     border-radius: 5px;
   }
   .cblock canvas { width: 140px !important; height: 90px !important; float: none; margin: 4px auto !important; }
@@ -875,22 +875,22 @@ body {
 #lq-card {
   position: absolute; top:50%; right:20px; transform: translateY(-50%);
   width: 280px; background: rgba(6,0,20,0.97);
-  border: 1px solid #44118877; border-radius: 8px;
+  border: 1px solid rgba(68,17,136,0.467); border-radius: 8px;
   padding: 18px 18px 14px; display: none; flex-direction: column; gap: 10px;
-  box-shadow: 0 0 40px #33006644; z-index:10;
+  box-shadow: 0 0 40px rgba(51,0,102,0.267); z-index:10;
   max-height: 85vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
 }
 #lq-card.on { display: flex; }
-.lq-portrait { width:46px; height:46px; border-radius:50%; border:2px solid #44118866; display:flex; align-items:center; justify-content:center; font-size: 1.375em; flex-shrink:0; }
+.lq-portrait { width:46px; height:46px; border-radius:50%; border:2px solid rgba(68,17,136,0.4); display:flex; align-items:center; justify-content:center; font-size: 1.375em; flex-shrink:0; }
 .lq-npc-name { font-family:'Cinzel',serif; font-size: 0.75em; color:#ccaaff; letter-spacing:1px; }
 .lq-npc-role { font-size: 0.625em; color:#554477; letter-spacing:1px; margin-top:2px; }
-.lq-sep { width:100%; height:1px; background:linear-gradient(90deg,transparent,#44118844,transparent); }
+.lq-sep { width:100%; height:1px; background:linear-gradient(90deg,transparent,rgba(68,17,136,0.267),transparent); }
 .lq-text { font-size: 0.75em; color:#bbaadd; line-height:1.65; font-style:italic; }
 .lq-quest-title { font-family:'Cinzel',serif; font-size: 0.688em; color:#ffcc66; letter-spacing:1px; margin-top:4px; }
 .lq-quest-desc { font-size: 0.688em; color:#9988bb; line-height:1.5; }
 .lq-reward { font-size: 0.688em; color:#44ffcc; margin-top:2px; }
 .lq-status { font-size: 0.625em; letter-spacing:1px; padding: 2px 8px; border-radius:2px; display:inline-block; }
-.lq-status.avail  { background:#0a2200; color:#66dd44; border:1px solid #33661133; }
+.lq-status.avail  { background:#0a2200; color:#66dd44; border:1px solid rgba(51,102,17,0.2); }
 .lq-status.active { background:#1a1000; color:#ffaa33; border:1px solid #664400; }
 .lq-status.done   { background:#001a22; color:#33ccff; border:1px solid #004466; }
 .lq-btns { display:flex; gap:7px; flex-wrap:wrap; margin-top:4px; }
@@ -905,7 +905,7 @@ body {
 /* Close / Back buttons */
 #lq-back {
   position:absolute; top:10px; left:14px; background:none;
-  border:1px solid #44006644; border-radius:3px; color:#6655aa;
+  border:1px solid rgba(68,0,102,0.267); border-radius:3px; color:#6655aa;
   font-size: 0.75em; padding:4px 10px; cursor:pointer;
   font-family:'Cinzel',serif; letter-spacing:1px; z-index:10;
   display:none;
@@ -913,7 +913,7 @@ body {
 #lq-back:hover { border-color:#9966dd; color:#ddbbff; }
 #lq-close {
   position:absolute; top:10px; right:14px; background:rgba(30,12,8,0.88);
-  border:1px solid #aa663355; border-radius:3px; color:#ddaa77;
+  border:1px solid rgba(170,102,51,0.333); border-radius:3px; color:#ddaa77;
   font-size: 0.75em; padding:4px 10px; cursor:pointer;
   font-family:'Cinzel',serif; letter-spacing:1px; z-index:10;
 }
@@ -946,7 +946,7 @@ body {
 }
 #ls-hud-title {
   font-family:'Cinzel',serif; font-size:0.875em; color:#4488ff;
-  letter-spacing:2px; text-shadow:0 0 20px #4488ff66;
+  letter-spacing:2px; text-shadow:0 0 20px rgba(68,136,255,0.4);
 }
 #ls-hud-stats {
   display:flex; gap:16px; font-size:0.688em; color:#6677aa;
@@ -957,9 +957,9 @@ body {
 #ls-minimap {
   position:absolute; bottom:48px; right:14px;
   width:110px; height:110px; border-radius:50%;
-  border:1px solid #4488ff33; background:rgba(2,0,16,0.75);
+  border:1px solid rgba(68,136,255,0.2); background:rgba(2,0,16,0.75);
   overflow:hidden; z-index:10; pointer-events:none;
-  box-shadow:0 0 20px #4488ff22;
+  box-shadow:0 0 20px rgba(68,136,255,0.133);
 }
 #ls-minimap canvas { width:100%; height:100%; }
 
@@ -985,7 +985,7 @@ body {
 #ls-close {
   position:absolute; bottom:170px; right:14px;
   background:rgba(30,12,8,0.92);
-  border:1px solid #aa663355; border-radius:4px; color:#ddaa77;
+  border:1px solid rgba(170,102,51,0.333); border-radius:4px; color:#ddaa77;
   font-size:0.688em; padding:6px 14px; cursor:pointer;
   font-family:'Cinzel',serif; letter-spacing:1px; z-index:20;
   white-space:nowrap;
@@ -1005,11 +1005,11 @@ body {
 /* ── NPC interaction panel (floats over canvas when near NPC) ── */
 #ls-interact-panel {
   position:absolute; bottom:60px; left:50%; transform:translateX(-50%);
-  background:rgba(6,0,20,0.96); border:1px solid #4488ff55;
+  background:rgba(6,0,20,0.96); border:1px solid rgba(68,136,255,0.333);
   border-radius:8px; padding:14px 18px 12px;
   display:none; flex-direction:column; gap:8px;
   min-width:280px; max-width:380px;
-  box-shadow:0 0 40px #4488ff22; z-index:15;
+  box-shadow:0 0 40px rgba(68,136,255,0.133); z-index:15;
 }
 #ls-interact-panel.on { display:flex; }
 #ls-interact-name {
@@ -1025,11 +1025,11 @@ body {
 /* ── Dock panel (full port replacement inside local space) ── */
 #ls-dock-panel {
   position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-  background:rgba(4,0,16,0.98); border:1px solid #4488ff44;
+  background:rgba(4,0,16,0.98); border:1px solid rgba(68,136,255,0.267);
   border-radius:10px; padding:20px 22px 18px;
   display:none; flex-direction:column; gap:12px;
   width:340px; max-height:85vh; overflow-y:auto;
-  box-shadow:0 0 60px #4488ff22; z-index:20;
+  box-shadow:0 0 60px rgba(68,136,255,0.133); z-index:20;
 }
 #ls-dock-panel.on { display:flex; }
 #ls-dock-title {
@@ -1056,18 +1056,18 @@ body {
   padding:8px 140px 8px 14px; z-index:10; pointer-events:none;
   background:linear-gradient(180deg,rgba(6,2,1,0.90) 0%,transparent 100%);
 }
-#fd-hud-title { font-family:'Cinzel',serif; font-size:0.875em; color:#cc8833; letter-spacing:2px; text-shadow:0 0 20px #cc883366; }
+#fd-hud-title { font-family:'Cinzel',serif; font-size:0.875em; color:#cc8833; letter-spacing:2px; text-shadow:0 0 20px rgba(204,136,51,0.4); }
 #fd-hud-stats { display:flex; gap:16px; font-size:0.688em; color:#776644; }
 #fd-hud-stats span { color:#ccaa77; }
 #fd-minimap {
   position:absolute; bottom:48px; right:14px; width:110px; height:110px; border-radius:6px;
-  border:1px solid #cc883333; background:rgba(6,2,1,0.85); overflow:hidden; z-index:10;
-  pointer-events:none; box-shadow:0 0 18px #cc883318;
+  border:1px solid rgba(204,136,51,0.2); background:rgba(6,2,1,0.85); overflow:hidden; z-index:10;
+  pointer-events:none; box-shadow:0 0 18px rgba(204,136,51,0.094);
 }
 #fd-minimap canvas { width:100%; height:100%; }
 #fd-log-strip {
   position:absolute; bottom:8px; left:50%; transform:translateX(-50%);
-  background:rgba(8,3,1,0.92); border:1px solid #66330033; border-radius:4px;
+  background:rgba(8,3,1,0.92); border:1px solid rgba(102,51,0,0.2); border-radius:4px;
   padding:5px 18px; font-size:0.688em; color:#887755; font-style:italic;
   pointer-events:none; max-width:560px; text-align:center; z-index:10;
 }
@@ -1075,14 +1075,14 @@ body {
 #fd-log-strip.danger { color:#ff5533; }
 #fd-abort {
   position:absolute; top:10px; right:14px; background:rgba(30,10,4,0.88);
-  border:1px solid #cc440033; border-radius:4px; padding:6px 14px;
+  border:1px solid rgba(204,68,0,0.2); border-radius:4px; padding:6px 14px;
   font-family:'Cinzel',serif; font-size:0.625em; color:#cc6633;
   cursor:pointer; z-index:12; letter-spacing:1px;
 }
 #fd-abort:hover { border-color:#cc6633; color:#ffaa66; }
 #fd-interact-panel {
   position:absolute; bottom:54px; left:50%; transform:translateX(-50%);
-  background:rgba(8,3,1,0.96); border:1px solid #cc883344; border-radius:6px;
+  background:rgba(8,3,1,0.96); border:1px solid rgba(204,136,51,0.267); border-radius:6px;
   padding:10px 16px 8px; z-index:11; min-width:240px; max-width:340px;
   display:none; flex-direction:column; gap:6px; text-align:center;
 }
@@ -1093,12 +1093,12 @@ body {
 #fd-joystick-zone { position:absolute; bottom:60px; left:20px; width:100px; height:100px; z-index:12; display:none; touch-action:none; }
 #fd-joystick-base {
   position:relative; width:100px; height:100px; border-radius:50%;
-  background:rgba(200,140,50,0.10); border:1px solid #cc883344;
+  background:rgba(200,140,50,0.10); border:1px solid rgba(204,136,51,0.267);
 }
 #fd-joystick-knob {
   position:absolute; top:50%; left:50%;
   width:36px; height:36px; border-radius:50%;
-  background:rgba(200,140,50,0.30); border:1px solid #cc883388;
+  background:rgba(200,140,50,0.30); border:1px solid rgba(204,136,51,0.533);
   transform:translate(-50%,-50%);
   pointer-events:none;
 }
@@ -1106,21 +1106,21 @@ body {
 /* ── Ask Locals panel ── */
 #ls-locals-panel {
   position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-  background:rgba(4,0,16,0.98); border:1px solid #aa882244;
+  background:rgba(4,0,16,0.98); border:1px solid rgba(170,136,34,0.267);
   border-radius:10px; padding:18px 20px 16px;
   display:none; flex-direction:column; gap:10px;
   width:340px; max-height:85vh; overflow-y:auto;
-  box-shadow:0 0 50px #aa882218; z-index:21;
+  box-shadow:0 0 50px rgba(170,136,34,0.094); z-index:21;
 }
 #ls-locals-panel.on { display:flex; }
 #ls-locals-title { font-family:'Cinzel',serif; font-size:0.8em; color:#ccaa55; letter-spacing:2px; text-align:center; margin-bottom:2px; }
 .ls-local-card {
   display:flex; align-items:center; gap:10px;
   padding:8px 10px; border-radius:6px;
-  background:rgba(20,12,4,0.7); border:1px solid #55441133;
+  background:rgba(20,12,4,0.7); border:1px solid rgba(85,68,17,0.2);
   cursor:pointer; transition:border-color 0.15s;
 }
-.ls-local-card:hover { border-color:#aa882266; }
+.ls-local-card:hover { border-color:rgba(170,136,34,0.4); }
 .ls-local-card.used { opacity:0.45; cursor:default; pointer-events:none; }
 .ls-local-card.selected { border-color:#ccaa55; background:rgba(40,28,4,0.9); }
 .ls-local-portrait { font-size:1.5em; flex-shrink:0; width:32px; text-align:center; }
@@ -1129,7 +1129,7 @@ body {
 .ls-local-flavor { font-size:0.563em; color:#887755; font-style:italic; margin-top:1px; }
 #ls-locals-response {
   padding:10px 12px; border-radius:6px;
-  background:rgba(10,6,2,0.8); border:1px solid #66441122;
+  background:rgba(10,6,2,0.8); border:1px solid rgba(102,68,17,0.133);
   font-size:0.688em; color:#ccbb88; font-style:italic; line-height:1.5;
   display:none;
 }
@@ -1145,12 +1145,12 @@ body {
 }
 #ls-joystick-base {
   width:100px; height:100px; border-radius:50%;
-  background:rgba(68,136,255,0.08); border:1px solid #4488ff33;
+  background:rgba(68,136,255,0.08); border:1px solid rgba(68,136,255,0.2);
 }
 #ls-joystick-knob {
   position:absolute; top:50%; left:50%;
   width:36px; height:36px; border-radius:50%;
-  background:rgba(68,136,255,0.25); border:1px solid #4488ff66;
+  background:rgba(68,136,255,0.25); border:1px solid rgba(68,136,255,0.4);
   transform:translate(-50%,-50%);
   pointer-events:none;
 }
@@ -1158,22 +1158,22 @@ body {
 /* ── NPC Hail dialog ── */
 #ls-npc-dialog {
   position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-  background:rgba(4,0,18,0.97); border:1px solid #4488ff44;
+  background:rgba(4,0,18,0.97); border:1px solid rgba(68,136,255,0.267);
   border-radius:10px; padding:18px 20px 16px;
   display:none; flex-direction:column; gap:10px;
   width:320px; max-width:92vw; max-height:82vh; overflow-y:auto;
-  box-shadow:0 0 50px #4488ff18; z-index:25;
+  box-shadow:0 0 50px rgba(68,136,255,0.094); z-index:25;
 }
 #ls-npc-dialog.on { display:flex; }
 #ls-npc-dialog-header { display:flex; align-items:center; gap:12px; }
 #ls-npc-dialog-portrait {
   width:44px; height:44px; border-radius:50%;
-  border:2px solid #44118866; display:flex; align-items:center;
+  border:2px solid rgba(68,17,136,0.4); display:flex; align-items:center;
   justify-content:center; font-size:1.375em; flex-shrink:0;
 }
 #ls-npc-dialog-name { font-family:'Cinzel',serif; font-size:0.75em; color:#ccaaff; letter-spacing:1px; }
 #ls-npc-dialog-role { font-size:0.563em; color:#554477; letter-spacing:1px; margin-top:2px; }
-#ls-npc-dialog-sep { width:100%; height:1px; background:linear-gradient(90deg,transparent,#44118844,transparent); }
+#ls-npc-dialog-sep { width:100%; height:1px; background:linear-gradient(90deg,transparent,rgba(68,17,136,0.267),transparent); }
 #ls-npc-dialog-greet { font-size:0.688em; color:#bbaadd; line-height:1.65; font-style:italic; }
 #ls-npc-dialog-quest { display:none; flex-direction:column; gap:6px; }
 #ls-npc-dialog-quest.on { display:flex; }
@@ -1181,7 +1181,7 @@ body {
 .ls-npc-qdesc  { font-size:0.625em; color:#9988bb; line-height:1.5; }
 .ls-npc-qreward { font-size:0.625em; color:#44ffcc; }
 .ls-npc-qstatus { font-size:0.563em; letter-spacing:1px; padding:2px 8px; border-radius:2px; display:inline-block; }
-.ls-npc-qstatus.avail  { background:#0a2200; color:#66dd44; border:1px solid #33661133; }
+.ls-npc-qstatus.avail  { background:#0a2200; color:#66dd44; border:1px solid rgba(51,102,17,0.2); }
 .ls-npc-qstatus.active { background:#1a1000; color:#ffaa33; border:1px solid #664400; }
 .ls-npc-qstatus.done   { background:#001a22; color:#33ccff; border:1px solid #004466; }
 #ls-npc-dialog-btns { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
@@ -1192,12 +1192,12 @@ body {
 /* ── Persistent TS bar shown at top of every trade/shop window ── */
 .trade-gold-bar {
   display:flex; align-items:center; justify-content:center; gap:6px;
-  background:rgba(40,28,0,0.7); border:1px solid #aa880044;
+  background:rgba(40,28,0,0.7); border:1px solid rgba(170,136,0,0.267);
   border-radius:5px; padding:7px 14px; margin-bottom:6px;
   font-family:'Cinzel',serif; letter-spacing:1px;
 }
 .trade-gold-bar .tgb-label { font-size:0.563em; color:#776633; text-transform:uppercase; }
-.trade-gold-bar .tgb-amount { font-size:1.05em; color:#ffd700; text-shadow:0 0 14px #ffd70055; font-weight:bold; }
+.trade-gold-bar .tgb-amount { font-size:1.05em; color:#ffd700; text-shadow:0 0 14px rgba(255,215,0,0.333); font-weight:bold; }
 .trade-gold-bar .tgb-icon { font-size:0.875em; }
 
 #ov-wpnpicker {
@@ -1208,10 +1208,10 @@ body {
 }
 #ov-wpnpicker.on { display:flex; }
 #wpnpicker-panel {
-  background:rgba(8,2,22,0.98); border:1px solid #6633aa55;
+  background:rgba(8,2,22,0.98); border:1px solid rgba(102,51,170,0.333);
   border-radius:10px; padding:22px 24px 20px;
   max-width:680px; width:96%; max-height:92vh; overflow-y:auto;
-  box-shadow:0 0 60px #44008855, inset 0 0 40px rgba(20,0,50,0.4);
+  box-shadow:0 0 60px rgba(68,0,136,0.333), inset 0 0 40px rgba(20,0,50,0.4);
   display:flex; flex-direction:column; gap:14px;
 }
 #wpnpicker-title {
@@ -1219,7 +1219,7 @@ body {
   letter-spacing:2px; text-align:center; text-transform:uppercase;
 }
 #wpnpicker-new-card {
-  background:rgba(20,5,50,0.7); border:1px solid #8855cc44;
+  background:rgba(20,5,50,0.7); border:1px solid rgba(136,85,204,0.267);
   border-radius:6px; padding:10px 14px;
 }
 .wpnp-card-name { font-family:'Cinzel',serif; font-size:12px; color:#ffcc66; }
@@ -1227,7 +1227,7 @@ body {
 .wpnp-card-special { font-size:10px; color:#ff9944; margin-top:3px; }
 #wpnpicker-ship-section { display:flex; flex-direction:column; align-items:center; gap:10px; }
 #wpnpicker-ship-label { font-family:'Cinzel',serif; font-size:10px; color:#554477; letter-spacing:2px; }
-#wpnpicker-canvas { border-radius:6px; border:1px solid #33115544; display:block; }
+#wpnpicker-canvas { border-radius:6px; border:1px solid rgba(51,17,85,0.267); display:block; }
 #wpnpicker-slots {
   display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
   width:100%;
@@ -1236,7 +1236,7 @@ body {
   flex:1; min-width:120px; max-width:200px;
   background:rgba(10,3,28,0.8); border-radius:6px;
   padding:9px 12px; cursor:pointer;
-  border:2px solid #33224455; transition:all 0.18s;
+  border:2px solid rgba(51,34,68,0.333); transition:all 0.18s;
   display:flex; flex-direction:column; gap:3px;
 }
 .wpnp-slot:hover { border-color:#8844cc; background:rgba(30,10,60,0.8); }
@@ -1244,7 +1244,7 @@ body {
 .wpnp-slot.empty:hover { border-color:#22aa44; background:rgba(5,25,10,0.8); }
 .wpnp-slot.occupied { border-color:#441122; }
 .wpnp-slot.occupied:hover { border-color:#cc2244; }
-.wpnp-slot.selected { border-color:#ffcc44 !important; background:rgba(40,30,5,0.9) !important; box-shadow:0 0 12px #ffcc4444; }
+.wpnp-slot.selected { border-color:#ffcc44 !important; background:rgba(40,30,5,0.9) !important; box-shadow:0 0 12px rgba(255,204,68,0.267); }
 .wpnp-slot-num { font-size:9px; color:#443355; letter-spacing:1px; font-family:'Cinzel',serif; }
 .wpnp-slot-name { font-family:'Cinzel',serif; font-size:10px; }
 .wpnp-slot-name.empty-label { color:#1a4422; font-style:italic; }
@@ -1254,18 +1254,18 @@ body {
   font-size:8px; padding:2px 5px; border-radius:2px;
   display:inline-block; margin-top:2px; width:fit-content;
 }
-.wpnp-slot-badge.open { background:#0a2210; color:#22aa44; border:1px solid #22aa4433; }
-.wpnp-slot-badge.in-use { background:#220a10; color:#cc2244; border:1px solid #cc224433; }
+.wpnp-slot-badge.open { background:#0a2210; color:#22aa44; border:1px solid rgba(34,170,68,0.2); }
+.wpnp-slot-badge.in-use { background:#220a10; color:#cc2244; border:1px solid rgba(204,34,68,0.2); }
 #wpnpicker-compare {
   display:none; background:rgba(5,1,15,0.8);
-  border:1px solid #5533aa33; border-radius:6px; padding:12px 14px;
+  border:1px solid rgba(85,51,170,0.2); border-radius:6px; padding:12px 14px;
 }
 #wpnpicker-compare.on { display:block; }
 .wpnp-compare-header { font-family:'Cinzel',serif; font-size:10px; color:#554477; letter-spacing:2px; margin-bottom:8px; }
 .wpnp-compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .wpnp-cmp-col { background:rgba(15,5,35,0.7); border-radius:5px; padding:9px 11px; }
-.wpnp-cmp-col.incoming { border:1px solid #8855cc55; }
-.wpnp-cmp-col.existing { border:1px solid #cc224455; }
+.wpnp-cmp-col.incoming { border:1px solid rgba(136,85,204,0.333); }
+.wpnp-cmp-col.existing { border:1px solid rgba(204,34,68,0.333); }
 .wpnp-cmp-label { font-size:9px; letter-spacing:1px; font-family:'Cinzel',serif; margin-bottom:5px; }
 .wpnp-cmp-label.new-label { color:#8855cc; }
 .wpnp-cmp-label.old-label { color:#cc2244; }
@@ -1277,17 +1277,17 @@ body {
 #wpnpicker-footer { display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; }
 #wpnpicker-confirm-btn {
   font-family:'Cinzel',serif; font-size:12px; padding:9px 20px;
-  background:rgba(20,40,5,0.9); border:1px solid #44aa2266;
+  background:rgba(20,40,5,0.9); border:1px solid rgba(68,170,34,0.4);
   color:#66ff44; border-radius:4px; cursor:pointer; transition:all 0.2s;
   display:none;
 }
-#wpnpicker-confirm-btn:hover { background:rgba(30,60,10,0.9); border-color:#66ff4488; box-shadow:0 0 10px #44aa2244; }
+#wpnpicker-confirm-btn:hover { background:rgba(30,60,10,0.9); border-color:rgba(102,255,68,0.533); box-shadow:0 0 10px rgba(68,170,34,0.267); }
 #wpnpicker-cancel-btn {
   font-family:'Cinzel',serif; font-size:12px; padding:9px 20px;
-  background:rgba(20,5,5,0.9); border:1px solid #44001122;
+  background:rgba(20,5,5,0.9); border:1px solid rgba(68,0,17,0.133);
   color:#664455; border-radius:4px; cursor:pointer; transition:all 0.2s;
 }
-#wpnpicker-cancel-btn:hover { border-color:#cc224455; color:#cc8899; }
+#wpnpicker-cancel-btn:hover { border-color:rgba(204,34,68,0.333); color:#cc8899; }
 
 
 /* ══════════════════════════════════════════════════════════════════
@@ -1305,7 +1305,7 @@ body {
 #ts-topbar {
   position: absolute; top: 0; left: 0; right: 0; z-index: 50;
   background: linear-gradient(90deg,#07001a,#160038,#07001a);
-  border-bottom: 1px solid #44118844;
+  border-bottom: 1px solid rgba(68,17,136,0.267);
   padding: 0 16px; height: 42px;
   display: flex; align-items: center; justify-content: space-between;
   pointer-events: all;
@@ -1317,7 +1317,7 @@ body {
 }
 .ts-tbtn {
   font-family:'Cinzel',serif; font-size: 0.625em; letter-spacing: 1px;
-  padding: 4px 10px; border: 1px solid #44118866; border-radius: 3px;
+  padding: 4px 10px; border: 1px solid rgba(68,17,136,0.4); border-radius: 3px;
   background: rgba(15,3,35,0.8); color: #9977cc; cursor: pointer;
 }
 .ts-tbtn:hover { border-color: #7755cc; color: #ccaaff; background: rgba(30,8,60,0.9); }
@@ -1379,20 +1379,20 @@ body {
   letter-spacing: 1px; transition: all 0.15s;
 }
 #ts-skip-btn {
-  background: rgba(20,8,50,0.9); border: 1px solid #6633aa66;
+  background: rgba(20,8,50,0.9); border: 1px solid rgba(102,51,170,0.4);
   color: #9966dd;
 }
 #ts-skip-btn:hover { border-color: #9966dd; color: #ddaaff; }
 #ts-skip-btn:disabled { opacity: 0.3; cursor: default; }
 #ts-speed-btn {
-  background: rgba(5,3,18,0.9); border: 1px solid #33225544;
+  background: rgba(5,3,18,0.9); border: 1px solid rgba(51,34,85,0.267);
   color: #554477;
 }
 #ts-speed-btn:hover { border-color: #7755aa; color: #9977cc; }
 #ts-speed-btn.fast { border-color: #44ff88; color: #44ff88;
   background: rgba(0,20,8,0.9); }
 #idle-toggle-btn {
-  background: rgba(20,8,50,0.85); border: 1px solid #5522aa88;
+  background: rgba(20,8,50,0.85); border: 1px solid rgba(85,34,170,0.533);
   color: #9977cc; font-family: 'Cinzel', serif; font-size: 10px;
   padding: 5px 13px; cursor: pointer; border-radius: 4px;
   transition: border-color 0.2s, color 0.2s;
@@ -1400,17 +1400,17 @@ body {
 #idle-toggle-btn:hover { border-color: #9955ee; color: #cc99ff; }
 #idle-toggle-btn.active { border-color: #44ff88; color: #44ff88;
   background: rgba(0,20,8,0.9);
-  text-shadow: 0 0 8px #44ff8855; animation: idle-pulse 2s ease-in-out infinite; }
+  text-shadow: 0 0 8px rgba(68,255,136,0.333); animation: idle-pulse 2s ease-in-out infinite; }
 @keyframes idle-pulse {
-  0%,100% { box-shadow: 0 0 4px #44ff8822; }
-  50%      { box-shadow: 0 0 14px #44ff8866; }
+  0%,100% { box-shadow: 0 0 4px rgba(68,255,136,0.133); }
+  50%      { box-shadow: 0 0 14px rgba(68,255,136,0.4); }
 }
 
 /* Event alert banner — appears when enemy/waypoint approaches */
 #ts-alert {
   position: fixed; top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(60,5,5,0.92); border: 1px solid #ff442266;
+  background: rgba(60,5,5,0.92); border: 1px solid rgba(255,68,34,0.4);
   border-radius: 8px; padding: 14px 36px;
   font-family: 'Cinzel', serif; font-size: 18px; color: #ff8844;
   letter-spacing: 3px; text-align: center;
@@ -1423,7 +1423,7 @@ body {
 }
 #ts-alert.waypoint {
   background: rgba(5,25,55,0.92);
-  border-color: #4488ff66; color: #88ccff;
+  border-color: rgba(68,136,255,0.4); color: #88ccff;
 }
 @keyframes ts-flash-in {
   from { opacity: 0; transform: translate(-50%, -50%) scale(0.88); }
@@ -1447,11 +1447,11 @@ body {
 #ov-cbt-inv.on { display: flex; }
 
 #cbt-inv-modal {
-  background: rgba(5,1,18,0.98); border: 1px solid #44228855;
+  background: rgba(5,1,18,0.98); border: 1px solid rgba(68,34,136,0.333);
   border-radius: 10px; padding: 18px 18px 14px;
   width: min(680px, 96vw); max-height: 86vh;
   display: flex; flex-direction: column; gap: 12px;
-  box-shadow: 0 0 60px #22006644, inset 0 0 30px rgba(20,0,50,0.3);
+  box-shadow: 0 0 60px rgba(34,0,102,0.267), inset 0 0 30px rgba(20,0,50,0.3);
 }
 
 /* Header row */
@@ -1464,16 +1464,16 @@ body {
 }
 .cbt-inv-sort-btn {
   font-family:'Cinzel',serif; font-size:9px; padding:4px 10px;
-  border:1px solid #44228844; border-radius:3px; cursor:pointer;
+  border:1px solid rgba(68,34,136,0.267); border-radius:3px; cursor:pointer;
   color:#664488; background:rgba(15,3,30,0.8); transition:all 0.15s;
   letter-spacing:1px;
 }
 .cbt-inv-sort-btn:hover { border-color:#8844cc; color:#aa88dd; }
-.cbt-inv-sort-btn.active { border-color:#8844cc66; color:#cc99ff;
+.cbt-inv-sort-btn.active { border-color:rgba(136,68,204,0.4); color:#cc99ff;
   background:rgba(40,10,70,0.8); }
 #cbt-inv-close {
   font-family:'Cinzel',serif; font-size:10px; padding:4px 12px;
-  border:1px solid #33112244; border-radius:3px; cursor:pointer;
+  border:1px solid rgba(51,17,34,0.267); border-radius:3px; cursor:pointer;
   color:#553355; background:none;
 }
 #cbt-inv-close:hover { border-color:#cc4466; color:#ff8899; }
@@ -1481,7 +1481,7 @@ body {
 /* Section headers */
 .cbt-inv-section-hdr {
   font-family:'Cinzel',serif; font-size:9px; letter-spacing:2px;
-  color:#442255; border-bottom:1px solid #22113322;
+  color:#442255; border-bottom:1px solid rgba(34,17,51,0.133);
   padding-bottom:5px; margin-bottom:6px; display:flex;
   align-items:center; gap:8px;
 }
@@ -1500,16 +1500,16 @@ body {
 .cbt-inv-usable {
   display: flex; flex-direction: column; align-items: center;
   width: 76px; padding: 8px 6px 6px;
-  background: rgba(0,15,35,0.85); border: 1px solid #2244aa44;
+  background: rgba(0,15,35,0.85); border: 1px solid rgba(34,68,170,0.267);
   border-radius: 5px; cursor: pointer; transition: all 0.15s;
   position: relative; user-select: none;
 }
 .cbt-inv-usable:hover { border-color: #4488ff; background: rgba(0,25,55,0.95);
-  box-shadow: 0 0 10px #2244aa33; }
+  box-shadow: 0 0 10px rgba(34,68,170,0.2); }
 .cbt-inv-usable.dragging { opacity:0.4; border-style:dashed; }
 .cbt-inv-usable.drag-over { border-color:#ffcc44; background:rgba(30,20,0,0.9); }
-.cbt-inv-usable.item-disable { border-color:#ffd70055; }
-.cbt-inv-usable.item-disable:hover { border-color:#ffd700; box-shadow:0 0 10px #ffd70033; }
+.cbt-inv-usable.item-disable { border-color:rgba(255,215,0,0.333); }
+.cbt-inv-usable.item-disable:hover { border-color:#ffd700; box-shadow:0 0 10px rgba(255,215,0,0.2); }
 .cbt-u-ico { font-size: 22px; margin-bottom: 4px; }
 .cbt-u-name { font-family:'Cinzel',serif; font-size:8px; color:#88aadd;
   text-align:center; line-height:1.3; }
@@ -1517,12 +1517,12 @@ body {
   margin-top:2px; line-height:1.3; }
 .cbt-inv-usable .cbt-use-label {
   position:absolute; bottom:2px; right:3px;
-  font-size:7px; color:#4488ff88; font-family:'Cinzel',serif;
+  font-size:7px; color:rgba(68,136,255,0.533); font-family:'Cinzel',serif;
   letter-spacing:0.5px;
 }
 .cbt-inv-usable:hover .cbt-use-label { color:#88ccff; }
 .cbt-inv-empty-slot {
-  width:76px; height:72px; border:1px dashed #22113333;
+  width:76px; height:72px; border:1px dashed rgba(34,17,51,0.2);
   border-radius:5px; display:flex; align-items:center; justify-content:center;
   color:#221133; font-size:18px;
 }
@@ -1539,7 +1539,7 @@ body {
 .cbt-inv-cargo-item {
   display: flex; align-items: center; gap: 7px;
   padding: 6px 10px; width: calc(50% - 3px);
-  background: rgba(10,3,22,0.8); border: 1px solid #33115533;
+  background: rgba(10,3,22,0.8); border: 1px solid rgba(51,17,85,0.2);
   border-radius: 4px; cursor: grab; transition: all 0.12s;
   user-select: none;
 }
@@ -1558,14 +1558,14 @@ body {
 #lq-shop {
   position:absolute; top:50%; right:20px; transform:translateY(-50%);
   width:300px; background:rgba(6,0,20,0.97);
-  border:1px solid #44558877; border-radius:8px;
+  border:1px solid rgba(68,85,136,0.467); border-radius:8px;
   padding:16px; display:none; flex-direction:column; gap:10px;
-  box-shadow: 0 0 40px #00336644; max-height:80vh; overflow-y:auto; z-index:10;
+  box-shadow: 0 0 40px rgba(0,51,102,0.267); max-height:80vh; overflow-y:auto; z-index:10;
 }
 #lq-shop.on { display:flex; }
 .lq-shop-title { font-family:'Cinzel',serif; font-size: 0.813em; color:#88ccff; letter-spacing:2px; }
 .lq-shop-grid { display:grid; grid-template-columns:1fr; gap:6px; }
-.lq-shop-item { background:rgba(10,20,40,0.8); border:1px solid #33446655; border-radius:4px; padding:8px 10px; cursor:pointer; transition:all 0.2s; }
+.lq-shop-item { background:rgba(10,20,40,0.8); border:1px solid rgba(51,68,102,0.333); border-radius:4px; padding:8px 10px; cursor:pointer; transition:all 0.2s; }
 .lq-shop-item:hover { border-color:#6688aa; background:rgba(20,40,70,0.8); }
 .lq-shop-item.dis { opacity:0.45; cursor:default; }
 .lq-shop-item .lq-si-name { font-family:'Cinzel',serif; font-size: 0.625em; color:#88bbff; }
@@ -1582,9 +1582,9 @@ body {
 .qlog-sub    { font-size: 0.688em; color:#554477; letter-spacing:1px; margin-bottom:14px; }
 .qlog-tabs   { display:flex; gap:6px; margin-bottom:14px; }
 .qlog-tab    { font-family:'Cinzel',serif; font-size: 0.625em; letter-spacing:1px; padding:5px 14px;
-               border:1px solid #44118844; border-radius:3px; background:rgba(10,2,28,0.7);
+               border:1px solid rgba(68,17,136,0.267); border-radius:3px; background:rgba(10,2,28,0.7);
                color:#7766aa; cursor:pointer; text-transform:uppercase; transition:all 0.2s; }
-.qlog-tab.act { border-color:#ffcc6688; color:#ffcc66; background:rgba(40,20,0,0.6); }
+.qlog-tab.act { border-color:rgba(255,204,102,0.533); color:#ffcc66; background:rgba(40,20,0,0.6); }
 .qlog-tab:hover:not(.act) { border-color:#9966dd; color:#ddbbff; }
 .qlog-body   { width:100%; max-width:640px; flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; }
 .qlog-sphere-header {
@@ -1593,20 +1593,20 @@ body {
   margin-top:6px;
 }
 .qlog-entry {
-  background:rgba(14,4,32,0.7); border:1px solid #33115533; border-radius:5px;
+  background:rgba(14,4,32,0.7); border:1px solid rgba(51,17,85,0.2); border-radius:5px;
   padding:12px 14px; display:flex; flex-direction:column; gap:4px;
   transition: border-color 0.2s;
 }
-.qlog-entry.active  { border-color:#ffaa3355; }
-.qlog-entry.turnin  { border-color:#ffd70088; background:rgba(30,20,0,0.7); }
-.qlog-entry.rewarded{ border-color:#44ffcc33; opacity:0.6; }
+.qlog-entry.active  { border-color:rgba(255,170,51,0.333); }
+.qlog-entry.turnin  { border-color:rgba(255,215,0,0.533); background:rgba(30,20,0,0.7); }
+.qlog-entry.rewarded{ border-color:rgba(68,255,204,0.2); opacity:0.6; }
 .qlog-entry-top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 .qlog-entry-title { font-family:'Cinzel',serif; font-size: 0.75em; color:#ddbbff; flex:1; }
 .qlog-entry-badge {
   font-size: 0.563em; letter-spacing:1px; padding:2px 8px; border-radius:2px;
   text-transform:uppercase; font-family:'Cinzel',serif;
 }
-.qlog-entry-badge.available { background:#0a2200; color:#66dd44; border:1px solid #33661133; }
+.qlog-entry-badge.available { background:#0a2200; color:#66dd44; border:1px solid rgba(51,102,17,0.2); }
 .qlog-entry-badge.active    { background:#1a1000; color:#ffaa33; border:1px solid #664400; }
 .qlog-entry-badge.turnin    { background:#2a1a00; color:#ffd700; border:1px solid #886600;
                                animation: qpulse 1.4s ease-in-out infinite; }
@@ -1635,7 +1635,7 @@ body {
 .jlog-entry {
   position: relative;
   padding: 14px 16px 12px 20px;
-  border-left: 2px solid #3a1a0077;
+  border-left: 2px solid rgba(58,26,0,0.467);
   margin-bottom: 0;
   transition: border-color 0.2s;
 }
@@ -1645,18 +1645,18 @@ body {
   width: 8px; height: 8px; border-radius: 50%;
   background: #3a1a00; border: 2px solid #7a4a18;
 }
-.jlog-entry:hover { border-left-color: #d4a96a55; }
-.jlog-entry:hover::before { background: #d4a96a55; border-color: #d4a96a; }
-.jlog-entry.type-imp   { border-left-color: #ffd70044; }
+.jlog-entry:hover { border-left-color: rgba(212,169,106,0.333); }
+.jlog-entry:hover::before { background: rgba(212,169,106,0.333); border-color: #d4a96a; }
+.jlog-entry.type-imp   { border-left-color: rgba(255,215,0,0.267); }
 .jlog-entry.type-imp::before { background: #7a6000; border-color: #ffd700; }
-.jlog-entry.type-gd    { border-left-color: #00ee8844; }
+.jlog-entry.type-gd    { border-left-color: rgba(0,238,136,0.267); }
 .jlog-entry.type-gd::before  { background: #005530; border-color: #00ee88; }
-.jlog-entry.type-dmg   { border-left-color: #ff444433; }
+.jlog-entry.type-dmg   { border-left-color: rgba(255,68,68,0.2); }
 .jlog-entry.type-dmg::before { background: #5a0000; border-color: #ff4444; }
-.jlog-entry.type-boss  { border-left-color: #cc44ff55; }
-.jlog-entry.type-boss::before { background: #330055; border-color: #cc44ff; box-shadow:0 0 6px #cc44ff88; }
-.jlog-entry.type-frag  { border-left-color: #ffd70099; }
-.jlog-entry.type-frag::before { background: #5a4000; border-color: #ffd700; box-shadow:0 0 6px #ffd70077; }
+.jlog-entry.type-boss  { border-left-color: rgba(204,68,255,0.333); }
+.jlog-entry.type-boss::before { background: #330055; border-color: #cc44ff; box-shadow:0 0 6px rgba(204,68,255,0.533); }
+.jlog-entry.type-frag  { border-left-color: rgba(255,215,0,0.6); }
+.jlog-entry.type-frag::before { background: #5a4000; border-color: #ffd700; box-shadow:0 0 6px rgba(255,215,0,0.467); }
 .jlog-date {
   font-family:'Cinzel',serif; font-size: 0.563em; color:#5a3e22;
   letter-spacing:2px; text-transform:uppercase; margin-bottom:5px;
@@ -1675,7 +1675,7 @@ body {
 }
 .jlog-divider {
   width:100%; max-width:640px;
-  border:none; border-top:1px solid #3a1a0055;
+  border:none; border-top:1px solid rgba(58,26,0,0.333);
   margin: 0;
 }
 /* Newest-first fade-in */
@@ -1685,7 +1685,7 @@ body {
 /* ── WATCH / FATIGUE SYSTEM ── */
 #watch-hud {
   position:fixed; top:46px; right:120px; left:auto; transform:none;
-  background:rgba(4,0,14,0.94); border:1px solid #44118866; border-radius:6px;
+  background:rgba(4,0,14,0.94); border:1px solid rgba(68,17,136,0.4); border-radius:6px;
   padding:6px 14px; display:none; flex-direction:column; align-items:flex-start; gap:3px;
   z-index:1100; min-width:190px; max-width:280px; width:fit-content; pointer-events:none;
 }
@@ -1719,17 +1719,17 @@ body {
 .wh-label { font-family:'Cinzel',serif; font-size:0.688em; color:#7755aa; letter-spacing:2px; text-transform:uppercase; }
 .wh-val   { font-family:'Cinzel',serif; font-size:0.813em; color:#ccaaff; letter-spacing:1px; }
 .wh-pips  { display:flex; gap:3px; }
-.wh-pip   { width:10px; height:10px; border-radius:50%; border:1px solid #44228844; background:#100025; transition:all 0.3s; }
+.wh-pip   { width:10px; height:10px; border-radius:50%; border:1px solid rgba(68,34,136,0.267); background:#100025; transition:all 0.3s; }
 .wh-pip.on { background:#9944ff; border-color:#cc88ff; box-shadow:0 0 4px #9944ff; }
 .wh-pip.used { background:#332244; border-color:#553366; }
 #fatigue-badge {
   font-family:'Cinzel',serif; font-size:0.563em; letter-spacing:1.5px; text-transform:uppercase;
   padding:2px 8px; border-radius:2px; transition:all 0.4s;
 }
-.fatigue-fresh    { background:#001a0a; color:#44ee88; border:1px solid #22aa5533; }
-.fatigue-tired    { background:#1a1400; color:#ffcc44; border:1px solid #aa880033; }
-.fatigue-fatigued { background:#1a0800; color:#ff8844; border:1px solid #aa440033; }
-.fatigue-exhausted{ background:#1a0000; color:#ff4444; border:1px solid #aa000033; animation:fatpulse 1.6s ease-in-out infinite; }
+.fatigue-fresh    { background:#001a0a; color:#44ee88; border:1px solid rgba(34,170,85,0.2); }
+.fatigue-tired    { background:#1a1400; color:#ffcc44; border:1px solid rgba(170,136,0,0.2); }
+.fatigue-fatigued { background:#1a0800; color:#ff8844; border:1px solid rgba(170,68,0,0.2); }
+.fatigue-exhausted{ background:#1a0000; color:#ff4444; border:1px solid rgba(170,0,0,0.2); animation:fatpulse 1.6s ease-in-out infinite; }
 @keyframes fatpulse { 0%,100%{opacity:1} 50%{opacity:0.55} }
 
 /* Rest / watch-advance overlay */
@@ -1741,14 +1741,14 @@ body {
 #rest-overlay.on { display:flex; }
 .rest-panel {
   display:flex; flex-direction:column; align-items:center; gap:16px;
-  background:rgba(8,2,22,0.98); border:1px solid #5522aa55;
+  background:rgba(8,2,22,0.98); border:1px solid rgba(85,34,170,0.333);
   border-radius:8px; padding:32px 44px; max-width:400px; width:90%;
-  box-shadow:0 0 50px #33006633;
+  box-shadow:0 0 50px rgba(51,0,102,0.2);
 }
 .rest-title { font-family:'Cinzel',serif; font-size:1.125em; color:#ccaaff; letter-spacing:3px; }
 .rest-watch-anim {
   width:80px; height:80px; border-radius:50%;
-  border:2px solid #5522aa44; position:relative;
+  border:2px solid rgba(85,34,170,0.267); position:relative;
   display:flex; align-items:center; justify-content:center;
 }
 .rest-star { font-size:2em; animation:restSpin 2s linear infinite; }
@@ -1764,16 +1764,16 @@ body {
   text-transform:uppercase; display:none;
 }
 #rest-btn.on { display:block; }
-#rest-btn.fresh    { border:1px solid #6633aa66; background:rgba(20,5,45,0.88); color:#bb99ee; }
+#rest-btn.fresh    { border:1px solid rgba(102,51,170,0.4); background:rgba(20,5,45,0.88); color:#bb99ee; }
 #rest-btn.fresh:hover { border-color:#bb88ff; color:#ffffff; }
-#rest-btn.tired    { border:1px solid #aa880066; background:rgba(30,20,0,0.8); color:#ffcc44; }
-#rest-btn.fatigued { border:1px solid #aa440066; background:rgba(30,10,0,0.8); color:#ff8844; animation:fatpulse 1.6s ease-in-out infinite; }
-#rest-btn.exhausted{ border:1px solid #aa000066; background:rgba(30,0,0,0.8); color:#ff4444; animation:fatpulse 0.8s ease-in-out infinite; }
+#rest-btn.tired    { border:1px solid rgba(170,136,0,0.4); background:rgba(30,20,0,0.8); color:#ffcc44; }
+#rest-btn.fatigued { border:1px solid rgba(170,68,0,0.4); background:rgba(30,10,0,0.8); color:#ff8844; animation:fatpulse 1.6s ease-in-out infinite; }
+#rest-btn.exhausted{ border:1px solid rgba(170,0,0,0.4); background:rgba(30,0,0,0.8); color:#ff4444; animation:fatpulse 0.8s ease-in-out infinite; }
 
 /* ── COMBAT INVENTORY PANEL ── */
 #cbt-inv-panel {
   display:none; width:100%;
-  background:rgba(4,0,14,0.96); border:1px solid #44228844;
+  background:rgba(4,0,14,0.96); border:1px solid rgba(68,34,136,0.267);
   border-radius:4px; padding:6px 8px; margin:3px 0;
   max-height:140px; overflow-y:auto;
 }
@@ -1782,19 +1782,19 @@ body {
 .cbt-inv-item {
   font-family:'Cinzel',serif; font-size:0.563em; letter-spacing:0.5px;
   padding:5px 8px; border-radius:3px; cursor:pointer;
-  border:1px solid #44aaff44; color:#88ccff; background:rgba(0,20,40,0.7);
+  border:1px solid rgba(68,170,255,0.267); color:#88ccff; background:rgba(0,20,40,0.7);
   transition:all 0.15s; display:flex; align-items:center; gap:4px;
   max-width:100%;
 }
 .cbt-inv-item:hover { border-color:#88ccff; color:#cceeff; background:rgba(0,30,60,0.9); }
-.cbt-inv-item.item-disable { border-color:#ffd70044; color:#ffd700; background:rgba(30,25,0,0.7); }
+.cbt-inv-item.item-disable { border-color:rgba(255,215,0,0.267); color:#ffd700; background:rgba(30,25,0,0.7); }
 .cbt-inv-item.item-disable:hover { border-color:#ffd700; }
 .cbt-inv-item-name { font-weight:bold; }
 .cbt-inv-empty { font-size:0.563em; color:#553355; font-style:italic; padding:4px 0; }
 #cbt-inv-toggle {
   width:100%; text-align:left;
 }
-#cbt-inv-toggle.has-items { border-color:#44aaff66; color:#88ccff; }
+#cbt-inv-toggle.has-items { border-color:rgba(68,170,255,0.4); color:#88ccff; }
 #cbt-inv-toggle.no-items  { border-color:rgba(51,34,68,0.33); color:#553355; opacity:0.6; }
 
 /* Volume panel */
@@ -1804,7 +1804,7 @@ body {
 .vol-row input[type=range] {
   -webkit-appearance:none; appearance:none;
   height:3px; border-radius:2px;
-  background:linear-gradient(90deg,#7744cc var(--pct,80%),#22113344 var(--pct,80%));
+  background:linear-gradient(90deg,#7744cc var(--pct,80%),rgba(34,17,51,0.267) var(--pct,80%));
   outline:none; cursor:pointer;
 }
 .vol-row input[type=range]::-webkit-slider-thumb {
@@ -1825,24 +1825,24 @@ body {
 <div id="header">
   <h1>⚓ Fentheris<span class="hdr-long">: Voyage Through the Drift</span></h1>
   <div style="display:flex;align-items:center;gap:8px;">
-    <button onclick="showMainMenu()" style="font-family:'Cinzel',serif;font-size:0.625em;letter-spacing:1px;padding:4px 10px;border:1px solid #44118866;border-radius:3px;background:rgba(15,3,35,0.8);color:#9977cc;cursor:pointer;">☰ Menu</button>
-    <button id="mute-btn" onclick="toggleVolPanel(event)" style="font-family:'Cinzel',serif;font-size:0.625em;letter-spacing:1px;padding:4px 10px;border:1px solid #44118866;border-radius:3px;background:rgba(15,3,35,0.8);color:#9977cc;cursor:pointer;">🔊 Sound</button>
-    <button onclick="showFontPanel()" style="font-family:'Cinzel',serif;font-size:0.625em;letter-spacing:1px;padding:4px 10px;border:1px solid #44118866;border-radius:3px;background:rgba(15,3,35,0.8);color:#9977cc;cursor:pointer;">🔠 Text</button>
+    <button onclick="showMainMenu()" style="font-family:'Cinzel',serif;font-size:0.625em;letter-spacing:1px;padding:4px 10px;border:1px solid rgba(68,17,136,0.4);border-radius:3px;background:rgba(15,3,35,0.8);color:#9977cc;cursor:pointer;">☰ Menu</button>
+    <button id="mute-btn" onclick="toggleVolPanel(event)" style="font-family:'Cinzel',serif;font-size:0.625em;letter-spacing:1px;padding:4px 10px;border:1px solid rgba(68,17,136,0.4);border-radius:3px;background:rgba(15,3,35,0.8);color:#9977cc;cursor:pointer;">🔊 Sound</button>
+    <button onclick="showFontPanel()" style="font-family:'Cinzel',serif;font-size:0.625em;letter-spacing:1px;padding:4px 10px;border:1px solid rgba(68,17,136,0.4);border-radius:3px;background:rgba(15,3,35,0.8);color:#9977cc;cursor:pointer;">🔠 Text</button>
     <div id="phase-tag">Navigation</div>
   </div>
 </div>
 
 <!-- FONT SCALE PANEL -->
-<div id="font-panel" style="display:none;position:fixed;top:50px;right:10px;z-index:300;background:rgba(5,0,18,0.97);border:1px solid #5522aa88;border-radius:7px;padding:16px 18px;min-width:220px;box-shadow:0 0 30px #33006644;">
+<div id="font-panel" style="display:none;position:fixed;top:50px;right:10px;z-index:300;background:rgba(5,0,18,0.97);border:1px solid rgba(85,34,170,0.533);border-radius:7px;padding:16px 18px;min-width:220px;box-shadow:0 0 30px rgba(51,0,102,0.267);">
   <div style="font-family:'Cinzel',serif;font-size:0.75em;color:#aa88ff;letter-spacing:2px;margin-bottom:12px;">🔠 TEXT SIZE</div>
   <div style="display:flex;gap:6px;justify-content:center;margin-bottom:10px;" id="font-btns">
-    <button onclick="setFontScale(0.85)" class="fs-btn" data-scale="0.85" style="font-family:'Cinzel',serif;font-size:0.688em;padding:7px 12px;border:1px solid #44228866;border-radius:4px;background:rgba(15,5,35,0.9);color:#8866aa;cursor:pointer;letter-spacing:1px;">A−</button>
-    <button onclick="setFontScale(1.0)"  class="fs-btn" data-scale="1"    style="font-family:'Cinzel',serif;font-size:0.75em;padding:7px 12px;border:1px solid #44228866;border-radius:4px;background:rgba(15,5,35,0.9);color:#9977cc;cursor:pointer;letter-spacing:1px;">A</button>
-    <button onclick="setFontScale(1.15)" class="fs-btn" data-scale="1.15" style="font-family:'Cinzel',serif;font-size:0.813em;padding:7px 12px;border:1px solid #44228866;border-radius:4px;background:rgba(15,5,35,0.9);color:#aa99dd;cursor:pointer;letter-spacing:1px;">A+</button>
-    <button onclick="setFontScale(1.3)"  class="fs-btn" data-scale="1.3"  style="font-family:'Cinzel',serif;font-size:0.875em;padding:7px 12px;border:1px solid #44228866;border-radius:4px;background:rgba(15,5,35,0.9);color:#ccaaff;cursor:pointer;letter-spacing:1px;">A++</button>
+    <button onclick="setFontScale(0.85)" class="fs-btn" data-scale="0.85" style="font-family:'Cinzel',serif;font-size:0.688em;padding:7px 12px;border:1px solid rgba(68,34,136,0.4);border-radius:4px;background:rgba(15,5,35,0.9);color:#8866aa;cursor:pointer;letter-spacing:1px;">A−</button>
+    <button onclick="setFontScale(1.0)"  class="fs-btn" data-scale="1"    style="font-family:'Cinzel',serif;font-size:0.75em;padding:7px 12px;border:1px solid rgba(68,34,136,0.4);border-radius:4px;background:rgba(15,5,35,0.9);color:#9977cc;cursor:pointer;letter-spacing:1px;">A</button>
+    <button onclick="setFontScale(1.15)" class="fs-btn" data-scale="1.15" style="font-family:'Cinzel',serif;font-size:0.813em;padding:7px 12px;border:1px solid rgba(68,34,136,0.4);border-radius:4px;background:rgba(15,5,35,0.9);color:#aa99dd;cursor:pointer;letter-spacing:1px;">A+</button>
+    <button onclick="setFontScale(1.3)"  class="fs-btn" data-scale="1.3"  style="font-family:'Cinzel',serif;font-size:0.875em;padding:7px 12px;border:1px solid rgba(68,34,136,0.4);border-radius:4px;background:rgba(15,5,35,0.9);color:#ccaaff;cursor:pointer;letter-spacing:1px;">A++</button>
   </div>
   <div style="font-size:0.625em;color:#554477;text-align:center;font-style:italic;margin-bottom:10px;">Preference saved automatically</div>
-  <button onclick="hideFontPanel()" style="width:100%;font-family:'Cinzel',serif;font-size:0.625em;padding:6px;border:1px solid #44224455;border-radius:3px;background:none;color:#665588;cursor:pointer;">✕ Close</button>
+  <button onclick="hideFontPanel()" style="width:100%;font-family:'Cinzel',serif;font-size:0.625em;padding:6px;border:1px solid rgba(68,34,68,0.333);border-radius:3px;background:none;color:#665588;cursor:pointer;">✕ Close</button>
 </div>
 
 
@@ -1943,8 +1943,8 @@ body {
     <button class="ovl-btn" id="sidebar-armory-btn" onclick="openArmory()" style="border-color:rgba(170,136,34,0.33);color:#ffcc88;">🛠 Armory</button>
     <button class="ovl-btn" onclick="openOverlay('shp')">🚀 Ship Details</button>
     <button class="ovl-btn" onclick="openOverlay('qlog')">📜 Quest Log</button>
-    <button class="ovl-btn" id="sidebar-lq-btn" onclick="openLocalQuest()" style="display:none;border-color:#44886655;color:#44ffcc;">🌌 Local Quests</button>
-    <button class="ovl-btn" id="sidebar-journal-btn" onclick="openOverlay('journal')" style="border-color:#7a4a1855;color:#d4a96a;">📖 Captain's Log</button>
+    <button class="ovl-btn" id="sidebar-lq-btn" onclick="openLocalQuest()" style="display:none;border-color:rgba(68,136,102,0.333);color:#44ffcc;">🌌 Local Quests</button>
+    <button class="ovl-btn" id="sidebar-journal-btn" onclick="openOverlay('journal')" style="border-color:rgba(122,74,24,0.333);color:#d4a96a;">📖 Captain's Log</button>
     <button id="rest-btn" class="fresh" onclick="doRest()">🌙 Rest (End Watch)</button>
   </div>
 </div>
@@ -1966,12 +1966,12 @@ body {
   </div>
   <canvas id="gc"></canvas>
   <!-- Zoom HUD — DOM element pinned to bottom-right, always in screen space -->
-  <div id="zoom-hud" style="position:absolute;bottom:10px;right:10px;z-index:5;background:rgba(5,0,18,0.88);border:1px solid #44118866;border-radius:7px;padding:6px 8px;display:none;user-select:none;">
+  <div id="zoom-hud" style="position:absolute;bottom:10px;right:10px;z-index:5;background:rgba(5,0,18,0.88);border:1px solid rgba(68,17,136,0.4);border-radius:7px;padding:6px 8px;display:none;user-select:none;">
     <div id="zoom-pct" style="font-family:'Cinzel',serif;font-size:9px;color:#8866aa;text-align:center;margin-bottom:4px;">ZOOM 100%</div>
     <div style="display:flex;gap:4px;align-items:center;">
-      <button id="zoom-out" style="width:22px;height:16px;background:#1a0a2e;border:1px solid #6633aa88;border-radius:3px;color:#cc99ff;font-size:13px;line-height:1;cursor:pointer;padding:0;">−</button>
-      <button id="zoom-in"  style="width:22px;height:16px;background:#1a0a2e;border:1px solid #6633aa88;border-radius:3px;color:#cc99ff;font-size:13px;line-height:1;cursor:pointer;padding:0;">+</button>
-      <button id="zoom-follow" style="width:42px;height:16px;background:#1a0a2e;border:1px solid #6633aa44;border-radius:3px;color:#7755aa;font-size:8px;font-family:'Cinzel',serif;cursor:pointer;padding:0;">🔓 FREE</button>
+      <button id="zoom-out" style="width:22px;height:16px;background:#1a0a2e;border:1px solid rgba(102,51,170,0.533);border-radius:3px;color:#cc99ff;font-size:13px;line-height:1;cursor:pointer;padding:0;">−</button>
+      <button id="zoom-in"  style="width:22px;height:16px;background:#1a0a2e;border:1px solid rgba(102,51,170,0.533);border-radius:3px;color:#cc99ff;font-size:13px;line-height:1;cursor:pointer;padding:0;">+</button>
+      <button id="zoom-follow" style="width:42px;height:16px;background:#1a0a2e;border:1px solid rgba(102,51,170,0.267);border-radius:3px;color:#7755aa;font-size:8px;font-family:'Cinzel',serif;cursor:pointer;padding:0;">🔓 FREE</button>
     </div>
   </div>
 
@@ -2005,7 +2005,7 @@ body {
   <!-- COMBAT -->
   <div class="ovlay" id="ov-combat">
     <div class="ctitle" id="ct-title">⚔ COMBAT ⚔</div>
-    <div id="idle-combat-bar" style="display:none;background:rgba(40,20,80,0.85);border:1px solid #5522aa55;border-radius:4px;padding:4px 14px;font-family:'Cinzel',serif;font-size:9px;color:#aa88ff;letter-spacing:1px;text-align:center;margin-bottom:4px;">
+    <div id="idle-combat-bar" style="display:none;background:rgba(40,20,80,0.85);border:1px solid rgba(85,34,170,0.333);border-radius:4px;padding:4px 14px;font-family:'Cinzel',serif;font-size:9px;color:#aa88ff;letter-spacing:1px;text-align:center;margin-bottom:4px;">
       ⚙ IDLE MODE ACTIVE — <button onclick="toggleIdleMode()" style="background:none;border:1px solid #7744cc;border-radius:3px;color:#cc88ff;font-size:8px;padding:1px 8px;cursor:pointer;font-family:'Cinzel',serif;">DISABLE</button>
     </div>
 
@@ -2066,7 +2066,7 @@ body {
   <div class="ovlay" id="ov-loot">
     <div class="loot-title">✦ Victory ✦</div>
     <div class="loot-sub" id="loot-subline">Shell Drifter Destroyed</div>
-    <canvas id="loot-canvas" width="180" height="110" style="border:1px solid #44118844;border-radius:5px;background:rgba(8,0,20,0.7);"></canvas>
+    <canvas id="loot-canvas" width="180" height="110" style="border:1px solid rgba(68,17,136,0.267);border-radius:5px;background:rgba(8,0,20,0.7);"></canvas>
     <div class="loot-gold">🔷 <span id="loot-gold">0</span> TS recovered from the wreckage</div>
     <div class="loot-manifest">— Cargo Hold Breached —</div>
     <div class="loot-grid" id="loot-grid"></div>
@@ -2230,8 +2230,8 @@ body {
     </div>
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;">
       <button id="pt-rumor-btn" class="btn" style="font-size:11px;padding:6px 14px;display:none;">🍺 Talk to Locals</button>
-      <button id="pt-lq-btn" class="btn" onclick="departPort();openLocalQuest()" style="font-size:11px;padding:6px 14px;display:none;border-color:#44886655;color:#44ffcc;">🌌 Local Quests</button>
-      <button id="pt-rest-btn" class="btn" onclick="doPortRest()" style="font-size:11px;padding:6px 14px;border-color:#5522aa55;color:#cc99ff;">🌙 Rest at Berth</button>
+      <button id="pt-lq-btn" class="btn" onclick="departPort();openLocalQuest()" style="font-size:11px;padding:6px 14px;display:none;border-color:rgba(68,136,102,0.333);color:#44ffcc;">🌌 Local Quests</button>
+      <button id="pt-rest-btn" class="btn" onclick="doPortRest()" style="font-size:11px;padding:6px 14px;border-color:rgba(85,34,170,0.333);color:#cc99ff;">🌙 Rest at Berth</button>
     </div>
     <div class="port-tabs">
       <button class="ptab act" id="tab-supplies" onclick="portTab('supplies',this)">Supplies &amp; Arms</button>
@@ -2250,7 +2250,7 @@ body {
 
   <!-- DOCKMASTER CONVERSATION -->
   <div class="ovlay" id="ov-dockmaster" style="z-index:50;">
-    <div id="dm-card" style="background:rgba(6,0,20,0.98);border:1px solid #44118877;border-radius:7px;padding:22px 24px;max-width:500px;width:95%;box-shadow:0 0 50px #22006633;display:flex;flex-direction:column;gap:14px;">
+    <div id="dm-card" style="background:rgba(6,0,20,0.98);border:1px solid rgba(68,17,136,0.467);border-radius:7px;padding:22px 24px;max-width:500px;width:95%;box-shadow:0 0 50px rgba(34,0,102,0.2);display:flex;flex-direction:column;gap:14px;">
       <div class="trade-gold-bar">
         <span class="tgb-icon">🔷</span>
         <span class="tgb-label">Treasury</span>
@@ -2258,19 +2258,19 @@ body {
         <span class="tgb-label">TS</span>
       </div>
       <div style="display:flex;align-items:center;gap:14px;">
-        <div id="dm-portrait" style="width:52px;height:52px;border-radius:50%;border:2px solid #44118855;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;">🧑‍✈️</div>
+        <div id="dm-portrait" style="width:52px;height:52px;border-radius:50%;border:2px solid rgba(68,17,136,0.333);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;">🧑‍✈️</div>
         <div>
           <div id="dm-name" style="font-family:'Cinzel',serif;font-size:13px;color:#ccaaff;letter-spacing:1px;"></div>
           <div id="dm-title" style="font-size:10px;color:#554477;letter-spacing:1px;margin-top:2px;"></div>
           <div id="dm-city" style="font-size:10px;color:#443366;font-style:italic;margin-top:2px;line-height:1.4;"></div>
         </div>
       </div>
-      <div style="width:100%;height:1px;background:linear-gradient(90deg,transparent,#44118844,transparent);"></div>
+      <div style="width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(68,17,136,0.267),transparent);"></div>
       <div id="dm-text" style="font-size:13px;color:#bbaadd;line-height:1.7;font-style:italic;min-height:80px;"></div>
       <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
         <button id="dm-skip-btn" class="btn" onclick="closeDockmaster()" style="font-size:11px;padding:7px 14px;border-color:rgba(51,34,68,0.33);color:#554477;">✕ Leave</button>
-        <button id="dm-quest-btn" class="btn" onclick="dmOfferQuest()" style="display:none;font-size:11px;padding:7px 14px;background:rgba(5,20,50,0.8);border-color:#2255aa55;color:#88aaff;"></button>
-        <button id="dm-clue-btn" class="btn" onclick="dmGrantClue()" style="display:none;font-size:11px;padding:7px 14px;background:rgba(60,20,10,0.8);border-color:#aa660055;color:#ffaa44;"></button>
+        <button id="dm-quest-btn" class="btn" onclick="dmOfferQuest()" style="display:none;font-size:11px;padding:7px 14px;background:rgba(5,20,50,0.8);border-color:rgba(34,85,170,0.333);color:#88aaff;"></button>
+        <button id="dm-clue-btn" class="btn" onclick="dmGrantClue()" style="display:none;font-size:11px;padding:7px 14px;background:rgba(60,20,10,0.8);border-color:rgba(170,102,0,0.333);color:#ffaa44;"></button>
         <button id="dm-next-btn" class="btn" onclick="dmAdvance()" style="font-size:11px;padding:7px 14px;">Continue →</button>
       </div>
       <div id="dm-progress" style="display:flex;gap:5px;justify-content:center;"></div>
@@ -2279,10 +2279,10 @@ body {
 
   <!-- GUARDIAN CONFIRM -->
   <div class="ovlay" id="ov-guardian" style="z-index:40;">
-    <div style="background:rgba(8,2,22,0.98);border:1px solid #aa660066;border-radius:7px;padding:24px 28px;max-width:400px;width:95%;box-shadow:0 0 40px #aa660033;display:flex;flex-direction:column;gap:12px;align-items:center;">
+    <div style="background:rgba(8,2,22,0.98);border:1px solid rgba(170,102,0,0.4);border-radius:7px;padding:24px 28px;max-width:400px;width:95%;box-shadow:0 0 40px rgba(170,102,0,0.2);display:flex;flex-direction:column;gap:12px;align-items:center;">
       <div id="grd-title" style="font-family:'Cinzel',serif;font-size:18px;color:#ffaa44;letter-spacing:2px;text-align:center;"></div>
       <div id="grd-sub" style="font-family:'Cinzel',serif;font-size:10px;color:#665533;letter-spacing:2px;text-align:center;"></div>
-      <canvas id="grd-canvas" width="200" height="120" style="border-radius:4px;background:rgba(5,0,15,0.7);border:1px solid #44220033;"></canvas>
+      <canvas id="grd-canvas" width="200" height="120" style="border-radius:4px;background:rgba(5,0,15,0.7);border:1px solid rgba(68,34,0,0.2);"></canvas>
       <div id="grd-stats" style="font-size:12px;color:#aa8855;text-align:center;"></div>
       <div id="grd-lore" style="font-size:12px;color:#7766aa;font-style:italic;text-align:center;line-height:1.5;"></div>
       <div style="display:flex;gap:10px;width:100%;justify-content:center;">
@@ -2320,14 +2320,14 @@ body {
     </div>
 
     <!-- Bounce config panel — shown when idle is active at map phase -->
-    <div id="idle-bounce-panel" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(6,2,18,0.97);border:1px solid #5522aa88;border-radius:8px;padding:20px 24px;z-index:300;min-width:260px;text-align:center;font-family:'Cinzel',serif;gap:10px;display:none;flex-direction:column;align-items:center;">
+    <div id="idle-bounce-panel" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(6,2,18,0.97);border:1px solid rgba(85,34,170,0.533);border-radius:8px;padding:20px 24px;z-index:300;min-width:260px;text-align:center;font-family:'Cinzel',serif;gap:10px;display:none;flex-direction:column;align-items:center;">
       <div style="color:#aa88ff;font-size:13px;letter-spacing:2px;margin-bottom:6px;">⚙ START IDLE BOUNCE</div>
       <div style="color:#665599;font-size:10px;margin-bottom:8px;">Pick a destination. The ship will travel back and forth<br>automatically, resupplying at each end.</div>
       <div style="display:flex;gap:8px;align-items:center;justify-content:center;width:100%;">
         <span style="color:#8866cc;font-size:10px;">FROM</span>
-        <span id="idle-bounce-from" style="color:#ccaaff;font-size:11px;background:rgba(40,20,80,0.6);padding:3px 10px;border-radius:3px;border:1px solid #44228844;">—</span>
+        <span id="idle-bounce-from" style="color:#ccaaff;font-size:11px;background:rgba(40,20,80,0.6);padding:3px 10px;border-radius:3px;border:1px solid rgba(68,34,136,0.267);">—</span>
         <span style="color:#8866cc;font-size:10px;">→ TO</span>
-        <select id="idle-bounce-to-sel" style="background:rgba(10,4,28,0.95);border:1px solid #5522aa66;color:#ccaaff;font-family:'Cinzel',serif;font-size:10px;padding:3px 8px;border-radius:3px;"></select>
+        <select id="idle-bounce-to-sel" style="background:rgba(10,4,28,0.95);border:1px solid rgba(85,34,170,0.4);color:#ccaaff;font-family:'Cinzel',serif;font-size:10px;padding:3px 8px;border-radius:3px;"></select>
       </div>
       <div style="display:flex;gap:8px;margin-top:6px;width:100%;justify-content:center;">
         <button class="btn" id="idle-bounce-start-btn" onclick="startBounceTravel()" style="font-size:10px;padding:6px 14px;">⚡ Start Bouncing</button>
@@ -2346,7 +2346,7 @@ body {
   </div>
 
   <!-- LANE / WAYPOINT HOVER TOOLTIP -->
-  <div id="map-tooltip" style="display:none;position:absolute;pointer-events:none;z-index:30;background:rgba(5,0,15,0.95);border:1px solid #44118866;border-radius:4px;padding:9px 13px;max-width:260px;">
+  <div id="map-tooltip" style="display:none;position:absolute;pointer-events:none;z-index:30;background:rgba(5,0,15,0.95);border:1px solid rgba(68,17,136,0.4);border-radius:4px;padding:9px 13px;max-width:260px;">
     <div id="mtt-label" style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:1px;margin-bottom:4px;"></div>
     <div id="mtt-danger" style="font-size:10px;margin-bottom:4px;"></div>
     <div id="mtt-lore" style="font-size:11px;color:#8877aa;font-style:italic;line-height:1.5;"></div>
@@ -2355,7 +2355,7 @@ body {
 
   <!-- IDLE AUTO-DOCK OVERLAY — shown during bounce resupply instead of local space -->
   <div class="ovlay" id="ov-idle-dock" style="z-index:200;display:none;align-items:center;justify-content:center;">
-    <div id="idle-dock-card" style="background:rgba(4,0,14,0.97);border:1px solid #5522aa88;border-radius:8px;padding:28px 32px;max-width:340px;width:92%;text-align:center;display:flex;flex-direction:column;gap:12px;box-shadow:0 0 60px #22006644;">
+    <div id="idle-dock-card" style="background:rgba(4,0,14,0.97);border:1px solid rgba(85,34,170,0.533);border-radius:8px;padding:28px 32px;max-width:340px;width:92%;text-align:center;display:flex;flex-direction:column;gap:12px;box-shadow:0 0 60px rgba(34,0,102,0.267);">
       <div style="font-family:'Cinzel',serif;font-size:13px;color:#aa88ff;letter-spacing:2px;">⚙ IDLE — AUTO-DOCKING</div>
       <div id="idle-dock-sphere" style="font-family:'Cinzel',serif;font-size:11px;color:#ccaaff;letter-spacing:1px;"></div>
       <div id="idle-dock-status" style="font-size:11px;color:#8877aa;font-style:italic;min-height:16px;"></div>
@@ -2522,7 +2522,7 @@ body {
       <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap;">
         <button class="btn exit" style="font-size:0.688em;" onclick="closeLsDock()">⬅ Return to Space</button>
         <button id="ls-dock-deliver-btn" class="btn" onclick="lsDockDeliverCargo()" style="display:none;font-size:0.688em;border-color:#446600;color:#88ff44;margin-bottom:4px;">📦 Deliver Cargo Mission</button>
-        <button id="ls-dock-ask-locals-btn" class="btn" onclick="lsOpenLocalsPanel()" style="font-size:0.688em;border-color:#aa882244;color:#ccaa55;">🍺 Ask Locals</button>
+        <button id="ls-dock-ask-locals-btn" class="btn" onclick="lsOpenLocalsPanel()" style="font-size:0.688em;border-color:rgba(170,136,34,0.267);color:#ccaa55;">🍺 Ask Locals</button>
         <button class="btn exit" style="font-size:0.688em;border-color:#661100;color:#ff8866;" onclick="lsDockDepart()" id="ls-dock-depart-btn">⛵ Depart System</button>
       </div>
     </div>
@@ -2631,7 +2631,7 @@ body {
     <div class="etext" style="font-size:13px;color:#7766aa;max-width:400px;">Your mission is complete — but the stars remain. You could rest, or you could keep sailing.</div>
     <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;">
       <button class="btn" onclick="restart()" style="border-color:rgba(51,102,68,0.33);color:#44bb88;">🏆 End Voyage</button>
-      <button class="btn" onclick="continueSailing()" style="border-color:#4488ff55;color:#88ccff;">⭐ Continue Sailing</button>
+      <button class="btn" onclick="continueSailing()" style="border-color:rgba(68,136,255,0.333);color:#88ccff;">⭐ Continue Sailing</button>
     </div>
     <button class="btn gd" onclick="restart()" style="display:none;"></button>
   </div>
@@ -2642,8 +2642,8 @@ body {
     <div class="etext" style="font-size:14px;color:#9955cc;max-width:480px;">You have done what no captain in recorded history has done. You crossed the Breach, mapped the unknown spheres, dismantled four Elder Evil extensions, and drove back the Manifest Hunger itself. The Void Rift will remember this. It will be back, eventually. But not today.</div>
     <div class="etext" style="font-size:13px;color:#7744aa;max-width:400px;font-style:italic;">— Entry sealed in the IEF Void Codex as "The the Scar-Wraith Expedition." Captain's name redacted at their request. Threat level: Resolved. —</div>
     <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;">
-      <button class="btn" onclick="restart()" style="border-color:#88006688;color:#cc44ff;">⬡ End the Expedition</button>
-      <button class="btn" onclick="continueSailing()" style="border-color:#4488ff55;color:#88ccff;">⭐ Keep Sailing</button>
+      <button class="btn" onclick="restart()" style="border-color:rgba(136,0,102,0.533);color:#cc44ff;">⬡ End the Expedition</button>
+      <button class="btn" onclick="continueSailing()" style="border-color:rgba(68,136,255,0.333);color:#88ccff;">⭐ Keep Sailing</button>
     </div>
   </div>
 </div>
@@ -5896,7 +5896,7 @@ function renderLoop(ts=0) {
     cx.fillStyle=wgr; cx.beginPath(); cx.arc(px,py,18,0,Math.PI*2); cx.fill();
     // Diamond shape
     const ds=7*pulse;
-    cx.fillStyle='rgba(8,2,22,0.85)'; cx.strokeStyle='#88ccff88'; cx.lineWidth=1;
+    cx.fillStyle='rgba(8,2,22,0.85)'; cx.strokeStyle='rgba(136,204,255,0.533)'; cx.lineWidth=1;
     cx.beginPath(); cx.moveTo(px,py-ds); cx.lineTo(px+ds,py); cx.lineTo(px,py+ds); cx.lineTo(px-ds,py); cx.closePath();
     cx.fill(); cx.stroke();
     // Inner dot
@@ -5917,7 +5917,7 @@ function renderLoop(ts=0) {
       const sp = sPos(sph);
       const fp = {x:fs.x*W, y:fs.y*H};
       cx.save();
-      cx.strokeStyle = collected ? '#55553388' : '#ffd70066';
+      cx.strokeStyle = collected ? 'rgba(85,85,51,0.533)' : 'rgba(255,215,0,0.4)';
       cx.lineWidth = collected ? 1 : 1.5;
       cx.setLineDash([5, 7]);
       cx.globalAlpha = collected ? 0.35 : 0.65 + 0.15*Math.sin(t*1.8);
@@ -6157,7 +6157,7 @@ function drawPinnace(ctx,x,y,sz,flip,t=0){
   // Single mast/sail
   ctx.strokeStyle=flip?'#9966ee':'#88bbff'; ctx.lineWidth=1.5*s;
   ctx.beginPath(); ctx.moveTo(0,-5*s); ctx.lineTo(0,-14*s); ctx.stroke();
-  ctx.fillStyle=flip?'#7733cc88':'#3366cc88';
+  ctx.fillStyle=flip?'rgba(119,51,204,0.533)':'rgba(51,102,204,0.533)';
   ctx.beginPath(); ctx.moveTo(-4*s,-13*s); ctx.lineTo(0,-14*s); ctx.lineTo(0,-6*s); ctx.lineTo(-4*s,-6*s); ctx.closePath(); ctx.fill();
   // Weapon nub
   ctx.fillStyle='#ffcc44'; ctx.beginPath(); ctx.rect(6*s,-2*s,6*s,4*s); ctx.fill();
@@ -9039,7 +9039,7 @@ function tsFallbackDraw(ctx, key, w, h, glowCol) {
     ctx.lineTo(w*0.3,h*0.12); ctx.lineTo(-w*0.38,h*0.08); ctx.closePath();
     ctx.fill(); ctx.stroke();
     // Broken bits
-    ctx.strokeStyle = '#33334455'; ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(51,51,68,0.333)'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(-w*0.2,-h*0.08); ctx.lineTo(-w*0.05,h*0.06); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(w*0.1,-h*0.04); ctx.lineTo(w*0.25,h*0.1); ctx.stroke();
   } else if (key.includes('jellyfish') || key.includes('mote')) {
@@ -9068,7 +9068,7 @@ function tsFallbackDraw(ctx, key, w, h, glowCol) {
   } else {
     // Generic: glowing cloud
     const rg = ctx.createRadialGradient(0,0,0,0,0,w*0.3);
-    rg.addColorStop(0, '#ffffff11'); rg.addColorStop(1,'transparent');
+    rg.addColorStop(0, 'rgba(255,255,255,0.067)'); rg.addColorStop(1,'transparent');
     ctx.fillStyle=rg; ctx.beginPath(); ctx.arc(0,0,w*0.3,0,Math.PI*2); ctx.fill();
   }
 }
@@ -9131,7 +9131,7 @@ function tsDrawEvent(ctx, ev, W, H) {
     const labelOffY = -Math.cos(angle) * 48;
     ctx.save();
     ctx.translate(ev.x + labelOffX, ev.y + labelOffY);
-    ctx.fillStyle = '#ff4422cc';
+    ctx.fillStyle = 'rgba(255,68,34,0.8)';
     ctx.font = `bold 11px 'Cinzel', serif`;
     ctx.textAlign = 'center';
     ctx.fillText(ev.label || '⚠ ENEMY SIGHTED', 0, 0);
@@ -9145,7 +9145,7 @@ function tsDrawEvent(ctx, ev, W, H) {
     rg.addColorStop(0, 'rgba(68,136,255,0.4)'); rg.addColorStop(1, 'transparent');
     ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(0, 0, 48, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle = 'rgba(8,18,50,0.95)';
-    ctx.strokeStyle = '#4488ffaa'; ctx.lineWidth = 2.5;
+    ctx.strokeStyle = 'rgba(68,136,255,0.667)'; ctx.lineWidth = 2.5;
     ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI*2); ctx.fill(); ctx.stroke();
     ctx.rotate(TS.t * 0.15);
     ctx.strokeStyle = 'rgba(68,136,255,0.4)'; ctx.lineWidth = 2;
@@ -10836,7 +10836,7 @@ function drawNeogi(ctx,x,y,sz){
   bodyGrad.addColorStop(0,'#3a1a00'); bodyGrad.addColorStop(1,'#1a0800');
   ctx.fillStyle=bodyGrad;
   ctx.beginPath(); ctx.ellipse(-s*2,0,s*12,s*8,0,0,Math.PI*2); ctx.fill();
-  ctx.strokeStyle='#6633001a'; ctx.lineWidth=s*0.6;
+  ctx.strokeStyle='rgba(102,51,0,0.102)'; ctx.lineWidth=s*0.6;
   ctx.beginPath(); ctx.ellipse(-s*2,0,s*12,s*8,0,0,Math.PI*2); ctx.stroke();
   // Cephalothorax — smaller forward section
   ctx.fillStyle='#2a1200';
@@ -10876,7 +10876,7 @@ function drawNeogi(ctx,x,y,sz){
     ctx.lineWidth=s*1.4;
   });
   // Chitin banding on abdomen
-  ctx.strokeStyle='#5c2a0044'; ctx.lineWidth=s*0.5;
+  ctx.strokeStyle='rgba(92,42,0,0.267)'; ctx.lineWidth=s*0.5;
   for(let i=0;i<3;i++){
     ctx.beginPath(); ctx.ellipse(-s*2,0,s*(8+i*1.5),s*(5+i*1),0,0,Math.PI*2); ctx.stroke();
   }
@@ -11182,7 +11182,7 @@ function drawTrullEnforcer(ctx,x,y,sz){
     ctx.strokeStyle='#664422'; ctx.lineWidth=s*0.4; ctx.strokeRect(px,py,s*5,s*4);
   });
   // Prow spike
-  ctx.fillStyle='#88552200'; ctx.strokeStyle='#aa7733'; ctx.lineWidth=s*0.8;
+  ctx.fillStyle='rgba(136,85,34,0.0)'; ctx.strokeStyle='#aa7733'; ctx.lineWidth=s*0.8;
   ctx.beginPath(); ctx.moveTo(s*16,0); ctx.lineTo(s*22,-s*1.5); ctx.lineTo(s*22,s*1.5); ctx.closePath(); ctx.fill(); ctx.stroke();
   // Crew ports — tiny windows
   ctx.fillStyle='#ffcc66';
@@ -11559,7 +11559,7 @@ function buildCbtPanels() {
   if (!G.cbt.pTurn) {
     playerPanel.innerHTML += '<div style="color:#9966dd;font-style:italic;font-size:10px;padding:4px;">Enemy is acting…</div>';
   } else if (G.cbt._playerStunned) {
-    playerPanel.innerHTML += '<div style="color:#ff7755;font-style:italic;font-size:10px;padding:4px;border:1px solid #ff443322;border-radius:3px;margin:4px 0;background:rgba(40,10,0,0.5);">⚡ STUNNED — click any action to lose turn</div>';
+    playerPanel.innerHTML += '<div style="color:#ff7755;font-style:italic;font-size:10px;padding:4px;border:1px solid rgba(255,68,51,0.133);border-radius:3px;margin:4px 0;background:rgba(40,10,0,0.5);">⚡ STUNNED — click any action to lose turn</div>';
   } else {
     if (G.cbt.pStat === 'stunned') G.cbt.pStat = 'normal';
     G.ship.wpns.forEach((wk, i) => {
@@ -14117,12 +14117,12 @@ function _buildRoamShopHTML(fac, resEl){
     const stockLabel = soldOut ? ' <span style="font-size:8px;color:#553344;">[SOLD OUT]</span>'
                                : ` <span style="font-size:8px;color:#554444;">[${s.remaining}]</span>`;
     const btnBg = soldOut ? 'rgba(10,5,10,0.5)' : (canAfford ? 'rgba(30,15,5,0.9)' : 'rgba(10,5,10,0.5)');
-    const btnBd = soldOut ? '#33223344' : (canAfford ? 'rgba(170,136,34,0.33)' : '#33223344');
+    const btnBd = soldOut ? 'rgba(51,34,51,0.267)' : (canAfford ? 'rgba(170,136,34,0.33)' : 'rgba(51,34,51,0.267)');
     const btnCol = (soldOut || !canAfford) ? '#443333' : '#ffcc66';
     const btnCur = (soldOut || !canAfford) ? 'default' : 'pointer';
     const btnDis = (soldOut || !canAfford) ? 'disabled' : '';
     const btnTxt = soldOut ? 'Sold' : 'Buy';
-    html += `<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #22113322;">
+    html += `<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid rgba(34,17,51,0.133);">
       <span style="font-size:13px;opacity:${soldOut?0.4:1}">${itm.ico}</span>
       <span style="flex:1;font-size:11px;color:${rowCol};">${nameStr}${stockLabel}</span>
       <span style="font-size:10px;color:#886633;">🔷 ${price}</span>
@@ -14188,14 +14188,14 @@ function roamHail(){
     const pickupSphere = G.spheres.find(s=>s.id===availQ.pickup);
     const turninSphere = G.spheres.find(s=>s.id===availQ.turnin);
     resEl.innerHTML = `<div style="margin-bottom:6px;color:#88aaff;">Diplomatic contact made. The ${fac.short} vessel stands down.</div>
-      <div style="border-top:1px solid #22334455;padding-top:8px;margin-top:4px;">
+      <div style="border-top:1px solid rgba(34,51,68,0.333);padding-top:8px;margin-top:4px;">
         <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:#886644;margin-bottom:6px;">— MISSION AVAILABLE —</div>
         <div style="font-size:12px;color:#ccaadd;margin-bottom:4px;"><b>${availQ.title}</b></div>
         <div style="font-size:11px;color:#998899;margin-bottom:8px;line-height:1.5;">${availQ.desc}</div>
         <div style="font-size:10px;color:#665577;">Pickup: ${pickupSphere?.n||availQ.pickup} → Deliver to: ${turninSphere?.n||availQ.turnin}</div>
         <div style="font-size:10px;color:#886633;margin-top:2px;">Reward: 🔷 ${availQ.reward} TS</div>
         <button onclick="roamAcceptQuest('${availQ.id}')"
-          style="margin-top:10px;width:100%;padding:8px;background:rgba(5,20,50,0.9);border:1px solid #2255aa55;
+          style="margin-top:10px;width:100%;padding:8px;background:rgba(5,20,50,0.9);border:1px solid rgba(34,85,170,0.333);
           color:#88aaff;font-family:'Cinzel',serif;font-size:11px;cursor:pointer;border-radius:4px;">
           📋 Accept Mission</button>
       </div>`;
@@ -14333,7 +14333,7 @@ function showFactionRep(){
   if(!el) return;
   const frows = Object.entries(FACTIONS).map(([k,f])=>{
     const rep = G.rep?.[k]??f.start;
-    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #11002233;">
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(17,0,34,0.2);">
       <div style="width:9px;height:9px;border-radius:50%;background:${f.col};flex-shrink:0;"></div>
       <div style="flex:1;font-size:12px;color:#bbaadd;">${f.n}</div>
       <div style="font-size:11px;color:${repCol(rep)};font-family:'Cinzel',serif;">${repLabel(rep)}</div>
@@ -14346,7 +14346,7 @@ function showFactionRep(){
       :q.state==='active'?'\ud83d\udccb Deliver \u2192 '+(G.spheres.find(s=>s.id===q.turnin)?.n||q.turnin)
       :q.state==='accepted'?'\ud83d\udce6 Collect at '+(G.spheres.find(s=>s.id===q.pickup)?.n||q.pickup)
       :'\u2014 Inactive';
-    return `<div style="padding:5px 0;border-bottom:1px solid #11002233;">
+    return `<div style="padding:5px 0;border-bottom:1px solid rgba(17,0,34,0.2);">
       <div style="font-size:10px;color:${col};margin-bottom:2px;">${status}</div>
       <div style="font-size:11px;color:#998899;">${q.title}</div>
     </div>`;
@@ -16943,7 +16943,7 @@ function _lsBuildSellGrid() {
     const badge = isUsable ? ' <span style="font-size:8px;color:#664499;">[60%]</span>'
                 : isWpn    ? ' <span style="font-size:8px;color:#665533;">[wpn]</span>' : '';
     row.innerHTML = `<span style="font-size:0.625em;color:${isUsable?'#aa88cc':isWpn?'#ffcc88':'#8899bb'};">${item.ico||'📦'} ${item.n}${badge}</span>
-      <button class="btn" style="font-size:0.563em;padding:3px 8px;${isUsable?'border-color:#66336655;color:#cc99ee;':''}">🔷 ${sv} TS</button>`;
+      <button class="btn" style="font-size:0.563em;padding:3px 8px;${isUsable?'border-color:rgba(102,51,102,0.333);color:#cc99ee;':''}">🔷 ${sv} TS</button>`;
     row.querySelector('button').onclick = () => {
       G.ship.gold += sv;
       G.ship.inv = G.ship.inv.filter(i => i.uid !== item.uid);
@@ -16976,7 +16976,7 @@ function _lsRefreshDock() {
   const _delBtn = document.getElementById('ls-dock-deliver-btn');
   if(_delBtn) {
     _delBtn.style.display = _hasCargo ? 'block' : 'none';
-    _delBtn.style.boxShadow = _hasCargo ? '0 0 10px #44ff44aa' : 'none';
+    _delBtn.style.boxShadow = _hasCargo ? '0 0 10px rgba(68,255,68,0.667)' : 'none';
     _delBtn.style.animation = _hasCargo ? 'questPulse 1.2s ease-in-out infinite' : 'none';
   }
 
@@ -17066,7 +17066,7 @@ function _lsBuildQmShop() {
 
     const row = document.createElement('div');
     row.style.cssText = `display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:4px;
-      background:rgba(10,5,30,0.6);border:1px solid ${soldOut?'#33224422':'rgba(51,34,68,0.2)'};
+      background:rgba(10,5,30,0.6);border:1px solid ${soldOut?'rgba(51,34,68,0.133)':'rgba(51,34,68,0.2)'};
       opacity:${soldOut||!canAfford ? '0.45' : '1'};`;
 
     // Item name + desc
@@ -17670,7 +17670,7 @@ function _lsOpenNpcCard(npc, hasShop=false) {
     const statusCls   = status==='active' ? 'active' : status==='rewarded' ? 'done' : 'avail';
     qBlock.innerHTML = `
       <div class="ls-npc-qtitle">${quest.title}</div>
-      <div style="width:100%;height:1px;background:linear-gradient(90deg,transparent,#44118844,transparent);"></div>
+      <div style="width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(68,17,136,0.267),transparent);"></div>
       <div class="ls-npc-qdesc">${status==='active' ? quest.task : quest.desc}</div>
       <div class="ls-npc-qreward">Reward: ${quest.reward}</div>
       <div><span class="ls-npc-qstatus ${statusCls}">${statusLabel}</span></div>`;
@@ -17813,13 +17813,13 @@ function _lsRender(cx, W, H, dt) {
     dark:   'rgba(10,10,40,0.22)',
   };
   const _lsNebWalls = {
-    realm:  ['rgba(30,60,180,0.08)','rgba(40,80,220,0.35)','#4466cc44'],
-    refuge: ['rgba(20,60,100,0.08)','rgba(30,80,160,0.30)','#4488dd44'],
-    grey:   ['rgba(30,70,10,0.08)', 'rgba(50,120,20,0.30)','#66aa2244'],
-    krynn:  ['rgba(100,50,10,0.08)','rgba(180,80,20,0.30)','#cc661144'],
-    cluster:['rgba(10,80,70,0.08)', 'rgba(20,140,120,0.30)','#22bbaa44'],
-    hero:   ['rgba(80,40,10,0.08)', 'rgba(150,80,20,0.30)','#aa661144'],
-    dark:   ['rgba(10,10,50,0.10)', 'rgba(20,10,80,0.35)', '#2222aa44'],
+    realm:  ['rgba(30,60,180,0.08)','rgba(40,80,220,0.35)','rgba(68,102,204,0.267)'],
+    refuge: ['rgba(20,60,100,0.08)','rgba(30,80,160,0.30)','rgba(68,136,221,0.267)'],
+    grey:   ['rgba(30,70,10,0.08)', 'rgba(50,120,20,0.30)','rgba(102,170,34,0.267)'],
+    krynn:  ['rgba(100,50,10,0.08)','rgba(180,80,20,0.30)','rgba(204,102,17,0.267)'],
+    cluster:['rgba(10,80,70,0.08)', 'rgba(20,140,120,0.30)','rgba(34,187,170,0.267)'],
+    hero:   ['rgba(80,40,10,0.08)', 'rgba(150,80,20,0.30)','rgba(170,102,17,0.267)'],
+    dark:   ['rgba(10,10,50,0.10)', 'rgba(20,10,80,0.35)', 'rgba(34,34,170,0.267)'],
   };
   const _nbCol  = _lsNebCols[_lsNebSph]  || _lsNebCols.realm;
   const _wCols  = _lsNebWalls[_lsNebSph] || _lsNebWalls.realm;
@@ -18045,12 +18045,12 @@ function _lsRender(cx, W, H, dt) {
       cx.beginPath(); cx.moveTo(14,0); cx.lineTo(-9,-6); cx.lineTo(-4,0); cx.lineTo(-9,6); cx.closePath(); cx.fill();
     } else if(G.ship.type==='squid'){
       cx.beginPath(); cx.moveTo(17,0); cx.lineTo(-10,-9); cx.lineTo(-5,-3); cx.lineTo(-12,0); cx.lineTo(-5,3); cx.lineTo(-10,9); cx.closePath(); cx.fill();
-      cx.strokeStyle='#ccddff44'; cx.lineWidth=1; cx.stroke();
+      cx.strokeStyle='rgba(204,221,255,0.267)'; cx.lineWidth=1; cx.stroke();
     } else if(G.ship.type==='hammer'){
       cx.fillRect(-4,-14,8,28); cx.beginPath(); cx.moveTo(18,0); cx.lineTo(0,-5); cx.lineTo(0,5); cx.closePath(); cx.fill();
     } else {
       cx.beginPath(); cx.moveTo(20,0); cx.lineTo(-12,-12); cx.lineTo(-7,-5); cx.lineTo(-14,0); cx.lineTo(-7,5); cx.lineTo(-12,12); cx.closePath(); cx.fill();
-      cx.strokeStyle='#ccddff44'; cx.lineWidth=1; cx.stroke();
+      cx.strokeStyle='rgba(204,221,255,0.267)'; cx.lineWidth=1; cx.stroke();
     }
   });
   cx.shadowBlur=0;
@@ -18126,12 +18126,12 @@ function _lsRenderMinimap() {
   mx.fillStyle='rgba(2,0,16,0.7)'; mx.fillRect(0,0,110,110);
 
   // Sphere boundary
-  mx.strokeStyle='#4466cc33'; mx.lineWidth=1;
+  mx.strokeStyle='rgba(68,102,204,0.2)'; mx.lineWidth=1;
   mx.beginPath(); mx.arc(55,55,53,0,Math.PI*2); mx.stroke();
 
   // Hazard zones
   LS.pois.filter(p=>p.type==='hazard_zone').forEach(p=>{
-    mx.fillStyle='#ff333322';
+    mx.fillStyle='rgba(255,51,51,0.133)';
     mx.beginPath(); mx.arc(ox+p.x*scale,oy+p.y*scale,p.r*scale,0,Math.PI*2); mx.fill();
   });
 
@@ -18164,7 +18164,7 @@ function _lsRenderMinimap() {
   // Player
   mx.fillStyle='#aaccff';
   mx.beginPath(); mx.arc(ox+LS.px*scale,oy+LS.py*scale,3.5,0,Math.PI*2); mx.fill();
-  mx.strokeStyle='#ffffff55'; mx.lineWidth=1;
+  mx.strokeStyle='rgba(255,255,255,0.333)'; mx.lineWidth=1;
   mx.beginPath(); mx.arc(ox+LS.px*scale,oy+LS.py*scale,3.5,0,Math.PI*2); mx.stroke();
 }
 
@@ -18656,7 +18656,7 @@ function lqRenderLoop(ts=0) {
     cx.beginPath();
     cx.moveTo(0,-10); cx.lineTo(-5,6); cx.lineTo(0,2); cx.lineTo(5,6); cx.closePath();
     cx.fill();
-    cx.strokeStyle = '#ffffff33'; cx.lineWidth=1; cx.stroke();
+    cx.strokeStyle = 'rgba(255,255,255,0.2)'; cx.lineWidth=1; cx.stroke();
     cx.restore(); cx.globalAlpha=1;
 
     // Status badge
@@ -18668,7 +18668,7 @@ function lqRenderLoop(ts=0) {
       cx.font='bold 11px Arial'; cx.textAlign='center'; cx.textBaseline='middle';
       cx.fillStyle='#ffd700'; cx.fillText('!',nx,ny-18);
     } else if(questStatus === 'active') {
-      cx.strokeStyle = '#ffaa3388'; cx.lineWidth=1.5;
+      cx.strokeStyle = 'rgba(255,170,51,0.533)'; cx.lineWidth=1.5;
       cx.beginPath(); cx.arc(nx,ny,13,0,Math.PI*2); cx.stroke();
     }
 
@@ -21144,6 +21144,65 @@ document.addEventListener('visibilitychange', () => {
   if(G.phase === 'traveling') {
     startLiveClock();
   }
+
+  // ── Browser background throttling recovery ────────────────────────────────
+  // Timers (setInterval/setTimeout) are paused or coalesced by the browser when
+  // the page is hidden (screen lock, app switch). When we come back, any in-flight
+  // setTimeout chains (dock overlay, rest countdown, etc.) may have fired at the
+  // wrong time or been skipped entirely, leaving the game stuck in 'map' phase.
+  // Give the pending callbacks 500ms to self-resolve, then run a full state audit.
+  if(G._idleBounce) {
+    setTimeout(() => {
+      if(!G?._idleMode || !G?._idleBounce) return;
+
+      // ── Case 1: stuck mid-rest (restingPhase never cleared) ──────────────
+      // Browser paused the rest animation setTimeout — force-complete it.
+      if(G.watch?.restingPhase) {
+        addLog('⚙ Idle: resuming interrupted rest…', '');
+        G.watch.restingPhase = false;
+        G.watch.legsPushed   = 0;
+        restAdvanceToMorning();
+        const s = G.ship;
+        const hullHeal = Math.min(25, s.maxHull - s.hull);
+        if(hullHeal > 0) { s.hull += hullHeal; }
+        const crewHeal = Math.min(2, s.maxCrew - s.crew);
+        if(crewHeal > 0) { s.crew += crewHeal; }
+        updateUI();
+        // If we have a pending resume, fire it
+        if(G._resumeTravel) {
+          const rt = G._resumeTravel; G._resumeTravel = null; G._restResumeBackup = null;
+          G.phase = 'map';
+          startTravel(rt.toId, rt.watchesRemaining, rt.pausedPos, rt.pausedProg, rt.laneOrigin);
+        } else if(G._idleBounceTo && G.ship.loc !== G._idleBounceTo) {
+          _idleBounceDepart();
+        }
+        return;
+      }
+
+      // ── Case 2: stuck in map with pending resume (countdown was throttled) ─
+      if(G.phase === 'map' && G._resumeTravel && !G.watch?.restingPhase) {
+        addLog('⚙ Idle: resume state found after wake — restarting voyage.', '');
+        // Clear any stale countdown
+        if(_restCountdownTimer) { clearInterval(_restCountdownTimer); _restCountdownTimer = null; }
+        document.getElementById('msgbox')?.classList.remove('on');
+        const rt = G._resumeTravel; G._resumeTravel = null; G._restResumeBackup = null;
+        G.phase = 'map';
+        startTravel(rt.toId, rt.watchesRemaining, rt.pausedPos, rt.pausedProg, rt.laneOrigin);
+        return;
+      }
+
+      // ── Case 3: stuck in map with no resume state but bounce is active ────
+      if(G.phase === 'map' && !G.watch?.restingPhase && G._idleBounceTo && G.ship.loc !== G._idleBounceTo) {
+        const dockOpen = document.getElementById('ov-idle-dock')?.style.display !== 'none';
+        const restOpen = document.getElementById('rest-overlay')?.classList.contains('on');
+        if(!dockOpen && !restOpen) {
+          addLog('⚙ Idle: no pending state after wake — restarting bounce.', '');
+          _idleBounceDepart();
+        }
+      }
+    }, 500);
+  }
+
   addLog('⚙ Idle: page resumed — continuing.', '');
 });
 
@@ -21161,7 +21220,7 @@ document.addEventListener('visibilitychange', () => {
 <!-- ═══ MAIN MENU ═══ -->
 <div id="main-menu" class="mm-screen">
   <div class="mm-card">
-    <canvas id="mm-ship-canvas" width="240" height="140" style="border-radius:5px;background:rgba(5,0,15,0.6);border:1px solid #33005544;"></canvas>
+    <canvas id="mm-ship-canvas" width="240" height="140" style="border-radius:5px;background:rgba(5,0,15,0.6);border:1px solid rgba(51,0,85,0.267);"></canvas>
     <h1 class="mm-title">FENTHERIS</h1>
     <div class="mm-sub">Voyage Through the Drift · Year 3350 CG</div>
     <div class="mm-divider"></div>
@@ -21520,8 +21579,8 @@ document.addEventListener('visibilitychange', () => {
 
 <!-- ═══ FACTION REP OVERLAY ═══ -->
 <div id="ov-faction-rep" class="ovlay" style="z-index:5500;">
-  <div style="background:rgba(4,0,14,0.98);border:1px solid #44118877;border-radius:8px;padding:20px 22px;max-width:420px;width:94%;max-height:80vh;overflow-y:auto;box-shadow:0 0 50px #22006633;margin:auto;">
-    <div style="font-family:'Cinzel',serif;font-size:12px;letter-spacing:3px;color:#7755aa;margin-bottom:14px;border-bottom:1px solid #33115533;padding-bottom:8px;">📊 FACTION STANDING</div>
+  <div style="background:rgba(4,0,14,0.98);border:1px solid rgba(68,17,136,0.467);border-radius:8px;padding:20px 22px;max-width:420px;width:94%;max-height:80vh;overflow-y:auto;box-shadow:0 0 50px rgba(34,0,102,0.2);margin:auto;">
+    <div style="font-family:'Cinzel',serif;font-size:12px;letter-spacing:3px;color:#7755aa;margin-bottom:14px;border-bottom:1px solid rgba(51,17,85,0.2);padding-bottom:8px;">📊 FACTION STANDING</div>
     <div id="fr-factions" style="margin-bottom:14px;"></div>
     <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:#443366;margin:12px 0 6px;">MISSIONS</div>
     <div id="fr-quests"></div>
@@ -21531,22 +21590,22 @@ document.addEventListener('visibilitychange', () => {
 
 <!-- ═══ ROAMING ENCOUNTER ═══ -->
 <div id="ov-roam" style="display:none;position:fixed;inset:0;z-index:6000;background:rgba(0,0,8,0.88);display:none;align-items:center;justify-content:center;">
-  <div style="background:rgba(5,0,18,0.98);border:1px solid #44118877;border-radius:8px;padding:24px 28px;max-width:460px;width:92%;box-shadow:0 0 60px #22006633;display:flex;flex-direction:column;gap:14px;position:relative;">
+  <div style="background:rgba(5,0,18,0.98);border:1px solid rgba(68,17,136,0.467);border-radius:8px;padding:24px 28px;max-width:460px;width:92%;box-shadow:0 0 60px rgba(34,0,102,0.2);display:flex;flex-direction:column;gap:14px;position:relative;">
     <button onclick="roamContinue()" title="Dismiss" style="position:absolute;top:10px;right:12px;background:none;border:none;color:#554466;font-size:18px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:3px;" onmouseover="this.style.color='#9977cc'" onmouseout="this.style.color='#554466'">✕</button>
     <div id="roam-faction-bar" style="display:flex;align-items:center;gap:10px;">
       <div id="roam-faction-dot" style="width:10px;height:10px;border-radius:50%;background:#4488ff;flex-shrink:0;"></div>
       <div id="roam-faction-name" style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:#8899cc;"></div>
-      <div id="roam-rep-badge" style="margin-left:auto;font-size:10px;padding:2px 8px;border-radius:3px;background:rgba(20,10,40,0.8);border:1px solid #33224455;color:#aaaacc;"></div>
+      <div id="roam-rep-badge" style="margin-left:auto;font-size:10px;padding:2px 8px;border-radius:3px;background:rgba(20,10,40,0.8);border:1px solid rgba(51,34,68,0.333);color:#aaaacc;"></div>
     </div>
     <div id="roam-title" style="font-family:'Cinzel',serif;font-size:16px;color:#ccaaff;letter-spacing:1px;"></div>
     <div id="roam-body" style="font-size:13px;color:#bbaadd;line-height:1.7;font-style:italic;"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
-      <button onclick="roamAttack()" style="flex:1;min-width:100px;background:rgba(60,5,5,0.8);border:1px solid #aa222255;color:#ff8888;font-family:'Cinzel',serif;font-size:11px;padding:9px 12px;cursor:pointer;border-radius:4px;">⚔ Attack</button>
-      <button onclick="roamTrade()" style="flex:1;min-width:100px;background:rgba(30,20,5,0.8);border:1px solid #aa882255;color:#ffcc66;font-family:'Cinzel',serif;font-size:11px;padding:9px 12px;cursor:pointer;border-radius:4px;">📦 Trade</button>
-      <button id="roam-hail-btn" onclick="roamHail()" style="flex:1;min-width:100px;background:rgba(5,20,40,0.8);border:1px solid #2255aa55;color:#88aaff;font-family:'Cinzel',serif;font-size:11px;padding:9px 12px;cursor:pointer;border-radius:4px;">📡 Hail</button>
+      <button onclick="roamAttack()" style="flex:1;min-width:100px;background:rgba(60,5,5,0.8);border:1px solid rgba(170,34,34,0.333);color:#ff8888;font-family:'Cinzel',serif;font-size:11px;padding:9px 12px;cursor:pointer;border-radius:4px;">⚔ Attack</button>
+      <button onclick="roamTrade()" style="flex:1;min-width:100px;background:rgba(30,20,5,0.8);border:1px solid rgba(170,136,34,0.333);color:#ffcc66;font-family:'Cinzel',serif;font-size:11px;padding:9px 12px;cursor:pointer;border-radius:4px;">📦 Trade</button>
+      <button id="roam-hail-btn" onclick="roamHail()" style="flex:1;min-width:100px;background:rgba(5,20,40,0.8);border:1px solid rgba(34,85,170,0.333);color:#88aaff;font-family:'Cinzel',serif;font-size:11px;padding:9px 12px;cursor:pointer;border-radius:4px;">📡 Hail</button>
     </div>
-    <div id="roam-result" style="display:none;font-size:12px;color:#88cc88;padding:8px 12px;background:rgba(0,30,0,0.4);border-radius:4px;border:1px solid #22442233;"></div>
-    <button id="roam-continue-btn" onclick="roamContinue()" style="display:none;background:rgba(10,5,30,0.9);border:1px solid #44228855;color:#9977cc;font-family:'Cinzel',serif;font-size:11px;padding:8px 20px;cursor:pointer;border-radius:4px;align-self:flex-end;">Continue Voyage →</button>
+    <div id="roam-result" style="display:none;font-size:12px;color:#88cc88;padding:8px 12px;background:rgba(0,30,0,0.4);border-radius:4px;border:1px solid rgba(34,68,34,0.2);"></div>
+    <button id="roam-continue-btn" onclick="roamContinue()" style="display:none;background:rgba(10,5,30,0.9);border:1px solid rgba(68,34,136,0.333);color:#9977cc;font-family:'Cinzel',serif;font-size:11px;padding:8px 20px;cursor:pointer;border-radius:4px;align-self:flex-end;">Continue Voyage →</button>
   </div>
 </div>
 
@@ -21558,21 +21617,21 @@ document.addEventListener('visibilitychange', () => {
     <input id="debug-input" type="text"
       placeholder="cheat | unlock | heal | TS | imgcheck…"
       autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-      style="flex:1;background:transparent;border:none;border-bottom:1px solid #00ff8855;color:#88ffcc;font-family:'Courier New',monospace;font-size:14px;outline:none;padding:4px 4px;"
+      style="flex:1;background:transparent;border:none;border-bottom:1px solid rgba(0,255,136,0.333);color:#88ffcc;font-family:'Courier New',monospace;font-size:14px;outline:none;padding:4px 4px;"
       onkeydown="if(event.key==='Enter')runDebugCmd();if(event.key==='Escape')toggleDebugCon();" />
-    <button onclick="runDebugCmd()" style="background:#002a18;border:1px solid #00ff8855;color:#00ff88;font-family:'Courier New',monospace;font-size:13px;padding:6px 14px;cursor:pointer;border-radius:2px;">RUN</button>
+    <button onclick="runDebugCmd()" style="background:#002a18;border:1px solid rgba(0,255,136,0.333);color:#00ff88;font-family:'Courier New',monospace;font-size:13px;padding:6px 14px;cursor:pointer;border-radius:2px;">RUN</button>
     <button onclick="toggleDebugCon()" style="background:transparent;border:none;color:#556655;font-size:18px;cursor:pointer;padding:4px 8px;">✕</button>
   </div>
   <div id="debug-out" style="color:#558866;font-size:11px;margin-top:6px;min-height:16px;"></div>
   <!-- Quick-tap common commands on mobile -->
   <div id="debug-quickbtns" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
-    <button onclick="document.getElementById('debug-input').value='heal';runDebugCmd();"    style="background:#001a0e;border:1px solid #00ff8833;color:#44cc88;font-size:10px;padding:4px 8px;cursor:pointer;border-radius:2px;">heal</button>
-    <button onclick="document.getElementById('debug-input').value='TS';runDebugCmd();"    style="background:#1a1400;border:1px solid #ffcc0033;color:#ccaa44;font-size:10px;padding:4px 8px;cursor:pointer;border-radius:2px;">TS</button>
-    <button onclick="document.getElementById('debug-input').value='frags';runDebugCmd();"   style="background:#1a0a00;border:1px solid #ff880033;color:#cc8844;font-size:10px;padding:4px 8px;cursor:pointer;border-radius:2px;">frags</button>
-    <button onclick="document.getElementById('debug-input').value='kill';runDebugCmd();"    style="background:#1a0000;border:1px solid #ff444433;color:#cc4444;font-size:10px;padding:4px 8px;cursor:pointer;border-radius:2px;">kill</button>
-    <button onclick="document.getElementById('debug-input').value='imgcheck';runDebugCmd();" style="background:#0a001a;border:1px solid #8844ff33;color:#8866cc;font-size:10px;padding:4px 8px;cursor:pointer;border-radius:2px;">imgcheck</button>
-    <button onclick="document.getElementById('debug-input').value='wbunlock';runDebugCmd();" style="background:#0a001a;border:1px solid #ff004433;color:#cc4488;font-size:10px;padding:4px 8px;cursor:pointer;border-radius:2px;">wbunlock</button>
-    <button onclick="document.getElementById('debug-input').value='cheat';runDebugCmd();"   style="background:#1a001a;border:1px solid #ff00ff33;color:#cc44cc;font-size:10px;padding:4px 8px;cursor:pointer;border-radius:2px;">cheat</button>
+    <button onclick="document.getElementById('debug-input').value='heal';runDebugCmd();"    style="background:#001a0e;border:1px solid rgba(0,255,136,0.2);color:#44cc88;font-size:10px;padding:4px 8px;cursor:pointer;border-radius:2px;">heal</button>
+    <button onclick="document.getElementById('debug-input').value='TS';runDebugCmd();"    style="background:#1a1400;border:1px solid rgba(255,204,0,0.2);color:#ccaa44;font-size:10px;padding:4px 8px;cursor:pointer;border-radius:2px;">TS</button>
+    <button onclick="document.getElementById('debug-input').value='frags';runDebugCmd();"   style="background:#1a0a00;border:1px solid rgba(255,136,0,0.2);color:#cc8844;font-size:10px;padding:4px 8px;cursor:pointer;border-radius:2px;">frags</button>
+    <button onclick="document.getElementById('debug-input').value='kill';runDebugCmd();"    style="background:#1a0000;border:1px solid rgba(255,68,68,0.2);color:#cc4444;font-size:10px;padding:4px 8px;cursor:pointer;border-radius:2px;">kill</button>
+    <button onclick="document.getElementById('debug-input').value='imgcheck';runDebugCmd();" style="background:#0a001a;border:1px solid rgba(136,68,255,0.2);color:#8866cc;font-size:10px;padding:4px 8px;cursor:pointer;border-radius:2px;">imgcheck</button>
+    <button onclick="document.getElementById('debug-input').value='wbunlock';runDebugCmd();" style="background:#0a001a;border:1px solid rgba(255,0,68,0.2);color:#cc4488;font-size:10px;padding:4px 8px;cursor:pointer;border-radius:2px;">wbunlock</button>
+    <button onclick="document.getElementById('debug-input').value='cheat';runDebugCmd();"   style="background:#1a001a;border:1px solid rgba(255,0,255,0.2);color:#cc44cc;font-size:10px;padding:4px 8px;cursor:pointer;border-radius:2px;">cheat</button>
   </div>
 </div>
 
@@ -21585,12 +21644,12 @@ document.addEventListener('visibilitychange', () => {
   </div>
   <div id="cin-dots" style="position:relative;z-index:2;display:flex;gap:8px;margin-top:32px;"></div>
   <div id="cin-btns" style="position:relative;z-index:2;display:flex;gap:16px;margin-top:24px;">
-    <button onclick="skipCinematic()" style="background:transparent;border:1px solid #33445566;color:#445566;font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;padding:6px 18px;cursor:pointer;border-radius:2px;">⏭ SKIP</button>
+    <button onclick="skipCinematic()" style="background:transparent;border:1px solid rgba(51,68,85,0.4);color:#445566;font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;padding:6px 18px;cursor:pointer;border-radius:2px;">⏭ SKIP</button>
     <button id="cin-next-btn" onclick="nextCinSlide()" style="background:rgba(20,8,50,0.8);border:1px solid #4422aa;color:#aa88ff;font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;padding:6px 20px;cursor:pointer;border-radius:2px;">NEXT ›</button>
   </div>
 </div>
 <!-- ═══ VOLUME PANEL (fixed position, always accessible) ═══ -->
-<div id="vol-panel" style="display:none;position:fixed;top:44px;right:8px;z-index:9998;background:rgba(5,0,18,0.97);border:1px solid #44118888;border-radius:6px;padding:14px 18px;width:240px;box-shadow:0 4px 32px rgba(0,0,0,0.9);" onclick="event.stopPropagation()">
+<div id="vol-panel" style="display:none;position:fixed;top:44px;right:8px;z-index:9998;background:rgba(5,0,18,0.97);border:1px solid rgba(68,17,136,0.533);border-radius:6px;padding:14px 18px;width:240px;box-shadow:0 4px 32px rgba(0,0,0,0.9);" onclick="event.stopPropagation()">
   <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:2px;color:#7755aa;margin-bottom:12px;text-transform:uppercase;">⚙ Audio &amp; Display</div>
   <div class="vol-row">
     <span class="vol-lbl">🔊 Master</span>
@@ -21612,7 +21671,7 @@ document.addEventListener('visibilitychange', () => {
     <input type="range" id="vol-voice" min="0" max="100" value="80" oninput="applyVolumes()" style="flex:1;">
     <span class="vol-val" id="vol-voice-val">80%</span>
   </div>
-  <div style="height:1px;background:#33115533;margin:10px 0;"></div>
+  <div style="height:1px;background:rgba(51,17,85,0.2);margin:10px 0;"></div>
   <div style="font-family:'Cinzel',serif;font-size:8px;letter-spacing:2px;color:#554477;margin-bottom:8px;text-transform:uppercase;">✦ Lane Particles</div>
   <div class="vol-row">
     <span class="vol-lbl">✦ Density</span>
@@ -21621,9 +21680,9 @@ document.addEventListener('visibilitychange', () => {
   </div>
   <div style="font-size:9px;color:#443355;margin-top:-4px;margin-bottom:6px;font-style:italic;">0 = off · 50 = default · 100 = full</div>
   <div style="margin-top:12px;display:flex;gap:8px;">
-    <button onclick="setAllVol(0)" style="flex:1;font-family:'Cinzel',serif;font-size:10px;padding:7px 4px;background:rgba(30,0,0,0.8);border:1px solid #66223388;border-radius:3px;color:#aa6688;cursor:pointer;">🔇 Mute All</button>
-    <button onclick="setAllVol(80)" style="flex:1;font-family:'Cinzel',serif;font-size:10px;padding:7px 4px;background:rgba(0,10,30,0.8);border:1px solid #33449988;border-radius:3px;color:#7799cc;cursor:pointer;">↺ Reset</button>
-    <button onclick="toggleVolPanel(event)" style="font-family:'Cinzel',serif;font-size:10px;padding:7px 8px;background:rgba(20,5,40,0.8);border:1px solid #44118855;border-radius:3px;color:#554477;cursor:pointer;">✕</button>
+    <button onclick="setAllVol(0)" style="flex:1;font-family:'Cinzel',serif;font-size:10px;padding:7px 4px;background:rgba(30,0,0,0.8);border:1px solid rgba(102,34,51,0.533);border-radius:3px;color:#aa6688;cursor:pointer;">🔇 Mute All</button>
+    <button onclick="setAllVol(80)" style="flex:1;font-family:'Cinzel',serif;font-size:10px;padding:7px 4px;background:rgba(0,10,30,0.8);border:1px solid rgba(51,68,153,0.533);border-radius:3px;color:#7799cc;cursor:pointer;">↺ Reset</button>
+    <button onclick="toggleVolPanel(event)" style="font-family:'Cinzel',serif;font-size:10px;padding:7px 8px;background:rgba(20,5,40,0.8);border:1px solid rgba(68,17,136,0.333);border-radius:3px;color:#554477;cursor:pointer;">✕</button>
   </div>
 </div>
 
