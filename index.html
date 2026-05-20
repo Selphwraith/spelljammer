@@ -3132,6 +3132,70 @@ const ENM = {
       { n:'Vault Cannon',      ico:'🏰', d:[2,8], cd:1, threat:3, txt:'Dwarven vault cannon — punishing and methodical.' },
       { n:'Boarding Axe Rush', ico:'🪓', d:[2,6], cd:2, threat:4, txt:'Armoured marines board — 1 crew lost.', crew:1 }
     ]},
+
+  // ── Krynn sphere (Vael — The Star Nest) dungeon minions ──────────────────
+  fd_krynn_skirmisher: { name:'Corsair Nest Skirmisher', sub:'The Star Nest — Drift Corsair', hp:60, maxHp:60, crew:4, maxCrew:4, g:[10,20],
+    atk:[{n:'Grapple Shot',d:[2,6],txt:'A grapple line punches through your hull — dragged toward the corsair formation!'},{n:'Scatter Volley',d:[2,8],txt:'A close-range scatter volley rakes your exposed deck plating!'}],
+    sp:{n:'Hit and Run',c:0.26,txt:'The skirmisher breaks hard — attack cancelled and repositions out of your firing arc!',fx:'dodge'},col:'#cc6644',diff:2,
+    wpns:[
+      { n:'Grapple Shot',       ico:'⚓', d:[2,6], cd:1, threat:2, txt:'Grapple cable — disrupts your helm response.' },
+      { n:'Scatter Volley',     ico:'🔥', d:[2,8], cd:1, threat:3, txt:'Close-range broadside — punishes slow ships.' }
+    ]},
+  fd_krynn_githyanki: { name:'Astral Corsair Raider', sub:'The Star Nest — Githyanki Vanguard', hp:78, maxHp:78, crew:6, maxCrew:6, g:[14,26],
+    atk:[{n:'Silver Blade Cannon',d:[3,8],txt:'Githyanki silver-alloy siege rounds tear through your hull!'},{n:'Psych Javelin',d:[2,6],txt:'A psionic lance hammers your bridge crew — two collapse at their stations!',crew:2}],
+    sp:{n:'Astral Step',c:0.24,txt:'The raider blinks through a pocket of astral space — your targeting solution evaporates!',fx:'dodge'},col:'#5566aa',diff:3,
+    wpns:[
+      { n:'Silver Blade Cannon', ico:'⚔️', d:[3,8], cd:1, threat:4, txt:'Githyanki silver-alloy rounds — bypasses standard shielding.' },
+      { n:'Psych Javelin',       ico:'🧠', d:[2,6], cd:2, threat:4, txt:'Psionic strike — deals damage AND kills 2 crew.', crew:2 }
+    ]},
+
+  // ── Cluster sphere (Varuun — The Broker's Cache) dungeon minions ──────────
+  fd_cluster_drone: { name:'Harvest Scout Drone', sub:"The Broker's Cache — Automated Sentinel", hp:42, maxHp:42, crew:0, maxCrew:0, g:[6,14],
+    atk:[{n:'Beam Sweep',d:[2,6],txt:'The drone sweeps a targeting beam across your hull — automated fire follows instantly!'},{n:'Ram Protocol',d:[3,6],txt:'The drone executes a collision subroutine — it has no concern for its own hull!'}],
+    sp:{n:'Swarm Signal',c:0.28,txt:'The drone broadcasts a proximity alarm — two more drones converge on your position!',fx:'summon',d:[1,6]},col:'#887755',diff:2,
+    wpns:[
+      { n:'Beam Sweep',     ico:'📡', d:[2,6], cd:0, threat:2, txt:'Automated targeting beam — fires every round.' },
+      { n:'Ram Protocol',   ico:'💥', d:[3,6], cd:2, threat:3, txt:'Collision subroutine — it does not care about self-damage.' }
+    ]},
+  fd_cluster_blackfleet: { name:'Blackfleet Scavenger', sub:"The Broker's Cache — Mercenary Crew", hp:70, maxHp:70, crew:5, maxCrew:5, g:[12,22],
+    atk:[{n:'Ripper Broadside',d:[2,8],txt:'The scavenger unleashes a strip-and-salvage broadside — designed to disable, not destroy!'},{n:'Crew Snatch',d:[1,6],txt:'Blackfleet boarders come over the rail — two crew dragged away as salvage!',crew:2}],
+    sp:{n:'Salvage Clamps',c:0.25,txt:'Magnetic clamps lock to your hull — you are held in place while the scavenger reloads!',fx:'stun',d:[1,4]},col:'#664422',diff:2,
+    wpns:[
+      { n:'Ripper Broadside', ico:'🏴', d:[2,8], cd:1, threat:3, txt:'Blackfleet strip-salvage broadside — disable and loot.' },
+      { n:'Crew Snatch',      ico:'🪝', d:[1,6], cd:2, threat:4, txt:'Boarding action — deals damage AND removes 2 crew.', crew:2 }
+    ]},
+
+  // ── Hero sphere (Thyss — Pre-Sundering Vault) dungeon minions ────────────
+  fd_hero_sentinel: { name:'Vault Sentinel Drone', sub:'Pre-Sundering Vault — Ancient Guardian', hp:68, maxHp:68, crew:0, maxCrew:0, g:[12,22],
+    atk:[{n:'Arc Discharge',d:[2,8],txt:'Ancient arc-field projectors discharge across the gap — your hull lights up with static fire!'},{n:'Null Field',d:[2,6],txt:'A null-field pulse disrupts your weapon systems for one round!'}],
+    sp:{n:'Fortress Mode',c:0.26,txt:'The sentinel locks into a pre-Sundering fortress configuration — damage absorbed this round!',fx:'dodge'},col:'#8899aa',diff:3,
+    wpns:[
+      { n:'Arc Discharge',  ico:'⚡', d:[2,8], cd:1, threat:3, txt:'Pre-Sundering arc projectors — still fully operational.' },
+      { n:'Null Field Pulse',ico:'🌀', d:[2,6], cd:2, threat:3, txt:'Ancient null-field — disrupts your targeting for 1 round.' }
+    ]},
+  fd_hero_construct: { name:'Archive War-Construct', sub:'Pre-Sundering Vault — Bound Defender', hp:88, maxHp:88, crew:0, maxCrew:0, g:[16,30],
+    atk:[{n:'Siege Engine Fire',d:[3,8],txt:'The ancient siege engine mounted to the construct\'s hull fires — the sound alone shakes your teeth!'},{n:'Gravity Anchor',d:[2,8],txt:'A gravity anchor spike hammers into your hull — your velocity drops to zero!'}],
+    sp:{n:'Emergency Repair',c:0.20,txt:'The construct\'s self-repair systems activate — it regenerates 20 HP from internal fabricators!',fx:'heal',amt:20,threshold:0.50},col:'#6677aa',diff:3,
+    wpns:[
+      { n:'Siege Engine',     ico:'🏛️', d:[3,8], cd:1, threat:4, txt:'Pre-Sundering siege weapon — heavier than anything in the current era.' },
+      { n:'Gravity Anchor',   ico:'⚓', d:[2,8], cd:2, threat:4, txt:'Gravity spike — hard stop. Leaves you exposed for a round.' }
+    ]},
+
+  // ── Dark sphere (Serath — The Dark Mote) dungeon minions ─────────────────
+  fd_dark_stalker: { name:'Void Stalker', sub:'The Dark Mote — Void Entity', hp:52, maxHp:52, crew:0, maxCrew:0, g:[8,18],
+    atk:[{n:'Phase Strike',d:[2,6],txt:'The stalker phases through your hull plating and strikes from inside — armour is useless!'},{n:'Drain Touch',d:[1,8],txt:'The stalker drains structural integrity from your hull — two max hull points gone permanently!',maxhullshred:2}],
+    sp:{n:'Void Phase',c:0.30,txt:'The stalker dissolves into the void between your shots — your entire volley passes through empty space!',fx:'dodge'},col:'#440066',diff:3,
+    wpns:[
+      { n:'Phase Strike',   ico:'👻', d:[2,6], cd:0, threat:3, txt:'Phases through armour — ignores hull resistance.' },
+      { n:'Drain Touch',    ico:'🌑', d:[1,8], cd:2, threat:4, txt:'Permanently removes 2 max hull points on hit.', maxhullshred:2 }
+    ]},
+  fd_dark_leviathan: { name:'Juvenile Void Leviathan', sub:'The Dark Mote — Void-Fed Predator', hp:90, maxHp:90, crew:0, maxCrew:0, g:[18,32],
+    atk:[{n:'Void Maw',d:[3,8],txt:'The leviathan opens its void-maw and pulls — your ship lurches sideways as hull sections buckle!'},{n:'Tendril Lash',d:[2,8],txt:'Void tendrils whip across your bow — three crew are pulled off the deck into the dark!',crew:3}],
+    sp:{n:'Void Scream',c:0.22,txt:'The leviathan screams across the void frequencies — your entire crew freezes for one terrible second! It fires again!',fx:'extra',d:[2,6]},col:'#220044',diff:3,
+    wpns:[
+      { n:'Void Maw',       ico:'🌑', d:[3,8], cd:1, threat:4, txt:'Void gravity pull — heavy hull impact.' },
+      { n:'Tendril Lash',   ico:'🦑', d:[2,8], cd:1, threat:5, txt:'DANGER: Void tendrils — deals damage AND removes 3 crew.', crew:3 }
+    ]},
 };
 
 // the Unnamed — the true final boss, revealed mid-Trull Overmind fight
@@ -3278,6 +3342,22 @@ const LOOT = {
   fd_grey_construct:[{id:'vaultdust',c:0.80},{id:'ruinstone',c:0.65},{id:'forgescrap',c:0.55},{id:'runeshard',c:0.18},{id:'repkit',c:0.12},{id:'arccore',c:0.06}],
   // Marines: better — dwarven gear, occasional coin, rare combat usable
   fd_grey_marine:  [{id:'forgescrap',c:0.70},{id:'trlldogtag',c:0.45},{id:'ruinstone',c:0.40},{id:'starcoin',c:0.28},{id:'corskit',c:0.20},{id:'crewmead',c:0.15},{id:'repkit',c:0.18}],
+  // Krynn skirmishers: corsair gear, plunder, occasional githyanki find
+  fd_krynn_skirmisher:[{id:'corsscrap',c:0.75},{id:'plunder',c:0.55},{id:'gobsack',c:0.50},{id:'starcoin',c:0.30},{id:'corskit',c:0.22},{id:'crewmead',c:0.15},{id:'repkit',c:0.10}],
+  // Githyanki raiders: silver gear, astral items, rare psi components
+  fd_krynn_githyanki:[{id:'astsil',c:0.70},{id:'silksw',c:0.50},{id:'starcoin',c:0.40},{id:'psiamp',c:0.20},{id:'arccore',c:0.15},{id:'stimpack',c:0.12},{id:'corskit',c:0.18}],
+  // Scout drones: cheap automated components, occasional useful fragment
+  fd_cluster_drone: [{id:'driftjunk',c:0.80},{id:'wreckcable',c:0.65},{id:'scrapplat',c:0.55},{id:'sparelens',c:0.25},{id:'moteash',c:0.20},{id:'repkit',c:0.08}],
+  // Blackfleet scavengers: stolen cargo, black-market goods, crew consumables
+  fd_cluster_blackfleet:[{id:'cargobale',c:0.75},{id:'plunder',c:0.60},{id:'gobsack',c:0.50},{id:'starcoin',c:0.35},{id:'crewmead',c:0.25},{id:'corskit',c:0.20},{id:'bfmanif',c:0.12}],
+  // Vault sentinels: pre-Sundering components — dense, valuable, rare
+  fd_hero_sentinel: [{id:'arccore',c:0.65},{id:'sparelens',c:0.55},{id:'runeshard',c:0.40},{id:'ruinstone',c:0.30},{id:'repkit',c:0.20},{id:'psiamp',c:0.10}],
+  // Archive constructs: ancient fabrication scraps, high-value pre-Sundering tech
+  fd_hero_construct:[{id:'arccore',c:0.75},{id:'runeshard',c:0.60},{id:'vaultdust',c:0.45},{id:'starcoin',c:0.35},{id:'psiamp',c:0.20},{id:'antimag',c:0.10},{id:'voidwelder',c:0.08}],
+  // Void stalkers: almost no physical loot — void residue and rare psi crystals
+  fd_dark_stalker:  [{id:'psicry',c:0.55},{id:'moteash',c:0.50},{id:'voidxtal',c:0.30},{id:'driftjunk',c:0.40},{id:'psiamp',c:0.12},{id:'antimag',c:0.08}],
+  // Juvenile leviatans: rare biological materials, void-touched organics
+  fd_dark_leviathan:[{id:'levscal',c:0.70},{id:'levblood',c:0.50},{id:'voidxtal',c:0.40},{id:'psicry',c:0.30},{id:'arccore',c:0.18},{id:'voidwelder',c:0.12}],
   // ── Void Rift enemy loot ─────────────────────────────────────────────
   vodoniPatrol:[{id:'vodeml',c:0.55},{id:'starcoin',c:0.75},{id:'arccore',c:0.30},{id:'repkit',c:0.45},{id:'crewmead',c:0.25},{id:'vodncore',c:0.08}],
   scroBattle:  [{id:'trulltrophy',c:0.70},{id:'plunder',c:0.65},{id:'crewmead',c:0.40},{id:'starcoin',c:0.55},{id:'arccore',c:0.22}],
@@ -4951,6 +5031,14 @@ const SHIP_IMAGE_DATA = {
   'fd_realm_scout':    'images/fd_realm_scout.png?v=1',
   'fd_grey_construct': 'images/fd_grey_construct.png?v=1',
   'fd_grey_marine':    'images/fd_grey_marine.png?v=1',
+  'fd_krynn_skirmisher': 'images/fd_krynn_skirmisher.png?v=1',
+  'fd_krynn_githyanki':  'images/fd_krynn_githyanki.png?v=1',
+  'fd_cluster_drone':      'images/fd_cluster_drone.png?v=1',
+  'fd_cluster_blackfleet': 'images/fd_cluster_blackfleet.png?v=1',
+  'fd_hero_sentinel':  'images/fd_hero_sentinel.png?v=1',
+  'fd_hero_construct': 'images/fd_hero_construct.png?v=1',
+  'fd_dark_stalker':   'images/fd_dark_stalker.png?v=1',
+  'fd_dark_leviathan': 'images/fd_dark_leviathan.png?v=1',
   'wb_grex':     'images/ship_wb_grex.png?v=2',
   'wb_admiral':  'images/ship_wb_admiral.png?v=2',
   'wb_clutch':   'images/ship_wb_clutch.png?v=2',
@@ -10621,6 +10709,14 @@ function _drawEnemyOnCtx(key, ctx, cw, ch, w, h) {
   else if(key==='fd_realm_scout')    _eF('fd_realm_scout',false,     ()=>drawCorsairSloop(ctx,cx,cy,r,true));
   else if(key==='fd_grey_construct') _eF('fd_grey_construct',false,  ()=>drawHammer(ctx,cx,cy,r,true));
   else if(key==='fd_grey_marine')    _eF('fd_grey_marine',false,     ()=>drawTrullPatrol(ctx,cx,cy,r));
+  else if(key==='fd_krynn_skirmisher')_eF('fd_krynn_skirmisher',false,()=>drawCorsairSloop(ctx,cx,cy,r,true));
+  else if(key==='fd_krynn_githyanki') _eF('fd_krynn_githyanki',false, ()=>drawGithyanki(ctx,cx,cy,r));
+  else if(key==='fd_cluster_drone')   _eF('fd_cluster_drone',false,  ()=>drawGoblinCutter(ctx,cx,cy,r));
+  else if(key==='fd_cluster_blackfleet')_eF('fd_cluster_blackfleet',false,()=>drawBlackFleetReaver(ctx,cx,cy,r,true));
+  else if(key==='fd_hero_sentinel')   _eF('fd_hero_sentinel',false,  ()=>drawTrullEnforcer(ctx,cx,cy,r));
+  else if(key==='fd_hero_construct')  _eF('fd_hero_construct',false, ()=>drawHammer(ctx,cx,cy,r,false));
+  else if(key==='fd_dark_stalker')    _eF('fd_dark_stalker',false,   ()=>drawFarRealmStalker(ctx,cx,cy,r));
+  else if(key==='fd_dark_leviathan')  _eF('fd_dark_leviathan',false, ()=>drawLeviathan(ctx,cx,cy,r));
   else                               drawSquid(ctx,cx,cy,r,true);
 }
 
@@ -10704,6 +10800,14 @@ function drawCbtShips(key){
   else if(key==='fd_realm_scout')    _eF('fd_realm_scout',false,    ()=>drawCorsairSloop(ec,100,65,46,true));
   else if(key==='fd_grey_construct') _eF('fd_grey_construct',false, ()=>drawHammer(ec,100,65,46,true));
   else if(key==='fd_grey_marine')    _eF('fd_grey_marine',false,    ()=>drawTrullPatrol(ec,100,65,46));
+  else if(key==='fd_krynn_skirmisher')_eF('fd_krynn_skirmisher',false,()=>drawCorsairSloop(ec,100,65,46,true));
+  else if(key==='fd_krynn_githyanki') _eF('fd_krynn_githyanki',false, ()=>drawGithyanki(ec,100,65,46));
+  else if(key==='fd_cluster_drone')   _eF('fd_cluster_drone',false,  ()=>drawGoblinCutter(ec,100,65,46));
+  else if(key==='fd_cluster_blackfleet')_eF('fd_cluster_blackfleet',false,()=>drawBlackFleetReaver(ec,100,65,46,true));
+  else if(key==='fd_hero_sentinel')   _eF('fd_hero_sentinel',false,  ()=>drawTrullEnforcer(ec,100,65,46));
+  else if(key==='fd_hero_construct')  _eF('fd_hero_construct',false, ()=>drawHammer(ec,100,65,46,false));
+  else if(key==='fd_dark_stalker')    _eF('fd_dark_stalker',false,   ()=>drawFarRealmStalker(ec,100,65,46));
+  else if(key==='fd_dark_leviathan')  _eF('fd_dark_leviathan',false, ()=>drawLeviathan(ec,100,65,46));
   else drawSquid(ec,100,65,46,true);
 }
 
@@ -12964,6 +13068,14 @@ function showLootOverlay(key, gold, items){
   else if(key==='fd_realm_scout')    _lF('fd_realm_scout',false,    ()=>drawCorsairSloop(lc,90,55,32,true));
   else if(key==='fd_grey_construct') _lF('fd_grey_construct',false, ()=>drawHammer(lc,90,55,32,true));
   else if(key==='fd_grey_marine')    _lF('fd_grey_marine',false,    ()=>drawTrullPatrol(lc,90,55,32));
+  else if(key==='fd_krynn_skirmisher')_lF('fd_krynn_skirmisher',false,()=>drawCorsairSloop(lc,90,55,32,true));
+  else if(key==='fd_krynn_githyanki') _lF('fd_krynn_githyanki',false, ()=>drawGithyanki(lc,90,55,32));
+  else if(key==='fd_cluster_drone')   _lF('fd_cluster_drone',false,  ()=>drawGoblinCutter(lc,90,55,32));
+  else if(key==='fd_cluster_blackfleet')_lF('fd_cluster_blackfleet',false,()=>drawBlackFleetReaver(lc,90,55,32,true));
+  else if(key==='fd_hero_sentinel')   _lF('fd_hero_sentinel',false,  ()=>drawTrullEnforcer(lc,90,55,32));
+  else if(key==='fd_hero_construct')  _lF('fd_hero_construct',false, ()=>drawHammer(lc,90,55,32,false));
+  else if(key==='fd_dark_stalker')    _lF('fd_dark_stalker',false,   ()=>drawFarRealmStalker(lc,90,55,32));
+  else if(key==='fd_dark_leviathan')  _lF('fd_dark_leviathan',false, ()=>drawLeviathan(lc,90,55,32));
   else drawSquid(lc,90,55,32,true);
   // X over it
   lc.strokeStyle='rgba(255,50,50,0.6)'; lc.lineWidth=4;
@@ -17610,8 +17722,9 @@ function _lsShowInteract(poi) {
         `${fs.n} crackles with hostile energy. A guardian vessel — ${guardian?.name || 'unknown'} — blocks access to the Fragment.`;
       const fightBtn = document.createElement('button');
       fightBtn.className='btn'; fightBtn.style.color='#ffdd44';
-      // Realm and Grey use the dungeon approach; other spheres go direct (for now)
-      if(fs.id === 'fs_realm' || fs.id === 'fs_grey') {
+      // All spheres use the dungeon approach
+      if(fs.id === 'fs_realm' || fs.id === 'fs_grey' || fs.id === 'fs_krynn' ||
+         fs.id === 'fs_cluster' || fs.id === 'fs_hero' || fs.id === 'fs_dark') {
         fightBtn.textContent='🔮 Enter the Site';
         fightBtn.onclick = () => {
           panel.classList.remove('on');
@@ -18982,6 +19095,74 @@ const FD_CONFIGS = {
       {id:'repkit',c:0.25},{id:'corskit',c:0.15},{id:'crewmead',c:0.15},
     ],
   },
+  krynn: {
+    id:   'krynn',
+    name: 'The Star Nest',
+    entryLog: "Entering the Star Nest. Corsair battle formations fill the approach lanes. Githyanki signal-fire burns in the dark ahead.",
+    guardianWarning: "War-Commander Zith'ral commands this nest with corsair skirmishers and githyanki elite raiders. The Navigation Core is secured in the Nest Command Chamber. They know you're coming.",
+    floorImg:     'images/fd_floor_krynn.png',
+    floorColor:   '#0d1220',
+    accentColor:  '#4466bb',
+    minRooms: 5, maxRooms: 7,
+    enemies:       ['fd_krynn_skirmisher','fd_krynn_githyanki'],
+    enemyWeights:  [3, 2],
+    lootTable: [
+      {id:'corsscrap',c:0.75},{id:'plunder',c:0.65},{id:'gobsack',c:0.55},
+      {id:'astsil',c:0.30},{id:'starcoin',c:0.25},{id:'psiamp',c:0.15},
+      {id:'repkit',c:0.20},{id:'corskit',c:0.25},{id:'crewmead',c:0.18},
+    ],
+  },
+  cluster: {
+    id:   'cluster',
+    name: "The Broker's Cache",
+    entryLog: "Entering the Broker's Cache. Salvage drones sweep the approach. Blackfleet scavengers are already on alert.",
+    guardianWarning: "The Broker has locked the cache behind automated drone fields and a full Blackfleet mercenary complement. The Navigation Core is in the innermost vault. No one gets in or out without The Broker's permission.",
+    floorImg:     'images/fd_floor_cluster.png',
+    floorColor:   '#1a1208',
+    accentColor:  '#cc7733',
+    minRooms: 5, maxRooms: 7,
+    enemies:       ['fd_cluster_drone','fd_cluster_blackfleet'],
+    enemyWeights:  [3, 2],
+    lootTable: [
+      {id:'cargobale',c:0.80},{id:'plunder',c:0.65},{id:'driftjunk',c:0.55},
+      {id:'starcoin',c:0.30},{id:'gobsack',c:0.28},{id:'bfmanif',c:0.15},
+      {id:'repkit',c:0.22},{id:'corskit',c:0.18},{id:'crewmead',c:0.20},
+    ],
+  },
+  hero: {
+    id:   'hero',
+    name: 'Pre-Sundering Vault',
+    entryLog: 'Entering the Pre-Sundering Vault. Ancient systems come online. Sentinel drones activate on approach — they have been waiting centuries.',
+    guardianWarning: "Vault-Keeper Xorrath commands this vault's full pre-Sundering defence grid: sentinel drones and archive war-constructs, all of them ancient and all of them fully operational. The Navigation Core is sealed in the inner sanctum. This vault was designed to outlast civilisation itself.",
+    floorImg:     'images/fd_floor_hero.png',
+    floorColor:   '#111820',
+    accentColor:  '#8899bb',
+    minRooms: 5, maxRooms: 7,
+    enemies:       ['fd_hero_sentinel','fd_hero_construct'],
+    enemyWeights:  [3, 2],
+    lootTable: [
+      {id:'arccore',c:0.75},{id:'runeshard',c:0.65},{id:'sparelens',c:0.55},
+      {id:'starcoin',c:0.30},{id:'psiamp',c:0.22},{id:'antimag',c:0.12},
+      {id:'repkit',c:0.20},{id:'voidwelder',c:0.12},{id:'crewmead',c:0.10},
+    ],
+  },
+  dark: {
+    id:   'dark',
+    name: 'The Dark Mote',
+    entryLog: 'Entering the Dark Mote. Reality frays at the edges. Void entities stir in the dark — they have been fed well here.',
+    guardianWarning: "The Void Prophet commands the Dark Mote through void stalkers and juvenile leviatans. The Navigation Core is deep inside the mote where the Void Rift is closest to breaking through. The longer you stay, the worse it gets.",
+    floorImg:     'images/fd_floor_dark.png',
+    floorColor:   '#080010',
+    accentColor:  '#7733aa',
+    minRooms: 5, maxRooms: 7,
+    enemies:       ['fd_dark_stalker','fd_dark_leviathan'],
+    enemyWeights:  [3, 2],
+    lootTable: [
+      {id:'psicry',c:0.75},{id:'moteash',c:0.65},{id:'voidxtal',c:0.55},
+      {id:'levscal',c:0.35},{id:'levblood',c:0.25},{id:'antimag',c:0.15},
+      {id:'arccore',c:0.18},{id:'psiamp',c:0.15},{id:'voidwelder',c:0.10},
+    ],
+  },
 };
 
 const FD = {
@@ -19279,11 +19460,219 @@ function _fdGreyLayout(){
   return{rooms:R,corridors:C};
 }
 
+// ── Fixed layout — The Star Nest (Vael / Krynn) ───────────────────────────
+// Topology: a corsair nest built into a drifting asteroid cluster — split
+// approach lanes converging on a central command bay, with a hidden rear escape
+// route that leads to the Commander's Chamber.
+//
+//         [Approach Bay]
+//              |
+//    [Port Barracks]──[Command Bay]──[Starboard Barracks]
+//                          |
+//              [Weapon Cache]──[Breach Lock]
+//                                   |
+//                           [Navigator's Den]
+//                                   |
+//                       [Commander's Chamber ●]
+//
+function _fdKrynnLayout(){
+  const R=[], C=[];
+  function mkR(id,type,x,y,w,h){
+    return{id,type,x:Math.round(x),y:Math.round(y),w,h,
+           cx:Math.round(x+w/2),cy:Math.round(y+h/2),
+           revealed:false,visible:false,enemies:[],loots:[],
+           guardianDefeated:false,_branch:false};
+  }
+  R.push(mkR( 0,'entry',    900,   60, 140, 120)); // Approach Bay
+  R.push(mkR( 1,'encounter',220,  280, 320, 240)); // Port Barracks — left flank
+  R.push(mkR( 2,'encounter',620,  240, 540, 300)); // Command Bay — centre
+  R.push(mkR( 3,'encounter',1240, 280, 320, 240)); // Starboard Barracks — right flank
+  R.push(mkR( 4,'loot',     440,  680, 300, 220)); // Weapon Cache — branch
+  R.push(mkR( 5,'encounter',820,  680, 400, 260)); // Breach Lock — choke point
+  R.push(mkR( 6,'loot',     1400, 680, 280, 200)); // Supply Locker — right branch
+  R.push(mkR( 7,'encounter',820, 1060, 340, 260)); // Navigator's Den
+  R.push(mkR( 8,'loot',     360, 1000, 260, 180)); // Hidden Alcove — branch
+  R.push(mkR( 9,'guardian',1700, 1280, 520, 460)); // Commander's Chamber
+
+  R[4]._branch=true; R[6]._branch=true; R[8]._branch=true;
+
+  const CONN=[
+    [0, 2],  // approach → command bay
+    [1, 2],  // port barracks → command bay
+    [2, 3],  // command bay → starboard barracks
+    [2, 4],  // command bay → weapon cache
+    [2, 5],  // command bay → breach lock
+    [3, 6],  // starboard barracks → supply locker
+    [5, 7],  // breach lock → navigator's den
+    [5, 8],  // breach lock → hidden alcove
+    [7, 9],  // navigator's den → commander's chamber
+  ];
+  CONN.forEach(([a,b],i)=>C.push(_fdMakeCorr(R[a],R[b],i)));
+  return{rooms:R,corridors:C};
+}
+
+// ── Fixed layout — The Broker's Cache (Varuun / Cluster) ──────────────────
+// Topology: a layered black-market cache — outer drone sweep lanes, a central
+// exchange floor, and the Broker's inner vault at the back.
+//
+//      [Loading Bay]
+//           |
+//  [Drone Bay L]──[Exchange Floor]──[Drone Bay R]
+//                       |
+//             [Holding Cells]──[Cargo Vault]
+//                                    |
+//                              [Inner Vault]
+//                                    |
+//                          [Broker's Chamber ●]
+//
+function _fdClusterLayout(){
+  const R=[], C=[];
+  function mkR(id,type,x,y,w,h){
+    return{id,type,x:Math.round(x),y:Math.round(y),w,h,
+           cx:Math.round(x+w/2),cy:Math.round(y+h/2),
+           revealed:false,visible:false,enemies:[],loots:[],
+           guardianDefeated:false,_branch:false};
+  }
+  R.push(mkR( 0,'entry',    880,   60, 160, 120)); // Loading Bay
+  R.push(mkR( 1,'encounter',200,  280, 320, 260)); // Drone Bay Left
+  R.push(mkR( 2,'encounter',600,  240, 560, 300)); // Exchange Floor — wide, open
+  R.push(mkR( 3,'encounter',1240, 280, 320, 260)); // Drone Bay Right
+  R.push(mkR( 4,'loot',     220,  680, 280, 200)); // Black Market Stash — branch
+  R.push(mkR( 5,'encounter',640,  680, 360, 260)); // Holding Cells
+  R.push(mkR( 6,'loot',     1060, 700, 340, 220)); // Cargo Vault — right branch
+  R.push(mkR( 7,'loot',     640, 1080, 360, 220)); // Inner Vault — ante-chamber
+  R.push(mkR( 8,'guardian',1620, 1280, 500, 480)); // Broker's Chamber
+
+  R[4]._branch=true; R[6]._branch=true;
+
+  const CONN=[
+    [0, 2],  // loading bay → exchange floor
+    [1, 2],  // drone bay L → exchange floor
+    [2, 3],  // exchange floor → drone bay R
+    [1, 4],  // drone bay L → stash
+    [2, 5],  // exchange floor → holding cells
+    [3, 6],  // drone bay R → cargo vault
+    [5, 7],  // holding cells → inner vault
+    [6, 7],  // cargo vault → inner vault (merge)
+    [7, 8],  // inner vault → broker's chamber
+  ];
+  CONN.forEach(([a,b],i)=>C.push(_fdMakeCorr(R[a],R[b],i)));
+  return{rooms:R,corridors:C};
+}
+
+// ── Fixed layout — Pre-Sundering Vault (Thyss / Hero) ────────────────────
+// Topology: a grand pre-Sundering vault with a ceremonial entry hall, two
+// symmetric defence wings, a deep archive core, and the Inner Sanctum.
+//
+//          [Ceremonial Gate]
+//                 |
+//   [West Defence Wing]──[Archive Antechamber]──[East Defence Wing]
+//                                 |
+//              [Record Stacks]──[Power Core Room]
+//                                       |
+//                               [Deep Archive]
+//                                       |
+//                            [Inner Sanctum ●]
+//
+function _fdHeroLayout(){
+  const R=[], C=[];
+  function mkR(id,type,x,y,w,h){
+    return{id,type,x:Math.round(x),y:Math.round(y),w,h,
+           cx:Math.round(x+w/2),cy:Math.round(y+h/2),
+           revealed:false,visible:false,enemies:[],loots:[],
+           guardianDefeated:false,_branch:false};
+  }
+  R.push(mkR( 0,'entry',    900,   60, 140, 120)); // Ceremonial Gate
+  R.push(mkR( 1,'encounter',180,  280, 360, 280)); // West Defence Wing
+  R.push(mkR( 2,'encounter',620,  240, 580, 320)); // Archive Antechamber — large
+  R.push(mkR( 3,'encounter',1290, 280, 360, 280)); // East Defence Wing
+  R.push(mkR( 4,'loot',     200,  720, 300, 220)); // West Relic Store — branch
+  R.push(mkR( 5,'loot',     640,  720, 340, 220)); // Record Stacks
+  R.push(mkR( 6,'encounter',1060, 740, 380, 260)); // Power Core Room
+  R.push(mkR( 7,'loot',     1500, 740, 280, 200)); // East Relic Store — branch
+  R.push(mkR( 8,'encounter',700, 1120, 520, 280)); // Deep Archive — wide
+  R.push(mkR( 9,'guardian',1760, 1320, 520, 480)); // Inner Sanctum
+
+  R[4]._branch=true; R[7]._branch=true;
+
+  const CONN=[
+    [0, 2],  // gate → antechamber
+    [1, 2],  // west wing → antechamber
+    [2, 3],  // antechamber → east wing
+    [1, 4],  // west wing → relic store
+    [2, 5],  // antechamber → record stacks
+    [2, 6],  // antechamber → power core
+    [3, 7],  // east wing → east relic store
+    [5, 8],  // record stacks → deep archive
+    [6, 8],  // power core → deep archive (merge)
+    [8, 9],  // deep archive → inner sanctum
+  ];
+  CONN.forEach(([a,b],i)=>C.push(_fdMakeCorr(R[a],R[b],i)));
+  return{rooms:R,corridors:C};
+}
+
+// ── Fixed layout — The Dark Mote (Serath / Dark) ──────────────────────────
+// Topology: a fractured void-mote with a narrow entry rift, widening into
+// void-corrupted chambers that spiral inward toward the Prophet's Sanctum.
+//
+//     [Entry Rift] (narrow)
+//          |
+//  [Void Fringe L]──[Fracture Hall]──[Void Fringe R]
+//                         |
+//             [Stalker Den]──[Void Confluence]
+//                                  |
+//                          [The Deepening]
+//                                  |
+//                      [Prophet's Sanctum ●]
+//
+function _fdDarkLayout(){
+  const R=[], C=[];
+  function mkR(id,type,x,y,w,h){
+    return{id,type,x:Math.round(x),y:Math.round(y),w,h,
+           cx:Math.round(x+w/2),cy:Math.round(y+h/2),
+           revealed:false,visible:false,enemies:[],loots:[],
+           guardianDefeated:false,_branch:false};
+  }
+  R.push(mkR( 0,'entry',    920,   60, 120, 110)); // Entry Rift — very narrow
+  R.push(mkR( 1,'encounter',180,  280, 320, 260)); // Void Fringe Left
+  R.push(mkR( 2,'encounter',580,  240, 560, 300)); // Fracture Hall — centre
+  R.push(mkR( 3,'encounter',1220, 280, 320, 260)); // Void Fringe Right
+  R.push(mkR( 4,'loot',     140,  700, 260, 200)); // Void Cache Left — branch
+  R.push(mkR( 5,'encounter',560,  680, 380, 280)); // Stalker Den
+  R.push(mkR( 6,'encounter',1020, 700, 380, 260)); // Void Confluence
+  R.push(mkR( 7,'loot',     1480, 720, 260, 180)); // Void Cache Right — branch
+  R.push(mkR( 8,'loot',     580, 1120, 400, 240)); // The Deepening — ante-chamber
+  R.push(mkR( 9,'loot',     1040,1100, 280, 180)); // Breach Pocket — optional loot branch
+  R.push(mkR(10,'guardian',1700, 1300, 520, 500)); // Prophet's Sanctum
+
+  R[4]._branch=true; R[7]._branch=true; R[9]._branch=true;
+
+  const CONN=[
+    [0, 2],   // entry rift → fracture hall
+    [1, 2],   // void fringe L → fracture hall
+    [2, 3],   // fracture hall → void fringe R
+    [1, 4],   // void fringe L → void cache
+    [2, 5],   // fracture hall → stalker den
+    [2, 6],   // fracture hall → void confluence
+    [3, 7],   // void fringe R → void cache R
+    [5, 8],   // stalker den → the deepening
+    [6, 8],   // void confluence → the deepening (merge)
+    [6, 9],   // void confluence → breach pocket
+    [8,10],   // the deepening → prophet's sanctum
+  ];
+  CONN.forEach(([a,b],i)=>C.push(_fdMakeCorr(R[a],R[b],i)));
+  return{rooms:R,corridors:C};
+}
+
 // ── Layout generator — procedural multi-directional with branch rooms ──────
 function _fdGenLayout(nRooms) {
   // Use fixed hand-authored layouts for specific spheres
-  if(FD.config?.id==='realm') return _fdRealmLayout();
-  if(FD.config?.id==='grey')  return _fdGreyLayout();
+  if(FD.config?.id==='realm')   return _fdRealmLayout();
+  if(FD.config?.id==='grey')    return _fdGreyLayout();
+  if(FD.config?.id==='krynn')   return _fdKrynnLayout();
+  if(FD.config?.id==='cluster') return _fdClusterLayout();
+  if(FD.config?.id==='hero')    return _fdHeroLayout();
+  if(FD.config?.id==='dark')    return _fdDarkLayout();
 
   const rooms=[], corridors=[];
   const MX=FD.W, MY=FD.H;
