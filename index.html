@@ -6930,20 +6930,16 @@ function showTravelWarning(toId, onConfirm) {
   const dest = G.spheres.find(sp => sp.id === toId);
   const destName = dest?.n || toId;
 
-  // Calculate estimated watches using the same formula as laneWatchCost
   const watches = laneWatchCost(lane, s);
   const air     = s.air  || 0;
   const maxAir  = s.maxAir || 12;
 
-  // Flow description
   const flowDesc = lane.flow === +1
     ? `✦ ${lane.flowName} carries you forward`
     : lane.flow === -1
     ? `✦ Fighting ${lane.flowName}`
     : null;
 
-  // Air status
-  const airPct   = air / maxAir;
   const airColor = air < watches       ? '#ff4444'
                  : air < watches * 1.5 ? '#ffaa22'
                  : '#44cc88';
@@ -6953,58 +6949,50 @@ function showTravelWarning(toId, onConfirm) {
     ? `⚠ Air will be low on arrival — consider refilling.`
     : `Air supply sufficient for this journey.`;
 
-  // Warzone warning
-  const warWarn = lane.warzone ? `\n⚔ WARNING: This lane is an active war zone.` : '';
+  const warWarn = lane.warzone ? `⚔ WARNING: This lane is an active war zone.` : null;
 
-  const body = [
-    `Destination: ${destName}`,
-    `Estimated travel: ~${watches} day${watches !== 1 ? 's' : ''}`,
-    flowDesc || null,
-    ``,
-    `Air Supply: ${air} / ${maxAir} days`,
-    airWarn,
-    warWarn || null,
-  ].filter(l => l !== null).join('\n');
+  const box    = document.getElementById('msgbox');
+  const title  = document.getElementById('msgtitle');
+  const body   = document.getElementById('msgbody');
+  const btn    = document.getElementById('msgbtn');
+  const btn2   = document.getElementById('msgbtn2');
+  if (!box || !title || !body || !btn) { onConfirm(); return; }
 
-  // Build custom msg with two buttons
-  const box = document.getElementById('msgbox');
-  const title = document.getElementById('msg-title');
-  const text  = document.getElementById('msg-text');
-  const btn   = document.getElementById('msgbtn');
-  if (!box || !title || !text || !btn) { onConfirm(); return; }
-
-  // Clear any stale countdown timer
   if (_restCountdownTimer) { clearInterval(_restCountdownTimer); _restCountdownTimer = null; }
 
   title.textContent = `⚓ Set Course — ${destName}`;
-  text.textContent  = body;
-  // Colour the air line
-  text.innerHTML = text.innerHTML.replace(
-    airWarn, `<span style="color:${airColor}">${airWarn}</span>`
-  );
 
-  // Primary button — Set Course
+  const lines = [
+    `Destination: ${destName}`,
+    `Estimated travel: ~${watches} day${watches !== 1 ? 's' : ''}`,
+    flowDesc,
+    ``,
+    `Air Supply: ${air} / ${maxAir} days`,
+  ].filter(l => l !== null).join('\n');
+
+  body.innerHTML = lines.replace(/\n/g, '<br>')
+    + `<br><span style="color:${airColor}">${airWarn}</span>`
+    + (warWarn ? `<br><span style="color:#ff8844">${warWarn}</span>` : '');
+
+  // Primary — Set Course
   btn.textContent = '⚓ Set Course';
   btn.onclick = () => {
     box.classList.remove('on');
+    btn2.style.display = 'none';
     onConfirm();
   };
 
-  // Add a Cancel button if it doesn't already exist
-  let cancelBtn = document.getElementById('msg-cancel-btn');
-  if (!cancelBtn) {
-    cancelBtn = document.createElement('button');
-    cancelBtn.id = 'msg-cancel-btn';
-    cancelBtn.className = 'btn';
-    cancelBtn.style.cssText = 'margin-top:6px;color:#886655;border-color:rgba(88,44,17,0.3);';
-    btn.parentNode.insertBefore(cancelBtn, btn.nextSibling);
+  // Secondary — Stay
+  if (btn2) {
+    btn2.textContent = '← Stay';
+    btn2.style.display = 'inline-block';
+    btn2.style.color = '#886655';
+    btn2.style.borderColor = 'rgba(88,44,17,0.3)';
+    btn2.onclick = () => {
+      box.classList.remove('on');
+      btn2.style.display = 'none';
+    };
   }
-  cancelBtn.textContent = '← Stay';
-  cancelBtn.style.display = 'inline-block';
-  cancelBtn.onclick = () => {
-    box.classList.remove('on');
-    cancelBtn.style.display = 'none';
-  };
 
   box.classList.add('on');
 }
@@ -14907,9 +14895,6 @@ function showMsg(title,body,btn,cb,btn2,cb2){
   document.getElementById('msgbody').textContent=body;
   document.getElementById('msgbtn').textContent=btn||'Continue';
   document.getElementById('msgbox').classList.add('on');
-  // Hide travel-warning cancel button if present
-  const _cancelBtn = document.getElementById('msg-cancel-btn');
-  if(_cancelBtn) _cancelBtn.style.display='none';
   G._msgCb=cb||null;
   const btn2El = document.getElementById('msgbtn2');
   if(btn2El){
