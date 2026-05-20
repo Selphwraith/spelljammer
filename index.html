@@ -3116,6 +3116,22 @@ const ENM = {
       { n:'Scout Crossbows',  ico:'🏹', d:[2,6], cd:0, threat:2, txt:'Disciplined patrol fire — every round.' },
       { n:'Boarding Grapple', ico:'⛓️', d:[1,6], cd:2, threat:3, txt:'Grapple-and-board — damage + 1 crew lost.', crew:1 }
     ]},
+
+  // ── Grey sphere (Korreth — The Dwarven Vault) dungeon minions ────────────
+  fd_grey_construct: { name:'Vault-Stone Golem', sub:'Dwarven Vault — Bound Construct', hp:55, maxHp:55, crew:0, maxCrew:0, g:[6,14],
+    atk:[{n:'Stone Fist',d:[2,6],txt:'The golem slams its carved-stone fists into your hull plating!'},{n:'Rune Detonation',d:[1,8],txt:'A detonation rune carved into the golem\'s chest fires!'}],
+    sp:{n:'Rubble Hail',c:0.25,txt:'The golem tears chunks from the vault ceiling — a hail of rubble hammers your hull!',fx:'summon',d:[1,6]},col:'#998866',diff:2,
+    wpns:[
+      { n:'Stone Fist Slam',    ico:'🪨', d:[2,6], cd:0, threat:2, txt:'Carved stone fists — fires every round.' },
+      { n:'Rune Detonation',    ico:'💥', d:[1,8], cd:2, threat:3, txt:'Chest-mounted detonation rune — blast radius hits your helm.' }
+    ]},
+  fd_grey_marine: { name:'Ironhaven Vault Marine', sub:'Dwarven Vault — Armoured Guard', hp:72, maxHp:72, crew:5, maxCrew:5, g:[12,24],
+    atk:[{n:'Cannon Volley',d:[2,8],txt:'The marines fire a disciplined cannon volley from the vault battlements!'},{n:'Boarding Axe',d:[2,6],txt:'Dwarven boarding axes bite into your hull — crew dragged to the deck!',crew:1}],
+    sp:{n:'Shield Wall',c:0.28,txt:'The marines lock tower shields — incoming fire deflects!',fx:'dodge'},col:'#aa7722',diff:2,
+    wpns:[
+      { n:'Vault Cannon',      ico:'🏰', d:[2,8], cd:1, threat:3, txt:'Dwarven vault cannon — punishing and methodical.' },
+      { n:'Boarding Axe Rush', ico:'🪓', d:[2,6], cd:2, threat:4, txt:'Armoured marines board — 1 crew lost.', crew:1 }
+    ]},
 };
 
 // the Unnamed — the true final boss, revealed mid-Trull Overmind fight
@@ -3254,21 +3270,6 @@ const LOOT = {
   fg_cluster: [{id:'ngvnm',c:0.80},{id:'starcoin',c:0.70},{id:'thrallring',c:0.45},{id:'crewmead',c:0.55},{id:'antimag',c:0.25}],
   fg_hero:    [{id:'bheye',c:0.85},{id:'antimag',c:0.50},{id:'runeshard',c:0.45},{id:'psiamp',c:0.55},{id:'voidchart',c:0.35}],
   fg_dark:    [{id:'levscal',c:0.85},{id:'levblood',c:0.65},{id:'voidchart',c:0.50},{id:'arccore',c:0.45},{id:'antimag',c:0.40}],
-  // ── Grey sphere (Korreth — The Dwarven Vault) dungeon minions ────────────
-  fd_grey_construct: { name:'Vault-Stone Golem', sub:'Dwarven Vault — Bound Construct', hp:55, maxHp:55, crew:0, maxCrew:0, g:[6,14],
-    atk:[{n:'Stone Fist',d:[2,6],txt:'The golem slams its carved-stone fists into your hull plating!'},{n:'Rune Detonation',d:[1,8],txt:'A detonation rune carved into the golem\'s chest fires!'}],
-    sp:{n:'Rubble Hail',c:0.25,txt:'The golem tears chunks from the vault ceiling — a hail of rubble hammers your hull!',fx:'summon',d:[1,6]},col:'#998866',diff:2,
-    wpns:[
-      { n:'Stone Fist Slam',    ico:'🪨', d:[2,6], cd:0, threat:2, txt:'Carved stone fists — fires every round.' },
-      { n:'Rune Detonation',    ico:'💥', d:[1,8], cd:2, threat:3, txt:'Chest-mounted detonation rune — blast radius hits your helm.' }
-    ]},
-  fd_grey_marine: { name:'Ironhaven Vault Marine', sub:'Dwarven Vault — Armoured Guard', hp:72, maxHp:72, crew:5, maxCrew:5, g:[12,24],
-    atk:[{n:'Cannon Volley',d:[2,8],txt:'The marines fire a disciplined cannon volley from the vault battlements!'},{n:'Boarding Axe',d:[2,6],txt:'Dwarven boarding axes bite into your hull — crew dragged to the deck!',crew:1}],
-    sp:{n:'Shield Wall',c:0.28,txt:'The marines lock tower shields — incoming fire deflects!',fx:'dodge'},col:'#aa7722',diff:2,
-    wpns:[
-      { n:'Vault Cannon',      ico:'🏰', d:[2,8], cd:1, threat:3, txt:'Dwarven vault cannon — punishing and methodical.' },
-      { n:'Boarding Axe Rush', ico:'🪓', d:[2,6], cd:2, threat:4, txt:'Armoured marines board — 1 crew lost.', crew:1 }
-    ]},
   // Drones: mostly worthless wreck debris, very rare anything useful
   fd_realm_drone:  [{id:'driftjunk',c:0.80},{id:'wreckcable',c:0.65},{id:'scrapplat',c:0.55},{id:'moteash',c:0.30},{id:'sparelens',c:0.15},{id:'repkit',c:0.08}],
   // Scouts: slightly better — corsair gear, occasional coin, rare usable
