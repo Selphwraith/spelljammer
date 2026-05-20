@@ -4313,6 +4313,9 @@ function watchExpiredMidJourney() {
   if (!G.watch || G.watch._pauseShown) return;
   G.watch._pauseShown = true;
   clearInterval(G.tvl.timer); G.tvl.timer = null;
+  // Tick the leg FIRST so totalHours is already updated when the clock stops —
+  // prevents the HWM from freezing at a sub-14:00 value.
+  tickLeg();
   stopLiveClock();
   // Capture before zeroing — anchorCb and pushCb need these.
   // _watchesRemaining is already set correctly by travelTick's segment-complete handler;
@@ -4325,7 +4328,6 @@ function watchExpiredMidJourney() {
     G.tvl.cur = 0; G.tvl.steps = 0;
   }
   G.phase = 'map';
-  tickLeg();
   stopTravelHum();
   tsClose();
 
@@ -4550,9 +4552,11 @@ function _restAutoCountdown(cb, seconds) {
     remaining--;
     const b = document.getElementById('msgbtn');
     const box = document.getElementById('msgbox');
-    // If msgbox was closed, abort
+    // If msgbox was closed externally (not by us), still fire the callback —
+    // resumeFn has a _resumeFired guard so double-fire is safe.
     if (!box?.classList.contains('on')) {
-      clearInterval(_restCountdownTimer); _restCountdownTimer = null; return;
+      clearInterval(_restCountdownTimer); _restCountdownTimer = null;
+      cb(); return;
     }
     if (remaining > 0) {
       if (b) b.textContent = `⛵ Resume Course (${remaining})`;
@@ -5373,6 +5377,43 @@ function initGame() {
       if (TS.active && !TS.animId) TS.animId = requestAnimationFrame(tsRender);
       resumeLiveClock();
     }, 5000);
+  }
+
+  // ── Idle map-phase watchdog — catches failed auto-resume after rest ────────
+  // The travel watchdog only fires when phase==='traveling'. If auto-rest fails
+  // to call resumeFn (e.g. countdown aborted), the game is stuck in phase==='map'
+  // with a pending _resumeTravel that never fires. This catches that.
+  if (!window._idleMapWatchdog) {
+    window._idleMapWatchdog = setInterval(() => {
+      if (!G?._idleMode || !G?._idleBounce) return;
+      if (G.phase !== 'map') return;
+      if (G.watch?.restingPhase) return; // rest animation still playing — OK
+      if (G.watch?._pauseShown) return;  // anchor popup showing — OK
+      // Dock overlay is open — OK
+      const dockOpen = document.getElementById('ov-idle-dock')?.style.display !== 'none';
+      if (dockOpen) return;
+      // Rest overlay is open — OK
+      const restOpen = document.getElementById('rest-overlay')?.classList.contains('on');
+      if (restOpen) return;
+      // If there's a pending resume that hasn't fired, kick it now
+      if (G._resumeTravel) {
+        addLog('⚙ Idle: recovering stalled resume — restarting voyage.', '');
+        const rt = G._resumeTravel; G._resumeTravel = null;
+        G._restResumeBackup = null;
+        startTravel(rt.toId, rt.watchesRemaining, rt.pausedPos, rt.pausedProg, rt.laneOrigin);
+        return;
+      }
+      // No resume state but bounce is active and we're on the map — restart the leg
+      if (G._idleBounceTo && G.ship.loc) {
+        const dest = G._idleBounceTo;
+        const destSph = G.spheres?.find(s => s.id === dest);
+        // Only restart if destination is different from current location
+        if (dest !== G.ship.loc) {
+          addLog(`⚙ Idle: no resume state found — restarting bounce to ${destSph?.n || dest}.`, '');
+          _idleBounceDepart();
+        }
+      }
+    }, 8000);
   }
 
   G = {
@@ -7075,7 +7116,8 @@ function travelTick(){
       const destSph = G.spheres.find(s=>s.id===G.tvl.to) || {x:.5,y:.5};
       const pg = G.tvl.prog / 100;
       const pausedPos = { x: laneOrigin.x + (destSph.x-laneOrigin.x)*pg, y: laneOrigin.y + (destSph.y-laneOrigin.y)*pg };
-      G._resumeTravel = { toId:G.tvl.to, watchesRemaining:G.tvl._watchesLeft||0, pausedPos, pausedProg:G.tvl.prog, laneOrigin };
+      // Math.max(1,...) — on the final watch _watchesLeft===0 means this watch still needs to complete
+      G._resumeTravel = { toId:G.tvl.to, watchesRemaining:Math.max(1, G.tvl._watchesLeft||0), pausedPos, pausedProg:G.tvl.prog, laneOrigin };
 
       if (TS.active) {
         // Queue beacon approach — tsResolveEvent will handle stopping travel and showing offer
