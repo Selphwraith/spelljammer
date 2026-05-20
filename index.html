@@ -4497,8 +4497,11 @@ function doRest() {
         G._restResumeBackup = rt;
         if (rt.pausedPos) G.ship.midLanePos = rt.pausedPos;
         const dn = G.spheres?.find(s=>s.id===rt.toId)?.n || rt.toId;
+        let _resumeFired = false;
         const resumeFn = () => {
+          if (_resumeFired) return; _resumeFired = true;
           G._restResumeBackup = null;
+          G.phase = 'map'; // startTravel requires phase==='map'
           startTravel(rt.toId, rt.watchesRemaining, rt.pausedPos, rt.pausedProg, rt.laneOrigin);
         };
         showMsg('⚓ Rested — Ready to Sail',
@@ -4506,9 +4509,22 @@ function doRest() {
           '⛵ Resume Course', resumeFn);
         // Auto-resume countdown for both idle and manual auto-rest
         if(G._idleMode || G._autoRest) _restAutoCountdown(resumeFn, G._idleMode ? 2 : 3);
-      } else if (G.tvl?.prog < 100 && (G.tvl?.to || G.tvl?.toWp || G.tvl?.toFragSite)) {
-        const dn = G.tvl.to ? G.spheres?.find(s=>s.id===G.tvl.to)?.n : (G.tvl.toWp?.n||G.tvl.toFragSite?.n||'destination');
-        const resumeFn2 = () => { G.phase='traveling'; startTravelHum(); startLiveClock(); resetLiveClock(); if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer=setInterval(travelTick,G.tvl.tickMs||100); tsOpen(getLane(G.tvl.from, G.tvl.to)); };
+      } else if (G.tvl?.to && (G.tvl._watchesLeft||0) > 0) {
+        // Fallback: no _resumeTravel saved but we know where we're going — rebuild it
+        const toId = G.tvl.to;
+        const dn = G.spheres?.find(s=>s.id===toId)?.n || toId;
+        const watchesRemaining = G.tvl._watchesRemaining || G.tvl._watchesLeft || 1;
+        const pausedProg = G.tvl._pausedProg || G.tvl.prog || 0;
+        const laneOrigin = G.tvl._laneOrigin || G.tvl.fromPos || {x:.5,y:.5};
+        const destSph = G.spheres?.find(s=>s.id===toId) || {x:.5,y:.5};
+        const pg = Math.max(0, Math.min(1, pausedProg / 100));
+        const pausedPos = { x: laneOrigin.x + (destSph.x-laneOrigin.x)*pg, y: laneOrigin.y + (destSph.y-laneOrigin.y)*pg };
+        let _resumeFired2 = false;
+        const resumeFn2 = () => {
+          if (_resumeFired2) return; _resumeFired2 = true;
+          G.phase = 'map';
+          startTravel(toId, watchesRemaining, pausedPos, pausedProg, laneOrigin);
+        };
         showMsg('⚓ Rested — Ready to Sail', `${dn} awaits. Day ${G.watch.day}, 06:00.`,
           '⛵ Resume Course', resumeFn2);
         if(G._idleMode || G._autoRest) _restAutoCountdown(resumeFn2, G._idleMode ? 2 : 3);
