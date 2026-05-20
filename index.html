@@ -44,12 +44,12 @@ body {
 #sidebar {
   grid-area: side;
   background: linear-gradient(180deg,#07001a,#05000f);
-  border-right: 1px solid #33005533;
+  border-right: 1px solid rgba(51,0,85,0.2);
   padding: 8px; overflow-y:auto;
   display: flex; flex-direction:column; gap:7px;
 }
 .pbox { background:rgba(22,6,50,0.7); border:1px solid #44118855; border-radius:4px; padding:8px; }
-.ptitle { font-family:'Cinzel',serif; font-size: 0.625em; letter-spacing:2px; color:#9966dd; text-transform:uppercase; margin-bottom:6px; border-bottom:1px solid #33005533; padding-bottom:3px; }
+.ptitle { font-family:'Cinzel',serif; font-size: 0.625em; letter-spacing:2px; color:#9966dd; text-transform:uppercase; margin-bottom:6px; border-bottom:1px solid rgba(51,0,85,0.2); padding-bottom:3px; }
 .srow { display:flex; justify-content:space-between; align-items:center; margin-bottom:3px; font-size: 0.75em; }
 .slabel { color:#7766aa; } .sval { color:#ffd700; font-weight:600; }
 .bw { background:#12002a; border:1px solid #33004433; border-radius:2px; height:6px; margin-top:2px; overflow:hidden; }
@@ -244,7 +244,7 @@ body {
 /* Keep cships alias working for any legacy JS references */
 .cships { display: flex; gap: 28px; align-items: center; width: 100%; max-width: 660px; }
 .cblock { flex:1; background:rgba(15,3,38,0.88); border:1px solid #5522aa; border-radius:5px; padding:11px; text-align:center; }
-.cblock canvas { width: 200px; height: 130px; display:block; margin: 6px auto; border-radius:4px; border:1px solid #33005533; }
+.cblock canvas { width: 200px; height: 130px; display:block; margin: 6px auto; border-radius:4px; border:1px solid rgba(51,0,85,0.2); }
 .cname { font-family:'Cinzel',serif; font-size: 0.688em; color:#9966dd; margin-bottom:5px; }
 .cstat { font-size: 0.688em; color:#8877aa; margin-top:3px; }
 .hpw { background:#12002a; border:1px solid #33004422; border-radius:2px; height:9px; overflow:hidden; margin-top:3px; }
@@ -354,7 +354,7 @@ body {
 #msgtitle { font-family:'Cinzel',serif; font-size: 1.063em; color:#ffd700; margin-bottom:8px; }
 #msgbody { font-size: 0.813em; color:#aa99cc; margin-bottom:12px; line-height:1.6; white-space:pre-line; }
 #msgbtn, #msgbtn2 { min-height:44px; min-width:120px; font-size:0.875em; padding:10px 16px; }
-#msgbtn2.muted { border-color:#33224455; color:#665577; }
+#msgbtn2.muted { border-color:rgba(51,34,68,0.33); color:#665577; }
 #msgbtn2.muted:hover { border-color:#6644aa; color:#aa88cc; }
 
 /* ── END SCREENS ── */
@@ -487,12 +487,12 @@ body {
 .briefing-title { font-family:'Cinzel',serif; font-size: 1.25em; color:#ffd700; letter-spacing:3px; }
 .briefing-trullll { overflow-y:auto; flex:1; padding-right:8px; display:flex; flex-direction:column; gap:10px; }
 .b-section { margin-bottom:2px; }
-.b-head { font-family:'Cinzel',serif; font-size: 0.688em; color:#9966dd; letter-spacing:2px; text-transform:uppercase; border-bottom:1px solid #33005533; padding-bottom:3px; margin-bottom:6px; }
+.b-head { font-family:'Cinzel',serif; font-size: 0.688em; color:#9966dd; letter-spacing:2px; text-transform:uppercase; border-bottom:1px solid rgba(51,0,85,0.2); padding-bottom:3px; margin-bottom:6px; }
 .b-body { font-size: 0.813em; color:#aa99cc; line-height:1.65; }
 .b-body strong { color:#ffcc66; font-weight:600; }
 .b-body em { color:#88aaff; font-style:normal; }
 .b-table { width:100%; border-collapse:collapse; font-size: 0.75em; margin-top:4px; }
-.b-table th { font-family:'Cinzel',serif; font-size: 0.625em; color:#7755aa; letter-spacing:1px; padding:4px 8px; text-align:left; border-bottom:1px solid #33005533; }
+.b-table th { font-family:'Cinzel',serif; font-size: 0.625em; color:#7755aa; letter-spacing:1px; padding:4px 8px; text-align:left; border-bottom:1px solid rgba(51,0,85,0.2); }
 .b-table td { padding:4px 8px; color:#998bbb; border-bottom:1px solid #22003322; }
 .b-table td:first-child { color:#cc99ff; }
 
@@ -565,7 +565,7 @@ body {
   align-self: flex-end;
 }
 #stats-drawer .pbox { background: rgba(22,6,50,0.7); border: 1px solid #44118855; border-radius: 4px; padding: 8px; }
-#stats-drawer .ptitle { font-family: 'Cinzel', serif; font-size: 0.625em; letter-spacing: 2px; color: #9966dd; text-transform: uppercase; margin-bottom: 6px; border-bottom: 1px solid #33005533; padding-bottom: 3px; }
+#stats-drawer .ptitle { font-family: 'Cinzel', serif; font-size: 0.625em; letter-spacing: 2px; color: #9966dd; text-transform: uppercase; margin-bottom: 6px; border-bottom: 1px solid rgba(51,0,85,0.2); padding-bottom: 3px; }
 #stats-drawer .srow { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; font-size: 0.75em; }
 #stats-drawer .slabel { color: #7766aa; }
 #stats-drawer .sval { color: #ffd700; font-weight: 600; }
@@ -898,7 +898,7 @@ body {
 /* Quest log strip at bottom */
 #lq-log-strip {
   position:absolute; bottom:8px; left:50%; transform:translateX(-50%);
-  background:rgba(5,0,15,0.85); border:1px solid #33005533; border-radius:4px;
+  background:rgba(5,0,15,0.85); border:1px solid rgba(51,0,85,0.2); border-radius:4px;
   padding:5px 14px; font-size: 0.688em; color:#7766aa; font-style:italic;
   pointer-events:none; max-width:500px; text-align:center; z-index:10;
 }
@@ -966,7 +966,7 @@ body {
 /* ── Log strip ── */
 #ls-log-strip {
   position:absolute; bottom:8px; left:50%; transform:translateX(-50%);
-  background:rgba(5,0,15,0.88); border:1px solid #33005533; border-radius:4px;
+  background:rgba(5,0,15,0.88); border:1px solid rgba(51,0,85,0.2); border-radius:4px;
   padding:5px 18px; font-size:0.688em; color:#7766aa; font-style:italic;
   pointer-events:none; max-width:560px; text-align:center; z-index:10;
   transition: color 0.4s;
@@ -1589,7 +1589,7 @@ body {
 .qlog-body   { width:100%; max-width:640px; flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; }
 .qlog-sphere-header {
   font-family:'Cinzel',serif; font-size: 0.625em; letter-spacing:2px; color:#554477;
-  text-transform:uppercase; padding:4px 0 4px; border-bottom:1px solid #33005533;
+  text-transform:uppercase; padding:4px 0 4px; border-bottom:1px solid rgba(51,0,85,0.2);
   margin-top:6px;
 }
 .qlog-entry {
@@ -1795,7 +1795,7 @@ body {
   width:100%; text-align:left;
 }
 #cbt-inv-toggle.has-items { border-color:#44aaff66; color:#88ccff; }
-#cbt-inv-toggle.no-items  { border-color:#33224455; color:#553355; opacity:0.6; }
+#cbt-inv-toggle.no-items  { border-color:rgba(51,34,68,0.33); color:#553355; opacity:0.6; }
 
 /* Volume panel */
 .vol-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
@@ -1940,7 +1940,7 @@ body {
     <div class="ptitle">⊞ Overlays</div>
     <button class="ovl-btn" onclick="openOverlay('inv')">📦 Cargo Manifest</button>
     <button class="ovl-btn" onclick="openOverlay('wpn')">⚔ Weapon Loadout</button>
-    <button class="ovl-btn" id="sidebar-armory-btn" onclick="openArmory()" style="border-color:#aa882255;color:#ffcc88;">🛠 Armory</button>
+    <button class="ovl-btn" id="sidebar-armory-btn" onclick="openArmory()" style="border-color:rgba(170,136,34,0.33);color:#ffcc88;">🛠 Armory</button>
     <button class="ovl-btn" onclick="openOverlay('shp')">🚀 Ship Details</button>
     <button class="ovl-btn" onclick="openOverlay('qlog')">📜 Quest Log</button>
     <button class="ovl-btn" id="sidebar-lq-btn" onclick="openLocalQuest()" style="display:none;border-color:#44886655;color:#44ffcc;">🌌 Local Quests</button>
@@ -2087,7 +2087,7 @@ body {
       <button class="fbtn" onclick="setInvFilter('usable',this)">Usable</button>
       <button class="fbtn" onclick="setInvFilter('equip',this)">Equip</button>
       <button class="fbtn" onclick="setInvFilter('artifact',this)">Artifacts</button>
-      <button class="fbtn" onclick="setInvFilter('weapon',this)" style="border-color:#aa882255;color:#ffcc88;">⚔ Weapons</button>
+      <button class="fbtn" onclick="setInvFilter('weapon',this)" style="border-color:rgba(170,136,34,0.33);color:#ffcc88;">⚔ Weapons</button>
     </div>
     <div class="inv-body">
       <div class="inv-grid-wrap">
@@ -2268,7 +2268,7 @@ body {
       <div style="width:100%;height:1px;background:linear-gradient(90deg,transparent,#44118844,transparent);"></div>
       <div id="dm-text" style="font-size:13px;color:#bbaadd;line-height:1.7;font-style:italic;min-height:80px;"></div>
       <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
-        <button id="dm-skip-btn" class="btn" onclick="closeDockmaster()" style="font-size:11px;padding:7px 14px;border-color:#33224455;color:#554477;">✕ Leave</button>
+        <button id="dm-skip-btn" class="btn" onclick="closeDockmaster()" style="font-size:11px;padding:7px 14px;border-color:rgba(51,34,68,0.33);color:#554477;">✕ Leave</button>
         <button id="dm-quest-btn" class="btn" onclick="dmOfferQuest()" style="display:none;font-size:11px;padding:7px 14px;background:rgba(5,20,50,0.8);border-color:#2255aa55;color:#88aaff;"></button>
         <button id="dm-clue-btn" class="btn" onclick="dmGrantClue()" style="display:none;font-size:11px;padding:7px 14px;background:rgba(60,20,10,0.8);border-color:#aa660055;color:#ffaa44;"></button>
         <button id="dm-next-btn" class="btn" onclick="dmAdvance()" style="font-size:11px;padding:7px 14px;">Continue →</button>
@@ -2617,7 +2617,7 @@ body {
   </div>
 
   <!-- MSG -->
-  <div id="msgbox"><div id="msgtitle"></div><div id="msgbody"></div><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;"><button class="btn" id="msgbtn" onclick="dismissMsg()">Continue</button><button class="btn" id="msgbtn2" onclick="dismissMsg2()" style="display:none;border-color:#33664455;color:#44bb88;"></button></div></div>
+  <div id="msgbox"><div id="msgtitle"></div><div id="msgbody"></div><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;"><button class="btn" id="msgbtn" onclick="dismissMsg()">Continue</button><button class="btn" id="msgbtn2" onclick="dismissMsg2()" style="display:none;border-color:rgba(51,102,68,0.33);color:#44bb88;"></button></div></div>
 
   <!-- END SCREENS -->
   <div class="endscr" id="scr-defeat">
@@ -2630,7 +2630,7 @@ body {
     <div class="etext">The Trull Overmind Flagship is ash and memory. The Drift breathes free. Legends of your voyage will echo through every Planet for an age.</div>
     <div class="etext" style="font-size:13px;color:#7766aa;max-width:400px;">Your mission is complete — but the stars remain. You could rest, or you could keep sailing.</div>
     <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;">
-      <button class="btn" onclick="restart()" style="border-color:#33664455;color:#44bb88;">🏆 End Voyage</button>
+      <button class="btn" onclick="restart()" style="border-color:rgba(51,102,68,0.33);color:#44bb88;">🏆 End Voyage</button>
       <button class="btn" onclick="continueSailing()" style="border-color:#4488ff55;color:#88ccff;">⭐ Continue Sailing</button>
     </div>
     <button class="btn gd" onclick="restart()" style="display:none;"></button>
@@ -4712,7 +4712,7 @@ function applyFontScale(scale, save=true) {
   // Highlight active button
   document.querySelectorAll('.fs-btn').forEach(btn => {
     const active = Math.abs(parseFloat(btn.dataset.scale) - scale) < 0.01;
-    btn.style.borderColor = active ? '#9966dd' : '#44228866';
+    btn.style.borderColor = active ? '#9966dd' : 'rgba(68,34,136,0.4)';
     btn.style.color       = active ? '#ddbbff'  : '';
     btn.style.background  = active ? 'rgba(40,15,80,0.9)' : 'rgba(15,5,35,0.9)';
   });
@@ -7330,7 +7330,7 @@ function enterPort(sph){
   if(!repBtn){
     repBtn = document.createElement('button');
     repBtn.id='pt-rep-btn'; repBtn.className='btn';
-    repBtn.style.cssText='font-size:11px;padding:6px 14px;border-color:#33446655;color:#8899cc;';
+    repBtn.style.cssText='font-size:11px;padding:6px 14px;border-color:rgba(51,68,102,0.33);color:#8899cc;';
     repBtn.textContent='📊 Faction Standing';
     repBtn.onclick=showFactionRep;
     document.getElementById('ov-port').querySelector('[style*="display:flex"]').appendChild(repBtn);
@@ -7348,7 +7348,7 @@ function enterPort(sph){
     if (hasDM) {
       rumorBtn.style.display = 'inline-block';
       rumorBtn.textContent = hasClue ? '📜 Review Intel' : '🍺 Talk to Locals';
-      rumorBtn.style.borderColor = hasClue ? '#33664455' : '#663311';
+      rumorBtn.style.borderColor = hasClue ? 'rgba(51,102,68,0.33)' : '#663311';
       rumorBtn.style.color = hasClue ? '#44bb88' : '#ffaa44';
       rumorBtn.onclick = () => openDockmaster(sph.id);
     } else {
@@ -7417,7 +7417,7 @@ function buildCargoSell(){
   if(filtered.length > 1) {
     const sellAllVal = filtered.reduce((a,i) => a + _sellPrice(i), 0);
     const allRow = document.createElement('div');
-    allRow.className = 'sitem'; allRow.style.borderColor = '#44ee8866';
+    allRow.className = 'sitem'; allRow.style.borderColor = 'rgba(68,238,136,0.4)';
     const lbl = {all:'Everything',cargo:'All Cargo',usable:'All Usables',weapon:'All Weapons'}[_sellFilter];
     allRow.innerHTML = `<div class="siname" style="color:#44ee88">💰 Sell ${lbl}</div>
       <div class="sidesc">${filtered.length} items</div>
@@ -7440,8 +7440,8 @@ function buildCargoSell(){
     const isUsable = item.type === 'usable';
     const d = document.createElement('div');
     d.className = 'sitem';
-    if(isWpn)    d.style.borderColor = '#aa882255';
-    if(isUsable) d.style.borderColor = '#66336655';
+    if(isWpn)    d.style.borderColor = 'rgba(170,136,34,0.33)';
+    if(isUsable) d.style.borderColor = 'rgba(102,51,102,0.33)';
     const badge = isWpn    ? ' <span style="font-size:9px;color:#665533;">[weapon]</span>'
                 : isUsable ? ' <span style="font-size:9px;color:#664499;">[usable — 60%]</span>' : '';
     d.innerHTML = `<div style="font-size:18px">${item.ico||'📦'}</div>
@@ -7469,7 +7469,7 @@ function buildShop(){
   // Flavor banner for this port's exclusive shop
   if (stock.wpns.length || stock.upgs.length) {
     const banner = document.createElement('div');
-    banner.style.cssText = 'grid-column:1/-1;font-size:11px;color:#6644aa;font-style:italic;padding:4px 0 2px;border-bottom:1px solid #33005533;margin-bottom:2px;';
+    banner.style.cssText = 'grid-column:1/-1;font-size:11px;color:#6644aa;font-style:italic;padding:4px 0 2px;border-bottom:1px solid rgba(51,0,85,0.2);margin-bottom:2px;';
     banner.textContent = `⚓ ${stock.label} — ${stock.flavor}`;
     grid.appendChild(banner);
   }
@@ -9090,7 +9090,7 @@ function tsDrawEvent(ctx, ev, W, H) {
     ctx.strokeStyle = '#4488ffaa'; ctx.lineWidth = 2.5;
     ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI*2); ctx.fill(); ctx.stroke();
     ctx.rotate(TS.t * 0.15);
-    ctx.strokeStyle = '#4488ff66'; ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(68,136,255,0.4)'; ctx.lineWidth = 2;
     for(let a=0; a<4; a++){
       const ra = a * Math.PI/2;
       ctx.beginPath(); ctx.moveTo(Math.cos(ra)*26, Math.sin(ra)*26);
@@ -9988,7 +9988,7 @@ function updatePortRestBtn() {
   const colors = ['#cc99ff','#ffcc44','#ff8844','#ff4444'];
   btn.textContent = labels[lvl];
   btn.style.color = colors[lvl];
-  btn.style.borderColor = lvl >= 2 ? colors[lvl]+'55' : '#5522aa55';
+  btn.style.borderColor = lvl >= 2 ? _h8(colors[lvl],'55') : 'rgba(85,34,170,0.33)';
 }
 
 function enterWaypoint(wp){
@@ -11576,7 +11576,7 @@ function buildCbtPanels() {
     const sb = document.createElement('button');
     sb.className = 'btn' + (sigOnCd ? ' disabled' : '');
     sb.disabled = sigOnCd;
-    sb.style.borderColor = sigOnCd ? '#44334488' : '#ffaa0088';
+    sb.style.borderColor = sigOnCd ? 'rgba(68,51,68,0.53)' : 'rgba(255,170,0,0.53)';
     sb.style.color = sigOnCd ? '#665544' : '#ffcc66';
     sb.style.background = sigOnCd ? '' : 'rgba(40,25,0,0.6)';
     sb.innerHTML = sigOnCd
@@ -11592,7 +11592,7 @@ function buildCbtPanels() {
     const lb = document.createElement('button');
     lb.className = 'btn' + (readyCount < 2 || lOnCd ? ' disabled' : '');
     lb.disabled = readyCount < 2 || lOnCd;
-    lb.style.borderColor = lOnCd ? '#886644aa' : '#ffaa2266';
+    lb.style.borderColor = lOnCd ? 'rgba(136,102,68,0.67)' : 'rgba(255,170,34,0.4)';
     lb.innerHTML = lOnCd ? '🎯 Linked Fire <em style="font-size:10px">(' + G.cbt.linkedCd + ' rds cd)</em>'
       : readyCount < 2 ? '🎯 Linked Fire <em style="font-size:10px">(need 2+ ready)</em>'
       : '🎯 Linked Fire <em style="font-size:10px">(fire 2 at once)</em>';
@@ -11605,7 +11605,7 @@ function buildCbtPanels() {
     const vb = document.createElement('button');
     vb.className = 'btn' + (readyWpns < 2 || vOnCd ? ' disabled' : '');
     vb.disabled = readyWpns < 2 || vOnCd;
-    vb.style.borderColor = vOnCd ? '#446688aa' : '#4488ff66';
+    vb.style.borderColor = vOnCd ? 'rgba(68,102,136,0.67)' : 'rgba(68,136,255,0.4)';
     vb.innerHTML = vOnCd ? '🌊 Volley Fire <em style="font-size:10px">(' + G.cbt.volleyCd + ' rds cd)</em>'
       : readyWpns < 2 ? '🌊 Volley Fire <em style="font-size:10px">(need 2+ ready)</em>'
       : '🌊 Volley Fire <em style="font-size:10px">(all ' + readyWpns + ' ready)</em>';
@@ -13081,7 +13081,7 @@ function selectInvItem(uid){
   if(item.type==='weapon' && item.wk) {
     // Equip from inventory — free, opens armory slot picker
     const eb=document.createElement('button'); eb.className='btn sm';
-    eb.style.cssText='border-color:#aa882255;color:#ffcc88;';
+    eb.style.cssText='border-color:rgba(170,136,34,0.33);color:#ffcc88;';
     eb.textContent='🛠 Equip Weapon';
     eb.onclick=()=>{ openArmoryEquip(item); };
     acts.appendChild(eb);
@@ -13594,7 +13594,7 @@ function cLog(msg,type){
 }
 function cLogSep(label){
   const b=document.getElementById('clog'); const d=document.createElement('div');
-  d.style.cssText='color:#33224455;font-size:9px;letter-spacing:2px;padding:4px 0 2px;border-top:1px solid #22113322;margin-top:3px;';
+  d.style.cssText='color:rgba(51,34,68,0.33);font-size:9px;letter-spacing:2px;padding:4px 0 2px;border-top:1px solid rgba(34,17,51,0.13);margin-top:3px;';
   d.textContent = label || '─────────────';
   b.appendChild(d); b.trullllTop=b.trullllHeight;
 }
@@ -13654,7 +13654,7 @@ function openDockmaster(sphereId) {
   document.getElementById('dm-title').textContent = dm.title;
   document.getElementById('dm-city').textContent = dm.city;
   document.getElementById('dm-portrait').style.background = dm.portrait + '22';
-  document.getElementById('dm-portrait').style.borderColor = dm.portrait + '55';
+  document.getElementById('dm-portrait').style.borderColor = _h8(dm.portrait,'55');
   const dmGoldBar = document.getElementById('dm-gold-bar');
   if(dmGoldBar) dmGoldBar.textContent = G.ship.gold;
 
@@ -14059,7 +14059,7 @@ function _buildRoamShopHTML(fac, resEl){
     const stockLabel = soldOut ? ' <span style="font-size:8px;color:#553344;">[SOLD OUT]</span>'
                                : ` <span style="font-size:8px;color:#554444;">[${s.remaining}]</span>`;
     const btnBg = soldOut ? 'rgba(10,5,10,0.5)' : (canAfford ? 'rgba(30,15,5,0.9)' : 'rgba(10,5,10,0.5)');
-    const btnBd = soldOut ? '#33223344' : (canAfford ? '#aa882255' : '#33223344');
+    const btnBd = soldOut ? '#33223344' : (canAfford ? 'rgba(170,136,34,0.33)' : '#33223344');
     const btnCol = (soldOut || !canAfford) ? '#443333' : '#ffcc66';
     const btnCur = (soldOut || !canAfford) ? 'default' : 'pointer';
     const btnDis = (soldOut || !canAfford) ? 'disabled' : '';
@@ -14575,7 +14575,7 @@ function drawZoomHud(cx,W,H,t){
   if(followBtn){
     followBtn.textContent = G.view.follow ? '🔒 LOCK' : '🔓 FREE';
     followBtn.style.background = G.view.follow ? '#33194d' : '#1a0a2e';
-    followBtn.style.borderColor = G.view.follow ? '#aa66ff' : '#6633aa44';
+    followBtn.style.borderColor = G.view.follow ? '#aa66ff' : 'rgba(102,51,170,0.27)';
     followBtn.style.color = G.view.follow ? '#ddaaff' : '#7755aa';
   }
 }
@@ -16722,7 +16722,7 @@ function _lsLocalsClickCard(idx) {
     const canAfford = G.ship.gold >= 5;
     respEl.innerHTML = `<div style="font-size:0.625em;color:#887755;margin-bottom:6px;">${local.portrait} ${local.name}</div>
       <div style="margin-bottom:10px;">"${local.name.split(' ').pop()} sizes you up slowly. There might be something worth your time — but information like that doesn't come free. Five TS for my trouble."</div>
-      <button class="btn" id="ls-locals-pay-btn" style="font-size:0.625em;padding:4px 14px;border-color:#aa882255;color:#ccaa55;" onclick="_lsLocalsPay(${idx})" ${canAfford?'':'disabled'}>🔷 Pay 5 TS</button>
+      <button class="btn" id="ls-locals-pay-btn" style="font-size:0.625em;padding:4px 14px;border-color:rgba(170,136,34,0.33);color:#ccaa55;" onclick="_lsLocalsPay(${idx})" ${canAfford?'':'disabled'}>🔷 Pay 5 TS</button>
       ${!canAfford?'<div style="color:#884444;font-size:0.563em;margin-top:6px;">Not enough TS.</div>':''}`;
   } else if(isKnowledgeable) {
     _lsLocalsRevealTip(idx, local);
@@ -16861,10 +16861,10 @@ function _lsBuildSellGrid() {
   if(filtered.length > 1) {
     const sellAllVal = filtered.reduce((a,i) => a + _sellPrice(i), 0);
     const allRow = document.createElement('div');
-    allRow.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-radius:4px;background:rgba(10,30,10,0.6);border:1px solid #33664433;';
+    allRow.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-radius:4px;background:rgba(10,30,10,0.6);border:1px solid rgba(51,102,68,0.2);';
     const lbl = {all:'Sell All',cargo:'All Cargo',usable:'All Usables',weapon:'All Weapons'}[_lsSellFilter];
     allRow.innerHTML = `<span style="font-size:0.625em;color:#44ee88;">💰 ${lbl} (${filtered.length})</span>
-      <button class="btn" style="font-size:0.563em;padding:3px 10px;border-color:#33664455;color:#44ee88;">🔷 ${sellAllVal} TS</button>`;
+      <button class="btn" style="font-size:0.563em;padding:3px 10px;border-color:rgba(51,102,68,0.33);color:#44ee88;">🔷 ${sellAllVal} TS</button>`;
     allRow.querySelector('button').onclick = () => {
       const uids = new Set(filtered.map(i => i.uid));
       G.ship.inv = G.ship.inv.filter(i => !uids.has(i.uid));
@@ -16881,7 +16881,7 @@ function _lsBuildSellGrid() {
     const isUsable = item.type === 'usable';
     const isWpn    = item.type === 'weapon';
     const row = document.createElement('div');
-    row.style.cssText = `display:flex;justify-content:space-between;align-items:center;padding:4px 8px;border-radius:4px;background:rgba(8,4,20,0.5);border:1px solid ${isUsable?'#44224455':isWpn?'#aa882233':'#33224433'};`;
+    row.style.cssText = `display:flex;justify-content:space-between;align-items:center;padding:4px 8px;border-radius:4px;background:rgba(8,4,20,0.5);border:1px solid ${isUsable?'rgba(68,34,68,0.33)':isWpn?'rgba(170,136,34,0.2)':'rgba(51,34,68,0.2)'};`;
     const badge = isUsable ? ' <span style="font-size:8px;color:#664499;">[60%]</span>'
                 : isWpn    ? ' <span style="font-size:8px;color:#665533;">[wpn]</span>' : '';
     row.innerHTML = `<span style="font-size:0.625em;color:${isUsable?'#aa88cc':isWpn?'#ffcc88':'#8899bb'};">${item.ico||'📦'} ${item.n}${badge}</span>
@@ -17008,7 +17008,7 @@ function _lsBuildQmShop() {
 
     const row = document.createElement('div');
     row.style.cssText = `display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:4px;
-      background:rgba(10,5,30,0.6);border:1px solid ${soldOut?'#33224422':'#33224433'};
+      background:rgba(10,5,30,0.6);border:1px solid ${soldOut?'#33224422':'rgba(51,34,68,0.2)'};
       opacity:${soldOut||!canAfford ? '0.45' : '1'};`;
 
     // Item name + desc
@@ -17128,7 +17128,15 @@ function _lsLog(msg, cls='') {
   if(msg) _lsLogTimer = setTimeout(()=>{ if(el.textContent===msg) el.textContent='Navigate to a point of interest.'; el.className=''; }, 6000);
 }
 
-// ── Ship speed → local space / dungeon movement speed mapping ────────────
+// ── Color helper — converts '#rrggbb' + 2-char alpha hex to rgba() ───────
+// Needed because 8-digit hex (#rrggbbaa) isn't supported on all mobile browsers.
+function _h8(hex6, alphaHex) {
+  const h = (hex6||'#888888').replace('#','');
+  if(h.length < 6) return hex6;
+  const r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16);
+  const a=Math.round(parseInt(alphaHex,16)/255*100)/100;
+  return `rgba(${r},${g},${b},${a})`;
+}
 // Speed 4 = half current (slow, starter feel)
 // Speed 8 = what used to be the base (current game feel)
 // Speed 10 = noticeably faster, reward for max upgrade
@@ -17565,7 +17573,7 @@ function _lsShowInteract(poi) {
       btns.appendChild(fightBtn);
 
       const retreatBtn = document.createElement('button');
-      retreatBtn.className='btn'; retreatBtn.style.cssText='color:#886655;border-color:#44221133;';
+      retreatBtn.className='btn'; retreatBtn.style.cssText='color:#886655;border-color:rgba(68,34,17,0.2);';
       retreatBtn.textContent='← Retreat';
       retreatBtn.onclick = () => { panel.classList.remove('on'); LS.interactOpen=false; LS.nearPoi=null; };
       btns.appendChild(retreatBtn);
@@ -17590,7 +17598,7 @@ function _lsOpenNpcCard(npc, hasShop=false) {
   const dlg = document.getElementById('ls-npc-dialog');
 
   document.getElementById('ls-npc-dialog-portrait').textContent = npc.portrait || '🧑‍✈️';
-  document.getElementById('ls-npc-dialog-portrait').style.borderColor = (npc.color||'#4488ff') + '88';
+  document.getElementById('ls-npc-dialog-portrait').style.borderColor = _h8(npc.color||'#4488ff','88');
   document.getElementById('ls-npc-dialog-name').textContent = npc.name;
   document.getElementById('ls-npc-dialog-role').textContent = npc.role;
   document.getElementById('ls-npc-dialog-greet').textContent = npc.greet;
@@ -17626,7 +17634,7 @@ function _lsOpenNpcCard(npc, hasShop=false) {
     if(status === 'available') {
       const acc = document.createElement('button');
       acc.className='btn'; acc.textContent='✔ Accept Quest';
-      acc.style.cssText='border-color:#33664455;color:#44bb88;';
+      acc.style.cssText='border-color:rgba(51,102,68,0.33);color:#44bb88;';
       acc.onclick = () => {
         G.localQuests[quest.id] = 'active';
         if(quest.trigger) quest.trigger(G);
@@ -17659,7 +17667,7 @@ function _lsOpenNpcCard(npc, hasShop=false) {
   if(hasShop) {
     const shopBtn = document.createElement('button');
     shopBtn.className='btn'; shopBtn.textContent='🛒 Open Shop';
-    shopBtn.style.cssText='border-color:#33664455;color:#44ffcc;';
+    shopBtn.style.cssText='border-color:rgba(51,102,68,0.33);color:#44ffcc;';
     shopBtn.onclick = () => {
       dlg.classList.remove('on');
       LS.interactOpen = false;
@@ -17670,7 +17678,7 @@ function _lsOpenNpcCard(npc, hasShop=false) {
 
   const closeBtn = document.createElement('button');
   closeBtn.className='btn'; closeBtn.textContent='✕ Close';
-  closeBtn.style.cssText='border-color:#33224455;color:#554477;';
+  closeBtn.style.cssText='border-color:rgba(51,34,68,0.33);color:#554477;';
   closeBtn.onclick = () => {
     dlg.classList.remove('on');
     LS.interactOpen = false;
@@ -18350,7 +18358,7 @@ function buildArmoryGrid() {
     const alreadyEquipped = equipped.includes(item.wk);
 
     const row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:5px;background:rgba(15,8,35,0.8);border:1px solid #44332255;';
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:5px;background:rgba(15,8,35,0.8);border:1px solid rgba(68,51,34,0.33);';
 
     // Info block
     const info = document.createElement('div');
@@ -18366,7 +18374,7 @@ function buildArmoryGrid() {
     // Equip button
     const btn = document.createElement('button');
     btn.className = 'btn';
-    btn.style.cssText = 'font-size:0.625em;padding:5px 10px;border-color:#aa882255;color:#ffcc88;flex-shrink:0;';
+    btn.style.cssText = 'font-size:0.625em;padding:5px 10px;border-color:rgba(170,136,34,0.33);color:#ffcc88;flex-shrink:0;';
     btn.textContent = alreadyEquipped ? '✓ Equipped' : '🛠 Equip';
     btn.disabled = alreadyEquipped;
     if(!alreadyEquipped) {
@@ -18685,7 +18693,7 @@ function showLqCard(npc) {
   ensureLqState();
   const card = document.getElementById('lq-card');
   document.getElementById('lq-portrait').textContent = npc.portrait;
-  document.getElementById('lq-portrait').style.borderColor = npc.color + '88';
+  document.getElementById('lq-portrait').style.borderColor = _h8(npc.color,'88');
   document.getElementById('lq-npc-name').textContent = npc.name;
   document.getElementById('lq-npc-role').textContent = npc.role;
   document.getElementById('lq-npc-text').textContent = npc.greet;
@@ -18723,7 +18731,7 @@ function showLqCard(npc) {
   if(status === 'available') {
     const accBtn = document.createElement('button');
     accBtn.className = 'btn'; accBtn.textContent = '✔ Accept Quest';
-    accBtn.style.cssText = 'font-size:11px;border-color:#33664455;color:#44bb88;';
+    accBtn.style.cssText = 'font-size:11px;border-color:rgba(51,102,68,0.33);color:#44bb88;';
     accBtn.onclick = () => lqAccept(quest, npc);
     btnRow.appendChild(accBtn);
   } else if(status === 'active') {
@@ -18743,7 +18751,7 @@ function showLqCard(npc) {
 
   const closeBtn = document.createElement('button');
   closeBtn.className = 'btn'; closeBtn.textContent = '✕ Close';
-  closeBtn.style.cssText = 'font-size:11px;border-color:#33224455;color:#554477;';
+  closeBtn.style.cssText = 'font-size:11px;border-color:rgba(51,34,68,0.33);color:#554477;';
   closeBtn.onclick = () => lqBack();
   btnRow.appendChild(closeBtn);
 
@@ -19536,7 +19544,7 @@ function _fdShowLootInteract(loot){
     _fdUpdateHud(); snd('purchase',0.6);
   };
   const leave=document.createElement('button'); leave.className='btn';
-  leave.style.cssText='color:#776644;border-color:#44221133;'; leave.textContent='← Leave';
+  leave.style.cssText='color:#776644;border-color:rgba(68,34,17,0.2);'; leave.textContent='← Leave';
   leave.onclick=()=>{panel.classList.remove('on');FD.interactOpen=false;};
   btns.appendChild(take); btns.appendChild(leave);
   panel.classList.add('on');
@@ -19555,7 +19563,7 @@ function _fdShowGuardianInteract(){
   eng.textContent='⚔ Engage Guardian';
   eng.onclick=()=>{panel.classList.remove('on');FD.interactOpen=false;_fdLaunchGuardianFight();};
   const ret=document.createElement('button'); ret.className='btn';
-  ret.style.cssText='color:#776644;border-color:#44221133;'; ret.textContent='← Fall Back';
+  ret.style.cssText='color:#776644;border-color:rgba(68,34,17,0.2);'; ret.textContent='← Fall Back';
   ret.onclick=()=>{panel.classList.remove('on');FD.interactOpen=false;};
   btns.appendChild(eng); btns.appendChild(ret);
   panel.classList.add('on');
@@ -20100,7 +20108,7 @@ function buildQuestLog(tab) {
       krynn:'#ff8844', cluster:'#44ffcc', hero:'#ffff44', dark:'#aa66ff' }[sphereId] || '#9966dd';
     const hdr = document.createElement('div');
     hdr.className = 'qlog-sphere-header';
-    hdr.style.color = sphereCol + 'cc';
+    hdr.style.color = _h8(sphereCol,'cc');
     hdr.textContent = '— ' + sphereName + ' —';
     body.appendChild(hdr);
 
