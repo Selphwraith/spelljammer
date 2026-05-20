@@ -5402,10 +5402,14 @@ function _titleNextTrack() {
   return _titleShuffled[_titleTrackIdx] || 'title';
 }
 
-function _titlePlayTrack(key) {
+function _titlePlayTrack(key, _isFallback) {
   const src = _SFX[key];
-  if (!src) { // file not loaded yet — fall back to title
-    _titlePlayTrack('title');
+  if (!src) {
+    // File not loaded yet — fall back to 'title' once only, never recurse
+    if (!_isFallback && key !== 'title') {
+      _titlePlayTrack('title', true);
+    }
+    // If 'title' itself is missing, silently give up — audio will try again next time
     return;
   }
   try {
@@ -22226,7 +22230,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function _dismiss(){
     if(!spEl || spEl.style.display==='none') return;
     spEl.style.display = 'none';
-    playTitle();
+    try { playTitle(); } catch(_) {}
   }
   if(spEl){
     spEl.addEventListener('touchend', function(e){ e.preventDefault(); _dismiss(); }, {passive:false});
