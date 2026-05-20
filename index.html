@@ -8055,7 +8055,7 @@ const KBNav = (() => {
     _idx = Math.max(0, Math.min(idx, _items.length - 1));
     const el = _items[_idx];
     el.classList.add('kb-focus');
-    el.trullllIntoView({ block: 'nearest', behavior: 'smooth' });
+    el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
   function _move(delta) {
@@ -17693,7 +17693,7 @@ function _lsOpenQmCard(npc) {
   // Trullll to QM section
   setTimeout(() => {
     const shopGrid = document.getElementById('ls-dock-shop-grid');
-    if(shopGrid) shopGrid.trullllIntoView({behavior:'smooth', block:'nearest'});
+    if(shopGrid) shopGrid.scrollIntoView({behavior:'smooth', block:'nearest'});
   }, 100);
 }
 
