@@ -5009,7 +5009,7 @@ const SHIP_IMAGE_DATA = {
   'vodoniPatrol': 'images/ship_vodoni.png?v=2',
   'trullBattle':  'images/ship_trull.png?v=2',
   'thrikreen':    'images/ship_thrikreen.png?v=2',
-  'harvester':         'images/ship_harvester.png?v=2',
+  'harvester':         'images/ship_harvester.png?v=3',
   'goblin_cutter':      'images/ship_goblin_cutter.png?v=2',
   'goblin_rocketer':    'images/ship_goblin_rocketer.png?v=2',
   'goblin_shaman_boat': 'images/ship_goblin_shaman.png?v=2',
@@ -7170,6 +7170,11 @@ function travelTick(){
     const key = `_enc${Math.round(cp)}`;
     if(G.tvl.prog >= cp && G.tvl.prevProg < cp && !G.tvl[key]){
       G.tvl[key] = true;
+      // Never spawn enemies during final sphere approach or after waystation intercept
+      if(G.tvl._sphereQueued || G.tvl._wpHit) break;
+      // On the final watch, block encounters at e2 (72%) — sphere queues at 60%
+      // so e2 would race the approach animation
+      if(_onFinalWatch && cp >= e2) break;
       const chance = (lane.rate || 0.200) * (fatigueLevel() >= 2 ? 1.3 : 1.0);
       if(Math.random() < chance){
         G.tvl._eventLocked = true;
