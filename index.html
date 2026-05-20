@@ -5405,25 +5405,21 @@ function _titleNextTrack() {
 function _titlePlayTrack(key, _isFallback) {
   const src = _SFX[key];
   if (!src) {
-    // File not loaded yet — fall back to 'title' once only, never recurse
-    if (!_isFallback && key !== 'title') {
-      _titlePlayTrack('title', true);
-    }
-    // If 'title' itself is missing, silently give up — audio will try again next time
+    if (!_isFallback && key !== 'title') { _titlePlayTrack('title', true); }
     return;
   }
+  // Don't start a new track if combat is active — wait until setAmbient('map') restores us
+  if (G?.phase === 'combat') return;
   try {
     const a = src.cloneNode();
     a.loop = false;
     a.volume = Math.min(1, 0.35 * (_VOL?.master||1) * (_VOL?.music||1));
     a.play().catch(()=>{});
-    // When this track ends, cross-fade into the next one
     a.addEventListener('ended', () => {
-      if (_titleEl !== a) return; // superseded
+      if (_titleEl !== a) return;
       _titleEl = null;
-      if (!_muted) {
-        const nextKey = _titleNextTrack();
-        _titlePlayTrack(nextKey);
+      if (!_muted && G?.phase !== 'combat') {
+        _titlePlayTrack(_titleNextTrack());
       }
     });
     _titleEl = a;
@@ -5479,11 +5475,18 @@ function setAmbient(scene) {
       } catch(_) {}
     }
   } else {
-    // Leaving combat — stop combat loop and restore title to full volume
+    // Leaving combat — stop combat loop and restore title
     _stopLoop();
-    _titleVolume(0.35);
-    // If title isn't playing at all, start it
-    if(!_titleEl || _titleEl.paused) playTitle();
+    if (_titleEl && _titleEl.paused) {
+      // Resume track that was paused during combat
+      try { _titleEl.play().catch(()=>{}); } catch(_) {}
+      _titleVolume(0.35);
+    } else if (!_titleEl) {
+      // No track at all — start the next one in the playlist
+      if (!_muted) _titlePlayTrack(_titleNextTrack());
+    } else {
+      _titleVolume(0.35);
+    }
   }
 }
 
