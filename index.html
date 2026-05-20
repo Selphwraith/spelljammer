@@ -16480,6 +16480,10 @@ function openLocalSpace() {
 
   if(LS.animId) cancelAnimationFrame(LS.animId);
   LS.lastTs = 0;
+  // Apply speed-tier movement stats so upgrades feel meaningful in local space
+  const _lsMs = _lsShipMoveStats();
+  LS.pSpeed = _lsMs.pSpeed;
+  LS.pAccel = _lsMs.pAccel;
   LS.animId = requestAnimationFrame(_lsLoop);
 
   // Reposition watch HUD below the LS stat bar so it doesn't clash
@@ -17121,7 +17125,17 @@ function _lsLog(msg, cls='') {
   if(msg) _lsLogTimer = setTimeout(()=>{ if(el.textContent===msg) el.textContent='Navigate to a point of interest.'; el.className=''; }, 6000);
 }
 
-// ── MAIN LOOP ─────────────────────────────────────────────────────────────
+// ── Ship speed → local space / dungeon movement speed mapping ────────────
+// Speed 4 = half current (slow, starter feel)
+// Speed 8 = what used to be the base (current game feel)
+// Speed 10 = noticeably faster, reward for max upgrade
+function _lsShipMoveStats() {
+  const s = G.ship?.speed || 4;
+  if      (s >= 10) return { pSpeed:200, pAccel:640 };
+  else if (s >= 8)  return { pSpeed:150, pAccel:520 };
+  else if (s >= 6)  return { pSpeed:110, pAccel:420 };
+  else              return { pSpeed: 70, pAccel:300 };
+}
 function _lsLoop(ts) {
   LS.animId = requestAnimationFrame(_lsLoop);
   const dt = Math.min((ts - (LS.lastTs||ts)) / 1000, 0.05);
@@ -18972,6 +18986,10 @@ function openFragDungeon(fs) {
   FD.ctx      = FD.canvas.getContext('2d');
   FD._floorPattern = null;
   FD._floorImg = null;
+  // Apply speed-tier movement stats
+  const _fdMs = _lsShipMoveStats();
+  FD.pSpeed = _fdMs.pSpeed;
+  FD.pAccel = _fdMs.pAccel;
   if(cfg.floorImg){
     const fi=new Image();
     fi.src=cfg.floorImg;
@@ -18995,6 +19013,9 @@ function _fdReopen() {
   FD.canvas   = document.getElementById('fd-canvas');
   FD.ctx      = FD.canvas.getContext('2d');
   FD._floorPattern = null; // force pattern rebuild for new ctx
+  const _fdMsR = _lsShipMoveStats();
+  FD.pSpeed = _fdMsR.pSpeed;
+  FD.pAccel = _fdMsR.pAccel;
   FD.mmCanvas = document.getElementById('fd-minimap-canvas');
   FD.mmCtx    = FD.mmCanvas.getContext('2d');
   FD.canvas.addEventListener('click', _fdHandleClick);
