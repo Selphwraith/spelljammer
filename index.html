@@ -1684,15 +1684,15 @@ body {
 
 /* ── WATCH / FATIGUE SYSTEM ── */
 #watch-hud {
-  position:fixed; top:48px; right:6px; left:auto; transform:none;
+  position:fixed; top:46px; right:120px; left:auto; transform:none;
   background:rgba(4,0,14,0.94); border:1px solid #44118866; border-radius:6px;
   padding:6px 14px; display:none; flex-direction:column; align-items:flex-start; gap:3px;
   z-index:1100; min-width:190px; max-width:280px; width:fit-content; pointer-events:none;
 }
 @media (max-width: 700px) {
   #watch-hud {
-    top: 44px;
-    right: 6px;
+    top: 42px;
+    right: 115px;
     left: auto;
     transform: none;
     min-width: 0;
@@ -9192,12 +9192,12 @@ function tsOpen(lane) {
   const ov = document.getElementById('ov-travel-seq');
   ov.classList.add('on');
 
-  // Force watch HUD to center-top — set inline style to override any CSS/browser quirks
+  // Let the CSS rule handle positioning — just ensure it's visible and on top
   const wh = document.getElementById('watch-hud');
   if(wh) {
     wh.classList.remove('hidden-by-overlay');
     wh.classList.add('on');
-    wh.style.cssText = 'display:flex !important; position:absolute !important; top:10px !important; left:50% !important; right:auto !important; transform:translateX(-50%) !important; z-index:260 !important; pointer-events:none !important;';
+    wh.style.cssText = '';
   }
 
   // Update destination label
