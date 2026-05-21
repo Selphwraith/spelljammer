@@ -4300,9 +4300,25 @@ function resetLiveClock(pausedFrac) {
   _clockLegHours = _clockBaseH;
 }
 
-// Compat stubs — no longer needed but called from various places
-function pauseLiveClock()  {}
-function resumeLiveClock() {}
+// Pause/resume — keep _clockHWM and _clockBaseH intact, just stop/restart the ticker
+function pauseLiveClock() {
+  if (_clockTicker) { clearInterval(_clockTicker); _clockTicker = null; }
+}
+
+function resumeLiveClock() {
+  if (_clockTicker) return; // already running
+  _clockTicker = setInterval(() => {
+    if (G.phase !== 'traveling') { pauseLiveClock(); return; }
+    const hud = document.getElementById('watch-hud');
+    if (!hud?.classList.contains('on')) return;
+    let legFrac = 0;
+    if (G.tvl?.steps > 0) legFrac = Math.min(1, (G.tvl.cur || 0) / G.tvl.steps);
+    if (legFrac > _clockHWM) _clockHWM = legFrac;
+    const totalH = _clockBaseH + _clockHWM * LEG_HOURS;
+    const hour   = Math.floor((6 + totalH) % 24);
+    document.getElementById('wh-day').textContent = `Day ${G.watch.day} — ${timeStr(hour)}`;
+  }, 500);
+}
 
 // Called once per completed leg (8 hours) — rest OR push
 // Adds 8 hours; if we cross a 24-hr mark, a new day fires
@@ -4339,7 +4355,7 @@ function restAdvanceToMorning() {
   if (!G.watch) return;
   const cur = G.watch.totalHours || 0;
   const rem = cur % 24;
-  const hoursToAdd = rem === 0 ? 24 : (24 - rem);
+  const hoursToAdd = rem === 0 ? 0 : (24 - rem);
   const prev = cur;
   G.watch.totalHours = cur + hoursToAdd;
   G.watch.moveUsed   = 0;
@@ -10700,9 +10716,8 @@ function startCombat(key){
   }
 
   G.phase='combat'; setTag('COMBAT');
-  stopTravelHum(); stopLiveClock();
-  // Save exact clock state so we can restore without replaying from 06:00
-  G._combatClockSave = { hwm: _clockHWM, baseH: _clockBaseH };
+  stopTravelHum(); pauseLiveClock();
+  G._combatClockSave = null; // clear any stale save
   tsClose();
   document.getElementById('watch-hud')?.classList.remove('on');
   const eWpns = (t.wpns||[]).map(w=>({...w}));
@@ -14085,14 +14100,7 @@ function endCbt(won){
     if(won) addLog('Enemy destroyed. Resuming course to '+G.tvl.toFragSite.n+'…','gd');
     document.getElementById('tvlbar').classList.add('on');
     if(G.tvl){ G.tvl._eventLocked=false; G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); }
-    startTravelHum();
-    startLiveClock(); // resets _clockHWM — restore saved values AFTER
-    if(G._combatClockSave) {
-      _clockBaseH = G._combatClockSave.baseH;
-      _clockHWM   = G._combatClockSave.hwm;
-      G._combatClockSave = null;
-    }
-    resetLiveClock(G.tvl && isFinite(G.tvl.prog) ? G.tvl.prog/100 : _clockHWM);
+    startTravelHum(); resumeLiveClock();
     updateWatchHUD();
     tsOpen(G.tvl.lane);
     return;
@@ -14126,14 +14134,7 @@ function endCbt(won){
   if(won)addLog('Resuming voyage.','');
   document.getElementById('tvlbar').classList.add('on');
   if(G.tvl){ G.tvl._eventLocked=false; G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); }
-  startTravelHum();
-  startLiveClock(); // resets _clockHWM — restore saved values AFTER
-  if(G._combatClockSave) {
-    _clockBaseH = G._combatClockSave.baseH;
-    _clockHWM   = G._combatClockSave.hwm;
-    G._combatClockSave = null;
-  }
-  resetLiveClock(G.tvl && isFinite(G.tvl.prog) ? G.tvl.prog/100 : _clockHWM);
+  startTravelHum(); resumeLiveClock();
   updateWatchHUD();
   tsOpen(G.tvl.lane);
 }
