@@ -5603,7 +5603,9 @@ function initGame() {
   if (!window._travelWatchdog) {
     window._travelWatchdog = setInterval(() => {
       if (G.phase !== 'traveling' || !G.tvl) return;
+      if (G.phase === 'combat' || G.phase === 'defeat') return;
       if (G.tvl.timer) return; // timer running fine
+      if (G.tvl._eventLocked) return; // event in progress — don't restart
       // Check if any TS event is still in flight
       const hasActiveEvent = TS.events && TS.events.length > 0 && TS.events.some(e => !e.triggered);
       if (hasActiveEvent) return; // event still approaching — give it time
@@ -9612,6 +9614,12 @@ function tsDrawEvent(ctx, ev, W, H) {
 
 // ── Resolve event when it reaches the ship ────────────────────────────────
 function tsResolveEvent(ev) {
+  // Stop the tick worker immediately — every path here pauses travel.
+  // roamContinue / startCombat / showWaystationOffer will restart when ready.
+  _tvlStop(); if(G.tvl) G.tvl.timer = null;
+  if(G.tvl) G.tvl._eventLocked = true;
+  pauseLiveClock();
+
   // Reset sphere queue flag so sphere re-appears if travel resumes after this event
   if(G.tvl) G.tvl._sphereQueued = false;
 
@@ -10744,6 +10752,7 @@ function startCombat(key){
   }
 
   G.phase='combat'; setTag('COMBAT');
+  _tvlStop(); if(G.tvl) G.tvl.timer = null; // kill worker before any combat state changes
   stopTravelHum(); pauseLiveClock();
   G._combatClockSave = null; // clear any stale save
   tsClose();
@@ -14676,6 +14685,8 @@ function buildShipOverlay(){
 // ╚══════════════════════════════════════════════════════╝
 function doDefeat(cause){
   G.phase='defeat';
+  _tvlStop(); if(G.tvl) G.tvl.timer = null;
+  pauseLiveClock();
   _stopLoop(); stopTitle(); stopTravelHum(); stopSphereAudio();
   snd('defeat', 1.0);
   document.getElementById('ov-combat').classList.remove('on');
