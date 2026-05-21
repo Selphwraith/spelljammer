@@ -4251,36 +4251,35 @@ function watchTimeStr() {
   return `Day ${G.watch.day} — ${timeStr(hour)}`;
 }
 
-// ── Live display clock — real-time based, see startLiveClock below ───────────
-
-// ── Live display clock — purely real-time based, decoupled from game state ──
-// At speed 4: 24 game-hours per 60 real seconds = 1 game-day per real minute.
-// At speed N: scales linearly. Display only — does NOT affect G.watch.totalHours.
-let _clockTicker    = null;
-let _clockStartMs   = 0;    // performance.now() when clock last started/resumed
-let _clockAccumH    = 0;    // game-hours accumulated before last pause
-let _clockPaused    = false;
+// ── Live display clock ────────────────────────────────────────────────────
+// One leg = one real minute at speed 4.
+// Clock shows 06:00 → 14:00 over 1 minute, then continues if pushed.
+// Display only — G.watch.totalHours is the authoritative game state.
+let _clockTicker  = null;
+let _clockStartMs = 0;   // performance.now() at last start/resume
+let _clockAccumH  = 0;   // hours banked before last pause
+let _clockPaused  = false;
 
 function _clockGameHoursPerMs() {
   const speed = G?.ship?.speed || 4;
-  // 24 game-hours per 60,000ms at speed 4
-  return (speed / 4) * (24 / 60000);
+  // 8 game-hours per 60,000 real ms at speed 4
+  return (speed / 4) * (8 / 60000);
 }
 
-function _clockCurrentDisplayH() {
-  const base = G?.watch?.totalHours || 0;
-  const accumulated = _clockPaused
-    ? _clockAccumH
-    : _clockAccumH + (performance.now() - _clockStartMs) * _clockGameHoursPerMs();
-  return base + accumulated;
+function _clockAccumulated() {
+  if (_clockPaused) return _clockAccumH;
+  return _clockAccumH + (performance.now() - _clockStartMs) * _clockGameHoursPerMs();
 }
 
 function _clockRender() {
   const el = document.getElementById('wh-day');
   if (!el || !G?.watch) return;
-  const h    = _clockCurrentDisplayH();
-  const hour = Math.floor((DAY_START_HOUR + h) % 24);
-  const day  = (G.watch.day || 1) + Math.floor(h / 24);
+  const accum = _clockAccumulated();
+  // totalHours = authoritative base; accum = smooth display progress within current leg
+  const totalH = (G.watch.totalHours || 0) + accum;
+  const hour   = Math.floor((DAY_START_HOUR + totalH) % 24);
+  // Extra days come only from accum so we don't double-count G.watch.day
+  const day    = (G.watch.day || 1) + Math.floor(accum / 24);
   el.textContent = `Day ${day} — ${timeStr(hour)}`;
 }
 
@@ -4291,8 +4290,7 @@ function startLiveClock() {
   _clockPaused  = false;
   _clockTicker  = setInterval(() => {
     if (G.phase !== 'traveling') { pauseLiveClock(); return; }
-    const hud = document.getElementById('watch-hud');
-    if (!hud?.classList.contains('on')) return;
+    if (!document.getElementById('watch-hud')?.classList.contains('on')) return;
     _clockRender();
   }, 250);
 }
@@ -4304,7 +4302,7 @@ function stopLiveClock() {
 }
 
 function resetLiveClock(_ignored) {
-  // Reset accumulated display offset — called at start of each new leg
+  // Called at leg completion — game state already snapped, reset display offset
   _clockAccumH  = 0;
   _clockStartMs = performance.now();
   _clockPaused  = false;
@@ -4313,7 +4311,7 @@ function resetLiveClock(_ignored) {
 function pauseLiveClock() {
   if (_clockPaused) return;
   _clockAccumH += (performance.now() - _clockStartMs) * _clockGameHoursPerMs();
-  _clockPaused = true;
+  _clockPaused  = true;
   if (_clockTicker) { clearInterval(_clockTicker); _clockTicker = null; }
 }
 
@@ -4324,8 +4322,7 @@ function resumeLiveClock() {
   if (_clockTicker) { clearInterval(_clockTicker); _clockTicker = null; }
   _clockTicker  = setInterval(() => {
     if (G.phase !== 'traveling') { pauseLiveClock(); return; }
-    const hud = document.getElementById('watch-hud');
-    if (!hud?.classList.contains('on')) return;
+    if (!document.getElementById('watch-hud')?.classList.contains('on')) return;
     _clockRender();
   }, 250);
 }
