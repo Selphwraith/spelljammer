@@ -4251,55 +4251,83 @@ function watchTimeStr() {
   return `Day ${G.watch.day} — ${timeStr(hour)}`;
 }
 
-// Live clock — reads G.tvl.cur/steps for the current leg fraction.
-// A high-water mark prevents the display from going backward during encounters.
-let _clockTicker   = null;
-let _clockHWM      = 0;   // high-water mark: furthest legFrac seen this leg (0–1)
-let _clockBaseH    = 0;   // G.watch.totalHours at leg start
-// compat stubs
-let _clockLegStart = 0;
-let _clockLegHours = 0;
+// ── Live display clock — real-time based, see startLiveClock below ───────────
+
+// ── Live display clock — purely real-time based, decoupled from game state ──
+// At speed 4: 24 game-hours per 60 real seconds = 1 game-day per real minute.
+// At speed N: scales linearly. Display only — does NOT affect G.watch.totalHours.
+let _clockTicker    = null;
+let _clockStartMs   = 0;    // performance.now() when clock last started/resumed
+let _clockAccumH    = 0;    // game-hours accumulated before last pause
+let _clockPaused    = false;
+
+function _clockGameHoursPerMs() {
+  const speed = G?.ship?.speed || 4;
+  // 24 game-hours per 60,000ms at speed 4
+  return (speed / 4) * (24 / 60000);
+}
+
+function _clockCurrentDisplayH() {
+  const base = G?.watch?.totalHours || 0;
+  const accumulated = _clockPaused
+    ? _clockAccumH
+    : _clockAccumH + (performance.now() - _clockStartMs) * _clockGameHoursPerMs();
+  return base + accumulated;
+}
+
+function _clockRender() {
+  const el = document.getElementById('wh-day');
+  if (!el || !G?.watch) return;
+  const h    = _clockCurrentDisplayH();
+  const hour = Math.floor((DAY_START_HOUR + h) % 24);
+  const day  = (G.watch.day || 1) + Math.floor(h / 24);
+  el.textContent = `Day ${day} — ${timeStr(hour)}`;
+}
 
 function startLiveClock() {
   stopLiveClock();
-  _clockHWM   = 0;
-  _clockBaseH = G.watch?.totalHours || 0;
-  _clockLegStart = performance.now();
-  _clockLegHours = _clockBaseH;
-
-  _clockTicker = setInterval(() => {
+  _clockAccumH  = 0;
+  _clockStartMs = performance.now();
+  _clockPaused  = false;
+  _clockTicker  = setInterval(() => {
     if (G.phase !== 'traveling') { pauseLiveClock(); return; }
     const hud = document.getElementById('watch-hud');
     if (!hud?.classList.contains('on')) return;
-    // Read directly from authoritative game state — never resets to 06:00
-    document.getElementById('wh-day').textContent = watchTimeStr();
-  }, 500);
+    _clockRender();
+  }, 250);
 }
 
 function stopLiveClock() {
   if (_clockTicker) { clearInterval(_clockTicker); _clockTicker = null; }
+  _clockAccumH = 0;
+  _clockPaused = false;
 }
 
-function resetLiveClock(pausedFrac) {
-  _clockHWM   = pausedFrac ?? 0;
-  _clockBaseH = G.watch?.totalHours || 0;
-  _clockLegStart = performance.now();
-  _clockLegHours = _clockBaseH;
+function resetLiveClock(_ignored) {
+  // Reset accumulated display offset — called at start of each new leg
+  _clockAccumH  = 0;
+  _clockStartMs = performance.now();
+  _clockPaused  = false;
 }
 
-// Pause/resume — keep state intact, just stop/restart the ticker
 function pauseLiveClock() {
+  if (_clockPaused) return;
+  _clockAccumH += (performance.now() - _clockStartMs) * _clockGameHoursPerMs();
+  _clockPaused = true;
   if (_clockTicker) { clearInterval(_clockTicker); _clockTicker = null; }
 }
 
 function resumeLiveClock() {
-  if (_clockTicker) return;
-  _clockTicker = setInterval(() => {
+  if (!_clockPaused && _clockTicker) return;
+  _clockStartMs = performance.now();
+  _clockPaused  = false;
+  if (_clockTicker) { clearInterval(_clockTicker); _clockTicker = null; }
+  _clockTicker  = setInterval(() => {
     if (G.phase !== 'traveling') { pauseLiveClock(); return; }
     const hud = document.getElementById('watch-hud');
     if (!hud?.classList.contains('on')) return;
-    document.getElementById('wh-day').textContent = watchTimeStr();
-  }, 500);
+    _clockRender();
+  }, 250);
 }
 
 // Called once per completed leg (8 hours) — rest OR push
@@ -4662,7 +4690,11 @@ function updateWatchHUD() {
   if(active) hud.classList.remove('hidden-by-overlay');
   hud.classList.toggle('on', active);
 
-  document.getElementById('wh-day').textContent = watchTimeStr();
+  if (G.phase === 'traveling') {
+    _clockRender();
+  } else {
+    document.getElementById('wh-day').textContent = watchTimeStr();
+  }
 
   // Leg pips — show position within current 24-hr cycle (0-3 legs)
   const pipsEl = document.getElementById('wh-pips');
