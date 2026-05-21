@@ -4344,7 +4344,10 @@ function restAdvanceToMorning() {
   if (!G.watch) return;
   const cur = G.watch.totalHours || 0;
   const rem = cur % 24;
-  const hoursToAdd = rem === 0 ? 0 : (24 - rem);
+  // If already at 06:00 exactly (rem===0), we still advance 24h so the day increments.
+  // This is correct — resting always costs a day regardless of when you anchor.
+  // Exception: if totalHours is 0 (game just started, first departure), don't penalise.
+  const hoursToAdd = (rem === 0 && cur === 0) ? 0 : rem === 0 ? 24 : (24 - rem);
   const prev = cur;
   G.watch.totalHours = cur + hoursToAdd;
   G.watch.moveUsed   = 0;
