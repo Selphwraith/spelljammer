@@ -4250,13 +4250,11 @@ function _clockGameHoursPerMs() {
 function _clockAccumulated() {
   if (_clockPaused) return _clockAccumH;
   const raw = _clockAccumH + (performance.now() - _clockStartMs) * _clockGameHoursPerMs();
-  // Hard-cap at 14:00 (LEG_HOURS = 8) during a normal watch leg.
-  // Fresh legs start with _clockAccumH = 0; push legs start at exactly LEG_HOURS.
-  // Checking _clockAccumH < LEG_HOURS only caps fresh legs — push legs
-  // are allowed to continue past 14:00 giving correct 14→22 push display.
-  // Prevents roam NPC approach animations, enemy intercepts, and the
-  // 15-second safety timeout from visually pushing the clock past 14:00.
-  if (_clockAccumH < LEG_HOURS) return Math.min(raw, LEG_HOURS);
+  // Cap at 14:00 (LEG_HOURS) on fresh legs. Push legs have legsPushed > 0 and
+  // must run past 14:00, so they bypass the cap. Using legsPushed is more reliable
+  // than checking _clockAccumH < LEG_HOURS because pauseLiveClock's clamp can set
+  // _clockAccumH to exactly LEG_HOURS mid-leg, which would falsely disable the cap.
+  if (!G?.watch?.legsPushed) return Math.min(raw, LEG_HOURS);
   return raw;
 }
 
@@ -7368,6 +7366,18 @@ function travelTick(){
   G.tvl.prog = segStart + (G.tvl.cur / G.tvl.steps) * watchPct;
   G.tvl.prog = Math.min(G.tvl.prog, segEnd);
   document.getElementById('tvlf').style.width = (isFinite(G.tvl.prog) ? G.tvl.prog : 0) + '%';
+
+  // ── Clock-driven segment snap ────────────────────────────────────────────
+  // If the real-time clock has already reached 14:00 (LEG_HOURS) on a fresh leg
+  // but tick-counted progress hasn't hit segEnd yet, snap it now so the
+  // segment-complete check below fires immediately on this tick instead of
+  // hanging at 14:00 for however many remaining ticks there are.
+  // Guarded by legsPushed===0 so push legs (which intentionally run past 14:00)
+  // are never snapped early.  Also blocked during events (_eventLocked checked
+  // at top of function) so we don't snap while a roam/enemy is mid-approach.
+  if (!G.watch?.legsPushed && _clockAccumulated() >= LEG_HOURS && G.tvl.prog < segEnd - 0.05) {
+    G.tvl.prog = segEnd;
+  }
 
   // ── Planet approach — only queue on the FINAL watch leg ──────────
   // _watchesLeft === 0 means this is the last leg before arrival.
