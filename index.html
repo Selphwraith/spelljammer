@@ -4297,15 +4297,24 @@ function startLiveClock() {
 
 function stopLiveClock() {
   if (_clockTicker) { clearInterval(_clockTicker); _clockTicker = null; }
-  _clockAccumH = 0;
-  _clockPaused = false;
+  // Bank what we've accumulated so far
+  if (!_clockPaused) {
+    _clockAccumH += (performance.now() - _clockStartMs) * _clockGameHoursPerMs();
+  }
+  _clockPaused = true;
+  // After tickLeg advances totalHours by LEG_HOURS (8h), the render will show
+  // totalHours (new base) + _clockAccumH. We subtract LEG_HOURS from accum so
+  // the display continues from where it visually was, not jumping forward.
+  // This is called right after tickLeg(), so we correct for the jump here.
+  _clockAccumH = Math.max(0, _clockAccumH - (LEG_HOURS || 8));
 }
 
 function resetLiveClock(_ignored) {
-  // Called at leg completion — game state already snapped, reset display offset
+  // Leg completed — G.watch.totalHours already advanced by 8h.
+  // Just re-anchor start time; accum resets to 0 since the base absorbed the leg.
   _clockAccumH  = 0;
   _clockStartMs = performance.now();
-  _clockPaused  = false;
+  // Don't change _clockPaused — if we were running, keep running
 }
 
 function pauseLiveClock() {
@@ -4417,10 +4426,7 @@ function watchExpiredMidJourney() {
   if (!G.watch || G.watch._pauseShown) return;
   G.watch._pauseShown = true;
   clearInterval(G.tvl.timer); G.tvl.timer = null;
-  // Tick the leg FIRST so totalHours is already updated when the clock stops —
-  // prevents the HWM from freezing at a sub-14:00 value.
-  tickLeg();
-  stopLiveClock();
+  pauseLiveClock(); // freeze display at current time — don't advance or reset
   // Capture before zeroing — anchorCb and pushCb need these.
   // _watchesRemaining is already set correctly by travelTick's segment-complete handler;
   // fall back to _watchesLeft only if travelTick didn't set it (e.g. called from elsewhere).
