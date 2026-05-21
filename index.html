@@ -4211,8 +4211,8 @@ function getWatchRealMs() {
 // Lane base legs scaled so Refuge→Realm (d:1, against flow) = 7 days
 // Multiplier ≈ 7/3 applied and rounded to clean integers
 // d:1 base=5, d:2 base=7, d:3 base=7, d:4 base=9, d:5 base=14
-const LANE_BASE_LEGS  = { 1: 10, 2: 12, 3: 12, 4: 15, 5: 23, 6: 28 };
-const LANE_MAX_LEGS   = 36;
+const LANE_BASE_LEGS  = { 1: 7, 2: 9, 3: 9, 4: 12, 5: 18, 6: 22 };
+const LANE_MAX_LEGS   = 32;
 
 function laneWatchCost(lane, ship) {
   let cost = LANE_BASE_LEGS[lane.d] || 3;
@@ -4268,21 +4268,11 @@ function startLiveClock() {
   _clockLegHours = _clockBaseH;
 
   _clockTicker = setInterval(() => {
-    if (G.phase !== 'traveling') { stopLiveClock(); return; }
+    if (G.phase !== 'traveling') { pauseLiveClock(); return; }
     const hud = document.getElementById('watch-hud');
     if (!hud?.classList.contains('on')) return;
-
-    // Current leg fraction from travelTick counters
-    let legFrac = 0;
-    if (G.tvl?.steps > 0) {
-      legFrac = Math.min(1, (G.tvl.cur || 0) / G.tvl.steps);
-    }
-    // Never go backward — use high-water mark
-    if (legFrac > _clockHWM) _clockHWM = legFrac;
-
-    const totalH = _clockBaseH + _clockHWM * LEG_HOURS;
-    const hour   = Math.floor((6 + totalH) % 24);
-    document.getElementById('wh-day').textContent = `Day ${G.watch.day} — ${timeStr(hour)}`;
+    // Read directly from authoritative game state — never resets to 06:00
+    document.getElementById('wh-day').textContent = watchTimeStr();
   }, 500);
 }
 
@@ -4291,32 +4281,24 @@ function stopLiveClock() {
 }
 
 function resetLiveClock(pausedFrac) {
-  // Called at start of a fresh leg — reset HWM and base.
-  // When resuming mid-journey (e.g. after a waystation stop), pass the
-  // fraction already completed so the clock doesn't jump backward.
   _clockHWM   = pausedFrac ?? 0;
   _clockBaseH = G.watch?.totalHours || 0;
   _clockLegStart = performance.now();
   _clockLegHours = _clockBaseH;
 }
 
-// Pause/resume — keep _clockHWM and _clockBaseH intact, just stop/restart the ticker
+// Pause/resume — keep state intact, just stop/restart the ticker
 function pauseLiveClock() {
   if (_clockTicker) { clearInterval(_clockTicker); _clockTicker = null; }
 }
 
 function resumeLiveClock() {
-  if (_clockTicker) return; // already running
+  if (_clockTicker) return;
   _clockTicker = setInterval(() => {
     if (G.phase !== 'traveling') { pauseLiveClock(); return; }
     const hud = document.getElementById('watch-hud');
     if (!hud?.classList.contains('on')) return;
-    let legFrac = 0;
-    if (G.tvl?.steps > 0) legFrac = Math.min(1, (G.tvl.cur || 0) / G.tvl.steps);
-    if (legFrac > _clockHWM) _clockHWM = legFrac;
-    const totalH = _clockBaseH + _clockHWM * LEG_HOURS;
-    const hour   = Math.floor((6 + totalH) % 24);
-    document.getElementById('wh-day').textContent = `Day ${G.watch.day} — ${timeStr(hour)}`;
+    document.getElementById('wh-day').textContent = watchTimeStr();
   }, 500);
 }
 
@@ -5943,8 +5925,8 @@ function renderLoop(ts=0) {
 
     const laneAB = getLane(a, b);
     const laneBA = getLane(b, a);
-    const daysAB = Math.round(laneWatchCost(laneAB, G.ship) / 1.6);
-    const daysBA = Math.round(laneWatchCost(laneBA, G.ship) / 1.6);
+    const daysAB = Math.round(laneWatchCost(laneAB, G.ship) / 1.15);
+    const daysBA = Math.round(laneWatchCost(laneBA, G.ship) / 1.15);
 
     const badges = [
       { t: 0.25, days: daysAB, warzone: laneAB.warzone },
