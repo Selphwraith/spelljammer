@@ -4666,7 +4666,7 @@ function doRest() {
           startTravel(rt.toId, rt.watchesRemaining, rt.pausedPos, rt.pausedProg, rt.laneOrigin);
         };
         showMsg('⚓ Rested — Ready to Sail',
-          `Day ${G.watch.day}, 06:00. ${dn} — ${rt.watchesRemaining} leg${rt.watchesRemaining>1?'s':''} remaining.`,
+          `Day ${G.watch.day}, 06:00. ${dn} — ${rt.watchesRemaining} day${rt.watchesRemaining>1?'s':''} remaining.`,
           '⛵ Resume Course', resumeFn);
         // Auto-resume countdown for both idle and manual auto-rest
         if(G._idleMode || G._autoRest) _restAutoCountdown(resumeFn, G._idleMode ? 2 : 3);
@@ -6091,8 +6091,7 @@ function renderLoop(ts=0) {
     // Each badge shows the travel time for that DIRECTION of travel:
     //   25% badge (near sphere A) = days traveling A → B
     //   75% badge (near sphere B) = days traveling B → A
-    // Conversion: laneWatchCost returns legs; legs ÷ 2 = actual game days
-    // (each 2-leg+rest cycle = exactly 24 game hours at standard pace)
+    // laneWatchCost returns the exact number of days (1 leg = 1 day).
     cx.globalAlpha = 1;
 
     const ldx = pb.x - pa.x, ldy = pb.y - pa.y;
@@ -6102,8 +6101,8 @@ function renderLoop(ts=0) {
 
     const laneAB = getLane(a, b);
     const laneBA = getLane(b, a);
-    const daysAB = Math.round(laneWatchCost(laneAB, G.ship) / 1.15);
-    const daysBA = Math.round(laneWatchCost(laneBA, G.ship) / 1.15);
+    const daysAB = laneWatchCost(laneAB, G.ship);
+    const daysBA = laneWatchCost(laneBA, G.ship);
 
     const badges = [
       { t: 0.25, days: daysAB, warzone: laneAB.warzone },
@@ -7294,7 +7293,7 @@ function startTravel(toId, _resumeWatchesLeft, _pausedPos, _pausedProg, _savedLa
   document.getElementById('tvlbar').classList.add('on');
   document.getElementById('tvllabel').textContent =
     totalWatches > 1
-      ? `→ ${t.n}  (${totalWatches} watch${totalWatches>1?'es':''} remaining)`
+      ? `→ ${t.n}  (${totalWatches} day${totalWatches>1?'s':''} remaining)`
       : `→ ${t.n}`;
   setTag(`Traveling → ${t.n}`);
   snd('travel_begin', 0.8);
@@ -9442,7 +9441,7 @@ function tsRender(timestamp) {
     document.getElementById('ts-prog-bar').style.width = (isFinite(pct) ? pct : 0) + '%';
     const wl = G.tvl._watchesLeft || 0;
     document.getElementById('ts-watch-label').textContent =
-      wl > 0 ? `${wl} leg${wl !== 1 ? 's' : ''} remaining` : 'approaching…';
+      wl > 0 ? `${wl} day${wl !== 1 ? 's' : ''} remaining` : 'approaching…';
   }
 
   // Update skip button disabled state
