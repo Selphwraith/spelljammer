@@ -7136,7 +7136,11 @@ function startTravel(toId, _resumeWatchesLeft, _pausedPos, _pausedProg, _savedLa
   }
 
   if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = setInterval(travelTick, tickMs);
-  startTravelHum(); startLiveClock(); resetLiveClock(_pausedProg ? _pausedProg / 100 : 0);
+  startTravelHum();
+  const _wasClockPaused = _clockPaused; // check before startLiveClock resets it
+  startLiveClock();
+  // Only reset display accumulator on a fresh leg — preserve time when resuming from combat
+  if (!_wasClockPaused) resetLiveClock(_pausedProg ? _pausedProg / 100 : 0);
   // Open the drift travel sequence visual
   if (!_pausedProg) {
     tsOpen(lane);
