@@ -5196,7 +5196,7 @@ function _tvlEnsureWorker() {
     `], { type: 'application/javascript' });
     const url = URL.createObjectURL(blob);
     const w = new Worker(url);
-    w.onmessage = () => { if (_tvlActive && G?.phase === 'traveling') travelTick(); };
+    w.onmessage = () => { if (_tvlActive && G?.phase === 'traveling' && !G?.tvl?._eventLocked) travelTick(); };
     w.onerror = () => { _tvlWorker = null; _tvlUseFallback(); };
     _tvlWorker = w;
   } catch(e) {
@@ -5217,7 +5217,7 @@ function _tvlStart(ms) {
     _tvlWorker.postMessage({ cmd: 'start', ms: _tvlTickMs });
   } else {
     if (_tvlFallback) clearInterval(_tvlFallback);
-    _tvlFallback = setInterval(() => { if (_tvlActive) travelTick(); }, _tvlTickMs);
+    _tvlFallback = setInterval(() => { if (_tvlActive && !G?.tvl?._eventLocked) travelTick(); }, _tvlTickMs);
   }
   return '__worker__';
 }
@@ -7312,11 +7312,8 @@ function _checkQuestRefresh() {
 }
 
 function travelTick(){
-  if(G.phase!=='traveling'){ clearInterval(G.tvl?.timer); return; }
-  // ── Event lock: if any encounter/waypoint/watch event already fired this
-  // session tick, skip ALL further event checks until the lock is cleared.
-  // This prevents enemy + waystation or enemy + watch-end collisions.
-  if(G.tvl._eventLocked){ clearInterval(G.tvl?.timer); G.tvl.timer=null; return; }
+  if(G.phase!=='traveling'){ _tvlStop(); if(G.tvl) G.tvl.timer=null; return; }
+  if(G.tvl._eventLocked){ _tvlStop(); if(G.tvl) G.tvl.timer=null; return; }
   G.tvl.prevProg = G.tvl.prog;
   G.tvl.lastTickTime = performance.now();
   G.tvl.cur++;
