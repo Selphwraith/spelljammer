@@ -9723,18 +9723,16 @@ function tsClose() {
   TS.active = false;
   if (TS.animId) { cancelAnimationFrame(TS.animId); TS.animId = null; }
   TS._lastTs = 0;
-  // Kill any active sphere approach
   _CS.active = false;
   _CS.t = 0;
   _CS.alpha = 0;
   stopSphereAudio();
-  const ov = document.getElementById('ov-travel-seq');
-  ov.classList.remove('on');
-  // Clear the inline style set by tsOpen so watch HUD returns to normal CSS
+  document.getElementById('ov-travel-seq')?.classList.remove('on');
   const whClose = document.getElementById('watch-hud');
   if(whClose) whClose.style.cssText = '';
-  document.getElementById('ts-speed-btn').classList.remove('fast');
-  document.getElementById('ts-alert').className = '';
+  document.getElementById('ts-speed-btn')?.classList.remove('fast');
+  document.getElementById('ts-alert')?.classList?.remove?.('show');
+  if(document.getElementById('ts-alert')) document.getElementById('ts-alert').className = '';
   // Reset sphere queue flag so the sphere re-queues if travel resumes mid-approach
   // (only reset if we haven't actually arrived — arrival path sets midLanePos to null)
   if(G.tvl && G.ship.midLanePos !== null) {
