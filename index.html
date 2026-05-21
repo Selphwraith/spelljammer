@@ -9719,37 +9719,24 @@ function tsSkip() {
 
   const maxFastTicks = 400;
   let ticks = 0;
-  const ticksPerLeg = G.tvl?.steps || 400;
   const origTimer = G.tvl?.timer;
   if (origTimer) clearInterval(origTimer);
 
+  const done = () => {
+    _tsSkipping = false;
+    if (G.phase === 'traveling' && G.tvl && !G.tvl._eventLocked) {
+      G.tvl.timer = setInterval(travelTick, G.tvl.tickMs || 100);
+    }
+  };
+
   const runFast = () => {
     if (!TS.active || G.phase !== 'traveling' || ticks >= maxFastTicks) {
-      // Advance display clock by the proportion of the leg that was skipped
-      const fracSkipped = Math.min(1, ticks / ticksPerLeg);
-      const hoursSkipped = fracSkipped * 8; // 8 game-hours per leg
-      _clockAccumH += hoursSkipped;
-      _clockStartMs = performance.now(); // re-anchor so we don't double-count
-      _tsSkipping = false;
-      if (G.phase === 'traveling' && G.tvl) {
-        if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = setInterval(travelTick, G.tvl.tickMs || 100);
-      }
-      _clockRender();
-      return;
+      done(); return;
     }
     travelTick();
     ticks++;
     if (G.phase !== 'traveling' || TS.events.length > 0) {
-      const fracSkipped = Math.min(1, ticks / ticksPerLeg);
-      const hoursSkipped = fracSkipped * 8;
-      _clockAccumH += hoursSkipped;
-      _clockStartMs = performance.now();
-      _tsSkipping = false;
-      if (G.phase === 'traveling' && G.tvl && TS.events.length === 0) {
-        if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = setInterval(travelTick, G.tvl.tickMs || 100);
-      }
-      _clockRender();
-      return;
+      done(); return;
     }
     setTimeout(runFast, 8);
   };
