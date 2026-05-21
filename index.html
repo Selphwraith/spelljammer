@@ -4349,6 +4349,10 @@ function restAdvanceToMorning() {
   G.watch.totalHours = cur + hoursToAdd;
   G.watch.moveUsed   = 0;
   G.watch.moveBudget = 1;
+  // Reset display clock — totalHours is now at the new 06:00 baseline,
+  // accum must be zeroed or the render will add the old leg's hours on top.
+  _clockAccumH  = 0;
+  _clockStartMs = performance.now();
   // Exactly 1 day passes on rest — always
   G.watch.day++;
   G.travelDays = (G.travelDays || 0) + 1;
