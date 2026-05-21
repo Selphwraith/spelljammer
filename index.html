@@ -4249,7 +4249,15 @@ function _clockGameHoursPerMs() {
 
 function _clockAccumulated() {
   if (_clockPaused) return _clockAccumH;
-  return _clockAccumH + (performance.now() - _clockStartMs) * _clockGameHoursPerMs();
+  const raw = _clockAccumH + (performance.now() - _clockStartMs) * _clockGameHoursPerMs();
+  // Hard-cap at 14:00 (LEG_HOURS = 8) during a normal watch leg.
+  // Fresh legs start with _clockAccumH = 0; push legs start at exactly LEG_HOURS.
+  // Checking _clockAccumH < LEG_HOURS only caps fresh legs — push legs
+  // are allowed to continue past 14:00 giving correct 14→22 push display.
+  // Prevents roam NPC approach animations, enemy intercepts, and the
+  // 15-second safety timeout from visually pushing the clock past 14:00.
+  if (_clockAccumH < LEG_HOURS) return Math.min(raw, LEG_HOURS);
+  return raw;
 }
 
 function _clockRender() {
@@ -16623,10 +16631,10 @@ const LOCAL_QUEST_DATA = {
     qmStock: {
       flavor: 'Field-authorized IEF materiel. Fentheris System station allocation.',
       items: [
-        { type:'usable', ico:'🩹', name:"Alchemist's Mend",     desc:'Use in combat: Restores 20 hull + 1 crew',             cost:80,  itemKey:'almend',   qty:4 },
-        { type:'upgrade', ico:'🛡', name:'Ablative Hull Plating', desc:'+50 max hull points (IEF grade)',                      cost:110, act:'upg', upg:'plating',   qty:1 },
-        { type:'upgrade', ico:'⚡', name:'Speed Engine Mk.II',   desc:'+2 void sailing speed',                                cost:85,  act:'upg', upg:'engine',    qty:1 },
-        { type:'upgrade', ico:'🔄', name:'Rapid Reload System',  desc:'All weapon cooldowns −1 round (Fentheris Field Issue)', cost:200, act:'upg', upg:'cdreduce',  qty:1 },
+        { type:'usable', ico:'🩹', name:"Alchemist's Mend",     desc:'Use in combat: Restores 20 hull + 1 crew',              cost:80,  itemKey:'almend',  qty:4 },
+        { type:'upgrade', ico:'🛡', name:'Ablative Hull Plating', desc:'+50 max hull points (IEF grade)',                      cost:110, act:'upg', upg:'plating',  qty:1 },
+        { type:'upgrade', ico:'⚡', name:'Speed Engine Mk.II',   desc:'+2 void sailing speed',                                cost:85,  act:'upg', upg:'engine',   qty:1 },
+        { type:'upgrade', ico:'🔄', name:'Rapid Reload System',  desc:'All weapon cooldowns −1 round (Fentheris Field Issue)', cost:200, act:'upg', upg:'cdreduce', qty:1 },
         { type:'wpn', ico:'💥', name:'Light Cannon',             desc:'3d8 · 3-round reload · first cannon tier (IEF surplus)', cost:165, wk:'lcannon', qty:1 },
         { type:'wpn', ico:'⚔', name:'Heavy Ballista Mk.II',     desc:'Improved ballista — higher damage per shot (IEF issue)', cost:95,  wk:'hball',   qty:2 },
       ]
@@ -23248,10 +23256,10 @@ document.addEventListener('visibilitychange', () => {
         <div class="b-body">
           Upgrade your ship at port shipyards. Larger ships have more weapon slots, higher hull, and bigger crews:<br><br>
           <strong>Pinnace</strong> — Starting ship. 2 weapon slots, 65 hull, 6 crew. No signature ability.<br>
-          <strong>🦑 Void Runner (1,480 TS)</strong> — 3 slots, 110 hull, 10 crew. Tentacle Grapple. Available at Vael.<br>
-          <strong>🔨 Ironhull (2,460 TS)</strong> — 4 slots, 170 hull, 14 crew. Siege Ram. Available at Serath.<br>
-          <strong>⚓ Sovereign (3,920 TS)</strong> — 5 slots, 230 hull, 20 crew. Starfire Broadside. Beyond The Shatter.<br><br>
-          <em>Ships are purchased through the Quartermaster NPC in local space, not the dock itself. Build your TS reserves before heading to the shipyard sphere — these are major investments.</em>
+          <strong>🦑 Void Runner (350 TS)</strong> — 3 slots, 80 hull, 8 crew. Tentacle Grapple.<br>
+          <strong>🔨 Ironhull (700 TS)</strong> — 4 slots, 100 hull, 12 crew. Siege Ram.<br>
+          <strong>⚓ Sovereign (1,400 TS)</strong> — 5 slots, 130 hull, 16 crew. Starfire Broadside.<br><br>
+          <em>Upgrade when you have reliable income and at least one solid weapon already purchased. Crew Quarters (Refuge QM) doubles your crew capacity on any ship — buy it early.</em>
         </div>
       </div>
 
