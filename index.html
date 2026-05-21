@@ -16626,6 +16626,7 @@ const LOCAL_QUEST_DATA = {
               // Grant a cdreduce upgrade if not already owned
               if(!G.ship.upgrades.includes('cdreduce')){
                 G.ship.upgrades.push('cdreduce');
+                G.ship.cdBonus = (G.ship.cdBonus||0) + 1;
                 addLog("Commander Thessan transfers 150 TS and has a Rapid Reload System installed on your hull. All weapon cooldowns reduced by 1.", 'gd');
               } else {
                 G.ship.gold += 100; // bonus TS if already have upgrade
@@ -18525,6 +18526,7 @@ function _lsBuildQmShop() {
               if(item.upg==='airtier1'){G.ship.maxAir=(G.ship.maxAir||10)+6;G.ship.air=G.ship.maxAir;}
               if(item.upg==='airtier2'){G.ship.maxAir=(G.ship.maxAir||10)+6;G.ship.air=G.ship.maxAir;}
               if(item.upg==='airtier3'){G.ship.maxAir=(G.ship.maxAir||10)+12;G.ship.air=G.ship.maxAir;}
+              if(item.upg==='cdreduce'){G.ship.cdBonus=(G.ship.cdBonus||0)+1;}
               msg=item.name+' installed!'; snd('ship_upgrade',0.85);
             }
             break;
@@ -20334,6 +20336,7 @@ function showLqShop(npc) {
               G.ship.air    = G.ship.maxAir;
               addLog(`Void Scrubber Array installed: +12 air capacity (now ${G.ship.maxAir} days).`,'gd');
             }
+            if(item.upg==='cdreduce'){ G.ship.cdBonus = (G.ship.cdBonus||0) + 1; }
             msg = item.name + ' installed!';
             snd('purchase', 0.9); snd('ship_upgrade', 0.85);
           } else {
