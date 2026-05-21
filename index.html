@@ -2315,8 +2315,6 @@ body {
     <canvas id="ts-canvas"></canvas>
 
     <div id="ts-controls">
-      <button id="ts-speed-btn" onclick="tsToggleSpeed()">▶▶ Fast</button>
-      <button id="ts-skip-btn" onclick="tsSkip()">⏭ Skip to Next</button>
       <button id="idle-toggle-btn" onclick="toggleIdleMode()" title="Idle: ON during travel = auto-combat, auto-rest, auto-bounce. Turn on while traveling to start immediately.">⚙ Idle: OFF</button>
     </div>
 
@@ -9708,50 +9706,10 @@ function tsQueueWaypoint(ws) {
   setTimeout(() => { if (alertEl) alertEl.className = ''; }, 1700);
 }
 
-// Skip: fast-forwards travelTick (not called when skipBlocked)
-let _tsSkipping = false; // re-entrancy guard
-
-function tsSkip() {
-  if (TS.skipBlocked) return;
-  if (_tsSkipping) return;
-  if (G.phase !== 'traveling') return;
-  _tsSkipping = true;
-
-  const maxFastTicks = 400;
-  let ticks = 0;
-  const origTimer = G.tvl?.timer;
-  if (origTimer) clearInterval(origTimer);
-
-  const done = () => {
-    _tsSkipping = false;
-    if (G.phase === 'traveling' && G.tvl && !G.tvl._eventLocked) {
-      G.tvl.timer = setInterval(travelTick, G.tvl.tickMs || 100);
-    }
-  };
-
-  const runFast = () => {
-    if (!TS.active || G.phase !== 'traveling' || ticks >= maxFastTicks) {
-      done(); return;
-    }
-    travelTick();
-    ticks++;
-    if (G.phase !== 'traveling' || TS.events.length > 0) {
-      done(); return;
-    }
-    setTimeout(runFast, 8);
-  };
-  runFast();
-}
-
-// Fast/normal speed toggle for the animation (doesn't affect travelTick rate)
-function tsToggleSpeed() {
-  TS.speed = TS.speed > 1 ? 1.0 : 3.0;
-  const btn = document.getElementById('ts-speed-btn');
-  if (btn) {
-    btn.classList.toggle('fast', TS.speed > 1);
-    btn.textContent = TS.speed > 1 ? '▶ Normal' : '▶▶ Fast';
-  }
-}
+// Skip and Fast buttons removed — reserved for future implementation
+let _tsSkipping = false;
+function tsSkip() {}
+function tsToggleSpeed() {}
 
 
 // ╔══════════════════════════════════════════════════════════════════════╗
