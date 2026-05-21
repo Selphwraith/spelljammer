@@ -4279,6 +4279,9 @@ function resetLiveClock(_ignored) {
 function pauseLiveClock() {
   if (_clockPaused) return;
   _clockAccumH += (performance.now() - _clockStartMs) * _clockGameHoursPerMs();
+  // Clamp to 1 leg max — prevents background-tab overshoot from showing 18:00/22:00
+  // when the worker fires many queued ticks at once after the tab is restored.
+  _clockAccumH = Math.min(_clockAccumH, LEG_HOURS);
   _clockPaused  = true;
   if (_clockWorker) _clockWorker.postMessage('stop');
   if (_clockFallback) { clearInterval(_clockFallback); _clockFallback = null; }
@@ -4387,6 +4390,12 @@ function watchExpiredMidJourney() {
   _tvlStop(); if(G.tvl) G.tvl.timer = null;
   tickLeg(); // advance totalHours by 8 — required before rest snaps to next dawn
   pauseLiveClock();
+  // CRITICAL: tickLeg() just absorbed the leg's 8 hours into totalHours.
+  // Zero _clockAccumH so it doesn't double-count on any subsequent push leg.
+  // (restAdvanceToMorning already zeroes it on the anchor path; this covers push + any
+  // combat/hail mid-leg that left accumulated hours banked before the leg completed.)
+  // The clock display still shows 14:00 correctly: totalHours already encodes hour 14.
+  _clockAccumH = 0;
   // Capture before zeroing — anchorCb and pushCb need these.
   // _watchesRemaining is already set correctly by travelTick's segment-complete handler;
   // fall back to _watchesLeft only if travelTick didn't set it (e.g. called from elsewhere).
@@ -4450,6 +4459,7 @@ Anchoring now means full rest and a fresh helmsman at dawn. Pushing on risks fat
     const newLvl = fatigueLevel();
     if (newLvl === 2) addLog(`⚠ Constitution check failed — helmsman is now Fatigued!`, 'dmg');
     if (newLvl === 3) addLog(`⚠ Constitution check failed again — helmsman is Exhausted!`, 'dmg');
+    jlogPushOn(); // Captain's Log entry for pushing past rest
     updateWatchHUD();
     // Resume travel from where we paused
     const toId = G.tvl?.to;
@@ -4514,7 +4524,10 @@ function doRest() {
       y: laneOrigin.y + (destSph.y - laneOrigin.y) * pg,
     };
     const pausedProg = G.tvl.prog;
-    const watchesRemaining = G.tvl._watchesRemaining || G.tvl._watchesLeft || 1;
+    // +1: include the currently-running (not yet complete) watch.
+    // G.tvl._watchesLeft = watches remaining AFTER this one; we're mid-watch so add 1.
+    // This prevents totalWatches=0 → watchPct=Infinity → prog=NaN when on the final watch.
+    const watchesRemaining = (G.tvl._watchesLeft || 0) + 1;
     G.ship.midLanePos = pausedPos;
     G.tvl._pausedProg = pausedProg;
     G.tvl._watchesRemaining = watchesRemaining;
@@ -7222,10 +7235,10 @@ function startTravel(toId, _resumeWatchesLeft, _pausedPos, _pausedProg, _savedLa
 
   if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = _tvlStart(tickMs);
   startTravelHum();
-  const _wasClockPaused = _clockPaused; // check before startLiveClock resets it
+  const _wasClockPaused = _clockPaused;
   startLiveClock();
-  // Only reset display accumulator on a fresh leg — preserve time when resuming from combat
-  if (!_wasClockPaused) resetLiveClock(_pausedProg ? _pausedProg / 100 : 0);
+  // Resuming from combat — keep accumulated time. Fresh leg — always reset to 06:00.
+  if (!_wasClockPaused) resetLiveClock();
   // Open the drift travel sequence visual
   if (!_pausedProg) {
     tsOpen(lane);
@@ -7484,6 +7497,7 @@ function travelTick(){
   if(G.tvl.prog >= segEnd - 0.05){
     G.tvl._eventLocked = true;
     _tvlStop(); if(G.tvl) G.tvl.timer = null;
+    pauseLiveClock(); // freeze display immediately — don't let clock overshoot 14:00
     const watchesLeft = G.tvl._watchesLeft || 0;
 
     if(watchesLeft <= 0){
@@ -7526,6 +7540,7 @@ function arrive(id){
   stopTravelHum();
   const sph=G.spheres.find(s=>s.id===id);
   G.ship.loc=id; G.phase='map'; G.ship.midLanePos=null;
+  G._jlogHailedThisTrip = new Set(); // reset per-voyage hail log guard on arrival
   snd('sphere_arrive', 0.85);
   if(sph.boss){
     if(G.postVictory){
@@ -9635,7 +9650,9 @@ function tsResolveEvent(ev) {
         const destSph = G.spheres?.find(s=>s.id===G.tvl.to) || {x:.5,y:.5};
         const pg = (G.tvl.prog || 50) / 100;
         const pausedPos = { x: laneOrigin.x + (destSph.x-laneOrigin.x)*pg, y: laneOrigin.y + (destSph.y-laneOrigin.y)*pg };
-        G._resumeTravel = { toId:G.tvl.to, watchesRemaining:G.tvl._watchesLeft||0, pausedPos, pausedProg:G.tvl.prog, laneOrigin };
+        // +1 to include the current (interrupted) watch. Without this, _watchesLeft===0
+        // on the final watch gives totalWatches=0 → watchPct=Infinity → prog=NaN → segment never ends.
+        G._resumeTravel = { toId:G.tvl.to, watchesRemaining:(G.tvl._watchesLeft||0)+1, pausedPos, pausedProg:G.tvl.prog, laneOrigin };
       }
       G.phase = 'map';
       startCombat(ev.key);
@@ -15086,6 +15103,7 @@ function dmGrantClue() {
     G.clues.add(_dmSphere);
     snd('fragment_collect', 0.8);
     addLog(`⚑ INTEL: ${site.clue}`, 'imp');
+    jlogFragSiteDiscover(_dmSphere); // Captain's Log entry for first fragment site discovery
   }
 
   // ── Breach intel tracking (Void Rift spheres) ──────────
@@ -15363,6 +15381,7 @@ function triggerRoamingEncounter(factionId){
   if (hailBtn) { hailBtn.disabled = false; hailBtn.style.opacity = '1'; hailBtn.style.cursor = 'pointer'; }
   // Show/hide trade and hail based on rep
   addLog(`📡 ${fac.n} vessel hails your comet on the approach lane.`,'');
+  jlogHail(factionId); // Captain's Log entry for this faction contact
   snd('sphere_click', 0.5);
   sndVoice(1.0);
 }
@@ -16062,7 +16081,15 @@ function menuNewGame() {
 function menuContinue() {
   if (!_gameActive) return;
   hideMainMenu();
-  _titleStartGamePlaylist();
+  // Keep music seamless — only (re)start the playlist if nothing is currently playing.
+  // If a track is already mid-play, leave it alone; opening/closing the menu should
+  // never interrupt or restart the in-game music.
+  if (!_titleEl || _titleEl.paused || _titleEl.ended) {
+    _titleStartGamePlaylist();
+  } else {
+    // Track is running — just ensure volume is correct for the current phase
+    _titleVolume(G?.phase === 'combat' ? 0.00 : 0.35);
+  }
   if (G.phase === 'combat') setTimeout(() => setAmbient('combat'), 100);
   setTag(G.phase === 'port' ? `Port — ${G.spheres.find(s=>s.id===G.ship.loc)?.n||''}` : 'Navigation');
 }
@@ -18144,6 +18171,7 @@ function _lsLocalsRevealFragment() {
   G.localQuests[sphereId+'_frag_revealed'] = true;
   // Also add to G.clues so the main navigation map shows the fragment site marker
   if(G.clues) G.clues.add(sphereId);
+  jlogFragSiteDiscover(sphereId); // Captain's Log entry for fragment site discovery
   const fragPoi = LS.pois?.find(p=>p.type==='fragment');
   if(fragPoi) { fragPoi.hidden = false; fragPoi._pingT = 8.0; }
   const fs = FRAGMENT_SITES.find(f=>f.sphere===sphereId);
@@ -21645,7 +21673,14 @@ const _J_ARRIVAL = {
   cluster:  ["Varuun — a sphere filled not with one world but a tumbling collection of small bodies, each with its own gravity and its own dangers.","We reached Varuun. Navigation is more art than science here; the dockmaster's charts are hand-drawn and proud of it."],
   hero:     ["Thyss. Named for the champions said to dwell on its central world — if they still live, they have gone quiet. We saw no other IEF vessels on approach.","Entered Thyss under reduced speed. The locals remember the last war here. They are not unfriendly, exactly, but they watch."],
   dark:     ["Serath. The sphere deserves its name. There is no sun here — only cold, drifting light from bioluminescent phenomena the charts cannot explain.","Arrived at Serath. The crew is quiet. Even the drift seems subdued, its colors muted to pale greens and violet. A sphere that has given up on warmth."],
-  default:  ["Another sphere crossed from the manifest. The log grows thicker. The mission grows clearer.","We arrived on schedule. The sphere is what the charts promised — no more, no less, and the Drift gives no opinions."],
+  ashmar:         ["Ashmar. The first thing past the Breach — not a sphere in the traditional sense but a dense knot of void-space that reality has folded around itself. The black market here carries things you cannot explain to a quartermaster. I have not looked too hard at the other ships docked here.","We have crossed the Breach and arrived at Ashmar. The crew is intact. The instruments are behaving. Neither of those things was guaranteed an hour ago. The charts end here. Whatever is ahead is ours to find."],
+  vodoni:         ["Trull Advance Space. The name has weight here in a way it does not in the Known Spheres — these are not Trull patrols operating at the edge of their range. This is their territory. I have ordered non-aggressive headings and made sure the IEF designation is not the first thing anyone reads on our hull.","We have reached Trull Advance controlled space. The Overmind’s influence is a background presence here rather than a distant threat. The crew knows it. Nobody is saying it out loud. I am noting it for the record."],
+  the_shatter_rim:["The Rift Zone. The Drift here is wrong in a way I cannot put in technical terms — thinner somehow, as if there is less of it between us and whatever lies on the other side of existence. The crew has been reporting sounds. I have been hearing them too.","We entered the Rift Zone. Whatever the Trull Overmind’s destruction did to this region, it did not finish the job. The scars are still open. I am filing this in the mission log for IEF Command. They will not be pleased."],
+  nullen:         ["Nullen. This place does not appear on any chart I have access to. What I can see from the approach lane is a sphere with no apparent light source that is somehow not dark. The crew stopped asking questions about the physics two systems back. I am learning to do the same.","Arrived at Nullen. The Trulls patrol this lane heavily — not the Advance, the original Overmind faction. Something here matters to them. I intend to find out what."],
+  baresun:        ["The Shatter. The briefings did not prepare me for what this looks like in person. This is not a world. It is the aftermath of a world — the Collapse in visible, permanent form. Whatever was here before the Shatter was large and old and is entirely gone now.","We reached the Shatter. Navigation instruments are reading things I have no reference for. The crew has been quiet since we passed the outer debris field. Some places communicate their history without words."],
+  shatter_rim:    ["The Shatter Rim. The outermost charted edge of the Void Rift expansion zone — which means it is not really charted, only named. The IEF gave it a designation so they could file reports about it. The reports do not adequately prepare you for being here.","Arrived at the Shatter Rim. Beyond this point the Drift does not follow known models. The ship’s navigation helm has defaulted to dead reckoning. We are flying by memory and instinct. Both have served us this far."],
+  thyss_outpost:  ["Thyss Outpost. An IEF forward installation that should not exist this far from the Known Spheres. Someone built it anyway. The supplies are current, which means it is being resupplied, which means there are routes we do not have on our charts. I have questions for the dockmaster.","We reached Thyss Outpost — the last recognizable IEF installation before the Drift becomes genuinely uncharted. The crew’s morale jumped the moment we saw the IEF standard on the approach beacon. I noted it without comment."],
+  default:        ["Another sphere crossed from the manifest. The log grows thicker. The mission grows clearer.","We arrived on schedule. The sphere is what the charts promised — no more, no less, and the Drift gives no opinions."],
 };
 
 const _J_COMBAT_WIN = [
@@ -21738,6 +21773,74 @@ function jlogRep(key) {
   const txt = _J_REP[key];
   if (txt) addJournalEntry(txt, key.includes('low') ? 'dmg' : 'imp');
 }
+
+// ── Roaming NPC hail flavor bank ────────────────────────────
+// One entry per faction; written as a brief after-action captain’s note.
+const _J_HAIL = {
+  ien:      ["An IEF patrol hailed us in the lane — standard identification and manifest check. Clean record, no complications. I find myself grateful, each time, that we are still the kind of ship that passes a routine inspection without incident.",
+             "IEF vessel on our lane, hail and response. The patrol captain mentioned the Far Dark situation is escalating. The news was not new but it was delivered as though it should be.",
+             "IEF contact mid-voyage. The driftways have more IEF presence than they used to. I do not know if that is reassuring or a sign that Command is worried about something it has not shared with field officers."],
+  merchant: ["The Merchant Consortium flagged us for a brief trade stop. Out here a functioning market vessel is a kind of good news — it means the lanes are passable enough for commerce.",
+             "Consortium contact mid-lane. They were cordial. We traded fairly and parted without incident. The crew appreciated the resupply opportunity.",
+             "A Consortium merchant vessel hailed us with a trade offer. Commerce continues in the Drift regardless of what else is happening. I find that fact either comforting or disturbing depending on the day."],
+  trull:    ["A Trull vessel hailed us instead of firing. That is a notable event and I am noting it. We continued on course. I am not sure what to make of Trull that parley. The old briefings did not have a category for it.",
+             "Trull intercept — hail, not attack. The crew is unsettled in the way people are unsettled when something behaves differently from its reputation. I understand the feeling.",
+             "We were hailed by Trull forces and the outcome was not combat. The Overmind faction operates on logic we have not fully mapped. Safe passage, for now. I will take it."],
+  vodoni:   ["Trull Advance vessel hailed us on the lane. They are more disciplined than the main Trull faction — more interested in cataloguing us than eliminating us, at least today. We were allowed to proceed.",
+             "The Trull Advance stopped us for their lane census. The process is bureaucratic in a way that feels almost like normalcy. Almost.",
+             "Advance contact. They logged our vessel registration and asked standard questions about cargo and destination. Their definition of satisfied involves letting us continue."],
+  farealm:  ["Something hailed us that I cannot fully categorize as a ship. The communication was coherent but the channel it arrived on is not listed in any IEF frequency directory. What it implied was considerable.",
+             "Far Realm contact in the drift lane. The crew did not all hear it the same way. The content was directed, intentional, and not entirely decipherable. We continue.",
+             "A Void Rift entity made contact during the crossing. It knew our destination. It knew our cargo. It did not threaten us with that knowledge. That is somehow worse than a threat would have been."],
+};
+
+// Fragment site discovery flavor bank
+const _J_FRAG_SITE = {
+  realm:   "Intelligence has confirmed a Fragment Site in Fentheris System. A piece of the Astral Chart hidden in the debris fields of the Flotsam. Someone buried it deliberately after the Collapse. The Trull Overmind has been searching for it. We will find it first.",
+  grey:    "Fragment Site located in Korreth — deep in a dwarven vault. Someone knew the dwarves would guard anything placed within their walls without asking too many questions about what it was. Clever, whoever did the hiding.",
+  krynn:   "A Fragment Site has been identified in Vael space. The Star Nest. The githyanki consider it theirs. Navigation Core fragments do not belong to any claimant by right — only by proximity and force. We have the advantage in one of those.",
+  cluster: "Fragment Site confirmed in Varuun. The Broker’s Cache. The name suggests the site has already changed hands at least once. I want to know how many times and who held it last.",
+  hero:    "A Fragment has been traced to Thyss — Pre-Sundering Vault, according to the coordinates. Pre-Sundering means it has been there for centuries at minimum. Whatever is guarding it has had time to become very good at guarding it.",
+  dark:    "Fragment Site confirmed in Serath space. The Dark Mote. Something in Serath guarded this Core through the Collapse, through everything that came after, and is still there. We are going to have to deal with it.",
+};
+
+// Push-on flavor bank (when player chooses to continue past rest threshold)
+const _J_PUSH = [
+  "The helmsman requested rest. I declined. We have distance left to cover and the destination is not getting closer by anchoring. The crew understands. They do not have to be happy about it.",
+  "Pushed through the watch break. Fatigue is a real tactical consideration and I am treating it as one, not dismissing it. But the calculation favors continuing. I have made note of this decision.",
+  "We sailed on past the anchor window. The helmsman is running at reduced efficiency. Sometimes the mission requires trading crew comfort for distance. This is one of those times.",
+  "Rest declined. We push on. The void does not wait and neither do we. The crew will rest when we arrive, or when I give the order, whichever comes first.",
+];
+
+// ── New trigger functions ────────────────────────────────────────
+
+// Called when a faction hails the player during travel
+// Rate-limited: only fires once per faction per voyage (G._jlogHailedThisTrip resets on arrival)
+function jlogHail(factionId) {
+  if (!factionId) return;
+  if (!G._jlogHailedThisTrip) G._jlogHailedThisTrip = new Set();
+  if (G._jlogHailedThisTrip.has(factionId)) return;
+  G._jlogHailedThisTrip.add(factionId);
+  const bank = _J_HAIL[factionId];
+  if (!bank) return;
+  addJournalEntry(bank[Math.floor(Math.random() * bank.length)], '');
+}
+
+// Called when a fragment site is first discovered (clue added for a sphere)
+function jlogFragSiteDiscover(sphereId) {
+  if (!sphereId) return;
+  if (!G._jlogFragSiteLogged) G._jlogFragSiteLogged = new Set();
+  if (G._jlogFragSiteLogged.has(sphereId)) return;
+  G._jlogFragSiteLogged.add(sphereId);
+  const txt = _J_FRAG_SITE[sphereId];
+  if (txt) addJournalEntry(txt, 'imp');
+}
+
+// Called when player chooses to push past the rest threshold
+function jlogPushOn() {
+  addJournalEntry(_J_PUSH[Math.floor(Math.random() * _J_PUSH.length)], '');
+}
+
 
 // ╔══════════════════════════════════════════════════════════════╗
 // ║  QUEST LOG                                                    ║
@@ -22750,10 +22853,18 @@ function _idleReleaseWakeLock() {
 // When the page becomes visible again after being hidden (alarm, app switch, lock screen)
 document.addEventListener('visibilitychange', () => {
   if(document.hidden) {
-    // Page going to background — nothing to do, setInterval keeps running
+    // Page going to background — pause the live clock immediately so real elapsed
+    // time while hidden doesn't accumulate into _clockAccumH and push the display
+    // past 14:00. The web worker keeps firing travelTick (background-safe), but the
+    // clock display should freeze while we can't render it.
+    if(!_clockPaused && G?.phase === 'traveling') pauseLiveClock();
     return;
   }
-  // Page coming back into view
+  // Page coming back into view — re-anchor the clock start to now.
+  // _clockAccumH is already capped at LEG_HOURS by pauseLiveClock(), so the
+  // display will never overshoot 14:00 even if the tab was hidden for hours.
+  if(_clockPaused && G?.phase === 'traveling' && !G?.tvl?._eventLocked) resumeLiveClock();
+
   if(!G?._idleMode) return;
 
   // Re-request wake lock (it's released when page is hidden)
@@ -22898,7 +23009,7 @@ document.addEventListener('visibilitychange', () => {
         <div class="b-head">⚓ Your Mission</div>
         <div class="b-body">
           You command a void sailing vessel for the <strong>International Earth Federation (IEF)</strong>, launching from <em>Refuge Station</em> — a hidden IEF forward base. The known spheres are under threat from the <strong>Trull Overmind Flagship</strong>, drifting through The Far Dark and consuming all conscious life in its path.<br><br>
-          Your orders: travel the Drift, recover all <strong>six Navigation Cores</strong> hidden across six spheres, assemble the completed chart, unlock The Far Dark, and destroy the Flagship before it reaches the inner worlds. Each Core is guarded — find clues at each sphere's dock before you can locate and fight for them.
+          Your orders: travel the Drift, recover all <strong>six Navigation Cores</strong> hidden across six spheres, assemble the completed Astral Chart, unlock The Far Dark, and destroy the Flagship before it reaches the inner worlds. Each Core is guarded — find clues at each sphere's dock before you can locate and fight for them.
         </div>
       </div>
 
@@ -22906,9 +23017,8 @@ document.addEventListener('visibilitychange', () => {
       <div class="b-section">
         <div class="b-head">🔷 Currency — Topazine Shards (TS)</div>
         <div class="b-body">
-          The currency of the Known Spheres is the <strong>Topazine Shard (TS)</strong> — named for the yellow gems the ancient dragons of Fentheris used as trade tokens during their reign. The topazine dragons had shimmering yellow scales and were masters of storms; their shards became the universal medium of exchange long after the last dragon vanished.<br><br>
-          TS is earned from <strong>combat loot</strong>, <strong>selling cargo</strong>, and <strong>completing quests</strong>. Spent on hull repairs, crew, weapons, ship upgrades, and supplies. Each sphere's dock and quartermaster sets its own prices — Thousand Sails Freeport charges freeport rates. Ironhaven on Korreth charges dwarven rates. Plan accordingly.<br><br>
-          <em>Other Fentheris currencies exist — Emerine, Rubine, Sapphirian Shards, and the ultra-rare Thermian Crest — but Topazine Shards are what the Drift runs on.</em>
+          The currency of the Known Spheres is the <strong>Topazine Shard (TS)</strong> — named for the yellow gems the ancient dragons of Fentheris used as trade tokens during their reign.<br><br>
+          TS is earned from <strong>combat loot</strong>, <strong>selling cargo</strong>, and <strong>completing quests</strong>. Spent on hull repairs, crew, weapons, ship upgrades, and supplies. Each sphere's dock and quartermaster sets its own prices.
         </div>
       </div>
 
@@ -22917,12 +23027,28 @@ document.addEventListener('visibilitychange', () => {
         <div class="b-head">🗺 Navigation &amp; The Map</div>
         <div class="b-body">
           The main screen shows the <strong>Drift</strong> — the space between spheres. Spheres appear as glowing circles. <strong>Lanes</strong> connect them across the void.<br><br>
-          <strong>To travel:</strong> tap any sphere to chart a course. Your ship animates across the Drift.<br>
+          <strong>To travel:</strong> tap any connected sphere to chart a course. Your ship animates across the Drift.<br>
           <strong>To dock:</strong> arrive at a sphere — you'll automatically enter its local space.<br>
           <strong>Locked spheres</strong> show a lock icon — some require story progress or Navigation Cores to reach.<br><br>
           <strong>Drift Flow Rivers</strong> — each lane carries a <em>current</em>. Watch which way the glowing particles drift — that is the flow direction. Travelling <em>with</em> the current is faster and costs fewer days. Travelling <em>against</em> it takes longer.<br><br>
-          <strong>Waypoints</strong> — small icons in the Drift — are supply caches, relay stations, and derelict vessels. Tap one to intercept it for supplies, air, or crew.<br><br>
-          <strong>Air Supply</strong> counts down during travel. Reaches zero? Your crew suffocates — voyage over. Always refill before long journeys.
+          <strong>Waystations</strong> — small beacons in the Drift — appear mid-lane. When your ship intercepts one, you can stop for emergency supplies or pass through. Waystations charge a premium over dock prices.
+        </div>
+      </div>
+
+      <!-- WATCH SYSTEM -->
+      <div class="b-section">
+        <div class="b-head">⏱ The Watch System — Travel Days</div>
+        <div class="b-body">
+          Each lane crossing is measured in <strong>watches</strong> — 8-hour shifts starting at 06:00 and ending at 14:00. The clock in the top bar counts up through the watch in real time.<br><br>
+          <strong>At the end of every watch</strong> you are prompted:<br>
+          &nbsp;&nbsp;• <strong>⚓ Anchor &amp; Rest</strong> — Sleep until 06:00 the next day. Restores the helmsman to <em>Fresh</em> status and repairs the hull slightly.<br>
+          &nbsp;&nbsp;• <strong>➤ Push On</strong> — Continue through the night. Helmsman becomes <em>Fatigued</em> then <em>Exhausted</em>.<br><br>
+          <strong>Fatigue levels:</strong><br>
+          &nbsp;&nbsp;• ✦ <strong>Fresh</strong> — Full effectiveness. Combat damage at 100%.<br>
+          &nbsp;&nbsp;• ⚠ <strong>Fatigued</strong> — One push past rest. Combat damage at 85%.<br>
+          &nbsp;&nbsp;• ⚠ <strong>Exhausted</strong> — Two pushes past rest. Combat damage at 70%. Hull damage ticks every few ticks from navigation errors.<br><br>
+          Longer lanes require <strong>multiple watches</strong> — each watch ends with the anchor/push prompt before the next leg begins. Resting always resets fatigue to Fresh.<br><br>
+          <em>The day counter in the Watch HUD shows your current day and hour. Air supply drains once per rest (once per game day).</em>
         </div>
       </div>
 
@@ -22932,24 +23058,41 @@ document.addEventListener('visibilitychange', () => {
         <div class="b-body">
           Arriving at a sphere automatically opens its <strong>Local Space</strong> — a top-down exploration zone where you pilot your ship directly.<br><br>
           <strong>Moving:</strong> WASD keys, virtual joystick (mobile), or tap/click anywhere to set a destination.<br>
-          <strong>Points of Interest:</strong> approach any POI to interact with it. The dock, NPC ships, fragment sites, and hazard zones all have their own interactions.<br><br>
-          <strong>The Dock (⚓):</strong> Approach and tap Dock for hull repair, air resupply, crew hire, and the sphere's Quartermaster shop. A 🔷 pulsing amber <strong>!</strong> on the dock means you have a cargo mission ready to turn in there — tap <em>Deliver Cargo Mission</em>.<br><br>
-          <strong>NPC Ships:</strong> Exclamation marks (!) above a ship mean they have a quest available or ready to turn in. Approach and hail them. QM NPCs show their shop via an <em>Open Shop</em> button after the quest dialog.<br><br>
-          <strong>Fragment Sites (🔮):</strong> Approach to attempt to claim the Navigation Core. A guardian stands in your way — you'll enter combat. Come prepared.<br><br>
+          <strong>Points of Interest:</strong> approach any POI to interact with it.<br><br>
+          <strong>The Dock (⚓):</strong> Approach to dock for hull repair, air resupply, crew hire, and the sphere's Quartermaster shop. A pulsing amber <strong>!</strong> on the dock means you have a cargo mission ready to deliver.<br><br>
+          <strong>NPC Ships:</strong> Exclamation marks (!) above a ship mean they have a quest available or ready to turn in. Approach and hail them. QM ships open their shop after the greeting dialog.<br><br>
+          <strong>Fragment Sites (🔮):</strong> Approach to enter the Fragment Dungeon and fight for the Navigation Core inside.<br><br>
           <strong>Hazard Zones (⚠):</strong> Enemy-heavy regions. Enemies spawn more frequently here. Avoid if your hull is low.<br><br>
-          <strong>Enemies</strong> patrol the outer fringes. They have vision cones — if they see you, they give chase. Get intercepted and combat triggers. Enemies respawn every 30 days.<br><br>
-          <strong>Tap outside any open panel</strong> to dismiss it and move simultaneously — one-tap workflow on mobile.
+          <strong>Enemies</strong> patrol the outer fringes with vision cones. If they see you, they give chase. Enemies respawn every 10 days.
         </div>
       </div>
 
-      <!-- FRAGMENTS -->
+      <!-- FRAGMENT DUNGEONS -->
       <div class="b-section">
-        <div class="b-head">🧩 Navigation Cores</div>
+        <div class="b-head">🏚 Fragment Dungeons</div>
         <div class="b-body">
-          Navigation Cores must be <strong>hunted down</strong> — they are not simply collected by visiting spheres.<br><br>
-          <strong>Step 1 — Find the Clue.</strong> Dock at a sphere and speak to the dockmaster. They know something. Accept their clue to mark the Fragment Site on your chart.<br><br>
+          Each Navigation Core is held inside a <strong>Fragment Dungeon</strong> — a multi-room site unique to each sphere. Approach the Fragment Site (🔮) in local space to enter.<br><br>
+          <strong>Inside the dungeon:</strong> you pilot your ship through corridors in a top-down view — the same controls as local space. The dungeon is filled with hostile ships patrolling rooms.<br><br>
+          <strong>Room enemies:</strong> minion-tier enemies guard the approach rooms. Each sphere has two enemy types. Defeat them to clear the path.<br><br>
+          <strong>The Guardian:</strong> at the far end of the dungeon — a named, unique boss significantly tougher than anything in the lanes. A warning screen describes them before the fight. They have special abilities and higher stats. Come prepared.<br><br>
+          <strong>Dungeon names and guardians:</strong><br>
+          &nbsp;&nbsp;• <em>Fentheris System</em> — The Flotsam Field · Corsair Captain Aldren<br>
+          &nbsp;&nbsp;• <em>Korreth</em> — The Dwarven Vault · Iron Warden Drekk<br>
+          &nbsp;&nbsp;• <em>Vael</em> — The Star Nest · War-Commander Zith'ral<br>
+          &nbsp;&nbsp;• <em>Varuun</em> — The Broker's Cache · The Broker<br>
+          &nbsp;&nbsp;• <em>Thyss</em> — Pre-Sundering Vault · Vault-Keeper Xorrath<br>
+          &nbsp;&nbsp;• <em>Serath</em> — The Dark Mote · The Void Prophet<br><br>
+          <em>Dungeons also contain loot rooms — random item drops along the path reward exploration.</em>
+        </div>
+      </div>
+
+      <!-- NAVIGATION CORES -->
+      <div class="b-section">
+        <div class="b-head">🧩 Navigation Cores — The Four Steps</div>
+        <div class="b-body">
+          <strong>Step 1 — Find the Clue.</strong> Dock at a sphere and speak to the dockmaster. They know something. Accept their clue to reveal the Fragment Site on your chart.<br><br>
           <strong>Step 2 — Locate the Site.</strong> The Fragment Site appears in local space as a glowing 🔮 marker. Navigate to it.<br><br>
-          <strong>Step 3 — Defeat the Guardian.</strong> Each Core is guarded by a named, unique enemy. These are significantly tougher than standard encounters. Stock up first.<br><br>
+          <strong>Step 3 — Clear the Dungeon.</strong> Fight through minion rooms, then defeat the Guardian at the far end.<br><br>
           <strong>Step 4 — Claim the Core.</strong> Defeat the Guardian and the Core is yours. Collect all six to unlock The Far Dark.
         </div>
       </div>
@@ -22961,8 +23104,8 @@ document.addEventListener('visibilitychange', () => {
           Losing any one of these ends your voyage:<br><br>
           <strong>⚔ Hull</strong> — Ship structure. Reaches 0 = broken apart. Repair at dock or use hull items mid-combat.<br>
           <strong>👥 Crew</strong> — Your sailors. Reaches 0 = helm goes dark, ship drifts. Lost to boarding attacks. Hire crew at dock.<br>
-          <strong>💨 Air Supply</strong> — Consumed during travel. Runs out mid-voyage = suffocation. Always refill before leaving.<br>
-          <strong>🔷 TS (Topazine Shards)</strong> — Currency of the Drift. Earned from loot and cargo sales. Spent on everything. Never goes negative — but you can run out.
+          <strong>💨 Air Supply</strong> — Drains 1 per game day (each anchor rest). Runs out mid-voyage = suffocation. Always refill before leaving. Base: 10 days. Upgradeable at quartermasters.<br>
+          <strong>🔷 TS (Topazine Shards)</strong> — Currency of the Drift. Earned from loot and cargo sales. Spent on everything.
         </div>
       </div>
 
@@ -23007,8 +23150,8 @@ document.addEventListener('visibilitychange', () => {
         <div class="b-body">
           Each ship class (except the starting Pinnace) has a <strong>built-in signature ability</strong> with three upgrade tiers:<br><br>
           <strong>🦑 Void Runner — Tentacle Grapple:</strong> Halves enemy attack damage for 2 turns. Tier 2 adds 8 damage. Tier 3 stuns for one turn + 15 damage. Cooldown: 5–6 rounds.<br><br>
-          <strong>🔨 Ironhull — Siege Ram:</strong> 2d10–4d10 impact damage but you take 2–5 hull damage from the collision. Tier 3 permanently reduces enemy max hull by 10. High risk, high reward. Cooldown: 5–6 rounds.<br><br>
-          <strong>⚓ Sovereign — Starfire Broadside:</strong> Fires all ready weapons simultaneously. Tier 2 adds +20% damage. Tier 3 suppresses enemy's next attack. Cooldown: 5–7 rounds.
+          <strong>🔨 Ironhull — Siege Ram:</strong> 2d10–4d10 impact damage but you take 2–5 hull damage. Tier 3 permanently reduces enemy max hull by 10. High risk, high reward. Cooldown: 5–6 rounds.<br><br>
+          <strong>⚓ Sovereign — Starfire Broadside:</strong> Fires all ready weapons simultaneously. Tier 2 adds +20% damage. Tier 3 suppresses the enemy's next attack. Cooldown: 5–7 rounds.
         </div>
       </div>
 
@@ -23040,12 +23183,12 @@ document.addEventListener('visibilitychange', () => {
       <div class="b-section">
         <div class="b-head">💀 Permanent Hull Damage</div>
         <div class="b-body">
-          Certain weapons <strong>permanently reduce your maximum hull</strong> — not restored by repairs or items.<br><br>
+          Certain weapons <strong>permanently reduce your maximum hull</strong> — not restored by ordinary repairs or items.<br><br>
           <strong>Sentinel Drone — Disintegration Beam:</strong> −4 max hull per hit.<br>
           <strong>Trull Overmind — Void Singularity:</strong> −8 max hull per hit.<br>
           <strong>World Bosses — Sphere Unmaking Pulse:</strong> −8 max hull per hit.<br><br>
           <strong>Restore lost max hull via:</strong><br>
-          🔩⚡ <strong>Void Welder</strong> — Consumable. Restores 20 max hull. Rare loot from Sentinel Drones.<br>
+          🔩⚡ <strong>Void Welder</strong> — Consumable. Restores 20 max hull. Rare loot from Sentinel Drones and Thyss/Serath dungeons.<br>
           ⚙️ <strong>Structural Drydock</strong> — Available at Refuge, Fentheris System, and Vael. Fully restores max hull for 8 TS per lost point.
         </div>
       </div>
@@ -23056,13 +23199,13 @@ document.addEventListener('visibilitychange', () => {
         <div class="b-body">
           Each sphere has its own dock with a <strong>Quartermaster (QM)</strong> who stocks sphere-specific items. Shops restock every <strong>30 in-game days</strong>.<br><br>
           <strong>Services at every dock:</strong> hull repair, air resupply, crew hire.<br>
-          <strong>Sell Cargo:</strong> convert trade goods, components, and artifacts to TS. Usable items can also be sold via the Sell Usable Items section.<br>
-          <strong>Deliver Cargo Missions:</strong> if you have a mission cargo item for this sphere, the 📦 Deliver button appears with an amber ! — tap it to complete the delivery without leaving local space.<br><br>
+          <strong>Sell Cargo:</strong> convert trade goods, components, and artifacts to TS. Usable items can also be sold here.<br>
+          <strong>Deliver Cargo Missions:</strong> if you have a cargo mission item for this sphere, a pulsing amber <strong>!</strong> appears on the dock — tap 📦 Deliver to complete it without leaving local space.<br><br>
           <strong>Sphere QM highlights:</strong><br>
-          &nbsp;&nbsp;• <strong>Refuge Station</strong> — Starter upgrades: Hull Plating, Speed Engine, <strong>Crew Quarters</strong>, Air Recycler.<br>
-          &nbsp;&nbsp;• <strong>Fentheris System (Realm)</strong> — Light Cannon, upgrade components, full supplies.<br>
-          &nbsp;&nbsp;• <strong>Korreth (Grey)</strong> — Super Ballista, <strong>Siege Bombard</strong>, heavy forge-grade gear.<br>
-          &nbsp;&nbsp;• <strong>Varuun (Cluster)</strong> — Void Ram, Force Cannon, <strong>Chain Reaction Crystal</strong> (exclusive).<br>
+          &nbsp;&nbsp;• <strong>Refuge Station</strong> — Starter upgrades: Hull Plating, Speed Engine, Crew Quarters, Air Recycler, Structural Drydock.<br>
+          &nbsp;&nbsp;• <strong>Fentheris System (Korreth)</strong> — Light Cannon, upgrade components, Structural Drydock.<br>
+          &nbsp;&nbsp;• <strong>Korreth (Ironhaven)</strong> — Super Ballista, Siege Bombard, heavy forge-grade gear.<br>
+          &nbsp;&nbsp;• <strong>Varuun (Thousand Sails Freeport)</strong> — Void Ram, Force Cannon, Chain Reaction Crystal (exclusive).<br>
           &nbsp;&nbsp;• <strong>Vael, Thyss, Serath</strong> — Endgame weapons and upgrades as you explore further out.
         </div>
       </div>
@@ -23077,6 +23220,16 @@ document.addEventListener('visibilitychange', () => {
           <strong>🔨 Ironhull (700 TS)</strong> — 4 slots, 100 hull, 12 crew. Siege Ram.<br>
           <strong>⚓ Sovereign (1,400 TS)</strong> — 5 slots, 130 hull, 16 crew. Starfire Broadside.<br><br>
           <em>Upgrade when you have reliable income and at least one solid weapon already purchased. Crew Quarters (Refuge QM) doubles your crew capacity on any ship — buy it early.</em>
+        </div>
+      </div>
+
+      <!-- ARMORY -->
+      <div class="b-section">
+        <div class="b-head">🛠 Armory — Equipping Weapons from Cargo</div>
+        <div class="b-body">
+          Weapons you loot from combat or buy at a shop go directly into your <strong>cargo hold</strong> — they are not automatically equipped. To use them in battle you must install them first.<br><br>
+          <strong>To equip a weapon:</strong> open the <strong>🛠 Armory</strong> from the sidebar. Any weapon in your cargo appears here with its stats and an <em>Equip</em> button. Tap it to open the slot selector and choose which slot to install it in.<br><br>
+          <em>Already-equipped weapons show ✓ Equipped and cannot be double-installed. You can also sell unwanted weapons from the Armory screen while docked.</em>
         </div>
       </div>
 
@@ -23125,13 +23278,32 @@ document.addEventListener('visibilitychange', () => {
       <div class="b-section">
         <div class="b-head">📋 Quests — Local &amp; Cargo</div>
         <div class="b-body">
-          <strong>Local Quests</strong> — Each sphere has NPCs with side missions. Approach and hail them in local space. Quest types:<br>
+          <strong>Local Quests</strong> — Each sphere has NPC ships with side missions. Approach and hail them in local space. Quest types:<br>
           &nbsp;&nbsp;• <strong>Delivery</strong> — Bring a specific item from your cargo to the NPC.<br>
-          &nbsp;&nbsp;• <strong>Combat</strong> — Defeat a number of specific enemy types in the lanes.<br>
+          &nbsp;&nbsp;• <strong>Combat</strong> — Defeat a number of specific enemy types in the lanes or local space.<br>
           &nbsp;&nbsp;• <strong>Explore</strong> — Travel to another sphere and return to the NPC.<br><br>
-          <strong>Cargo Missions</strong> — Offered by roaming NPC ships during travel. Accept a mission to pick up a package at one sphere and deliver it to another. Cargo missions refresh every <strong>10 in-game days</strong> after completion — the same route can appear again once the cooldown expires.<br><br>
-          <strong>Delivering cargo in Local Space</strong> — when you arrive at the target sphere and have the cargo, the dock shows a pulsing amber <strong>!</strong> and a 📦 Deliver button. Tap it to turn in the mission without leaving local space.<br><br>
-          <strong>Faction Reputation</strong> builds separately with IEF, Trull, Merchants, and others. Higher rep unlocks better prices and exclusive dialogue. Negative rep means surcharges.
+          Track all quests under <strong>📜 Quest Log</strong> in the sidebar. Active quests show progress; quests with a gold ★ are ready to turn in — return to the quest giver's sphere.<br><br>
+          <strong>Cargo Missions</strong> — Offered by roaming NPC ships during travel. Accept a mission to pick up a package at one sphere and deliver it to another. The dock at the destination shows a pulsing amber <strong>!</strong> when you arrive with the cargo — tap 📦 Deliver to complete it.
+        </div>
+      </div>
+
+      <!-- FACTION REP -->
+      <div class="b-section">
+        <div class="b-head">⚖ Faction Reputation</div>
+        <div class="b-body">
+          Reputation tracks separately with each major faction (−100 to +100). Completing quests, hailing ships, and your combat choices all affect it. View current standings via the <strong>Rep</strong> button in the Watch HUD.<br><br>
+          <strong>The factions:</strong><br>
+          &nbsp;&nbsp;• <strong>IEF (International Earth Federation)</strong> — Your employer. Strong presence in Fentheris System and Thyss. Start at +60.<br>
+          &nbsp;&nbsp;• <strong>Merchant Consortium</strong> — Commerce network spanning Korreth, Varuun, Vael, and Serath. Start at +20.<br>
+          &nbsp;&nbsp;• <strong>Trull Commander</strong> — Hostile Trull forces. Start at −20.<br>
+          &nbsp;&nbsp;• <strong>Trull Advance Empire</strong> — More organised Trull faction. Start at −10.<br>
+          &nbsp;&nbsp;• <strong>Void Rift Touched</strong> — Entities influenced by the Void Rift. Start at 0.<br><br>
+          <strong>Reputation effects on prices:</strong><br>
+          &nbsp;&nbsp;• Rep ≥ 50: <span style="color:#88ff66;">15% discount</span> at that faction's docks<br>
+          &nbsp;&nbsp;• Rep ≥ 25: <span style="color:#aabb66;">8% discount</span><br>
+          &nbsp;&nbsp;• Rep &lt; −25: <span style="color:#ffaa44;">10% surcharge</span><br>
+          &nbsp;&nbsp;• Rep &lt; −50: <span style="color:#ff6644;">20% surcharge</span> — and hostile faction ships will intercept you<br><br>
+          <em>Hailing roaming NPC ships always grants a small rep boost for free.</em>
         </div>
       </div>
 
@@ -23139,13 +23311,26 @@ document.addEventListener('visibilitychange', () => {
       <div class="b-section">
         <div class="b-head">📡 Roaming NPC Ships</div>
         <div class="b-body">
-          During travel, <strong>friendly faction ships</strong> may appear approaching from various directions. You can hail them or let them pass.<br><br>
+          During travel, <strong>friendly faction ships</strong> may appear approaching from various directions. They hail you in the travel sequence.<br><br>
           <strong>Hailing</strong> triggers a diplomatic exchange — the faction ship stands down and may:<br>
           &nbsp;&nbsp;• Offer a <strong>cargo mission</strong> if one is available for that faction<br>
           &nbsp;&nbsp;• Share a piece of <strong>Fentheris world lore</strong> if no mission is available<br>
           &nbsp;&nbsp;• Open a <strong>small trade stock</strong> of faction-specific items<br><br>
-          Each faction's roaming ships carry different lore. IEF ships discuss the Collapse and Fentheris history. Merchant ships discuss trade routes and Fentheris geography. Trull ships speak of the Overmind. The Void Rift Touched discuss what presses through from the other side.<br><br>
-          <em>Hailing improves faction reputation slightly. It costs nothing and often grants information you won't find anywhere else.</em>
+          Each faction's roaming ships carry different lore. IEF ships discuss the Collapse and Fentheris history. Merchant ships discuss trade routes. Trull ships speak of the Overmind. Void Rift Touched discuss what presses through from the other side.<br><br>
+          <em>Hailing improves faction reputation. It costs nothing and often grants information you won't find anywhere else. If a faction is hostile (rep &lt; −50), their ships will attack instead of hailing.</em>
+        </div>
+      </div>
+
+      <!-- AIR SUPPLY -->
+      <div class="b-section">
+        <div class="b-head">💨 Air Supply &amp; Upgrades</div>
+        <div class="b-body">
+          Air supply drains <strong>once per rest</strong> (once per game day). Base capacity is <strong>10 days</strong>. Upgrades are available from quartermasters as you travel further out:<br><br>
+          &nbsp;&nbsp;• <strong>Air Recycler</strong> (Refuge / Fentheris QM) — Doubles air efficiency (×2 multiplier)<br>
+          &nbsp;&nbsp;• <strong>Air Tier 1</strong> (Refuge / Fentheris QM) — +6 days capacity (up to 16)<br>
+          &nbsp;&nbsp;• <strong>Air Tier 2</strong> (Korreth / Vael / Varuun QM) — +6 more days (up to 22)<br>
+          &nbsp;&nbsp;• <strong>Air Tier 3</strong> (Thyss / Serath QM) — +12 more days (up to 34)<br><br>
+          <em>Never leave port with less than 15 air. Long voyages kill captains who forget to refill.</em>
         </div>
       </div>
 
@@ -23164,14 +23349,16 @@ document.addEventListener('visibilitychange', () => {
         <div class="b-body">
           • <strong>Buy Crew Quarters at Refuge first.</strong> It doubles your crew capacity on every ship — the single most impactful early purchase.<br>
           • <strong>Never leave port with less than 15 air.</strong> Long voyages kill captains who forget to refill.<br>
+          • <strong>Check the Armory.</strong> Looted weapons sit in cargo doing nothing until you equip them via the 🛠 Armory panel.<br>
           • <strong>Sell cargo before buying supplies.</strong> You may already have enough TS.<br>
           • <strong>Crew matters as much as hull.</strong> 0 crew = defeat even at full hull.<br>
           • <strong>Disable the scariest weapon first.</strong> Disintegration Beam and Rage Cannon get exponentially worse the longer they fire.<br>
           • <strong>Evasive Maneuver before a known big hit</strong> — wasted after the attack lands.<br>
-          • <strong>Hail every roaming NPC ship.</strong> It's free rep and free lore.<br>
+          • <strong>Hail every roaming NPC ship.</strong> Free rep, free lore, sometimes a mission.<br>
           • <strong>The ! markers in local space tell you where to go.</strong> Amber ! on the dock = cargo delivery ready. Yellow ! on an NPC = quest available or ready to turn in.<br>
-          • <strong>Enemies on the fringes of local space are tougher per sphere.</strong> Hazard zones are marked — don't wander into them at low hull.<br>
-          • <strong>Drain enemy crew with the Psionic Lance</strong> — 0 crew disables all enemy specials and reduces damage.<br>
+          • <strong>Rest when you can.</strong> Pushing through fatigue deals less combat damage and risks hull damage from navigation errors.<br>
+          • <strong>Stock up before entering a dungeon.</strong> Guardians are significantly harder than lane enemies — bring hull repair items and crew restores.<br>
+          • <strong>Drain enemy crew with the Psionic Lance</strong> — 0 crew disables all enemy specials and reduces incoming damage.<br>
           • <strong>Sovereign Broadside on a full reload cycle</strong> deals more burst damage than any other single action — save it for boss fights.
         </div>
       </div>
