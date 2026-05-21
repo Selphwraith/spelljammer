@@ -2505,9 +2505,6 @@ body {
         <button class="btn ls-dock-btn" id="ls-svc-crew" onclick="lsDockService('crew')">🔷 —g</button>
       </div>
 
-      <div class="ls-dock-section" style="margin-top:6px;">🛒 IEF QUARTERMASTER</div>
-      <div id="ls-dock-shop-grid" style="display:flex;flex-direction:column;gap:6px;margin-top:2px;"></div>
-
       <div class="ls-dock-section" style="margin-top:6px;">💰 SELL ITEMS</div>
       <!-- Sell filter tabs -->
       <div id="ls-sell-filter-tabs" style="display:flex;gap:3px;flex-wrap:wrap;margin:4px 0 3px;">
@@ -2526,7 +2523,27 @@ body {
       </div>
     </div>
 
-    <!-- Ask Locals panel -->
+    <!-- QM Shop panel — separate from dock, opened by hailing the Quartermaster NPC -->
+    <div id="ls-qm-panel" style="display:none;position:absolute;inset:0;background:rgba(2,0,10,0.96);border:1px solid rgba(68,34,136,0.4);border-radius:7px;padding:14px 14px 10px;overflow-y:auto;flex-direction:column;gap:8px;z-index:120;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+        <div id="ls-qm-portrait" style="font-size:24px;border:1px solid rgba(68,34,136,0.4);border-radius:4px;padding:4px 8px;background:rgba(15,5,40,0.8);">&#x2693;</div>
+        <div style="flex:1;min-width:0;">
+          <div id="ls-qm-name" style="font-family:'Cinzel',serif;font-size:0.75em;color:#ccaaff;letter-spacing:1px;"></div>
+          <div id="ls-qm-role" style="font-size:0.563em;color:#554477;letter-spacing:1px;margin-top:2px;"></div>
+        </div>
+        <div class="trade-gold-bar" style="margin:0;padding:3px 8px;">
+          <span style="font-size:11px;">&#x1F537;</span>
+          <span id="ls-qm-gold" style="font-size:11px;color:#ffcc44;font-family:'Cinzel',serif;"></span>
+          <span style="font-size:9px;color:#554433;">TS</span>
+        </div>
+      </div>
+      <div id="ls-qm-flavor" style="font-size:0.563em;color:#4a3060;font-style:italic;border-bottom:1px solid rgba(51,0,85,0.2);padding-bottom:6px;margin-bottom:2px;"></div>
+      <div id="ls-qm-restock" style="font-size:0.5em;color:#334455;font-style:italic;margin-bottom:2px;"></div>
+      <div id="ls-qm-grid" style="display:flex;flex-direction:column;gap:6px;"></div>
+      <button class="btn exit" style="font-size:0.688em;margin-top:8px;align-self:flex-start;" onclick="lsCloseQmPanel()">Back to Space</button>
+    </div>
+
+        <!-- Ask Locals panel -->
     <div id="ls-locals-panel">
       <div id="ls-locals-title">🍺 ASK THE LOCALS</div>
       <div id="ls-locals-cost-hint"></div>
@@ -2810,8 +2827,8 @@ const SPHERE_SHOPS = {
 
 const SHIP_TYPES = {
   pinnace: { n:'Pinnace',    slots:2, hull:65,  crew:6,  speed:4, cost:0,    availSpheres:null,               desc:'A nimble scout vessel. Fast but lightly armed and fragile.' },
-  squid:   { n:'Void Runner', slots:3, hull:110, crew:10, speed:3, cost:980,  availSpheres:['krynn'],          desc:'A reliable void runner. Versatile and fast, three weapon slots.' },
-  hammer:  { n:'Ironhull', slots:4, hull:170, crew:14, speed:2, cost:1960, availSpheres:['dark'],           desc:'A battle-proven vessel built for war. Slow but formidable.' },
+  squid:   { n:'Void Runner', slots:3, hull:110, crew:10, speed:3, cost:1480, availSpheres:['krynn'],          desc:'A reliable void runner. Versatile and fast, three weapon slots. Signature: Tentacle Grapple.' },
+  hammer:  { n:'Ironhull',   slots:4, hull:170, crew:14, speed:2, cost:2460, availSpheres:['dark'],           desc:'A battle-proven vessel built for war. Slow but formidable. Signature: Siege Ram.' },
   manow:   { n:'Sovereign',  slots:5, hull:230, crew:20, speed:2, cost:3920, availSpheres:['ashmar','vodoni','the_shatter_rim','shatter_rim','baresun','thyss_outpost','serath','nullen','ashmar_deep','varuun_prime'], desc:'A heavy battle cruiser. Five weapon mounts. First available beyond The Shatter.' },
 };
 
@@ -16606,14 +16623,12 @@ const LOCAL_QUEST_DATA = {
     qmStock: {
       flavor: 'Field-authorized IEF materiel. Fentheris System station allocation.',
       items: [
-        { type:'supply', ico:'🔧', name:'Emergency Hull Patch', desc:'Restores 40 hull points', cost:55, act:'hull40', qty:8 },
-        { type:'supply', ico:'💨', name:'Compressed Air Cylinder', desc:'Restores full air supply', cost:42, act:'air', qty:6 },
-        { type:'supply', ico:'👥', name:'IEF Crew Transfer', desc:'Assigns 4 trained crew from station reserves', cost:60, act:'crew4', qty:5 },
-        { type:'usable', ico:'🩹', name:"Alchemist's Mend", desc:'Use in combat: Restores 20 hull + 1 crew', cost:80, itemKey:'almend', qty:4 },
-        { type:'upgrade', ico:'🛡', name:'Ablative Hull Plating', desc:'+50 max hull points (IEF grade)', cost:110, act:'upg', upg:'plating', qty:1 },
-        { type:'upgrade', ico:'⚡', name:'Speed Engine Mk.II', desc:'+2 void sailing speed', cost:85, act:'upg', upg:'engine', qty:1 },
-        { type:'wpn', ico:'💥', name:'Light Cannon', desc:'3d8 · 3-round reload · first cannon tier — more damage than ballista (IEF surplus)', cost:165, wk:'lcannon', qty:1 },
-        { type:'wpn', ico:'⚔', name:'Heavy Ballista Mk.II', desc:'Improved ballista — higher damage per shot (IEF issue)', cost:95, wk:'hball', qty:2 },
+        { type:'usable', ico:'🩹', name:"Alchemist's Mend",     desc:'Use in combat: Restores 20 hull + 1 crew',             cost:80,  itemKey:'almend',   qty:4 },
+        { type:'upgrade', ico:'🛡', name:'Ablative Hull Plating', desc:'+50 max hull points (IEF grade)',                      cost:110, act:'upg', upg:'plating',   qty:1 },
+        { type:'upgrade', ico:'⚡', name:'Speed Engine Mk.II',   desc:'+2 void sailing speed',                                cost:85,  act:'upg', upg:'engine',    qty:1 },
+        { type:'upgrade', ico:'🔄', name:'Rapid Reload System',  desc:'All weapon cooldowns −1 round (Fentheris Field Issue)', cost:200, act:'upg', upg:'cdreduce',  qty:1 },
+        { type:'wpn', ico:'💥', name:'Light Cannon',             desc:'3d8 · 3-round reload · first cannon tier (IEF surplus)', cost:165, wk:'lcannon', qty:1 },
+        { type:'wpn', ico:'⚔', name:'Heavy Ballista Mk.II',     desc:'Improved ballista — higher damage per shot (IEF issue)', cost:95,  wk:'hball',   qty:2 },
       ]
     }
   },
@@ -16726,15 +16741,12 @@ const LOCAL_QUEST_DATA = {
     qmStock: {
       flavor: 'Ironhaven IEF attachment. Dwarven-certified equipment.',
       items: [
-        { type:'supply', ico:'🔧', name:'Emergency Hull Patch', desc:'Restores 40 hull points', cost:55, act:'hull40' },
-        { type:'supply', ico:'💨', name:'Compressed Air Cylinder', desc:'Restores full air supply', cost:42, act:'air' },
-        { type:'supply', ico:'👥', name:'IEF Crew Transfer', desc:'Assigns 4 trained crew', cost:60, act:'crew4' },
-        { type:'upgrade', ico:'🛡', name:'Reinforced Dwarven Plating', desc:'+50 max hull (forge-certified)', cost:115, act:'upg', upg:'plating' },
-        { type:'upgrade', ico:'⚡', name:'Overclocked Helm Drive', desc:'+2 void speed (req: Speed Engine)', cost:180, act:'upg', upg:'engine2' },
-        { type:'upgrade', ico:'🌀', name:'Air Recycler', desc:'Air lasts 2× longer in the void', cost:90, act:'upg', upg:'recycler' },
-        { type:'upgrade', ico:'💨', name:'Air Cell Array', desc:'+6 days air capacity — safe for mid-sphere runs', cost:95, act:'upg', upg:'airtier1' },
-        { type:'wpn', ico:'⚔', name:'Super Ballista', desc:'Heavy siege ballista — high damage, slower rate (Dwarven forge)', cost:130, wk:'sballista' },
-        { type:'wpn', ico:'⚔', name:'Siege Bombard', desc:'Massive hull-cracker cannon. Slow reload, devastating impact', cost:200, wk:'bombard' },
+        { type:'upgrade', ico:'🛡', name:'Reinforced Dwarven Plating', desc:'+50 max hull (forge-certified)',                cost:115, act:'upg', upg:'plating' },
+        { type:'upgrade', ico:'⚡', name:'Overclocked Helm Drive',      desc:'+2 void speed (req: Speed Engine)',             cost:180, act:'upg', upg:'engine2' },
+        { type:'upgrade', ico:'♻️', name:'Air Recycler',                desc:'Air lasts 2× longer in the void',              cost:90,  act:'upg', upg:'recycler' },
+        { type:'upgrade', ico:'💨', name:'Air Cell Array Tier 1',       desc:'+6 days air capacity — safe for mid-sphere runs', cost:95, act:'upg', upg:'airtier1' },
+        { type:'wpn', ico:'⚔', name:'Super Ballista',                   desc:'Heavy siege ballista — high damage, slower rate (Dwarven forge)', cost:130, wk:'sballista' },
+        { type:'wpn', ico:'⚔', name:'Siege Bombard',                    desc:'Massive hull-cracker cannon. Slow reload, devastating impact', cost:200, wk:'bombard' },
       ]
     }
   },
@@ -16829,15 +16841,13 @@ const LOCAL_QUEST_DATA = {
     qmStock: {
       flavor: 'Steel Dragon Pact military surplus. Elven precision, void-grade construction.',
       items: [
-        { type:'supply', ico:'🔧', name:'Emergency Hull Patch',        desc:'Restores 40 hull points',                 cost:60,  act:'hull40' },
-        { type:'supply', ico:'💨', name:'Compressed Air Cylinder',     desc:'Restores full air supply',                cost:47,  act:'air' },
-        { type:'supply', ico:'👥', name:'Crew Hire (Vael)',            desc:'+4 crew from the docks',                  cost:65,  act:'crew4' },
         { type:'usable', ico:'💉', name:'Void Sailer Stimpack',        desc:'Use: Restores 6 crew in combat',          cost:70,  itemKey:'stimpack' },
         { type:'usable', ico:'🌀', name:'Phase Disruptor',             desc:'Disable one enemy weapon for 2 turns',    cost:90,  itemKey:'phasedis' },
         { type:'upgrade', ico:'🔁', name:'Rapid Fire Mount',           desc:'Ballista-type weapons fire twice per action', cost:270, act:'upg', upg:'rapidfire' },
-        { type:'upgrade', ico:'⚡', name:'Overclocked Helm Drive', desc:'+2 void speed (req: Speed Engine)', cost:180, act:'upg', upg:'engine2' },
+        { type:'upgrade', ico:'⚡', name:'Overclocked Helm Drive',     desc:'+2 void speed (req: Speed Engine)',        cost:180, act:'upg', upg:'engine2' },
         { type:'wpn', ico:'⚔️', name:'Superior Ballista',              desc:'3d6 · fires every round · elven-forged, never jams', cost:145, wk:'sballista' },
         { type:'wpn', ico:'🧠', name:'Psionic Lance',                  desc:'3d6 · hits crew directly · 3-round reload (Steel Dragon grade)', cost:680, wk:'psylance' },
+        { type:'ship', ico:'🦑', name:'🦑 Void Runner — Ship Upgrade', desc:'3 weapon slots · 110 hull · 10 crew · Speed 3 · Signature: Tentacle Grapple. Palanthas Spindle shipyard.', cost:1480, shipKey:'squid' },
       ]
     }
   },
@@ -16932,12 +16942,9 @@ const LOCAL_QUEST_DATA = {
     qmStock: {
       flavor: 'Thousand Sails salvage market. No questions, no receipts, everything works.',
       items: [
-        { type:'supply', ico:'🔧', name:'Emergency Hull Patch',       desc:'Restores 40 hull points',          cost:60,  act:'hull40' },
-        { type:'supply', ico:'💨', name:'Compressed Air Cylinder',    desc:'Restores full air supply',          cost:47,  act:'air' },
-        { type:'supply', ico:'👥', name:'Crew Hire (Freeport)',       desc:'+4 crew from the docks',            cost:65,  act:'crew4' },
         { type:'usable', ico:'🍺', name:"Crew's Courage Mead",        desc:"Use: Restores 3 crew in combat",    cost:55,  itemKey:'crewmead' },
         { type:'upgrade', ico:'💥', name:'Chain Reaction Crystal',    desc:'30% chance of free bonus shot on any hit', cost:300, act:'upg', upg:'chainreact' },
-        { type:'upgrade', ico:'💨', name:'Pressurized Air Module', desc:'+6 days air capacity — reaches the outer void', cost:150, act:'upg', upg:'airtier2' },
+        { type:'upgrade', ico:'💨', name:'Pressurized Air Module',    desc:'+6 days air capacity — reaches the outer void', cost:150, act:'upg', upg:'airtier2' },
         { type:'wpn', ico:'⚙️', name:'Void Sailing Ram',              desc:'5d6 · 4-round reload · bone-shattering impact (salvaged)', cost:320, wk:'ram' },
         { type:'wpn', ico:'💥', name:'Force Cannon',                  desc:'4d8 · 3-round reload · heavy shot (freeport surplus)',      cost:265, wk:'fcannon' },
       ]
@@ -17021,14 +17028,12 @@ const LOCAL_QUEST_DATA = {
     qmStock: {
       flavor: 'IEF Station Refuge — full field allocation. Admiral-authorized.',
       items: [
-        { type:'supply', ico:'🔧', name:'Emergency Hull Patch', desc:'Restores 40 hull', cost:50, act:'hull40' },
-        { type:'supply', ico:'💨', name:'Compressed Air Cylinder', desc:'Full air resupply', cost:40, act:'air' },
-        { type:'supply', ico:'👥', name:'IEF Crew Transfer', desc:'+4 trained crew', cost:55, act:'crew4' },
-        { type:'usable', ico:'🧪', name:'IEF Leviathan Blood Vial', desc:'Use: +30 hull in combat (field grade)', cost:60, itemKey:'levblood' },
-        { type:'upgrade', ico:'🛡', name:'Hull Plating', desc:'+50 max hull', cost:100, act:'upg', upg:'plating' },
-        { type:'upgrade', ico:'⚡', name:'Speed Engine', desc:'+2 void sailing speed', cost:80, act:'upg', upg:'engine' },
-        { type:'upgrade', ico:'🏠', name:'Crew Quarters', desc:'+8 max crew', cost:65, act:'upg', upg:'quarters' },
-        { type:'upgrade', ico:'💨', name:'Pressurized Air Module', desc:'+6 days air capacity — reaches the outer void', cost:150, act:'upg', upg:'airtier2' },
+        { type:'usable', ico:'🧪', name:'IEF Leviathan Blood Vial',   desc:'Use: +30 hull in combat (field grade)', cost:60, itemKey:'levblood' },
+        { type:'upgrade', ico:'🛡', name:'Hull Plating',               desc:'+50 max hull',                          cost:100, act:'upg', upg:'plating' },
+        { type:'upgrade', ico:'⚡', name:'Speed Engine',               desc:'+2 void sailing speed',                 cost:80,  act:'upg', upg:'engine' },
+        { type:'upgrade', ico:'🏠', name:'Crew Quarters',              desc:'+8 max crew capacity',                  cost:65,  act:'upg', upg:'quarters' },
+        { type:'upgrade', ico:'♻️', name:'Air Recycler',               desc:'Air lasts 2× longer in the void',       cost:90,  act:'upg', upg:'recycler' },
+        { type:'upgrade', ico:'💨', name:'Air Cell Array Tier 1',      desc:'+6 days air capacity',                  cost:95,  act:'upg', upg:'airtier1' },
       ]
     }
   },
@@ -17124,16 +17129,13 @@ const LOCAL_QUEST_DATA = {
     qmStock: {
       flavor: 'Pre-Sundering artifacts of terrible and wonderful power. Handle accordingly.',
       items: [
-        { type:'supply', ico:'🔧', name:'Vault-Grade Hull Patch',  desc:'Restores 40 hull points', cost:65, act:'hull40' },
-        { type:'supply', ico:'💨', name:'Compressed Air Cylinder', desc:'Restores full air supply', cost:47, act:'air' },
-        { type:'supply', ico:'👥', name:'Crew Hire (Thyss Dock)',  desc:'+4 crew from the Citadel', cost:70, act:'crew4' },
-        { type:'usable', ico:'🔧', name:'Void Welder',             desc:'Use: Restores 20 MAX hull (rare)', cost:180, itemKey:'voidwelder' },
-        { type:'usable', ico:'🧪', name:'Psionic Amplifier',       desc:'Use: Stun enemy for 1 turn', cost:90, itemKey:'psiamp' },
+        { type:'usable', ico:'🔧', name:'Void Welder',             desc:'Use: Restores 20 MAX hull (rare)',              cost:180, itemKey:'voidwelder' },
+        { type:'usable', ico:'🧪', name:'Psionic Amplifier',       desc:'Use: Stun enemy for 1 turn',                   cost:90,  itemKey:'psiamp' },
         { type:'wpn', ico:'💥', name:'Pre-Sundering Bombard',      desc:'4d10 · 5-round reload · ancient siege weapon', cost:420, wk:'bombard' },
         { type:'wpn', ico:'💀', name:'Nether Cannon',              desc:'4d8 · 4-round reload · void-forged dissolution round', cost:380, wk:'nether' },
-        { type:'upgrade', ico:'🔀', name:'Volley System',          desc:'Fire ALL ready weapons simultaneously', cost:350, act:'upg', upg:'volley' },
-        { type:'upgrade', ico:'⚡', name:'Void-Runner Core', desc:'+2 void speed to max (req: Overclocked Drive)', cost:320, act:'upg', upg:'engine3' },
-        { type:'upgrade', ico:'🌬️', name:'Void Scrubber Array', desc:'+12 days air capacity — required for the deepest void runs', cost:260, act:'upg', upg:'airtier3' },
+        { type:'upgrade', ico:'🔀', name:'Volley System',          desc:'Fire ALL ready weapons simultaneously',         cost:350, act:'upg', upg:'volley' },
+        { type:'upgrade', ico:'⚡', name:'Void-Runner Core',       desc:'+2 void speed to max (req: Overclocked Drive)', cost:320, act:'upg', upg:'engine3' },
+        { type:'upgrade', ico:'🌬️', name:'Void Scrubber Array',   desc:'+12 days air capacity — required for the deepest void runs', cost:260, act:'upg', upg:'airtier3' },
       ]
     }
   },
@@ -17229,16 +17231,14 @@ const LOCAL_QUEST_DATA = {
     qmStock: {
       flavor: 'Born in the lightless void. For captains who are running out of options.',
       items: [
-        { type:'supply', ico:'🔧', name:'Void-Grade Hull Patch',   desc:'Restores 40 hull points', cost:70, act:'hull40' },
-        { type:'supply', ico:'💨', name:'Compressed Air Cylinder', desc:'Restores full air supply', cost:50, act:'air' },
-        { type:'supply', ico:'👥', name:'Crew Hire (Voidhaven)',   desc:'+4 crew from the dark docks', cost:72, act:'crew4' },
-        { type:'usable', ico:'🧪', name:'Leviathan Blood Vial',    desc:'Use: +30 hull in combat', cost:75, itemKey:'levblood' },
-        { type:'usable', ico:'💊', name:'Void Sailer Stimpack',    desc:'Use: +6 crew in combat', cost:80, itemKey:'stimpack' },
+        { type:'usable', ico:'🧪', name:'Leviathan Blood Vial',    desc:'Use: +30 hull in combat',              cost:75,  itemKey:'levblood' },
+        { type:'usable', ico:'💊', name:'Void Sailer Stimpack',    desc:'Use: +6 crew in combat',               cost:80,  itemKey:'stimpack' },
         { type:'wpn', ico:'⚡', name:'Star Elven Ballista',        desc:'3d6 · 0-round reload · elven-forged, fires every turn', cost:440, wk:'sballista' },
-        { type:'wpn', ico:'🌀', name:'Void Cannon',                desc:'6d8 · 6-round reload · endgame annihilation round', cost:520, wk:'voidcann' },
-        { type:'upgrade', ico:'🔫', name:'Rapid-Fire System',      desc:'Reduce all weapon reload times by 1', cost:320, act:'upg', upg:'rapidfire' },
-        { type:'upgrade', ico:'⚡', name:'Void-Runner Core', desc:'+2 void speed to max (req: Overclocked Drive)', cost:320, act:'upg', upg:'engine3' },
-        { type:'upgrade', ico:'🌬️', name:'Void Scrubber Array', desc:'+12 days air capacity — required for the deepest void runs', cost:260, act:'upg', upg:'airtier3' },
+        { type:'wpn', ico:'🌀', name:'Void Cannon',                desc:'6d8 · 6-round reload · endgame annihilation round',     cost:520, wk:'voidcann' },
+        { type:'ship', ico:'🔨', name:'🔨 Ironhull — Ship Upgrade', desc:'4 weapon slots · 170 hull · 14 crew · Speed 2 · Signature: Siege Ram. Voidhaven shipyard.', cost:2460, shipKey:'hammer' },
+        { type:'upgrade', ico:'🔫', name:'Rapid-Fire System',      desc:'Reduce all weapon reload times by 1',  cost:320, act:'upg', upg:'rapidfire' },
+        { type:'upgrade', ico:'⚡', name:'Void-Runner Core',       desc:'+2 void speed to max (req: Overclocked Drive)', cost:320, act:'upg', upg:'engine3' },
+        { type:'upgrade', ico:'🌬️', name:'Void Scrubber Array',   desc:'+12 days air capacity — required for the deepest void runs', cost:260, act:'upg', upg:'airtier3' },
       ]
     }
   }
@@ -18390,19 +18390,12 @@ function _lsGetQmStock() {
 }
 
 function _lsBuildQmShop() {
-  const grid = document.getElementById('ls-dock-shop-grid');
+  const grid = document.getElementById('ls-qm-grid');
   if(!grid) return;
   grid.innerHTML = '';
 
   const items = _lsGetQmStock();
   const dayNow = G.watch?.day || 1;
-  const _rSphId = G.ship?.loc || 'realm'; const daysUntilRestock = 30 - ((dayNow - (G._lsQmStock?.[_rSphId]?.lastRestockDay||0)) % 30);
-
-  // Restock banner
-  const banner = document.createElement('div');
-  banner.style.cssText = 'font-size:0.563em;color:#334455;font-style:italic;margin-bottom:4px;';
-  banner.textContent = `Restocks in ${daysUntilRestock} day${daysUntilRestock!==1?'s':''}`;
-  grid.appendChild(banner);
 
   let anyVisible = false;
 
@@ -18413,19 +18406,24 @@ function _lsBuildQmShop() {
     const wKey = item.wk || (item.act === 'wpn' ? item.wpnKey : null);
     if(wKey && G.ship.wpns.includes(wKey)) return;
     if(wKey && wpnHasBetter(wKey, G.ship.wpns)) return;
+    // Ship upgrade: hide if player already has this ship tier or higher
+    if(item.type === 'ship' && item.shipKey) {
+      const _sOrder = ['pinnace','squid','hammer','manow'];
+      if(_sOrder.indexOf(item.shipKey) <= _sOrder.indexOf(G.ship.type)) return;
+    }
 
     anyVisible = true;
     const soldOut    = item.remaining <= 0;
     const canAfford  = G.ship.gold >= item.cost;
     const isUpgrade  = item.act === 'upg';
+    const isShip     = item.type === 'ship';
     const isWpn      = !!wKey;
-    // Max qty a player can select: capped by remaining stock
-    // Upgrades and weapons are always qty 1; supplies/usables can be multi
-    const maxSel = (isUpgrade || isWpn) ? 1 : Math.min(item.remaining, 9);
+    // Max qty: ships/upgrades/weapons always 1; supplies can be multi
+    const maxSel = (isUpgrade || isWpn || isShip) ? 1 : Math.min(item.remaining, 9);
 
     const row = document.createElement('div');
     row.style.cssText = `display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:4px;
-      background:rgba(10,5,30,0.6);border:1px solid ${soldOut?'rgba(51,34,68,0.133)':'rgba(51,34,68,0.2)'};
+      background:${isShip?'rgba(20,5,50,0.85)':'rgba(10,5,30,0.6)'};border:1px solid ${isShip?'rgba(136,68,255,0.5)':soldOut?'rgba(51,34,68,0.133)':'rgba(51,34,68,0.2)'};
       opacity:${soldOut||!canAfford ? '0.45' : '1'};`;
 
     // Item name + desc
@@ -18468,6 +18466,19 @@ function _lsBuildQmShop() {
         const totalCost = item.cost * qty;
         if(G.ship.gold < totalCost) return;
 
+        // Ship upgrade — handled via upgradeShip()
+        if(isShip && item.shipKey) {
+          const _sOrder = ['pinnace','squid','hammer','manow'];
+          if(_sOrder.indexOf(item.shipKey) > _sOrder.indexOf(G.ship.type)) {
+            G.ship.gold -= totalCost;
+            upgradeShip(item.shipKey);
+            addLog(`${SHIP_TYPES[item.shipKey].n} hull purchased and fitted at the local shipyard!`, 'gd');
+            document.getElementById('ls-qm-gold').textContent = G.ship.gold;
+            _lsBuildQmShop(); // refresh to hide purchased tier
+          }
+          return;
+        }
+
         // Weapons go through slot picker
         if(wKey && WPN[wKey]) {
           wpnPickerOpen({...item, act:'wpn'}, 'ls');
@@ -18507,7 +18518,11 @@ function _lsBuildQmShop() {
         }
         snd('purchase',0.7);
         addLog('QM: '+msg,'gd');
-        updateUI(); _lsRefreshDock();
+        updateUI();
+        // Update QM gold display
+        const _qgEl = document.getElementById('ls-qm-gold');
+        if(_qgEl) _qgEl.textContent = G.ship.gold;
+        _lsBuildQmShop(); // refresh stock
       };
     }
     row.appendChild(buyBtn);
@@ -19110,21 +19125,38 @@ function _lsOpenNpcCard(npc, hasShop=false) {
   dlg.classList.add('on');
 }
 
+function lsCloseQmPanel() {
+  const p = document.getElementById('ls-qm-panel');
+  if(p) p.style.display = 'none';
+}
+
 function _lsOpenQmCard(npc) {
-  // QM opens the dock panel directly — it's already in the station
-  // If already docked, just trullll to the QM section
-  if(document.getElementById('ls-dock-panel').classList.contains('on')) return;
-  // Otherwise open dock + trullll to shop
-  LS.dockOpen = true;
-  LS.pTargetX = null; LS.pTargetY = null;
-  document.getElementById('ls-interact-panel').classList.remove('on');
-  _lsRefreshDock();
-  document.getElementById('ls-dock-panel').classList.add('on');
-  // Trullll to QM section
-  setTimeout(() => {
-    const shopGrid = document.getElementById('ls-dock-shop-grid');
-    if(shopGrid) shopGrid.scrollIntoView({behavior:'smooth', block:'nearest'});
-  }, 100);
+  // Open the dedicated QM panel — separate from the dock services panel
+  const panel = document.getElementById('ls-qm-panel');
+  if(!panel) return;
+
+  // Close other panels
+  document.getElementById('ls-interact-panel')?.classList.remove('on');
+  document.getElementById('ls-npc-dialog')?.classList.remove('on');
+
+  // Populate header
+  const sphereId = G.ship?.loc || 'realm';
+  const stock = LOCAL_QUEST_DATA[sphereId]?.qmStock;
+  document.getElementById('ls-qm-portrait').textContent = npc?.portrait || '⚓';
+  document.getElementById('ls-qm-portrait').style.borderColor = _h8(npc?.color||'#4488ff','88');
+  document.getElementById('ls-qm-name').textContent = npc?.name || 'Quartermaster';
+  document.getElementById('ls-qm-role').textContent = npc?.role || '';
+  document.getElementById('ls-qm-gold').textContent = G.ship.gold;
+  document.getElementById('ls-qm-flavor').textContent = stock?.flavor || '';
+
+  // Restock timer
+  const dayNow = G.watch?.day || 1;
+  const lastRestock = G._lsQmStock?.[sphereId]?.lastRestockDay || 0;
+  const daysUntil = Math.max(0, 30 - ((dayNow - lastRestock) % 30));
+  document.getElementById('ls-qm-restock').textContent = `Restocks in ${daysUntil} day${daysUntil!==1?'s':''}`;
+
+  _lsBuildQmShop();
+  panel.style.display = 'flex';
 }
 
 // ── ENEMY SPAWN TICK ───────────────────────────────────────────────────────
@@ -23216,10 +23248,10 @@ document.addEventListener('visibilitychange', () => {
         <div class="b-body">
           Upgrade your ship at port shipyards. Larger ships have more weapon slots, higher hull, and bigger crews:<br><br>
           <strong>Pinnace</strong> — Starting ship. 2 weapon slots, 65 hull, 6 crew. No signature ability.<br>
-          <strong>🦑 Void Runner (350 TS)</strong> — 3 slots, 80 hull, 8 crew. Tentacle Grapple.<br>
-          <strong>🔨 Ironhull (700 TS)</strong> — 4 slots, 100 hull, 12 crew. Siege Ram.<br>
-          <strong>⚓ Sovereign (1,400 TS)</strong> — 5 slots, 130 hull, 16 crew. Starfire Broadside.<br><br>
-          <em>Upgrade when you have reliable income and at least one solid weapon already purchased. Crew Quarters (Refuge QM) doubles your crew capacity on any ship — buy it early.</em>
+          <strong>🦑 Void Runner (1,480 TS)</strong> — 3 slots, 110 hull, 10 crew. Tentacle Grapple. Available at Vael.<br>
+          <strong>🔨 Ironhull (2,460 TS)</strong> — 4 slots, 170 hull, 14 crew. Siege Ram. Available at Serath.<br>
+          <strong>⚓ Sovereign (3,920 TS)</strong> — 5 slots, 230 hull, 20 crew. Starfire Broadside. Beyond The Shatter.<br><br>
+          <em>Ships are purchased through the Quartermaster NPC in local space, not the dock itself. Build your TS reserves before heading to the shipyard sphere — these are major investments.</em>
         </div>
       </div>
 
