@@ -4201,16 +4201,30 @@ function getWatchRealMs() {
   const speed = G?.ship?.speed || 4;
   return Math.max(10000, Math.round(60000 * (4 / speed)));
 }
-const LANE_BASE_LEGS  = { 1: 7, 2: 9, 3: 9, 4: 12, 5: 18, 6: 22 };
 const LANE_MAX_LEGS   = 32;
 
+// Per-tier leg costs keyed by (d, flow direction).
+// Computed to match the intended travel times at base speed (Pinnace, speed 4):
+//   d:1 refuge↔realm:   4 days with flow, 8 against  (10 days air capacity covers a round trip)
+//   d:3 inner sphere:   6 days with flow, 9 against
+//   d:5 outer crossing: 10 days with flow, 16 against (requires Air Tier upgrades)
+const LANE_COSTS = {
+  1: { none: 6,  with: 4,  against: 8  },
+  2: { none: 6,  with: 4,  against: 6  },
+  3: { none: 9,  with: 6,  against: 9  },
+  4: { none: 12, with: 8,  against: 16 },
+  5: { none: 16, with: 10, against: 16 },
+  6: { none: 22, with: 14, against: 28 },
+};
+
 function laneWatchCost(lane, ship) {
-  let cost = LANE_BASE_LEGS[lane.d] || 3;
-  if (lane.flow ===  1) cost = Math.max(1, Math.round(cost * 0.65)); // with flow: fewer days
-  if (lane.flow === -1) cost = Math.min(LANE_MAX_LEGS, Math.round(cost * 1.35)); // against: more days
-  // Speed reduces leg count: each 2 speed above base saves 1 leg (min 1)
-  const speedBonus = Math.floor((ship.speed - 4) / 2);
-  return Math.max(1, cost - speedBonus);
+  const tier  = LANE_COSTS[lane.d] || LANE_COSTS[3];
+  let   base  = lane.flow === +1 ? tier.with
+               : lane.flow === -1 ? tier.against
+               : tier.none;
+  // Speed reduces leg count: each 2 speed above base (4) saves 1 leg
+  const speedBonus = Math.floor(((ship?.speed || 4) - 4) / 2);
+  return Math.max(1, Math.min(LANE_MAX_LEGS, base - speedBonus));
 }
 
 function calcMoveBudget() { return 1; } // 1 leg per day always
@@ -4493,6 +4507,45 @@ Anchoring now means full rest and a fresh helmsman at dawn. Pushing on risks fat
     if (toId) startTravel(toId, watchesRemaining, pausedPos, pausedProg, G.tvl?._laneOrigin);
     else { G.phase = 'traveling'; if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = _tvlStart(G.tvl.tickMs || 100); }
   };
+
+  // ── MIDPOINT WAYSTATION CHECK ─────────────────────────────────────────────
+  // If this watch is the exact midpoint of a lane that has a waystation, replace
+  // the normal anchor/push prompt with the waystation docking offer.
+  // Guard: ≥3-watch journeys only (no waystation on short 1–2 watch hops).
+  if (G._journeyOrigWatches >= 3 && !G._journeyWpHit) {
+    const _completedWatches = G._journeyOrigWatches - (G.tvl?._watchesLeft || 0);
+    if (_completedWatches === Math.ceil(G._journeyOrigWatches / 2)) {
+      const _laneKey = `${G.tvl?.from}->${G.tvl?.to}`;
+      const _midWs = WAYPOINTS.find(w => w.lanes?.includes(_laneKey));
+      if (_midWs) {
+        G._journeyWpHit      = true;
+        G._waystationAnchorCb = anchorCb;
+        G._waystationPushCb   = pushCb;
+        G._waystationMidpoint = true;
+        G._waystationRested   = false;
+        snd('sphere_arrive', 0.6);
+        addLog(`⚓ ${_midWs.n} — waystation at your heading's midpoint.`, 'imp');
+        showMsg(
+          `${_midWs.ico} ${_midWs.n} — Midpoint`,
+          `${_midWs.desc}\n\nYou've reached the halfway point of your voyage. Dock here to trade and rest, or push on without stopping.\n\nField prices apply — 50% above port rates. Resting here clears fatigue.`,
+          '⚓ Dock & Resupply',
+          () => {
+            G.watch._pauseShown = false;
+            openWaystationShop(_midWs);
+          },
+          '➤ Push On',
+          () => {
+            G.watch._pauseShown = false;
+            G._waystationMidpoint = false;
+            G._waystationAnchorCb = null;
+            G._waystationPushCb   = null;
+            pushCb();
+          }
+        );
+        return; // skip normal anchor/push prompt
+      }
+    }
+  }
 
   showMsg(
     `${icon} ${timeStr(hour)} — Watch Complete`,
@@ -7247,6 +7300,14 @@ function startTravel(toId, _resumeWatchesLeft, _pausedPos, _pausedProg, _savedLa
   snd('travel_begin', 0.8);
 
   if (!_pausedProg) { // only log on very first departure
+    // ── Journey metadata for midpoint waystation system ───────────────────
+    // Store the original total watch count so watchExpiredMidJourney can
+    // compute exactly which watch is the halfway point.  Reset the hit-flag
+    // so each new journey gets exactly one waystation offer at its midpoint.
+    // Neither value is set on resumes (_pausedProg defined) so they persist
+    // across the watch-by-watch startTravel calls that make up one crossing.
+    G._journeyOrigWatches = totalWatches;
+    G._journeyWpHit = false;
     const dangerLabel = lane.warzone ? ' ⚠ WAR ZONE' : lane.d >= 4 ? ' ⚠ EXTREME DANGER' : lane.d === 3 ? ' ⚠ DANGEROUS' : '';
     const flowLabel = lane.flow === 1  ? ` 〜 Riding the ${lane.flowName}…`
                     : lane.flow === -1 ? ` ⚡ Fighting the ${lane.flowName}.` : '';
@@ -7434,8 +7495,10 @@ function travelTick(){
   }
 
   // ── Waystation auto-intercept (once per lane, near midpoint) ──
-  // Only fires on main sphere-to-sphere travel, not fragment/waypoint trips
-  if(G.tvl.to && !G.tvl.toWp && !G.tvl.toFragSite && !G.tvl._wpHit){
+  // Only fires on main sphere-to-sphere travel, not fragment/waypoint trips.
+  // Suppressed when the new midpoint system is active (_journeyOrigWatches set) —
+  // in that case the waystation fires at watch-end via watchExpiredMidJourney instead.
+  if(G.tvl.to && !G.tvl.toWp && !G.tvl.toFragSite && !G.tvl._wpHit && !G._journeyOrigWatches){
     const laneKey = `${G.tvl.from}->${G.tvl.to}`;
     const ws = WAYPOINTS.find(w => w.lanes && w.lanes.includes(laneKey));
     if(ws && G.tvl.prog >= 45 && G.tvl.prevProg < 45){
@@ -10689,10 +10752,52 @@ function waystationPurchase(item, ws){
 // Override departWaypoint to handle waystation resume
 function departWaypoint(){
   document.getElementById('ov-waypoint').classList.remove('on');
-  G.phase = 'map'; setTag('Navigation'); updateUI();
   G._currentWaystation = null;
-  G._waystationRested = false; // allow rest again next time
-  // If we stopped here mid-journey, offer to resume
+
+  // ── MIDPOINT WAYSTATION DEPARTURE ────────────────────────────────────────
+  // When the player is departing a midpoint waystation (reached via watchExpiredMidJourney),
+  // we need to offer anchor/push instead of the normal "resume course" path.
+  if (G._waystationMidpoint) {
+    G._waystationMidpoint = false;
+    const anchorCb = G._waystationAnchorCb; G._waystationAnchorCb = null;
+    const pushCb   = G._waystationPushCb;   G._waystationPushCb   = null;
+    const rested   = !!G._waystationRested;
+    G._waystationRested = false;
+
+    G.phase = 'map'; setTag('Navigation'); updateUI();
+
+    if (rested) {
+      // Player already rested in the shop via "Anchor & Rest" item —
+      // restAdvanceToMorning has already run; just offer to resume.
+      G.watch.legsPushed = 0;
+      if (G._resumeTravel) {
+        const rt = G._resumeTravel; G._resumeTravel = null;
+        const dn = G.spheres?.find(s => s.id === rt.toId)?.n || rt.toId;
+        showMsg('⚓ Rested & Underway',
+          `${dn} — crew is refreshed. Resuming course at dawn.`,
+          '⛵ Resume Course', () => {
+            G.ship.midLanePos = null;
+            startTravel(rt.toId, rt.watchesRemaining, rt.pausedPos, rt.pausedProg, rt.laneOrigin);
+          });
+      }
+    } else {
+      // Player traded but did not rest — present anchor / push choice
+      const lvl = fatigueLevel();
+      showMsg(
+        '⚓ Cast Off?',
+        `Your business at the waystation is concluded.\n\nAnchor here for the night, or push on through the dark?`,
+        lvl >= 2 ? '⚓ Anchor Now!' : '⚓ Anchor & Rest',
+        () => { if (anchorCb) anchorCb(); },
+        lvl >= 2 ? '➤ Push On (Risky)' : '➤ Push On Through the Night',
+        () => { if (pushCb) pushCb(); }
+      );
+    }
+    return;
+  }
+
+  // ── NORMAL WAYSTATION DEPARTURE (mid-leg intercept path) ─────────────────
+  G._waystationRested = false;
+  G.phase = 'map'; setTag('Navigation'); updateUI();
   if(G._resumeTravel){
     const rt = G._resumeTravel; G._resumeTravel = null;
     const dn = G.spheres?.find(s=>s.id===rt.toId)?.n || rt.toId;
@@ -16257,6 +16362,8 @@ function _buildSaveEntry(slot, name) {
       captainLog: G.captainLog || [],
       travelDays: G.travelDays || 0,
       watch: G.watch || {},
+      journeyOrigWatches: G._journeyOrigWatches || 0,
+      journeyWpHit: G._journeyWpHit || false,
     })
   };
 }
@@ -16324,6 +16431,8 @@ function _applyLoad(save) {
     const PC = ['rgba(255,90,0,','rgba(255,40,100,','rgba(150,30,255,','rgba(30,80,255,','rgba(30,230,200,','rgba(255,190,0,'];
     for (let i = 0; i < 55; i++) G.phlo.push({ x:Math.random(),y:Math.random(),vx:(Math.random()-.5)*0.0006,vy:(Math.random()-.5)*0.0006,sz:Math.random()*90+35,col:PC[i%PC.length],a:Math.random()*0.10+0.03,da:(Math.random()-.5)*0.0008 });
     G.localQuests = state.localQuests || {};
+    G._journeyOrigWatches = state.journeyOrigWatches || 0;
+    G._journeyWpHit       = state.journeyWpHit       || false;
     G._lsQmStock   = state.lsQmStock   || null;
     G._lsLastSpawn = state.lsLastSpawn || {};
     G._lsLastVisit = state.lsLastVisit || {};
