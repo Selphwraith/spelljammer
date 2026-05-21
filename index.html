@@ -4181,36 +4181,11 @@ const DAY_START_HOUR = 6;
 const WATCH_REAL_MS_BASE = 60000; // 60 real seconds per watch (8 hours × 7.5s/hour) at base speed
 
 // Compute actual WATCH_REAL_MS based on ship speed
+// One leg = 60 real seconds at speed 4. Faster engines reduce leg COUNT, not leg speed.
 function getWatchRealMs() {
   const speed = G?.ship?.speed || 4;
-  // Each +2 speed = ×0.75 multiplier (speed 6=75%, 8=56%, 10=42%)
-  // But we want speed 8 = exactly half, so use: factor = 4/speed
-  const factor = Math.max(0.3, 4 / speed);
-  return Math.round(WATCH_REAL_MS_BASE * factor);
+  return Math.max(10000, Math.round(60000 * (4 / speed)));
 }
-
-// Lane cost in LEGS (8-hr helmsman shifts)
-// Design targets at base speed (speed 4):
-//   d:1 with-flow    → 1 leg  (~1 day)
-//   d:1 against-flow → 3 legs (3 days)
-//   d:2 with-flow    → 2 legs (2 days)
-//   d:2 no-flow      → 3 legs (3 days)  [using d:2 base=3]
-//   d:2 against-flow → 5 legs (5 days) [capped at LANE_MAX_LEGS]
-//   d:3 with-flow    → 2 legs (2 days)
-//   d:3 no-flow      → 3 legs (3 days)
-//   d:3 against-flow → 5 legs (5 days)
-//   d:4 with-flow    → 2 legs (2 days)
-//   d:4 no-flow      → 4 legs (4 days)
-//   d:4 against-flow → 5 legs (5 days)  [capped]
-//   d:5 no-flow      → 6 legs (6 days)
-// Lane cost in LEGS (8-hr helmsman shifts)
-// Speed reduces leg COUNT (fewer days) — animation per leg is always the same speed
-// A faster ship covers a lane in fewer 8-hr shifts, not by rushing each shift
-// d:1 with=1, no=2, against=3  |  d:2 with=2, no=3, against=4
-// d:3 with=2, no=3, against=4  |  d:4 with=2, no=4, against=5(cap)  |  d:5=6
-// Lane base legs scaled so Refuge→Realm (d:1, against flow) = 7 days
-// Multiplier ≈ 7/3 applied and rounded to clean integers
-// d:1 base=5, d:2 base=7, d:3 base=7, d:4 base=9, d:5 base=14
 const LANE_BASE_LEGS  = { 1: 7, 2: 9, 3: 9, 4: 12, 5: 18, 6: 22 };
 const LANE_MAX_LEGS   = 32;
 
@@ -4222,15 +4197,6 @@ function laneWatchCost(lane, ship) {
   const speedBonus = Math.floor((ship.speed - 4) / 2);
   return Math.max(1, cost - speedBonus);
 }
-
-// Animation: 60 seconds per watch at base speed 4 (8 hours × 7.5s/hour)
-// Higher speed = faster animation — speed 6 = 40s, speed 8 = 30s, speed 10 = 24s
-function getWatchRealMs() {
-  const speed = G?.ship?.speed || 4;
-  return Math.max(6000, Math.round(24000 * (4 / speed)));
-}
-
-function calcMoveBudget() { return 1; }
 
 function calcMoveBudget() { return 1; } // 1 leg per day always
 
