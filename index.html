@@ -4248,63 +4248,41 @@ function _clockRender() {
 }
 
 function startLiveClock() {
-  // If clock is paused (e.g. resuming after combat), restore state rather than reset
-  if (_clockPaused) {
-    _clockStartMs = performance.now();
-    _clockPaused  = false;
-    if (_clockTicker) { clearInterval(_clockTicker); _clockTicker = null; }
-  } else {
-    stopLiveClock();
-    _clockAccumH  = 0;
-    _clockStartMs = performance.now();
-    _clockPaused  = false;
-  }
-  _clockTicker  = setInterval(() => {
-    if (G.phase !== 'traveling') { pauseLiveClock(); return; }
-    if (!document.getElementById('watch-hud')?.classList.contains('on')) return;
-    _clockRender();
-  }, 250);
+  const wasPaused = _clockPaused;
+  if (!wasPaused) { _clockAccumH = 0; }
+  _clockStartMs = performance.now();
+  _clockPaused  = false;
+  _clockEnsureWorker();
+  _clockWorker.postMessage('start');
+  _clockTicker = '__worker__'; // sentinel so truthy checks pass
 }
 
 function stopLiveClock() {
-  if (_clockTicker) { clearInterval(_clockTicker); _clockTicker = null; }
-  // Bank what we've accumulated so far
-  if (!_clockPaused) {
-    _clockAccumH += (performance.now() - _clockStartMs) * _clockGameHoursPerMs();
-  }
-  _clockPaused = true;
-  // After tickLeg advances totalHours by LEG_HOURS (8h), the render will show
-  // totalHours (new base) + _clockAccumH. We subtract LEG_HOURS from accum so
-  // the display continues from where it visually was, not jumping forward.
-  // This is called right after tickLeg(), so we correct for the jump here.
-  _clockAccumH = Math.max(0, _clockAccumH - (LEG_HOURS || 8));
+  if (_clockWorker) _clockWorker.postMessage('stop');
+  if (_clockTicker && _clockTicker !== '__worker__') clearInterval(_clockTicker);
+  _clockTicker  = null;
+  _clockAccumH  = 0;
+  _clockPaused  = false;
 }
 
 function resetLiveClock(_ignored) {
-  // Leg completed — G.watch.totalHours already advanced by 8h.
-  // Just re-anchor start time; accum resets to 0 since the base absorbed the leg.
   _clockAccumH  = 0;
   _clockStartMs = performance.now();
-  // Don't change _clockPaused — if we were running, keep running
 }
 
 function pauseLiveClock() {
   if (_clockPaused) return;
   _clockAccumH += (performance.now() - _clockStartMs) * _clockGameHoursPerMs();
   _clockPaused  = true;
-  if (_clockTicker) { clearInterval(_clockTicker); _clockTicker = null; }
+  if (_clockWorker) _clockWorker.postMessage('stop');
 }
 
 function resumeLiveClock() {
-  if (!_clockPaused && _clockTicker) return;
+  if (!_clockPaused) return;
   _clockStartMs = performance.now();
   _clockPaused  = false;
-  if (_clockTicker) { clearInterval(_clockTicker); _clockTicker = null; }
-  _clockTicker  = setInterval(() => {
-    if (G.phase !== 'traveling') { pauseLiveClock(); return; }
-    if (!document.getElementById('watch-hud')?.classList.contains('on')) return;
-    _clockRender();
-  }, 250);
+  _clockEnsureWorker();
+  _clockWorker.postMessage('start');
 }
 
 // Called once per completed leg (8 hours) — rest OR push
@@ -4394,7 +4372,7 @@ function consumeMove() {
 function watchExpiredMidJourney() {
   if (!G.watch || G.watch._pauseShown) return;
   G.watch._pauseShown = true;
-  clearInterval(G.tvl.timer); G.tvl.timer = null;
+  _tvlStop(); G.tvl.timer = null;
   tickLeg(); // advance totalHours by 8 — required before rest snaps to next dawn
   pauseLiveClock();
   // Capture before zeroing — anchorCb and pushCb need these.
@@ -4468,7 +4446,7 @@ Anchoring now means full rest and a fresh helmsman at dawn. Pushing on risks fat
     const pausedProg = G.tvl?._pausedProg;
     G.ship.midLanePos = null;
     if (toId) startTravel(toId, watchesRemaining, pausedPos, pausedProg, G.tvl?._laneOrigin);
-    else { G.phase = 'traveling'; if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = setInterval(travelTick, G.tvl.tickMs || 100); }
+    else { G.phase = 'traveling'; if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = _tvlStart(G.tvl.tickMs || 100); }
   };
 
   showMsg(
@@ -4508,7 +4486,7 @@ The helmsman has completed an 8-hour watch. Anchor here for the night, or push o
 // Anchor — full rest — always returns to Fresh
 function doRest() {
   if (G.watch?.restingPhase) return;
-  if (G.phase === 'traveling') { clearInterval(G.tvl.timer); G.phase = 'map'; }
+  if (G.phase === 'traveling') { _tvlStop(); G.tvl.timer = null; G.phase = 'map'; }
 
   // restAdvanceToMorning always snaps to next 06:00 correctly —
   // no need to track whether tickLeg already ran; the snap handles any prior leg tick.
@@ -5182,6 +5160,72 @@ function sndCreature(enemyKey, vol = 0.85) {
 // Travel hum — looping engine sound during travel ────────
 let _travelHumEl = null;
 
+// ── Background-safe tick worker ───────────────────────────────────────────
+// Browsers throttle setInterval to ~1s when the tab is hidden.
+// A Web Worker runs on a separate thread and is never throttled.
+// _tvlStart / _tvlStop replace every setInterval(travelTick, ...) call.
+let _tvlWorker   = null;
+let _tvlActive   = false;
+let _tvlTickMs   = 100;
+
+function _tvlEnsureWorker() {
+  if (_tvlWorker) return;
+  const blob = new Blob([`
+    let _t = null;
+    self.onmessage = function(e) {
+      if (e.data.cmd === 'start') {
+        clearInterval(_t);
+        _t = setInterval(() => self.postMessage('tick'), e.data.ms || 100);
+      } else if (e.data.cmd === 'stop') {
+        clearInterval(_t); _t = null;
+      }
+    };
+  `], { type: 'application/javascript' });
+  _tvlWorker = new Worker(URL.createObjectURL(blob));
+  _tvlWorker.onmessage = () => {
+    if (_tvlActive && G?.phase === 'traveling') travelTick();
+  };
+}
+
+function _tvlStart(ms) {
+  _tvlTickMs = ms || 100;
+  _tvlActive = true;
+  _tvlEnsureWorker();
+  _tvlWorker.postMessage({ cmd: 'start', ms: _tvlTickMs });
+  // Return a non-null sentinel so G.tvl.timer truthy checks still work
+  return '__worker__';
+}
+
+function _tvlStop() {
+  _tvlActive = false;
+  if (_tvlWorker) _tvlWorker.postMessage({ cmd: 'stop' });
+}
+
+// ── Clock worker — keeps the display clock ticking in background ──────────
+let _clockWorker = null;
+
+function _clockEnsureWorker() {
+  if (_clockWorker) return;
+  const blob = new Blob([`
+    let _t = null;
+    self.onmessage = function(e) {
+      if (e.data === 'start') {
+        clearInterval(_t);
+        _t = setInterval(() => self.postMessage('tick'), 250);
+      } else if (e.data === 'stop') {
+        clearInterval(_t); _t = null;
+      }
+    };
+  `], { type: 'application/javascript' });
+  _clockWorker = new Worker(URL.createObjectURL(blob));
+  _clockWorker.onmessage = () => {
+    if (_clockPaused) return;
+    if (G?.phase !== 'traveling') return;
+    if (!document.getElementById('watch-hud')?.classList.contains('on')) return;
+    _clockRender();
+  };
+}
+
 function startTravelHum() {
   stopTravelHum();
   if (_muted || !_SFX['travel_hum']) return;
@@ -5510,7 +5554,7 @@ function wpnSound(wk) {
 // ╚══════════════════════════════════════════════════════╝
 let G = {};
 function initGame() {
-  if(G.tvl&&G.tvl.timer) clearInterval(G.tvl.timer);
+  if(G.tvl&&G.tvl.timer) _tvlStop(); G.tvl.timer = null;
   if(G.animId) cancelAnimationFrame(G.animId);
   _stopLoop();
   // Transition from title track to in-game shuffle playlist
@@ -5531,7 +5575,7 @@ function initGame() {
       if (roamOpen) return;
       // Stuck — restart
       addLog('⚙ Voyage resuming…', '');
-      if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = setInterval(travelTick, G.tvl.tickMs || 100);
+      if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = _tvlStart(G.tvl.tickMs || 100);
       if (TS.active && !TS.animId) TS.animId = requestAnimationFrame(tsRender);
       resumeLiveClock();
     }, 5000);
@@ -7037,7 +7081,7 @@ function startTravel(toId, _resumeWatchesLeft, _pausedPos, _pausedProg, _savedLa
   if(G.phase!=='map')return;
   // Always kill any existing travel timer before overwriting G.tvl —
   // prevents orphaned setInterval handles that keep firing after G.tvl is replaced.
-  if(G.tvl?.timer) { clearInterval(G.tvl.timer); G.tvl.timer = null; }
+  if(G.tvl?.timer) { _tvlStop(); G.tvl.timer = null; }
   if(G.tvl) G.tvl._eventLocked = false; // clear any stale lock from previous leg
   if(G.tvl) G.tvl._sphereQueued = false; // allow sphere to re-queue on new approach
   _LP.inited = false; _LP._lastTs = 0; _LP.pools = {}; // reinit lane particles for new game
@@ -7137,7 +7181,7 @@ function startTravel(toId, _resumeWatchesLeft, _pausedPos, _pausedProg, _savedLa
     addLog(`Resuming course to ${t.n}…`, '');
   }
 
-  if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = setInterval(travelTick, tickMs);
+  if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = _tvlStart(tickMs);
   startTravelHum();
   const _wasClockPaused = _clockPaused; // check before startLiveClock resets it
   startLiveClock();
@@ -7178,7 +7222,7 @@ function startWaypointTravel(wp){
   setTag(`Traveling → ${wp.n}`);
   snd('travel_begin', 0.7);
   addLog(`Setting course for waypoint ${wp.ico} ${wp.n}…`,'');
-  if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer=setInterval(travelTick, wpTickMs); startTravelHum(); startLiveClock(); resetLiveClock();
+  if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer=_tvlStart(wpTickMs); startTravelHum(); startLiveClock(); resetLiveClock();
 }
 
 function startFragSiteTravel(fs){
@@ -7209,7 +7253,7 @@ function startFragSiteTravel(fs){
   setTag(`Traveling → ${fs.n}`);
   snd('travel_begin', 0.75);
   addLog(`Setting course for ${fs.n}. Leaving the marked lanes…`, 'imp');
-  if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = setInterval(travelTick, fsTickMs);
+  if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = _tvlStart(fsTickMs);
   tsOpen(lane); // open travel sequence for frag site approach
 }
 
@@ -7284,7 +7328,7 @@ function travelTick(){
       const chance = (lane.rate || 0.200) * (fatigueLevel() >= 2 ? 1.3 : 1.0);
       if(Math.random() < chance){
         G.tvl._eventLocked = true;
-        clearInterval(G.tvl.timer); G.tvl.timer = null;
+        _tvlStop(); G.tvl.timer = null;
         const enemyKey = (lane.pool||['nautiloid','harvester'])[Math.floor(Math.random()*(lane.pool||['nautiloid','harvester']).length)];
         // Show enemy approaching in travel sequence before triggering combat
         if (TS.active) {
@@ -7293,7 +7337,7 @@ function travelTick(){
           // Safety: if enemy hasn't triggered within 12s, restart travel anyway
           setTimeout(() => {
             if (G.phase === 'traveling' && G.tvl && !G.tvl.timer) {
-              if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = setInterval(travelTick, G.tvl.tickMs || 100);
+              if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = _tvlStart(G.tvl.tickMs || 100);
               resumeLiveClock();
             }
           }, 12000);
@@ -7313,7 +7357,7 @@ function travelTick(){
     if(ws && G.tvl.prog >= 45 && G.tvl.prevProg < 45){
       G.tvl._wpHit = true;
       G.tvl._eventLocked = true;
-      clearInterval(G.tvl.timer);
+      _tvlStop(); G.tvl.timer = null;
 
       // Build resume state now (before anything changes)
       const laneOrigin = G.tvl._laneOrigin || G.tvl.fromPos || {x:.5,y:.5};
@@ -7352,7 +7396,7 @@ function travelTick(){
       if(sameleg){
         const bossProg=(bossFrom===G.tvl.from)?state.prog*100:(1-state.prog)*100;
         if(G.tvl.prog>=bossProg&&G.tvl.prevProg<bossProg){
-          G.tvl._bossChecked=true; G.tvl._eventLocked=true; clearInterval(G.tvl.timer);
+          G.tvl._bossChecked=true; G.tvl._eventLocked=true; _tvlStop(); G.tvl.timer = null;
           addLog(`⚠ ${wb.intro}`,'dmg'); startWorldBossCombat(wbKey); return;
         }
       }
@@ -7368,13 +7412,13 @@ function travelTick(){
     if(factionId && FACTIONS[factionId]){
       if((G.rep[factionId]||0) <= -50){
         G.tvl._eventLocked = true;
-        clearInterval(G.tvl.timer); G.tvl.timer = null;
+        _tvlStop(); G.tvl.timer = null;
         stopLiveClock();
         addLog(`⚠ ${FACTIONS[factionId].n} forces intercept your vessel — HOSTILE!`,'dmg');
         startCombat(FACTIONS[factionId].shipKey); return;
       } else {
         G.tvl._eventLocked = true;
-        clearInterval(G.tvl.timer); G.tvl.timer = null;
+        _tvlStop(); G.tvl.timer = null;
         pauseLiveClock(); // freeze clock — don't stopLiveClock, just pause it
         if (TS.active) {
           tsQueueRoam(factionId);
@@ -7382,7 +7426,7 @@ function travelTick(){
           setTimeout(() => {
             if (G.phase === 'traveling' && G.tvl && !G.tvl.timer) {
               addLog('Vessel veered off — continuing voyage.', '');
-              if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = setInterval(travelTick, G.tvl.tickMs || 100);
+              if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = _tvlStart(G.tvl.tickMs || 100);
               resumeLiveClock();
             }
           }, 15000);
@@ -7397,13 +7441,13 @@ function travelTick(){
   if(fatigueLevel()>=3 && G.tvl.cur % Math.max(1,Math.floor(G.tvl.steps/3))===0){
     const dmg=Math.ceil(Math.random()*3); G.ship.hull=Math.max(0,G.ship.hull-dmg);
     addLog(`⚠ Exhausted crew — navigation error! Hull −${dmg}.`,'dmg'); updateUI();
-    if(G.ship.hull<=0){clearInterval(G.tvl.timer);doDefeat('hull_travel');return;}
+    if(G.ship.hull<=0){_tvlStop(); G.tvl.timer = null;doDefeat('hull_travel');return;}
   }
 
   // ── Watch segment complete ─────────────────────────────────
   if(G.tvl.prog >= segEnd - 0.05){
     G.tvl._eventLocked = true;
-    clearInterval(G.tvl.timer);
+    _tvlStop(); G.tvl.timer = null;
     const watchesLeft = G.tvl._watchesLeft || 0;
 
     if(watchesLeft <= 0){
@@ -14032,7 +14076,7 @@ function endCbt(won){
   // Local space / dungeon combat — return to LS instead of resuming travel
   if(_lsPendingReturn) {
     // Kill any stale travel timer so it can't double-tick when travel restarts
-    if(G.tvl?.timer){ clearInterval(G.tvl.timer); G.tvl.timer=null; }
+    if(G.tvl?.timer){ _tvlStop(); G.tvl.timer = null; G.tvl.timer=null; }
     G._resumeTravel = null; // discard any stale resume state
     G.phase = 'map'; setTag('Navigation'); updateUI();
     _lsCheckReturnAfterCombat();
@@ -14049,7 +14093,7 @@ function endCbt(won){
     setTag(`Traveling → ${G.tvl.toFragSite.n}`);
     if(won) addLog('Enemy destroyed. Resuming course to '+G.tvl.toFragSite.n+'…','gd');
     document.getElementById('tvlbar').classList.add('on');
-    if(G.tvl){ G.tvl._eventLocked=false; G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); }
+    if(G.tvl){ G.tvl._eventLocked=false; G.tvl.timer=_tvlStart(G.tvl.tickMs||100); }
     startTravelHum(); resumeLiveClock();
     updateWatchHUD();
     tsOpen(G.tvl.lane);
@@ -14083,7 +14127,7 @@ function endCbt(won){
   G.phase='traveling'; setTag(`Traveling → ${G.spheres.find(s=>s.id===G.tvl.to)?.n||''}`);
   if(won)addLog('Resuming voyage.','');
   document.getElementById('tvlbar').classList.add('on');
-  if(G.tvl){ G.tvl._eventLocked=false; G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); }
+  if(G.tvl){ G.tvl._eventLocked=false; G.tvl.timer=_tvlStart(G.tvl.tickMs||100); }
   startTravelHum(); resumeLiveClock();
   updateWatchHUD();
   tsOpen(G.tvl.lane);
@@ -14230,7 +14274,7 @@ function claimLoot(){
   if(isFragFight){
     document.getElementById('ov-loot').classList.remove('on');
     document.getElementById('ov-combat').classList.remove('on'); // belt-and-suspenders
-    if(G.tvl.timer){ clearInterval(G.tvl.timer); G.tvl.timer=null; } // kill any stray timer
+    if(G.tvl.timer){ _tvlStop(); G.tvl.timer = null; G.tvl.timer=null; } // kill any stray timer
     G.cbt = { enemy:null, pStat:'normal', eStat:'normal', pTurn:false, cds:{}, fragFight:false };
     // Mark ship as still at the site so departure rules apply
     const clearedSite = FRAGMENT_SITES.find(fs => fs.id === G._lootKey.replace('fg_','fs_') ||
@@ -14653,7 +14697,7 @@ function doDefeat(cause){
   document.getElementById('defeat-msg').textContent   = chosenMsg;
 
   document.getElementById('scr-defeat').classList.add('on');
-  if(G.tvl.timer) clearInterval(G.tvl.timer);
+  if(G.tvl.timer) _tvlStop(); G.tvl.timer = null;
   if(G.animId) cancelAnimationFrame(G.animId);
 }
 function doVictory(){
@@ -14730,7 +14774,7 @@ function restart(){
   });
   const _fr=document.getElementById('ov-faction-rep'); if(_fr) _fr.style.display='none';
   document.getElementById('clog').innerHTML='';
-  if(G.tvl&&G.tvl.timer)clearInterval(G.tvl.timer);
+  if(G.tvl&&G.tvl.timer)_tvlStop(); G.tvl.timer = null;
   if(G.animId)cancelAnimationFrame(G.animId);
   // Reset local space state
   if(LS.animId){ cancelAnimationFrame(LS.animId); LS.animId=null; }
@@ -15250,7 +15294,7 @@ function triggerRoamingEncounter(factionId){
     startTravelHum();
     if(TS.active || (G.tvl && G.phase === 'map')) {
       G.phase = 'traveling';
-      if(G.tvl) { G.tvl._eventLocked=false; G.tvl.timer=setInterval(travelTick, G.tvl.tickMs||100); }
+      if(G.tvl) { G.tvl._eventLocked=false; G.tvl.timer=_tvlStart(G.tvl.tickMs||100); }
       if(!TS.active && G.tvl) tsOpen(G.tvl.lane || getLane(G.tvl.from, G.tvl.to));
     }
     addLog('⚙ Idle: passing roaming vessel — no contact.', '');
@@ -15449,7 +15493,7 @@ function roamContinue(){
   _roamMissionOffered = false;
   // Resume travel
   if(G.phase==='traveling' && G.tvl){
-    if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = setInterval(travelTick, G.tvl.tickMs||100);
+    if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = _tvlStart(G.tvl.tickMs||100);
     resumeLiveClock(); // resume from where we paused — don't restart
     // Reopen travel sequence render if it was paused for the roam hail
     if (TS._pausedForRoam) {
@@ -15911,7 +15955,7 @@ function menuQuitGame() {
 
 function menuQuitToTitle() {
   // Stop all active systems
-  if(G.tvl?.timer) clearInterval(G.tvl.timer);
+  if(G.tvl?.timer) _tvlStop(); G.tvl.timer = null;
   if(G.animId) cancelAnimationFrame(G.animId);
   if(LS.animId) { cancelAnimationFrame(LS.animId); LS.animId = null; }
   _stopLoop();
@@ -15966,7 +16010,7 @@ function menuNewGame() {
   });
   const _fr=document.getElementById('ov-faction-rep'); if(_fr) _fr.style.display='none';
   document.getElementById('clog').innerHTML='';
-  if(G&&G.tvl&&G.tvl.timer) clearInterval(G.tvl.timer);
+  if(G&&G.tvl&&G.tvl.timer) _tvlStop(); G.tvl.timer = null;
   if(G&&G.animId) cancelAnimationFrame(G.animId);
   // Show opening cinematic — initGame() is called when it finishes or is skipped
   showCinematic();
@@ -16122,7 +16166,7 @@ function loadFromSlot(slot) {
 function _applyLoad(save) {
   try {
     const state = JSON.parse(save.data);
-    if (G.tvl && G.tvl.timer) clearInterval(G.tvl.timer);
+    if (G.tvl && G.tvl.timer) _tvlStop(); G.tvl.timer = null;
     if (G.animId) cancelAnimationFrame(G.animId);
     _stopLoop();
     // Close all overlays including local space
@@ -22678,7 +22722,7 @@ document.addEventListener('visibilitychange', () => {
   }
   // Ensure travelTick interval is running
   if(G.phase === 'traveling' && G.tvl && !G.tvl.timer && !G.tvl._eventLocked) {
-    G.tvl.timer = setInterval(travelTick, G.tvl.tickMs || 100);
+    G.tvl.timer = _tvlStart(G.tvl.tickMs || 100);
   }
   // Restart combat AI if we're mid-combat with player's turn
   if(G.phase === 'combat' && G.cbt?.pTurn && !G._idleCbtTimer) {
