@@ -4450,13 +4450,6 @@ function watchExpiredMidJourney() {
   // Idle mode — always auto-anchor
   if(G._idleMode) { _idleAutoAnchor(); }
 
-  // Auto-rest: silently anchor without showing the popup
-  if (G._autoRest) {
-    G.watch._pauseShown = false;
-    addLog('⚓ Auto-rest: anchoring for the night.', '');
-    doRest();
-    return;
-  }
   const hour = currentHour();
   const lvl  = fatigueLevel();
   const destName = G.tvl?.to ? G.spheres?.find(s=>s.id===G.tvl.to)?.n
@@ -4545,6 +4538,19 @@ Anchoring now means full rest and a fresh helmsman at dawn. Pushing on risks fat
         return; // skip normal anchor/push prompt
       }
     }
+  }
+
+  // Auto-rest: silently anchor without showing the popup.
+  // MUST be here — after anchorCb is defined — so anchorCb() correctly sets
+  // G._resumeTravel with the right watchesRemaining and decrements the watch count.
+  // Calling doRest() directly (as was done before) bypassed anchorCb and caused
+  // doRest's fallback to recompute watchesRemaining = _watchesLeft+1, resetting
+  // the journey to full length on every rest and making the halfway point never arrive.
+  if (G._autoRest) {
+    G.watch._pauseShown = false;
+    addLog('⚓ Auto-rest: anchoring for the night.', '');
+    anchorCb();
+    return;
   }
 
   showMsg(
