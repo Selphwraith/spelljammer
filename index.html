@@ -5051,7 +5051,8 @@ const SOUND_DATA = {
   'miss': 'sounds/miss.mp3',
   'stun': 'sounds/stun.mp3',
   'burn_tick': 'sounds/burn_tick.mp3',
-  'ram_hit': 'sounds/ram_hit.mp3',
+  'ram_hit':      'sounds/ram_hit.mp3',
+  'squid_attack': 'sounds/squid_attack.mp3',
   'repair_hull': 'sounds/repair_hull.mp3',
   'heal_item': 'sounds/heal_item.mp3',
   'evasive': 'sounds/evasive.mp3',
@@ -13695,7 +13696,7 @@ async function doAction(type, idx, itemUid) {
           if(!G._godMode){ e.hp = Math.max(0, e.hp - dmg); }
           floatDmg(eCV(), G._godMode ? 0 : dmg, false);
           triggerAnim(eCV(), 'anim-shake');
-          snd('ram_hit', 0.9);
+          snd('squid_attack', 1.0);
           cLog(`Void Stranglehold — ${dmg} damage dealt and enemy fully immobilized next round!`, 'gd');
           if(checkEnemyDead(tData.cdRounds)){ return; }
         } else if (tier === 2) {
@@ -13704,7 +13705,7 @@ async function doAction(type, idx, itemUid) {
           if(!G._godMode){ e.hp = Math.max(0, e.hp - dmg); }
           floatDmg(eCV(), G._godMode ? 0 : dmg, false);
           triggerAnim(eCV(), 'anim-shake');
-          snd('ram_hit', 0.7);
+          snd('squid_attack', 0.85);
           G.cbt._squidGrip = true; G.cbt._squidGripTurns = 2;
           cLog(`Crushing Grip — ${dmg} damage + enemy attacks halved for 2 turns!`, 'gd');
           if(checkEnemyDead(tData.cdRounds)){ return; }
@@ -13712,6 +13713,7 @@ async function doAction(type, idx, itemUid) {
           // T1 — halve next attack only
           G.cbt._squidGrip = true; G.cbt._squidGripTurns = 2;
           triggerAnim(eCV(), 'anim-shake');
+          snd('squid_attack', 0.7);
           cLog(`Tentacle Grapple — enemy attacks halved for 2 turns!`, 'gd');
         }
 
