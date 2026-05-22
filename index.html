@@ -3326,6 +3326,8 @@ const ITEMS = {
   gobteeth:  { n:'Goblin Tooth Necklace',    ico:'🦷', type:'trade',     val:12,  desc:"A string of goblin teeth. Goblins consider it an insult. Their chieftains consider it a declaration of war." },
   gobsack:   { n:'Goblin Plunder Sack',      ico:'💼', type:'trade',     val:20,  desc:"A jumbled sack of stolen trinkets and tools. Mostly junk but there's always something worth keeping." },
   trlldogtag:{ n:'Trull Identification Disc',     ico:'🔖', type:'artifact',  val:30,  desc:"An engraved Trull identification disc. IEF intelligence pays a bounty per confirmed Trull kill." },
+  trullsiege:{ n:'Trull Siege Mark',               ico:'⚙️', type:'artifact',  val:65,  desc:"A heavy iron command marker from a Trull Siege vessel — stamped with the ship's confirmed kill count. IEF pays a premium for these." },
+  trullcrest: { n:'Trull Warchief Crest',          ico:'🛡️', type:'artifact',  val:110, desc:"A Warchief's personal battle-crest, recovered from a Trull Heavy Siege vessel. Rare proof of a kill the Trull will want to avenge." },
 
   vodncore:  { n:'Drift Navigation Core',   ico:'⚙️', type:'equip',     val:85,  desc:'Install: salvaged drive-core integrates into your void sailer — adds +1 speed.', use:'speed1' },
 };
@@ -3339,6 +3341,12 @@ const LOOT = {
   trull_patrol:   [{id:'trulltrophy',c:0.70},{id:'trlldogtag',c:0.65},{id:'crewmead',c:0.30},{id:'repkit',c:0.25},{id:'corskit',c:0.20}],
   trull_enforcer: [{id:'trulltrophy',c:0.75},{id:'trlldogtag',c:0.70},{id:'corskit',c:0.35},{id:'crewmead',c:0.30},{id:'starcoin',c:0.20}],
   trull_slaver:   [{id:'trulltrophy',c:0.80},{id:'trlldogtag',c:0.75},{id:'crewmead',c:0.50},{id:'corskit',c:0.30},{id:'starcoin',c:0.25},{id:'stimpack',c:0.15}],
+  // Trull Siege Class (trull_warship) — 72hp, diff:2, Marine Assault + Breach Lances
+  // Harder than the slaver — reliable chance at the Siege Mark, good consumables, chance at combat usables
+  trull_warship:  [{id:'trullsiege',c:0.90},{id:'trlldogtag',c:0.80},{id:'trulltrophy',c:0.65},{id:'starcoin',c:0.55},{id:'crewmead',c:0.50},{id:'repkit',c:0.40},{id:'stimpack',c:0.30},{id:'phasedis',c:0.15}],
+  // Trull Heavy Siege (trull_dreadnought) — 140hp, diff:3, Warchief Command + Marine Wave
+  // One of the toughest lane enemies — guaranteed Warchief Crest, strong chance at combat usables and high-value items
+  trull_dreadnought:[{id:'trullcrest',c:1.00},{id:'trullsiege',c:0.85},{id:'trlldogtag',c:0.90},{id:'starcoin',c:0.75},{id:'crewmead',c:0.65},{id:'stimpack',c:0.55},{id:'repkit',c:0.50},{id:'phasedis',c:0.35},{id:'levblood',c:0.30},{id:'psiamp',c:0.20}],
   // ── Drift Creatures — natural harvests, no ship loot ──────────────────
   phlog_mote:        [{id:'moteash',c:0.40},{id:'phlogmem',c:0.15}],
   phlog_jellyfish:   [{id:'jellystem',c:0.75},{id:'phlogmem',c:0.55},{id:'phlogcore',c:0.30},{id:'predblood',c:0.20}],
@@ -17014,6 +17022,8 @@ const LOCAL_QUEST_DATA = {
         { type:'wpn', ico:'⚔️', name:'Superior Ballista',              desc:'3d6 · fires every round · elven-forged, never jams', cost:145, wk:'sballista' },
         { type:'wpn', ico:'🧠', name:'Psionic Lance',                  desc:'3d6 · hits crew directly · 3-round reload (Steel Dragon grade)', cost:680, wk:'psylance' },
         { type:'ship', ico:'🦑', name:'🦑 Void Runner — Ship Upgrade', desc:'3 weapon slots · 110 hull · 10 crew · Speed 3 · Signature: Tentacle Grapple. Palanthas Spindle shipyard.', cost:1480, shipKey:'squid' },
+        { type:'sig', ico:'🦑', name:'🦑 Crushing Grip (Tier 2)',      desc:'Void Runner upgrade — Tentacle Grapple tightened: 8 direct damage AND next 2 enemy attacks halved.', cost:300, act:'sig', sigTier:2, forShip:'squid' },
+        { type:'sig', ico:'🦑', name:'🦑 Void Stranglehold (Tier 3)',  desc:'Void Runner upgrade — Total immobilization: stuns enemy 1 full turn AND deals 15 damage.', cost:650, act:'sig', sigTier:3, forShip:'squid' },
       ]
     }
   },
@@ -17302,6 +17312,8 @@ const LOCAL_QUEST_DATA = {
         { type:'upgrade', ico:'🔀', name:'Volley System',          desc:'Fire ALL ready weapons simultaneously',         cost:350, act:'upg', upg:'volley' },
         { type:'upgrade', ico:'⚡', name:'Void-Runner Core',       desc:'+2 void speed to max (req: Overclocked Drive)', cost:320, act:'upg', upg:'engine3' },
         { type:'upgrade', ico:'🌬️', name:'Void Scrubber Array',   desc:'+12 days air capacity — required for the deepest void runs', cost:260, act:'upg', upg:'airtier3' },
+        { type:'sig', ico:'⚓', name:'⚓ Coordinated Barrage (Tier 2)', desc:'Sovereign upgrade — All ready weapons fire simultaneously with +20% damage on each shot.', cost:500, act:'sig', sigTier:2, forShip:'manow' },
+        { type:'sig', ico:'⚓', name:'⚓ Elven Battle Formation (Tier 3)', desc:'Sovereign upgrade — Full broadside with +20% damage AND enemy attack suppressed next round.', cost:1000, act:'sig', sigTier:3, forShip:'manow' },
       ]
     }
   },
@@ -17402,6 +17414,8 @@ const LOCAL_QUEST_DATA = {
         { type:'wpn', ico:'⚡', name:'Star Elven Ballista',        desc:'3d6 · 0-round reload · elven-forged, fires every turn', cost:440, wk:'sballista' },
         { type:'wpn', ico:'🌀', name:'Void Cannon',                desc:'6d8 · 6-round reload · endgame annihilation round',     cost:520, wk:'voidcann' },
         { type:'ship', ico:'🔨', name:'🔨 Ironhull — Ship Upgrade', desc:'4 weapon slots · 170 hull · 14 crew · Speed 2 · Signature: Siege Ram. Voidhaven shipyard.', cost:2460, shipKey:'hammer' },
+        { type:'sig', ico:'🔨', name:'🔨 Reinforced Ram (Tier 2)',  desc:'Ironhull upgrade — Armored prow: 3d10 damage. Self hull cost reduced from 5 to 3.', cost:350, act:'sig', sigTier:2, forShip:'hammer' },
+        { type:'sig', ico:'🔨', name:'🔨 Void Crusher (Tier 3)',    desc:'Ironhull upgrade — Catastrophic ram: 4d10 damage AND permanently reduces enemy max hull by 10.', cost:750, act:'sig', sigTier:3, forShip:'hammer' },
         { type:'upgrade', ico:'🔫', name:'Rapid-Fire System',      desc:'Reduce all weapon reload times by 1',  cost:320, act:'upg', upg:'rapidfire' },
         { type:'upgrade', ico:'⚡', name:'Void-Runner Core',       desc:'+2 void speed to max (req: Overclocked Drive)', cost:320, act:'upg', upg:'engine3' },
         { type:'upgrade', ico:'🌬️', name:'Void Scrubber Array',   desc:'+12 days air capacity — required for the deepest void runs', cost:260, act:'upg', upg:'airtier3' },
@@ -18576,6 +18590,13 @@ function _lsBuildQmShop() {
     if(item.act === 'upg' && G.ship.upgrades.includes(item.upg)) return;
     if(item.act === 'upg' && item.upg === 'engine2' && !G.ship.upgrades.includes('engine')) return;
     if(item.act === 'upg' && item.upg === 'engine3' && !G.ship.upgrades.includes('engine2')) return;
+    // Sig upgrade: only show for the right ship at the right tier
+    if(item.act === 'sig') {
+      if(item.forShip && G.ship.type !== item.forShip) return; // wrong ship
+      if(!G.ship.sigTier) return;                               // ship has no sig system
+      if(G.ship.sigTier >= item.sigTier) return;                // already at this tier or higher
+      if(item.sigTier > (G.ship.sigTier + 1)) return;           // can't skip tiers
+    }
     const wKey = item.wk || (item.act === 'wpn' ? item.wpnKey : null);
     if(wKey && G.ship.wpns.includes(wKey)) return;
     if(wKey && wpnHasBetter(wKey, G.ship.wpns)) return;
@@ -18701,6 +18722,15 @@ function _lsBuildQmShop() {
               msg=item.name+' installed!'; snd('ship_upgrade',0.85);
             }
             break;
+          } else if(item.act === 'sig') {
+            // Signature ability upgrade
+            if(!G.ship.sigTier || G.ship.sigTier >= item.sigTier) break;
+            G.ship.sigTier = item.sigTier;
+            const _sigDef = SIG_ABILITY[G.ship.type];
+            const _tierData = _sigDef?.tiers[item.sigTier - 1];
+            msg = `${_sigDef?.ico || '⭐'} ${_tierData?.n || item.name} — Tier ${item.sigTier} signature ability installed!`;
+            snd('purchase', 0.7);
+            setTimeout(() => snd('ship_upgrade', 1.0), 220);
           } else if(item.itemKey) {
             const itData=ITEMS[item.itemKey]||LQ_SPECIAL_ITEMS[item.itemKey];
             if(itData){G.ship.inv.push({...itData,uid:uid()});}
