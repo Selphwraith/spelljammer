@@ -8757,45 +8757,47 @@ function tsSpawnObject(cv, forced) {
   const rotSpd = (Math.random() - 0.5) * 0.4;
 
   // Per-type base dimensions — buoys/markers tiny; asteroids/boulders large & varied
+  // Scale range is 0.5–2.0 for all types: −50% to +100% of the base size.
   const k = entry.key;
-  let baseW, baseH, scaleMin, scaleMax;
+  let baseW, baseH;
   if (k === 'env_beacon_buoy' || k === 'env_nav_marker') {
-    baseW = 18; baseH = 28; scaleMin = 0.5; scaleMax = 0.9;
+    baseW = 18; baseH = 28;
   } else if (k === 'env_asteroid') {
-    baseW = 90; baseH = 70; scaleMin = 0.5; scaleMax = 1.4;
+    baseW = 90; baseH = 70;
   } else if (k === 'env_asteroid_small') {
-    baseW = 45; baseH = 38; scaleMin = 0.4; scaleMax = 1.0;
+    baseW = 45; baseH = 38;
   } else if (k === 'env_asteroid_cluster') {
-    baseW = 110; baseH = 80; scaleMin = 0.5; scaleMax = 1.1;
+    baseW = 110; baseH = 80;
   } else if (k === 'env_asteroid_flat') {
-    baseW = 100; baseH = 40; scaleMin = 0.5; scaleMax = 1.2;
+    baseW = 100; baseH = 40;
   } else if (k === 'env_void_boulder') {
-    baseW = 75; baseH = 60; scaleMin = 0.4; scaleMax = 1.2;
+    baseW = 75; baseH = 60;
   } else if (k === 'env_rock_ring') {
-    baseW = 100; baseH = 100; scaleMin = 0.5; scaleMax = 1.1;
+    baseW = 100; baseH = 100;
   } else if (k === 'env_crystal_spire') {
-    baseW = 50; baseH = 90; scaleMin = 0.5; scaleMax = 1.1;
+    baseW = 50; baseH = 90;
   } else if (k === 'env_ice_comet') {
-    baseW = 80; baseH = 40; scaleMin = 0.5; scaleMax = 1.0;
+    baseW = 80; baseH = 40;
   } else if (k === 'env_cargo_drift') {
-    baseW = 50; baseH = 32; scaleMin = 0.5; scaleMax = 0.9;
+    baseW = 50; baseH = 32;
   } else if (k === 'env_wreck_hull' || k === 'env_wreck_prow') {
-    baseW = 110; baseH = 60; scaleMin = 0.55; scaleMax = 1.1;
+    baseW = 110; baseH = 60;
   } else if (k === 'env_debris_field') {
-    baseW = 120; baseH = 70; scaleMin = 0.6; scaleMax = 1.1;
+    baseW = 120; baseH = 70;
   } else if (k === 'env_void_jellyfish' || k === 'env_jelly_bloom' || k === 'env_jelly_arc') {
-    baseW = 70; baseH = 90; scaleMin = 0.4; scaleMax = 1.0;
+    baseW = 70; baseH = 90;
   } else if (k === 'env_leviathan_bones' || k === 'env_skeleton_ribcage') {
-    baseW = 130; baseH = 80; scaleMin = 0.6; scaleMax = 1.2;
+    baseW = 130; baseH = 80;
   } else if (k === 'env_skeleton_helm') {
-    baseW = 80; baseH = 75; scaleMin = 0.5; scaleMax = 1.0;
+    baseW = 80; baseH = 75;
   } else if (k === 'env_ruined_column') {
-    baseW = 35; baseH = 100; scaleMin = 0.5; scaleMax = 1.0;
+    baseW = 35; baseH = 100;
   } else {
     // Default: motes, phlog eddy, ruins, vault
-    baseW = 90; baseH = 60; scaleMin = 0.45; scaleMax = 1.0;
+    baseW = 90; baseH = 60;
   }
 
+  const scaleMin = 0.5, scaleMax = 2.0;
   const scale = scaleMin + Math.random() * (scaleMax - scaleMin);
 
   TS.objects.push({
