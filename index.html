@@ -936,13 +936,13 @@ body {
 #ls-hud {
   position:absolute; top:0; left:0; right:0;
   display:flex; align-items:center; justify-content:space-between;
-  padding:8px 14px; z-index:10; pointer-events:none;
-  background:linear-gradient(180deg,rgba(2,0,16,0.85) 0%,transparent 100%);
+  padding:6px 12px; z-index:10; pointer-events:none; gap:8px;
+  background:linear-gradient(180deg,rgba(2,0,16,0.88) 0%,transparent 100%);
 }
 @media (max-width:700px) {
-  #ls-hud { padding:6px 14px; flex-wrap:wrap; gap:2px; }
-  #ls-hud-title { font-size:0.625em; }
-  #ls-hud-stats { font-size:0.563em; gap:8px; }
+  #ls-hud { padding:4px 10px; gap:6px; }
+  #ls-hud-title { font-size:0.563em; }
+  #ls-hud-stats { font-size:0.5em; gap:6px; }
 }
 #ls-hud-title {
   font-family:'Cinzel',serif; font-size:0.875em; color:#4488ff;
@@ -995,32 +995,29 @@ body {
   #ls-close {
     bottom: 158px;
     right: 8px;
-    left: auto;
-    transform: none;
-    font-size: 0.625em;
-    padding: 5px 12px;
+    font-size: 0.563em;
+    padding: 4px 10px;
+    letter-spacing: 0.5px;
   }
 }
 
 /* ── NPC interaction panel (floats over canvas when near NPC) ── */
 #ls-interact-panel {
-  position:absolute; bottom:60px; left:50%; transform:translateX(-50%);
-  background:rgba(6,0,20,0.96); border:1px solid rgba(68,136,255,0.333);
-  border-radius:8px; padding:14px 18px 12px;
-  display:none; flex-direction:column; gap:8px;
-  min-width:280px; max-width:380px;
-  box-shadow:0 0 40px rgba(68,136,255,0.133); z-index:15;
+  position:absolute; bottom:56px; left:50%; transform:translateX(-50%);
+  background:rgba(4,0,14,0.96); border:1px solid rgba(68,136,255,0.25);
+  border-radius:6px; padding:8px 12px 8px;
+  display:none; flex-direction:column; gap:6px;
+  min-width:0; max-width:88vw; width:fit-content;
+  box-shadow:0 0 20px rgba(68,136,255,0.1); z-index:15;
 }
 #ls-interact-panel.on { display:flex; }
 #ls-interact-name {
-  font-family:'Cinzel',serif; font-size:0.75em; color:#aabbff; letter-spacing:1px;
+  font-family:'Cinzel',serif; font-size:0.688em; color:#aabbff; letter-spacing:1px;
 }
-#ls-interact-role { font-size:0.625em; color:#445577; letter-spacing:1px; }
-#ls-interact-prompt {
-  font-size:0.688em; color:#8899bb; font-style:italic; line-height:1.5;
-}
-#ls-interact-btns { display:flex; gap:8px; flex-wrap:wrap; margin-top:2px; }
-#ls-interact-btns .btn { font-size:0.688em; padding:5px 12px; }
+#ls-interact-role { display:none; }
+#ls-interact-prompt { display:none; }
+#ls-interact-btns { display:flex; gap:6px; flex-wrap:wrap; }
+#ls-interact-btns .btn { font-size:0.688em; padding:4px 12px; }
 
 /* ── Dock panel (full port replacement inside local space) ── */
 #ls-dock-panel {
@@ -1707,15 +1704,38 @@ body {
 }
 #watch-hud.on { display:flex; }
 #watch-hud.hidden-by-overlay { display:none !important; }
-/* In local space, drop below the sphere title + stats row */
+/* In local space, collapse to a compact inline strip — no floating box */
 #watch-hud.ls-mode {
-  top: 130px !important;
-  right: 6px !important;
+  position:static !important;
+  top:auto !important; right:auto !important;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  padding:0 !important;
+  min-width:0 !important;
+  max-width:none !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  gap:6px !important;
+  pointer-events:none;
+}
+#watch-hud.ls-mode .wh-row { gap:4px; }
+#watch-hud.ls-mode .wh-label { display:none; }
+#watch-hud.ls-mode #wh-move { display:none; }
+#watch-hud.ls-mode .wh-pips { display:none; }
+#watch-hud.ls-mode .wh-val {
+  font-size:0.563em !important;
+  color:#6677aa !important;
+  letter-spacing:0 !important;
+}
+#watch-hud.ls-mode #fatigue-badge {
+  font-size:0.5em !important;
+  padding:1px 5px !important;
 }
 @media (max-width: 700px) {
   #watch-hud.ls-mode {
-    top: 124px !important;
-    right: 6px !important;
+    top:auto !important;
+    right:auto !important;
   }
 }
 .wh-row { display:flex; align-items:center; gap:8px; }
@@ -2461,11 +2481,7 @@ body {
 
     <!-- NPC / POI interaction panel (slides up when in range) -->
     <div id="ls-interact-panel">
-      <div>
-        <div id="ls-interact-name"></div>
-        <div id="ls-interact-role"></div>
-      </div>
-      <div id="ls-interact-prompt"></div>
+      <div id="ls-interact-name"></div>
       <div id="ls-interact-btns"></div>
     </div>
 
@@ -18070,7 +18086,13 @@ function openLocalSpace() {
   LS.pAccel = _lsMs.pAccel;
   LS.animId = requestAnimationFrame(_lsLoop);
 
-  // Reposition watch HUD below the LS stat bar so it doesn't clash
+  // Reposition watch HUD — move it inline into the LS top bar
+  const _wh = document.getElementById('watch-hud');
+  const _lsHud = document.getElementById('ls-hud');
+  if(_wh && _lsHud && _wh.parentElement !== _lsHud) {
+    _wh._lsOrigParent = _wh.parentElement;
+    _lsHud.appendChild(_wh);
+  }
   document.getElementById('watch-hud')?.classList.add('ls-mode');
 
   // Hide sidebar Local Quest button for realm (LS replaces it)
@@ -18091,6 +18113,11 @@ function closeLsOverlay() {
   _lsPendingReturn = false;
   _lsPendingFragment = null;
   document.getElementById('watch-hud')?.classList.remove('ls-mode');
+  const _whRestore = document.getElementById('watch-hud');
+  if(_whRestore?._lsOrigParent && _whRestore.parentElement !== _whRestore._lsOrigParent) {
+    _whRestore._lsOrigParent.appendChild(_whRestore);
+    _whRestore._lsOrigParent = null;
+  }
   setTag('Navigation'); updateUI();
   _syncWatchHudVisibility();
 }
