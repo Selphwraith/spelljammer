@@ -1294,12 +1294,15 @@ body {
    PHLOGISTON TRAVEL SEQUENCE OVERLAY
    ══════════════════════════════════════════════════════════════════ */
 #ov-travel-seq {
-  position: fixed; inset: 0; z-index: 250;
+  position: fixed; inset: 0; z-index: 260;
   display: none; flex-direction: column;
   background: #030008;
   overflow: hidden;
 }
 #ov-travel-seq.on { display: flex; }
+
+/* These overlays open from the travel-sequence header buttons and must render above it */
+#ov-inv.on, #ov-shp.on, #ov-wpn.on, #ov-qlog.on, #ov-journal.on { z-index: 320; }
 
 /* ── Travel sequence top bar — mirrors the main header ── */
 #ts-topbar {
@@ -18629,15 +18632,31 @@ function _lsBuildQmShop() {
         const totalCost = item.cost * qty;
         if(G.ship.gold < totalCost) return;
 
-        // Ship upgrade — handled via upgradeShip()
+        // Ship upgrade — handled via applyShipUpgrade() (NOT upgradeShip which deducts gold again)
         if(isShip && item.shipKey) {
           const _sOrder = ['pinnace','squid','hammer','manow'];
           if(_sOrder.indexOf(item.shipKey) > _sOrder.indexOf(G.ship.type)) {
             G.ship.gold -= totalCost;
-            upgradeShip(item.shipKey);
-            addLog(`${SHIP_TYPES[item.shipKey].n} hull purchased and fitted at the local shipyard!`, 'gd');
-            document.getElementById('ls-qm-gold').textContent = G.ship.gold;
-            _lsBuildQmShop(); // refresh to hide purchased tier
+            snd('purchase', 0.7);
+            setTimeout(() => snd('ship_upgrade', 1.0), 220);
+            // Apply ship change directly — upgradeShip() deducts cost again so we do it inline
+            const st = SHIP_TYPES[item.shipKey];
+            const prevType = G.ship.type;
+            G.ship.type = item.shipKey;
+            G.ship.name = st.n;
+            G.ship.maxHull = st.hull + G.ship.upgrades.filter(u=>u==='plating').length*50;
+            G.ship.hull = G.ship.maxHull;
+            G.ship.maxCrew = st.crew + G.ship.upgrades.filter(u=>u==='quarters').length*8;
+            G.ship.crew = G.ship.maxCrew;
+            G.ship.speed = st.speed + G.ship.upgrades.filter(u=>u==='engine').length*2;
+            while(G.ship.wpns.length > st.slots) G.ship.wpns.pop();
+            G.ship.sigTier = SIG_ABILITY[item.shipKey] ? 1 : null;
+            const sigName = SIG_ABILITY[item.shipKey]?.tiers[0].n || '';
+            const msg = `${st.n} hull purchased and fitted at the local shipyard! Hull ${G.ship.maxHull}, Crew ${G.ship.maxCrew}, ${st.slots} weapon slots.${sigName ? ` Signature: ${sigName}.` : ''}`;
+            addLog(msg, 'gd');
+            jlogShipUpgrade(`Vessel upgraded to ${st.n}.`);
+            updateUI();
+            _lsBuildQmShop();
           }
           return;
         }
@@ -22306,6 +22325,18 @@ window.addEventListener('keydown', e=>{
         close: ()=> closeOverlay('journal') },
       { check: ()=> { const el=document.getElementById('ov-localquest'); return el&&(el.classList.contains('on')); },
         close: ()=> lqBack() },
+      // ── Local Space inner panels — close these before exiting LS entirely ──
+      { check: ()=> { const p=document.getElementById('ls-qm-panel'); return p&&p.style.display==='flex'; },
+        close: ()=> lsCloseQmPanel?.() },
+      { check: ()=> { const p=document.getElementById('ls-locals-panel'); return p&&p.classList.contains('on'); },
+        close: ()=> lsCloseLocalsPanel?.() },
+      { check: ()=> { const p=document.getElementById('ls-npc-dialog'); return p&&p.classList.contains('on'); },
+        close: ()=> { document.getElementById('ls-npc-dialog')?.classList.remove('on'); } },
+      { check: ()=> { const p=document.getElementById('ls-dock-panel'); return p&&p.classList.contains('on'); },
+        close: ()=> closeLsDock?.() },
+      { check: ()=> { const p=document.getElementById('ls-interact-panel'); return p&&p.classList.contains('on'); },
+        close: ()=> { document.getElementById('ls-interact-panel')?.classList.remove('on'); LS.nearPoi=null; LS.interactOpen=false; } },
+      // ── Exit local space only when all inner panels are closed ──
       { check: ()=> { const el=document.getElementById('ov-localspace'); return el&&(el.classList.contains('on')); },
         close: ()=> closeLsOverlay() },
       { check: ()=> document.getElementById('ov-waypoint')?.classList.contains('on'),
