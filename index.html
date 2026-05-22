@@ -4516,6 +4516,14 @@ Anchoring now means full rest and a fresh helmsman at dawn. Pushing on risks fat
         G._waystationPushCb   = pushCb;
         G._waystationMidpoint = true;
         G._waystationRested   = false;
+
+        // Idle mode — skip the waystation prompt, auto-anchor and keep going
+        if (G._idleMode) {
+          addLog(`⚙ Idle: passing ${_midWs.n} — no stop.`, '');
+          anchorCb();
+          return;
+        }
+
         snd('sphere_arrive', 0.6);
         addLog(`⚓ ${_midWs.n} — waystation at your heading's midpoint.`, 'imp');
         showMsg(
