@@ -1441,127 +1441,101 @@ body {
 #ov-cbt-inv {
   position: fixed; inset: 0; z-index: 600;
   display: none; align-items: center; justify-content: center;
-  background: rgba(2,0,8,0.88);
+  background: rgba(2,0,8,0.92);
   backdrop-filter: blur(3px);
 }
 #ov-cbt-inv.on { display: flex; }
 
 #cbt-inv-modal {
   background: rgba(5,1,18,0.98); border: 1px solid rgba(68,34,136,0.333);
-  border-radius: 10px; padding: 18px 18px 14px;
-  width: min(680px, 96vw); max-height: 86vh;
-  display: flex; flex-direction: column; gap: 12px;
+  border-radius: 10px; padding: 16px 16px 12px;
+  width: min(560px, 96vw); max-height: 90vh;
+  display: flex; flex-direction: column; gap: 10px;
   box-shadow: 0 0 60px rgba(34,0,102,0.267), inset 0 0 30px rgba(20,0,50,0.3);
 }
-
-/* Header row */
 #cbt-inv-header {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
 }
 #cbt-inv-title {
-  font-family:'Cinzel',serif; font-size:12px; color:#9966dd;
+  font-family:'Cinzel',serif; font-size:0.75em; color:#9966dd;
   letter-spacing:2px; flex:1;
 }
 .cbt-inv-sort-btn {
-  font-family:'Cinzel',serif; font-size:9px; padding:4px 10px;
+  font-family:'Cinzel',serif; font-size:0.563em; padding:4px 10px;
   border:1px solid rgba(68,34,136,0.267); border-radius:3px; cursor:pointer;
-  color:#664488; background:rgba(15,3,30,0.8); transition:all 0.15s;
-  letter-spacing:1px;
+  color:#664488; background:rgba(15,3,30,0.8); transition:all 0.15s; letter-spacing:1px;
 }
 .cbt-inv-sort-btn:hover { border-color:#8844cc; color:#aa88dd; }
-.cbt-inv-sort-btn.active { border-color:rgba(136,68,204,0.4); color:#cc99ff;
-  background:rgba(40,10,70,0.8); }
+.cbt-inv-sort-btn.active { border-color:rgba(136,68,204,0.4); color:#cc99ff; background:rgba(40,10,70,0.8); }
 #cbt-inv-close {
-  font-family:'Cinzel',serif; font-size:10px; padding:4px 12px;
+  font-family:'Cinzel',serif; font-size:0.563em; padding:4px 12px;
   border:1px solid rgba(51,17,34,0.267); border-radius:3px; cursor:pointer;
-  color:#553355; background:none;
+  color:#553355; background:none; flex-shrink:0;
 }
 #cbt-inv-close:hover { border-color:#cc4466; color:#ff8899; }
-
-/* Section headers */
+/* Single unified scrollable body */
+#cbt-inv-scroll {
+  overflow-y: auto; flex: 1;
+  display: flex; flex-direction: column; gap: 14px;
+  padding-right: 4px; -webkit-overflow-scrolling: touch;
+}
 .cbt-inv-section-hdr {
-  font-family:'Cinzel',serif; font-size:9px; letter-spacing:2px;
-  color:#442255; border-bottom:1px solid rgba(34,17,51,0.133);
-  padding-bottom:5px; margin-bottom:6px; display:flex;
-  align-items:center; gap:8px;
+  font-family:'Cinzel',serif; font-size:0.625em; letter-spacing:2px;
+  color:#6644aa; border-bottom:1px solid rgba(68,34,136,0.2);
+  padding-bottom:6px; margin-bottom:8px; display:flex; align-items:center; gap:8px;
 }
 .cbt-inv-section-hdr span.count {
-  font-size:8px; color:#331133;
-  background:rgba(40,0,60,0.5); padding:1px 6px; border-radius:2px;
+  font-size:0.85em; color:#442266;
+  background:rgba(40,0,60,0.5); padding:1px 7px; border-radius:2px;
 }
-
-/* Usable items section */
-#cbt-inv-usables-wrap {
-  flex-shrink: 0;
-}
+/* Usable items — 2-column, large readable cards */
 #cbt-inv-usables {
-  display: flex; flex-wrap: wrap; gap: 7px; min-height: 48px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
 }
 .cbt-inv-usable {
-  display: flex; flex-direction: column; align-items: center;
-  width: 76px; padding: 8px 6px 6px;
-  background: rgba(0,15,35,0.85); border: 1px solid rgba(34,68,170,0.267);
-  border-radius: 5px; cursor: pointer; transition: all 0.15s;
+  display: flex; flex-direction: row; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  background: rgba(0,15,40,0.85); border: 1px solid rgba(34,68,170,0.3);
+  border-radius: 6px; cursor: pointer; transition: all 0.15s;
   position: relative; user-select: none;
 }
-.cbt-inv-usable:hover { border-color: #4488ff; background: rgba(0,25,55,0.95);
-  box-shadow: 0 0 10px rgba(34,68,170,0.2); }
+.cbt-inv-usable:hover { border-color: #4488ff; background: rgba(0,30,65,0.95);
+  box-shadow: 0 0 12px rgba(34,68,170,0.2); }
+.cbt-inv-usable.item-disable { border-color:rgba(255,215,0,0.333); }
+.cbt-inv-usable.item-disable:hover { border-color:#ffd700; }
 .cbt-inv-usable.dragging { opacity:0.4; border-style:dashed; }
 .cbt-inv-usable.drag-over { border-color:#ffcc44; background:rgba(30,20,0,0.9); }
-.cbt-inv-usable.item-disable { border-color:rgba(255,215,0,0.333); }
-.cbt-inv-usable.item-disable:hover { border-color:#ffd700; box-shadow:0 0 10px rgba(255,215,0,0.2); }
-.cbt-u-ico { font-size: 22px; margin-bottom: 4px; }
-.cbt-u-name { font-family:'Cinzel',serif; font-size:8px; color:#88aadd;
-  text-align:center; line-height:1.3; }
-.cbt-u-desc { font-size:7px; color:#445566; text-align:center;
-  margin-top:2px; line-height:1.3; }
+.cbt-u-ico  { font-size:1.75em; flex-shrink:0; }
+.cbt-u-text { flex:1; min-width:0; }
+.cbt-u-name { font-family:'Cinzel',serif; font-size:0.688em; color:#88bbff; line-height:1.3; margin-bottom:3px; }
+.cbt-u-desc { font-size:0.563em; color:#5566aa; line-height:1.4; }
 .cbt-inv-usable .cbt-use-label {
-  position:absolute; bottom:2px; right:3px;
-  font-size:7px; color:rgba(68,136,255,0.533); font-family:'Cinzel',serif;
-  letter-spacing:0.5px;
+  position:absolute; top:5px; right:6px;
+  font-size:0.5em; color:rgba(68,136,255,0.5); font-family:'Cinzel',serif; letter-spacing:0.5px;
 }
 .cbt-inv-usable:hover .cbt-use-label { color:#88ccff; }
 .cbt-inv-empty-slot {
-  width:76px; height:72px; border:1px dashed rgba(34,17,51,0.2);
+  grid-column: 1 / -1; padding: 12px; border:1px dashed rgba(34,17,51,0.2);
   border-radius:5px; display:flex; align-items:center; justify-content:center;
-  color:#221133; font-size:18px;
+  color:#332244; font-size:0.625em; font-style:italic; gap:8px;
 }
-
-/* Cargo section */
-#cbt-inv-cargo-wrap {
-  flex: 1; overflow: hidden; display: flex; flex-direction: column;
-}
-#cbt-inv-cargo {
-  display: flex; flex-wrap: wrap; gap: 6px;
-  overflow-y: auto; flex: 1; padding-right: 4px;
-  max-height: 200px;
-}
+/* Cargo — single column */
+#cbt-inv-cargo { display: flex; flex-direction: column; gap: 6px; }
 .cbt-inv-cargo-item {
-  display: flex; align-items: center; gap: 7px;
-  padding: 6px 10px; width: calc(50% - 3px);
+  display: flex; align-items: center; gap: 10px; padding: 8px 12px;
   background: rgba(10,3,22,0.8); border: 1px solid rgba(51,17,85,0.2);
-  border-radius: 4px; cursor: grab; transition: all 0.12s;
-  user-select: none;
+  border-radius: 5px; cursor: grab; transition: all 0.12s; user-select: none;
 }
 .cbt-inv-cargo-item:hover { border-color:#664488; background:rgba(20,5,40,0.9); }
 .cbt-inv-cargo-item.dragging { opacity:0.4; border-style:dashed; cursor:grabbing; }
 .cbt-inv-cargo-item.drag-over { border-color:#ffcc44; }
-.cbt-c-ico { font-size:16px; flex-shrink:0; }
+.cbt-c-ico  { font-size:1.375em; flex-shrink:0; }
 .cbt-c-info { flex:1; min-width:0; }
-.cbt-c-name { font-family:'Cinzel',serif; font-size:9px; color:#aa88cc;
+.cbt-c-name { font-family:'Cinzel',serif; font-size:0.688em; color:#aa88cc;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.cbt-c-val  { font-size:8px; color:#664477; margin-top:1px; }
-.cbt-c-type { font-size:7px; color:#443355; letter-spacing:0.5px; text-transform:uppercase; }
-.cbt-inv-no-cargo { font-size:10px; color:#332233; font-style:italic; padding:8px 4px; }
-
-/* IEF QM shop within local quest */
-#lq-shop {
-  position:absolute; top:50%; right:20px; transform:translateY(-50%);
-  width:300px; background:rgba(6,0,20,0.97);
-  border:1px solid rgba(68,85,136,0.467); border-radius:8px;
-  padding:16px; display:none; flex-direction:column; gap:10px;
-  box-shadow: 0 0 40px rgba(0,51,102,0.267); max-height:80vh; overflow-y:auto; z-index:10;
-}
+.cbt-c-val  { font-size:0.563em; color:#664477; margin-top:2px; }
+.cbt-c-type { font-size:0.5em; color:#443355; letter-spacing:0.5px; text-transform:uppercase; }
+.cbt-inv-no-cargo { font-size:0.625em; color:#332233; font-style:italic; padding:8px 4px; }
 #lq-shop.on { display:flex; }
 .lq-shop-title { font-family:'Cinzel',serif; font-size: 0.813em; color:#88ccff; letter-spacing:2px; }
 .lq-shop-grid { display:grid; grid-template-columns:1fr; gap:6px; }
@@ -2188,26 +2162,29 @@ body {
           <button id="cbt-inv-close" onclick="closeCbtInv()">✕ Close</button>
         </div>
 
-        <!-- Usable items — top section -->
-        <div id="cbt-inv-usables-wrap">
-          <div class="cbt-inv-section-hdr">
-            ⚗ USABLE IN COMBAT
-            <span class="count" id="cbt-usable-count">0</span>
-            <span style="font-size:8px;color:#332244;margin-left:auto;">click to use · drag to reorder</span>
-          </div>
-          <div id="cbt-inv-usables"></div>
-        </div>
+        <!-- Single scrollable body -->
+        <div id="cbt-inv-scroll">
 
-        <!-- Cargo / trade goods — bottom section -->
-        <div id="cbt-inv-cargo-wrap">
-          <div class="cbt-inv-section-hdr">
-            📦 CARGO &amp; TRADE GOODS
-            <span class="count" id="cbt-cargo-count">0</span>
-            <span style="font-size:8px;color:#332244;margin-left:auto;">drag to reorder</span>
+          <!-- Usable items -->
+          <div>
+            <div class="cbt-inv-section-hdr">
+              ⚗ USABLE IN COMBAT
+              <span class="count" id="cbt-usable-count">0</span>
+              <span style="font-size:0.75em;color:#332244;margin-left:auto;">tap to use</span>
+            </div>
+            <div id="cbt-inv-usables"></div>
           </div>
-          <div id="cbt-inv-cargo"></div>
-        </div>
 
+          <!-- Cargo / trade goods -->
+          <div>
+            <div class="cbt-inv-section-hdr">
+              📦 CARGO &amp; TRADE GOODS
+              <span class="count" id="cbt-cargo-count">0</span>
+            </div>
+            <div id="cbt-inv-cargo"></div>
+          </div>
+
+        </div>
       </div>
     </div>
   <!-- SHIP DETAILS -->
@@ -10016,8 +9993,10 @@ function buildCbtInvOverlay() {
       el.title = item.desc || '';
       el.innerHTML = `
         <div class="cbt-u-ico">${item.ico}</div>
-        <div class="cbt-u-name">${item.n}</div>
-        <div class="cbt-u-desc">${item.desc ? item.desc.split('.')[0] : ''}</div>
+        <div class="cbt-u-text">
+          <div class="cbt-u-name">${item.n}</div>
+          <div class="cbt-u-desc">${item.desc ? item.desc.split('.')[0] : ''}</div>
+        </div>
         <span class="cbt-use-label">USE</span>`;
 
       // Click to use — works in combat (pTurn check) and during travel/map
