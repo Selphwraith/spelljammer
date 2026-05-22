@@ -15071,7 +15071,7 @@ function updateUI(){
   $id('s-gold',s.gold); $id('s-speed',s.speed); $id('s-name',s.name);
   $id('s-resist',s.resist>0?`-${s.resist}`:'—');
   // Sync all trade window TS bars
-  ['pt-gold','lq-qm-gold','dm-gold-bar','ls-dock-gold','roam-gold-display','ls-hud-gold'].forEach(id=>{
+  ['pt-gold','lq-qm-gold','dm-gold-bar','ls-dock-gold','roam-gold-display','ls-hud-gold','ls-qm-gold'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.textContent=s.gold;
   });
   document.getElementById('b-hull').style.width=Math.max(0,isFinite(s.hull/s.maxHull)?(s.hull/s.maxHull)*100:0)+'%';
@@ -18576,6 +18576,7 @@ function _lsBuildQmShop() {
 
     anyVisible = true;
     const soldOut    = item.remaining <= 0;
+    if(soldOut) return; // hide completely — don't render a greyed "SOLD OUT" row
     const canAfford  = G.ship.gold >= item.cost;
     const isUpgrade  = item.act === 'upg';
     const isShip     = item.type === 'ship';
@@ -18585,18 +18586,18 @@ function _lsBuildQmShop() {
 
     const row = document.createElement('div');
     row.style.cssText = `display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:4px;
-      background:${isShip?'rgba(20,5,50,0.85)':'rgba(10,5,30,0.6)'};border:1px solid ${isShip?'rgba(136,68,255,0.5)':soldOut?'rgba(51,34,68,0.133)':'rgba(51,34,68,0.2)'};
-      opacity:${soldOut||!canAfford ? '0.45' : '1'};`;
+      background:${isShip?'rgba(20,5,50,0.85)':'rgba(10,5,30,0.6)'};border:1px solid ${isShip?'rgba(136,68,255,0.5)':'rgba(51,34,68,0.2)'};
+      opacity:${!canAfford ? '0.45' : '1'};`;
 
     // Item name + desc
     const info = document.createElement('div');
     info.style.cssText = 'flex:1;min-width:0;';
-    info.innerHTML = `<div style="font-size:0.625em;color:${soldOut?'#554455':'#8899bb'};">${item.ico} ${item.name}${soldOut?' <span style="color:#553344;font-size:0.85em;">[SOLD OUT]</span>':''}</div>
+    info.innerHTML = `<div style="font-size:0.625em;color:#8899bb;">${item.ico} ${item.name}</div>
       <div style="font-size:0.5em;color:#445566;margin-top:1px;">${item.desc}</div>`;
     row.appendChild(info);
 
-    // Stock badge
-    if(!soldOut) {
+    // Stock badge — only show if qty > 1 (items with qty:1 just disappear on purchase)
+    if(item.remaining > 1) {
       const stk = document.createElement('span');
       stk.style.cssText = 'font-size:0.5em;color:#334455;white-space:nowrap;flex-shrink:0;';
       stk.textContent = `[${item.remaining}]`;
@@ -18605,7 +18606,7 @@ function _lsBuildQmShop() {
 
     // Qty selector (only for multi-qty non-upgrade non-weapon items)
     let qtyEl = null;
-    if(!soldOut && maxSel > 1) {
+    if(maxSel > 1) {
       qtyEl = document.createElement('select');
       qtyEl.style.cssText = 'font-size:16px;background:#080018;color:#ffcc66;border:1px solid #553322;border-radius:2px;padding:1px 2px;width:48px;flex-shrink:0;touch-action:manipulation;';
       for(let q=1; q<=maxSel; q++) {
@@ -18621,8 +18622,8 @@ function _lsBuildQmShop() {
     buyBtn.className = 'btn';
     buyBtn.style.cssText = 'font-size:0.563em;padding:3px 8px;flex-shrink:0;white-space:nowrap;';
     buyBtn.textContent = `🔷 ${item.cost} TS`;
-    buyBtn.disabled = soldOut || !canAfford;
-    if(!soldOut && canAfford) {
+    buyBtn.disabled = !canAfford;
+    if(canAfford) {
       buyBtn.onclick = () => {
         const qty = qtyEl ? (parseInt(qtyEl.value)||1) : 1;
         const totalCost = item.cost * qty;
