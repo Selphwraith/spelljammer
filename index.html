@@ -17727,6 +17727,13 @@ function _lsDefinePois() {
       x: W*0.50, y: H*0.50, r: 70, col:'#4488ff', icon:'⚓', type:'dock',
       safeRadius: 320,   // no enemies spawn within this radius of the station
     },
+    // Quartermaster Dael Morne — tight orbit near dock, sells realm-tier weapons and upgrades
+    {
+      id:'npc_qm', label:'QM Dael Morne', role:'IEF Supply Corps — Fentheris System',
+      x: W*0.62, y: H*0.44, r: 48, col:'#88bbff', icon:'⚓', type:'npc',
+      npcId: 'realm_qm',
+      patrol: true, patrolR: 80, patrolSpeed: 0.25, patrolAngle: 1.0,
+    },
     // Ensign Lirith Vaen — patrol route NPC, mid-ring
     {
       id:'npc_lirith', label:'Ensign Lirith Vaen', role:'IEF Scout Corvette — Quest',
