@@ -1704,24 +1704,20 @@ body {
 }
 #watch-hud.on { display:flex; }
 #watch-hud.hidden-by-overlay { display:none !important; }
-/* In local space, collapse to a compact inline strip — no floating box */
+/* In local space — compact pill anchored top-right, same row as the LS top bar */
 #watch-hud.ls-mode {
-  position:static !important;
-  top:auto !important; right:auto !important;
-  background:transparent !important;
-  border:none !important;
-  box-shadow:none !important;
-  padding:0 !important;
-  min-width:0 !important;
-  max-width:none !important;
-  flex-direction:row !important;
-  align-items:center !important;
-  gap:6px !important;
-  pointer-events:none;
+  top: 4px !important;
+  right: 6px !important;
+  left: auto !important;
+  padding: 3px 8px !important;
+  min-width: 0 !important;
+  max-width: 180px !important;
+  gap: 3px !important;
+  background: rgba(4,0,14,0.82) !important;
+  border-color: rgba(68,17,136,0.25) !important;
 }
-#watch-hud.ls-mode .wh-row { gap:4px; }
+#watch-hud.ls-mode .wh-row:last-child { display:none; }
 #watch-hud.ls-mode .wh-label { display:none; }
-#watch-hud.ls-mode #wh-move { display:none; }
 #watch-hud.ls-mode .wh-pips { display:none; }
 #watch-hud.ls-mode .wh-val {
   font-size:0.563em !important;
@@ -1731,12 +1727,6 @@ body {
 #watch-hud.ls-mode #fatigue-badge {
   font-size:0.5em !important;
   padding:1px 5px !important;
-}
-@media (max-width: 700px) {
-  #watch-hud.ls-mode {
-    top:auto !important;
-    right:auto !important;
-  }
 }
 .wh-row { display:flex; align-items:center; gap:8px; }
 .wh-label { font-family:'Cinzel',serif; font-size:0.688em; color:#7755aa; letter-spacing:2px; text-transform:uppercase; }
@@ -2482,6 +2472,8 @@ body {
     <!-- NPC / POI interaction panel (slides up when in range) -->
     <div id="ls-interact-panel">
       <div id="ls-interact-name"></div>
+      <div id="ls-interact-role"></div>
+      <div id="ls-interact-prompt"></div>
       <div id="ls-interact-btns"></div>
     </div>
 
@@ -18086,13 +18078,7 @@ function openLocalSpace() {
   LS.pAccel = _lsMs.pAccel;
   LS.animId = requestAnimationFrame(_lsLoop);
 
-  // Reposition watch HUD — move it inline into the LS top bar
-  const _wh = document.getElementById('watch-hud');
-  const _lsHud = document.getElementById('ls-hud');
-  if(_wh && _lsHud && _wh.parentElement !== _lsHud) {
-    _wh._lsOrigParent = _wh.parentElement;
-    _lsHud.appendChild(_wh);
-  }
+  // Add ls-mode class to watch HUD — CSS handles the compact inline appearance
   document.getElementById('watch-hud')?.classList.add('ls-mode');
 
   // Hide sidebar Local Quest button for realm (LS replaces it)
@@ -18113,11 +18099,6 @@ function closeLsOverlay() {
   _lsPendingReturn = false;
   _lsPendingFragment = null;
   document.getElementById('watch-hud')?.classList.remove('ls-mode');
-  const _whRestore = document.getElementById('watch-hud');
-  if(_whRestore?._lsOrigParent && _whRestore.parentElement !== _whRestore._lsOrigParent) {
-    _whRestore._lsOrigParent.appendChild(_whRestore);
-    _whRestore._lsOrigParent = null;
-  }
   setTag('Navigation'); updateUI();
   _syncWatchHudVisibility();
 }
