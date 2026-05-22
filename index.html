@@ -5213,6 +5213,17 @@ function drawShipImg(key, ctx, cx, cy, w, h, flip, fallbackFn) {
 const _SHIP_IMG_RETRY_T = {};
 // Scale w,h for player ships so each class feels bigger than the last.
 // Pinnace = base, squid = 1.25x, hammer = 2x, manow = 2.5x
+// Returns a scale multiplier relative to a 390px mobile baseline.
+// Mobile (≤700px)  → 1.0   (unchanged)
+// Tablet (~900px)  → ~1.4
+// Desktop (~1280px)→ ~1.9
+// Wide (≥1600px)   → capped at 2.2
+function _uiScale() {
+  const w = window.innerWidth;
+  if (w <= 700) return 1.0;
+  return Math.min(2.2, 0.5 + w / 700);
+}
+
 function shipSz(type, bw, bh) {
   if(type==='squid')  return [bw*1.25, bh*1.25];
   if(type==='hammer') return [bw*2,    bh*2   ];
@@ -8798,7 +8809,7 @@ function tsSpawnObject(cv, forced) {
   }
 
   const scaleMin = 0.5, scaleMax = 2.0;
-  const scale = scaleMin + Math.random() * (scaleMax - scaleMin);
+  const scale = (scaleMin + Math.random() * (scaleMax - scaleMin)) * _uiScale();
 
   TS.objects.push({
     key: entry.key,
@@ -9201,7 +9212,8 @@ function tsRender(timestamp) {
   const tilt  = Math.sin(TS.t * 1.1) * 0.04 + (laneFlow === -1 ? Math.sin(TS.t * 2.3) * 0.06 : 0);
 
   const sType = G.ship?.type || 'pinnace';
-  const [sw, sh] = shipSz(sType, 100, 60);
+  const _s = _uiScale();
+  const [sw, sh] = shipSz(sType, 100 * _s, 60 * _s);
 
   // ── SCREEN-SPACE ship position (for effects drawn before ctx.rotate) ───
   const sxScreen = shipX + sway;
@@ -9639,7 +9651,7 @@ function tsDrawEvent(ctx, ev, W, H) {
     // PNG ships (nose faces left) do NOT need rotate(PI) — flip parameter handles them.
     // We skip rotate(PI) only for PNG-loaded ships that are handled by drawShipImg directly.
     ctx.rotate(Math.PI);
-    const [ew, eh] = [80, 50];
+    const [ew, eh] = [80 * _uiScale(), 50 * _uiScale()];
     ctx.shadowColor = '#ff4422'; ctx.shadowBlur = 20;
     drawShipImg(ev.key, ctx, 0, 0, ew, eh, false, () => {
       // Per-enemy fallback — matches drawCbtShips procedural draws
@@ -9722,7 +9734,7 @@ function tsDrawEvent(ctx, ev, W, H) {
     ctx.save();
     ctx.translate(rx, ry);
     ctx.rotate(roamAngle);
-    const [ew, eh] = [75, 48];
+    const [ew, eh] = [75 * _uiScale(), 48 * _uiScale()];
     ctx.shadowColor = ev.col || '#88ccff'; ctx.shadowBlur = 16;
     drawShipImg(ev.key, ctx, 0, 0, ew, eh, false, () => drawCorsairSloop(ctx, 0, 0, 20, false));
     ctx.shadowBlur = 0;
@@ -19429,7 +19441,7 @@ function _lsRender(cx, W, H, dt) {
       const npcAngle = (p._facingAngle || 0);
       cx.save(); cx.translate(p.x, p.y); cx.rotate(npcAngle);
       cx.shadowColor=p.col; cx.shadowBlur=10;
-      drawShipImg('npc_ship', cx, 0, 0, 28, 18, false, () => {
+      drawShipImg('npc_ship', cx, 0, 0, 28 * _uiScale(), 18 * _uiScale(), false, () => {
         // Fallback: nose-left corvette (−X = front, matching image convention)
         cx.fillStyle=p.col;
         cx.beginPath();
@@ -19552,7 +19564,7 @@ function _lsRender(cx, W, H, dt) {
     cx.save(); cx.translate(e.x,e.y); cx.rotate(e.angle);
     cx.globalAlpha=blinkAlpha;
     cx.shadowColor=isChasing?'#ff4422':ec; cx.shadowBlur=isChasing?16:8;
-    const _lsEw=32, _lsEh=20;
+    const _lsEw = 32 * _uiScale(), _lsEh = 20 * _uiScale();
     drawShipImg(e.key, cx, 0, 0, _lsEw, _lsEh, true, () => {
       cx.fillStyle=isChasing?'#ff6644':ec;
       _lsDrawShipSilhouette(cx, e.key);
@@ -19583,7 +19595,7 @@ function _lsRender(cx, W, H, dt) {
   // So rotate by pAngle directly — no offset needed.
   cx.save(); cx.translate(LS.px, LS.py); cx.rotate(LS.pAngle);
   cx.shadowColor='#88aaff'; cx.shadowBlur=18;
-  const [_lsPw, _lsPh] = shipSz(G.ship.type, 36, 22);
+  const [_lsPw, _lsPh] = shipSz(G.ship.type, 36 * _uiScale(), 22 * _uiScale());
   drawShipImg(G.ship.type, cx, 0, 0, _lsPw, _lsPh, false, () => {
     // Procedural fallbacks — all drawn nose-right (pointing +X)
     cx.fillStyle='#aaccff';
