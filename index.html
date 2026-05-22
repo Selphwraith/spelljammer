@@ -2718,7 +2718,7 @@ const WPN = {
   // Drawbacks are handled in combat fire logic — see applyFarRealmDrawback()
   phlogtorch:  { n:'Drift Torch (Flame-class)',    d:[3,6],  cd:2, cost:620, info:'3d6 · 2-round reload · burns 3 turns · 15% backfire risk',       special:'burn', farRealm:true, drawback:'backfire',  hullPenalty:0 },
   entropic:    { n:'Entropic Discharger (Void-class)',  d:[4,8],  cd:3, cost:780, info:'4d8 · 3-round reload · ignores dodge · costs 2 crew per shot',   special:null,   farRealm:true, drawback:'crew2',     hullPenalty:0 },
-  psylance:    { n:'Psionic Lance (Psi-class)',         d:[3,6],  cd:3, cost:700, info:'3d6 · hits crew directly · 1 crew feedback per shot',             special:null,   farRealm:true, drawback:'crewfeed',  hullPenalty:0, psionic:true },
+  psylance:    { n:'Psionic Lance (Psi-class)',         d:[1,6],  cd:3, cost:700, info:'1d6 direct crew damage · small hull bleed · 1 crew feedback per shot',  special:null,   farRealm:true, drawback:'crewfeed',  hullPenalty:0, psionic:true },
   nullbolt:    { n:'Null Bolt (Void-class)',            d:[2,8],  cd:3, cost:650, info:'2d8 · disables enemy special 2 turns · bonus dmg if no special · 20% jam',  special:null, farRealm:true, drawback:'jam20',    hullPenalty:0, nullify:true },
   realspike:   { n:'Reality Spike (Void-class)',        d:[3,8],  cd:3, cost:720, info:'3d8 · 25% stun next turn · −5 max hull while equipped',           special:null,   farRealm:true, drawback:'hullmax5',  hullPenalty:5 },
   warpcann:    { n:'Warp Cannon (Warp-class)',          d:[1,32], cd:4, cost:800, info:'1d32 · wildly random · 15% chance fires backward',                special:null,   farRealm:true, drawback:'backshoot', hullPenalty:0 },
@@ -13338,11 +13338,10 @@ async function doAction(type, idx, itemUid) {
         const isBallistaType = wk === 'ballista' || wk === 'hball' || wk === 'sballista' || wk === 'rball';
         const fireCount = (w.fires === 3) ? 3 : (w.fires === 2) || (G.ship.upgrades.includes('rapidfire') && isBallistaType) ? 2 : 1;
 
-        // Psionic Lance — hits crew directly, not hull
+        // Psionic Lance — deals the full dice roll as direct crew damage
         if(wk === 'psylance'){
-          const psiDmg = roll(w.d[0], w.d[1]);
-          const crewHit = Math.max(1, Math.floor(psiDmg / 3));
-          const hullHit = Math.floor(psiDmg * 0.4);
+          const crewHit = roll(w.d[0], w.d[1]); // 1d6 straight crew damage
+          const hullHit = Math.floor(crewHit * 0.3); // small hull bleed (30%)
           if(!G._instakill){ e.hp = Math.max(0, e.hp - hullHit); }
           if(e.crew !== undefined){ e.crew = Math.max(0, e.crew - crewHit); }
           G.cbt.cds[idx] = w.cd > 0 ? Math.max(1, w.cd - (G.ship.cdBonus||0)) : 0;
@@ -13353,7 +13352,7 @@ async function doAction(type, idx, itemUid) {
           floatDmg(eCV(), hullHit, false, `👥 -${crewHit} CREW`);
           floatText(pCV(), '🧠 -1 CREW FEEDBACK', '#ff8844', 55);
           const crewStatus = e.crew !== undefined ? ` | Enemy crew: ${e.crew}/${e.maxCrew}` : '';
-          cLog(`🧠 Psionic Lance — ${hullHit} hull + ${crewHit} enemy crew drained!${crewStatus} [−1 your crew from feedback]`, 'gd');
+          cLog(`🧠 Psionic Lance — ${crewHit} enemy crew drained + ${hullHit} hull bleed!${crewStatus} [−1 your crew from feedback]`, 'gd');
           if(e.crew !== undefined && e.crew <= 0 && e.maxCrew > 0){
             cLog(`☠ ${e.name} crew wiped out — ship is dead in the void!`, 'dmg');
           }
@@ -17022,7 +17021,7 @@ const LOCAL_QUEST_DATA = {
         { type:'upgrade', ico:'🔁', name:'Rapid Fire Mount',           desc:'Ballista-type weapons fire twice per action', cost:270, act:'upg', upg:'rapidfire' },
         { type:'upgrade', ico:'⚡', name:'Overclocked Helm Drive',     desc:'+2 void speed (req: Speed Engine)',        cost:180, act:'upg', upg:'engine2' },
         { type:'wpn', ico:'⚔️', name:'Superior Ballista',              desc:'3d6 · fires every round · elven-forged, never jams', cost:145, wk:'sballista' },
-        { type:'wpn', ico:'🧠', name:'Psionic Lance',                  desc:'3d6 · hits crew directly · 3-round reload (Steel Dragon grade)', cost:680, wk:'psylance' },
+        { type:'wpn', ico:'🧠', name:'Psionic Lance',                  desc:'1d6 · hits crew directly · 3-round reload (Steel Dragon grade)', cost:680, wk:'psylance' },
         { type:'ship', ico:'🦑', name:'🦑 Void Runner — Ship Upgrade', desc:'3 weapon slots · 110 hull · 10 crew · Speed 3 · Signature: Tentacle Grapple. Palanthas Spindle shipyard.', cost:1480, shipKey:'squid' },
         { type:'sig', ico:'🦑', name:'🦑 Crushing Grip (Tier 2)',      desc:'Void Runner upgrade — Tentacle Grapple tightened: 8 direct damage AND next 2 enemy attacks halved.', cost:300, act:'sig', sigTier:2, forShip:'squid' },
         { type:'sig', ico:'🦑', name:'🦑 Void Stranglehold (Tier 3)',  desc:'Void Runner upgrade — Total immobilization: stuns enemy 1 full turn AND deals 15 damage.', cost:650, act:'sig', sigTier:3, forShip:'squid' },
