@@ -22686,17 +22686,21 @@ const LANE_POI_CONFIGS = {
 
 // ── Trigger check — called from travelTick ────────────────────────────────
 function _lpoiTriggerCheck(segEnd){
-  if(!G.tvl||G._idleMode||G._autoRest||G._inLanePoi) return;
+  if(!G.tvl||G._idleMode||G._inLanePoi||G._skipLanePoi) return;
   if(G.tvl._lpoiOffered||G.tvl._eventLocked) return;
   const laneKey = G.tvl.from&&G.tvl.to ? `${G.tvl.from}->${G.tvl.to}` : null;
   if(!laneKey||!LANE_POI_CONFIGS[laneKey]) return;
-  // Fire at ~40% through the current segment only once
-  const midProg = (segEnd || 100) - (100/(G._journeyOrigWatches||8))*0.58;
+  // Fire at ~40% through the current segment only once.
+  // Guard origWatches >= 1 to prevent division-by-zero giving -Infinity midProg.
+  const origW = Math.max(1, G._journeyOrigWatches || 8);
+  const midProg = (segEnd || 100) - (100 / origW) * 0.58;
   if(G.tvl.prog < midProg) return;
+  // Mark offered BEFORE the random roll so this check never fires again this segment
+  // even if the roll misses — but do NOT set _eventLocked until the roll succeeds.
   G.tvl._lpoiOffered = true;
   // 12% chance per lane crossing
   if(Math.random() > 0.12) return;
-  // Pause travel and show offer
+  // Roll succeeded — now lock travel and show the offer
   G.tvl._eventLocked = true;
   _tvlStop(); if(G.tvl) G.tvl.timer=null;
   pauseLiveClock();
@@ -22704,19 +22708,36 @@ function _lpoiTriggerCheck(segEnd){
   stopTravelHum();
   const cfg = LANE_POI_CONFIGS[laneKey];
   const poiName = cfg.names[Math.floor(Math.random()*cfg.names.length)];
+  const _pushOnFn = ()=>{
+    G.tvl._eventLocked=false; G.tvl.timer=_tvlStart(G.tvl.tickMs||100);
+    resumeLiveClock();
+    if(!TS.animId&&TS.active){TS._lastTs=0;TS.animId=requestAnimationFrame(tsRender);}
+    startTravelHum();
+  };
   showMsg(
     `${cfg.icon} ${poiName} Detected`,
     `Your sensors flag a ${poiName.toLowerCase()} drifting off the lane heading. Weak power signature. Could be salvage — or a trap.\n\nInvestigate?`,
-    '🔍 Investigate',
+    '\u{1F50D} Investigate',
     ()=>{ enterLanePoi(laneKey, poiName); },
-    '⏩ Push On',
-    ()=>{
-      G.tvl._eventLocked=false; G.tvl.timer=_tvlStart(G.tvl.tickMs||100);
-      resumeLiveClock();
-      if(!TS.animId&&TS.active){TS._lastTs=0;TS.animId=requestAnimationFrame(tsRender);}
-      startTravelHum();
-    }
+    '\u23E9 Push On',
+    _pushOnFn
   );
+  // Inject Skip POI checkbox so auto-rest players can disable encounters this voyage
+  setTimeout(()=>{
+    const box=document.getElementById('msgbox');
+    if(box&&!box.querySelector('#lpoi-skip-row')){
+      const row=document.createElement('div');
+      row.id='lpoi-skip-row';
+      row.style.cssText='margin-top:8px;font-size:10px;display:flex;align-items:center;gap:6px;justify-content:center;';
+      const cb=document.createElement('input'); cb.type='checkbox'; cb.id='lpoi-skip-cb';
+      cb.checked=!!G._skipLanePoi;
+      cb.addEventListener('change',()=>{ G._skipLanePoi=cb.checked; if(G._skipLanePoi) _pushOnFn(); });
+      const lbl=document.createElement('label'); lbl.htmlFor='lpoi-skip-cb';
+      lbl.style.cssText='color:#554477;font-family:Cinzel,serif;letter-spacing:1px;cursor:pointer;';
+      lbl.textContent='Skip POI encounters this voyage';
+      row.appendChild(cb); row.appendChild(lbl); box.appendChild(row);
+    }
+  }, 80);
 }
 
 // ── Enter POI ─────────────────────────────────────────────────────────────
