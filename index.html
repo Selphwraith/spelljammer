@@ -22527,22 +22527,94 @@ function stopCinVoice() {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-function showCinematic(){
-  const ov=document.getElementById('cin-ovl');
-  ov.style.display='flex';
-  _cinCanvas=document.getElementById('cin-cv');
-  _cinCtx=_cinCanvas.getContext('2d');
-  _cinSlide=0;
+let _cinIntroTimer = null;
+
+function _cinFinishIntro() {
+  // Clear timers
+  if (_cinIntroTimer) { clearTimeout(_cinIntroTimer); _cinIntroTimer = null; }
+  // Hide video and skip button
+  const vid = document.getElementById('cin-intro-video');
+  const skipBtn = document.getElementById('cin-video-skip');
+  if (vid) { vid.pause(); vid.style.display = 'none'; }
+  if (skipBtn) skipBtn.style.display = 'none';
+  // Show cinematic canvas and UI, then run first slide
+  document.getElementById('cin-cv').style.opacity = '1';
+  document.getElementById('cin-text').style.opacity = '1';
+  document.getElementById('cin-dots').style.display = 'flex';
+  document.getElementById('cin-btns').style.display = 'flex';
   renderCinSlide();
 }
+
+function skipIntroVideo() {
+  _cinFinishIntro();
+}
+
+function showCinematic(){
+  const ov = document.getElementById('cin-ovl');
+  ov.style.display = 'flex';
+  _cinCanvas = document.getElementById('cin-cv');
+  _cinCtx = _cinCanvas.getContext('2d');
+  _cinSlide = 0;
+
+  // Hide slide UI until video finishes
+  _cinCanvas.style.opacity = '0';
+  document.getElementById('cin-text').style.opacity = '0';
+  document.getElementById('cin-dots').style.display = 'none';
+  document.getElementById('cin-btns').style.display = 'none';
+
+  // Music: keep whatever is already playing from the menu — no restart.
+  // playTitle() was already called by showMainMenu, so music is live.
+  // Just ensure volume is at the right level for cinematic mood.
+  _titleVolume(0.35);
+
+  // Try to play the intro video
+  const vid = document.getElementById('cin-intro-video');
+  const skipBtn = document.getElementById('cin-video-skip');
+
+  if (vid && vid.src) {
+    vid.style.display = 'block';
+    vid.style.opacity = '1';
+    if (skipBtn) skipBtn.style.display = 'block';
+
+    // Start fade-out at 20s (2s before the 22s cap)
+    const fadeTimer = setTimeout(() => {
+      vid.style.opacity = '0';
+    }, 20000);
+
+    // Hard cut to slide 1 at 22s
+    _cinIntroTimer = setTimeout(() => {
+      clearTimeout(fadeTimer);
+      _cinFinishIntro();
+    }, 22000);
+
+    // Also catch natural video end (in case it's shorter)
+    vid.onended = () => {
+      clearTimeout(fadeTimer);
+      _cinFinishIntro();
+    };
+
+    vid.currentTime = 0;
+    vid.play().catch(() => {
+      // Video failed to load — skip straight to cinematic
+      clearTimeout(fadeTimer);
+      _cinFinishIntro();
+    });
+  } else {
+    // No video — go straight to slides
+    _cinFinishIntro();
+  }
+}
 function skipCinematic(){
+  if (_cinIntroTimer) { clearTimeout(_cinIntroTimer); _cinIntroTimer = null; }
+  const vid = document.getElementById('cin-intro-video');
+  if (vid) { vid.pause(); vid.style.display = 'none'; }
+  document.getElementById('cin-video-skip').style.display = 'none';
   if(_cinAnimId){ cancelAnimationFrame(_cinAnimId); _cinAnimId=null; }
-  stopCinVoice();                          // stop any playing narration
+  stopCinVoice();
   document.getElementById('cin-ovl').style.display='none';
   _gameActive = true;
-  stopTitle();   // stop just before game audio takes over
+  stopTitle();
   initGame();
-  // Start inside Refuge local space so new players land at the dock immediately
   setTimeout(() => openLocalSpace(), 150);
 }
 function nextCinSlide(){
@@ -23747,13 +23819,22 @@ document.addEventListener('visibilitychange', () => {
 
 <!-- ═══ OPENING CINEMATIC ═══ -->
 <div id="cin-ovl" style="display:none;position:fixed;inset:0;z-index:8888;background:#000;flex-direction:column;align-items:center;justify-content:center;">
-  <canvas id="cin-cv" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
-  <div id="cin-text" style="position:relative;z-index:2;max-width:680px;width:90%;text-align:center;padding:0 20px;">
+  <!-- Intro video — plays first, silent, music continues underneath -->
+  <video id="cin-intro-video" playsinline
+    style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;opacity:1;transition:opacity 2s ease-in-out;display:none;"
+    src="video/intro_cinematic.mp4"></video>
+  <div id="cin-video-skip" onclick="skipIntroVideo()"
+    style="display:none;position:absolute;bottom:28px;right:28px;z-index:5;
+    background:transparent;border:1px solid rgba(51,68,85,0.4);color:#445566;
+    font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;padding:6px 18px;
+    cursor:pointer;border-radius:2px;">⏭ SKIP INTRO</div>
+  <canvas id="cin-cv" style="position:absolute;inset:0;width:100%;height:100%;z-index:2;"></canvas>
+  <div id="cin-text" style="position:relative;z-index:3;max-width:680px;width:90%;text-align:center;padding:0 20px;">
     <div id="cin-chapter" style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:4px;color:#44aaff;text-transform:uppercase;margin-bottom:16px;opacity:0;transition:opacity 0.8s;"></div>
     <div id="cin-body" style="font-family:Georgia,serif;font-size:16px;line-height:1.75;color:#ccc;opacity:0;transition:opacity 1.2s;"></div>
   </div>
-  <div id="cin-dots" style="position:relative;z-index:2;display:flex;gap:8px;margin-top:32px;"></div>
-  <div id="cin-btns" style="position:relative;z-index:2;display:flex;gap:16px;margin-top:24px;">
+  <div id="cin-dots" style="position:relative;z-index:3;display:flex;gap:8px;margin-top:32px;"></div>
+  <div id="cin-btns" style="position:relative;z-index:3;display:flex;gap:16px;margin-top:24px;">
     <button onclick="skipCinematic()" style="background:transparent;border:1px solid rgba(51,68,85,0.4);color:#445566;font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;padding:6px 18px;cursor:pointer;border-radius:2px;">⏭ SKIP</button>
     <button id="cin-next-btn" onclick="nextCinSlide()" style="background:rgba(20,8,50,0.8);border:1px solid #4422aa;color:#aa88ff;font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;padding:6px 20px;cursor:pointer;border-radius:2px;">NEXT ›</button>
   </div>
