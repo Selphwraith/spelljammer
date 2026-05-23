@@ -5031,6 +5031,7 @@ const SOUND_DATA = {
   'ram_hit':      'sounds/ram_hit.mp3',
   'squid_attack': 'sounds/squid_attack.mp3',
   'repair_hull': 'sounds/repair_hull.mp3',
+  'void_armor':  'sounds/void_armor.mp3',
   'heal_item': 'sounds/heal_item.mp3',
   'evasive': 'sounds/evasive.mp3',
   'flee_escape': 'sounds/flee_escape.mp3',
@@ -12861,6 +12862,49 @@ function _fxHeal(target) {
   _fxKick();
 }
 
+// VOID ARMOR — metallic blue-silver sheen sweeps over the ship
+function _fxVoidArmor(target) {
+  _fxInit(); _fxResize();
+  const { x, y } = target;
+
+  // Central cold-blue flash
+  _fxFlash(x, y, '#aaccff', '#001144', 60, 8, 0.5, 0.9);
+
+  // Three expanding armour rings — silver-blue, staggered 80ms apart
+  const ringCols = ['#88bbff99', '#aaddff77', '#cceeff55'];
+  ringCols.forEach((col, i) => {
+    setTimeout(() => {
+      _FX.particles.push({ x, y, vx:0, vy:0,
+        col, r: 2.5 - i * 0.5, rBase: 6, rMax: 55 + i * 18,
+        maxLife: 0.52, life: 0.52,
+        alpha: 0.85 - i * 0.15, drag: 1, glow: 12, gravity: 0, shape: 'ring' });
+      _fxKick();
+    }, i * 80);
+  });
+
+  // Metallic silver-white spark burst — the "plating crystallising" moment
+  setTimeout(() => {
+    _fxSparks(x, y, '#cce8ff', 14, 75, 0.45);
+    _fxSparks(x, y, '#ffffff', 6, 45, 0.3);
+    _fxKick();
+  }, 90);
+
+  // Two sweeping beams across the ship body — like energy coating the hull
+  setTimeout(() => {
+    const halfW = 42;
+    _fxBeam(x - halfW, y - 10, x + halfW, y + 8,  '#88ccff', 2.5, 0.35, { glow: 18, alpha: 0.75 });
+    _fxBeam(x - halfW * 0.7, y + 12, x + halfW * 0.7, y - 6, '#aaddff', 1.5, 0.28, { glow: 14, alpha: 0.55 });
+    _fxKick();
+  }, 120);
+
+  // Second flash pulse after rings settle — the "locked in" moment
+  setTimeout(() => {
+    _fxFlash(x, y, '#88bbff', '#000d22', 30, 5, 0.25, 0.6);
+    _fxKick();
+  }, 360);
+}
+
+
 // STUN — electric crackle on target
 function _fxStun(target) {
   _fxInit(); _fxResize();
@@ -13867,8 +13911,8 @@ async function enemyTurn() {
       cLog(`✨ ${e.name} — ${healDef.n}!`, 'dmg');
       await sleep(350);
       triggerAnim(eCV(), 'anim-flinch-r');
-      snd('repair_hull', 0.8);
       if(healDef.fx === 'heal'){
+        snd('repair_hull', 0.8);
         _fxHeal(_fxPos(false));        if(healDef.crewCost && e.crew !== undefined){
           e.crew = Math.max(0, e.crew - healDef.crewCost);
           cLog(`${healDef.crewCost} crew sacrificed...`,'dmg');
@@ -13903,6 +13947,8 @@ async function enemyTurn() {
         await sleep(400);
         if(s.hull <= 0){ await sleep(300); doDefeat('hull_combat'); return; }
       } else if(healDef.fx === 'buff'){
+        snd('void_armor', 0.85);
+        _fxVoidArmor(_fxPos(false));
         if(healDef.buffStat === 'resist'){
           e._buffResist = healDef.buffAmt; e._buffResistTurns = healDef.buffTurns;
           cLog(`${healDef.txt} — gains +${healDef.buffAmt} damage resistance for ${healDef.buffTurns} turns!`, 'dmg');
