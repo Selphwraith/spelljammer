@@ -935,23 +935,18 @@ body {
 /* ── HUD elements ── */
 #ls-hud {
   position:absolute; top:0; left:0; right:0;
-  display:flex; align-items:center; justify-content:space-between;
-  padding:6px 12px; z-index:10; pointer-events:none; gap:8px;
+  display:flex; align-items:center;
+  padding:8px 14px; z-index:10; pointer-events:none;
   background:linear-gradient(180deg,rgba(2,0,16,0.88) 0%,transparent 100%);
 }
 @media (max-width:700px) {
-  #ls-hud { padding:4px 10px; gap:6px; }
-  #ls-hud-title { font-size:0.563em; }
-  #ls-hud-stats { font-size:0.5em; gap:6px; }
+  #ls-hud { padding:6px 14px; }
+  #ls-hud-title { font-size:0.625em; }
 }
 #ls-hud-title {
   font-family:'Cinzel',serif; font-size:0.875em; color:#4488ff;
   letter-spacing:2px; text-shadow:0 0 20px rgba(68,136,255,0.4);
 }
-#ls-hud-stats {
-  display:flex; gap:16px; font-size:0.688em; color:#6677aa;
-}
-#ls-hud-stats span { color:#aabbdd; }
 
 /* ── Minimap ── */
 #ls-minimap {
@@ -1848,10 +1843,14 @@ body {
     <span class="mhud-lbl">TS</span>
   </div>
   <div class="mhud-stat">
+    <span class="mhud-val" id="mhud-air">10</span>
+    <span class="mhud-lbl">AIR</span>
+  </div>
+  <div class="mhud-stat">
     <div class="mhud-frags" id="mhud-frags"></div>
     <span class="mhud-lbl">FRAGS</span>
   </div>
-  <button id="btn-stats-drawer" onclick="toggleStatsDrawer(event)">⊞ Stats</button>
+  <button id="btn-stats-drawer" onclick="toggleStatsDrawer(event)">⊞</button>
   <!-- Hidden 5-tap debug trigger — tap FRAGS label 5 times quickly -->
   <span id="debug-tap-zone" style="position:absolute;left:0;top:0;width:60px;height:100%;opacity:0;cursor:default;" ontouchstart="_dbTap()"></span>
 </div>
@@ -2420,14 +2419,9 @@ body {
   <div id="ov-localspace">
     <canvas id="ls-canvas"></canvas>
 
-    <!-- HUD top bar -->
+    <!-- HUD top bar — sphere title only; stats are in the main header bar -->
     <div id="ls-hud">
-      <div id="ls-hud-title">🔭 REALMSPACE — Local Space</div>
-      <div id="ls-hud-stats">
-        Hull: <span id="ls-hud-hull">—</span> &nbsp;
-        Crew: <span id="ls-hud-crew">—</span> &nbsp;
-        🔷 <span id="ls-hud-gold">—</span>
-      </div>
+      <div id="ls-hud-title">🔭 LOCAL SPACE</div>
     </div>
 
     <!-- Controls hint bottom-left -->
@@ -15138,9 +15132,11 @@ function updateMobileHUD(){
   const mhull=document.getElementById('mhud-hull');
   const mcrew=document.getElementById('mhud-crew');
   const mgold=document.getElementById('mhud-gold');
+  const mair =document.getElementById('mhud-air');
   if(mhull) mhull.textContent=Math.max(0,s.hull);
   if(mcrew) mcrew.textContent=s.crew;
   if(mgold) mgold.textContent=s.gold;
+  if(mair)  mair.textContent=(s.air||0)+'d';
   // Fragment pips in HUD
   const mfr=document.getElementById('mhud-frags');
   if(mfr){ mfr.innerHTML=''; for(let i=0;i<6;i++){const d=document.createElement('div');d.className='mhud-fpip'+(i<G.frags?' on':'');mfr.appendChild(d);} }
@@ -18118,7 +18114,7 @@ function openLocalSpace() {
   LS.pAccel = _lsMs.pAccel;
   LS.animId = requestAnimationFrame(_lsLoop);
 
-  // Add ls-mode class to watch HUD — CSS handles the compact inline appearance
+  // Add ls-mode class to watch HUD — CSS handles compact appearance
   document.getElementById('watch-hud')?.classList.add('ls-mode');
 
   // Hide sidebar Local Quest button for realm (LS replaces it)
@@ -18786,9 +18782,6 @@ function _lsBuildQmShop() {
 
 // ── HUD / LOG ──────────────────────────────────────────────────────────────
 function _lsUpdateHud() {
-  const hh = document.getElementById('ls-hud-hull');
-  const hc = document.getElementById('ls-hud-crew');
-  const hg = document.getElementById('ls-hud-gold');
   // Update HUD title to reflect current sphere
   const _hudTitle = document.getElementById('ls-hud-title');
   if(_hudTitle) {
@@ -18796,9 +18789,8 @@ function _lsUpdateHud() {
     const _sLabel = LOCAL_QUEST_DATA[_sId]?.label || '🔭 Local Space';
     _hudTitle.textContent = '🔭 ' + _sLabel;
   }
-  if(hh) hh.textContent = G.ship.hull+'/'+G.ship.maxHull;
-  if(hc) hc.textContent = G.ship.crew+'/'+G.ship.maxCrew;
-  if(hg) hg.textContent = G.ship.gold;
+  // Main stats (hull/crew/air/gold) are in the global mobile-hud — updateUI() handles them
+  updateUI();
 }
 
 let _lsLogTimer = null;
