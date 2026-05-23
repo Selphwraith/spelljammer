@@ -9826,14 +9826,16 @@ function tsResolveEvent(ev) {
     // CSS handles the fade — just clear the class after animation completes
     setTimeout(() => { if (alertEl) alertEl.className = ''; }, 1700);
     setTimeout(() => {
-      // Save travel resume state BEFORE switching phase
-      if (G.tvl?.to && !G._resumeTravel) {
+      // Save travel resume state BEFORE switching phase.
+      // Always overwrite — if two enemies hit back-to-back, the second fight
+      // must save its own position or endCbt will use stale state from the first
+      // fight and teleport the ship back to the wrong sphere.
+      if (G.tvl?.to) {
         const laneOrigin = G.tvl._laneOrigin || G.tvl.fromPos || {x:.5,y:.5};
         const destSph = G.spheres?.find(s=>s.id===G.tvl.to) || {x:.5,y:.5};
         const pg = (G.tvl.prog || 50) / 100;
         const pausedPos = { x: laneOrigin.x + (destSph.x-laneOrigin.x)*pg, y: laneOrigin.y + (destSph.y-laneOrigin.y)*pg };
-        // +1 to include the current (interrupted) watch. Without this, _watchesLeft===0
-        // on the final watch gives totalWatches=0 → watchPct=Infinity → prog=NaN → segment never ends.
+        // +1 to include the current (interrupted) watch.
         G._resumeTravel = { toId:G.tvl.to, watchesRemaining:(G.tvl._watchesLeft||0)+1, pausedPos, pausedProg:G.tvl.prog, laneOrigin };
       }
       G.phase = 'map';
