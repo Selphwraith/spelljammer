@@ -15561,10 +15561,14 @@ function triggerRoamingEncounter(factionId){
   if(G._idleMode) {
     TS._pausedForRoam = false;
     startTravelHum();
-    if(TS.active || (G.tvl && G.phase === 'map')) {
-      G.phase = 'traveling';
-      if(G.tvl) { G.tvl._eventLocked=false; G.tvl.timer=_tvlStart(G.tvl.tickMs||100); }
-      if(!TS.active && G.tvl) tsOpen(G.tvl.lane || getLane(G.tvl.from, G.tvl.to));
+    if(G.tvl) { G.tvl._eventLocked=false; G.tvl.timer=_tvlStart(G.tvl.tickMs||100); }
+    G.phase = 'traveling';
+    // Always restart the render loop — animId was cancelled before this was called
+    if(!TS.animId && TS.active) {
+      TS._lastTs = 0;
+      TS.animId = requestAnimationFrame(tsRender);
+    } else if(!TS.active && G.tvl) {
+      tsOpen(G.tvl.lane || getLane(G.tvl.from, G.tvl.to));
     }
     addLog('⚙ Idle: passing roaming vessel — no contact.', '');
     return;
@@ -15765,11 +15769,11 @@ function roamContinue(){
   if(G.phase==='traveling' && G.tvl){
     if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = _tvlStart(G.tvl.tickMs||100);
     resumeLiveClock(); // resume from where we paused — don't restart
-    // Reopen travel sequence render if it was paused for the roam hail
-    if (TS._pausedForRoam) {
+    // Restart travel sequence render — animId may be null from the roam pause
+    if (TS._pausedForRoam || !TS.animId) {
       TS._pausedForRoam = false;
       TS._lastTs = 0;
-      TS.animId = requestAnimationFrame(tsRender);
+      if (!TS.animId) TS.animId = requestAnimationFrame(tsRender);
       startTravelHum();
     } else if (!TS.active) {
       if (G.tvl.to || G.tvl.toFragSite) tsOpen(G.tvl.lane);
