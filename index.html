@@ -14998,13 +14998,19 @@ function doDefeat(cause){
   ['ov-cbt-inv','ov-travel-seq','ov-wpnpicker','ov-combat','ov-port','ov-waypoint',
    'ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster',
    'ov-localquest','ov-localspace','ov-armory','ov-faction-rep','tvlbar','msgbox',
-   'rest-overlay'].forEach(id=>{
+   'rest-overlay','ov-lane-poi'].forEach(id=>{
     const el=document.getElementById(id);
     if(!el) return;
     el.classList.remove('on','active');
     if(el.style.display==='flex') el.style.display='none';
   });
   document.getElementById('msgbox').style.display='none';
+  // Kill lane POI render loop and state
+  if(typeof LPOI !== 'undefined'){
+    LPOI.active=false;
+    if(LPOI.animId){ cancelAnimationFrame(LPOI.animId); LPOI.animId=null; }
+  }
+  G._inLanePoi=false; G._resumeLanePoi=false;
 
   // ── Cause-specific defeat messages ───────────────────────────────────────
   const _loc = G.spheres?.find(s=>s.id===G.ship?.loc)?.n || 'the Drift';
@@ -15140,7 +15146,7 @@ function defeatLoadGame(){
   setTimeout(() => { menuShowSave(); }, 200);
 }
 function restart(){
-  ['ov-cbt-inv','ov-travel-seq','ov-wpnpicker','ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','ov-localspace','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay'].forEach(id=>{
+  ['ov-cbt-inv','ov-travel-seq','ov-wpnpicker','ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','ov-localspace','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay','ov-lane-poi'].forEach(id=>{
     const el=document.getElementById(id); if(el)el.classList.remove('on','active');
   });
   const _fr=document.getElementById('ov-faction-rep'); if(_fr) _fr.style.display='none';
@@ -15172,6 +15178,7 @@ function _anyOverlayOpen() {
     'ov-port','ov-waypoint','ov-wpnpicker','ov-inv','ov-wpn','ov-shp',
     'ov-qlog','ov-journal','ov-loot','ov-dockmaster','ov-combat',
     'ov-localquest','ov-localspace','ov-faction-rep','msgbox','rest-overlay',
+    'ov-lane-poi',
   ];
   for (const id of onOverlays) {
     const el = document.getElementById(id);
@@ -16561,9 +16568,14 @@ function _applyLoad(save) {
     if (G.animId) cancelAnimationFrame(G.animId);
     _stopLoop();
     // Close all overlays including local space
-    ['ov-cbt-inv','ov-travel-seq','ov-wpnpicker','ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','ov-localspace','ov-armory','ov-faction-rep','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay'].forEach(id=>{
+    ['ov-cbt-inv','ov-travel-seq','ov-wpnpicker','ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','ov-localspace','ov-armory','ov-faction-rep','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay','ov-lane-poi'].forEach(id=>{
       const el=document.getElementById(id); if(el)el.classList.remove('on','active');
     });
+    // Kill lane POI render loop if it was running
+    if(typeof LPOI !== 'undefined'){
+      LPOI.active=false;
+      if(LPOI.animId){ cancelAnimationFrame(LPOI.animId); LPOI.animId=null; }
+    }
     // Reset local space engine state — position/world restored below after state is loaded
     if(typeof LS !== 'undefined') {
       if(LS.animId){ cancelAnimationFrame(LS.animId); LS.animId = null; }
