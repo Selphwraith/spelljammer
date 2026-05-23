@@ -935,6 +935,48 @@ body {
 #ov-localspace.on { display: block; pointer-events: all; touch-action: none; }
 #ls-canvas { position:absolute; inset:0; width:100%; height:100%; display:block; z-index:1; cursor:crosshair; }
 
+/* ── Lane POI Overlay ── */
+#ov-lane-poi {
+  position:fixed; inset:0; z-index:7000; background:#020008;
+  display:none; flex-direction:column;
+  pointer-events:none;
+}
+#ov-lane-poi.on { display:flex; pointer-events:all; }
+#lpoi-canvas { position:absolute; inset:0; width:100%; height:100%; display:block; cursor:crosshair; z-index:1; }
+#lpoi-hud {
+  position:absolute; top:0; left:0; right:0; z-index:10;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 14px; pointer-events:none;
+  background:linear-gradient(180deg,rgba(2,0,12,0.92) 0%,transparent 100%);
+}
+#lpoi-title { font-family:'Cinzel',serif; font-size:0.75em; color:#bb88ff; letter-spacing:2px; }
+#lpoi-exit-btn {
+  font-family:'Cinzel',serif; font-size:0.563em; padding:5px 14px;
+  border:1px solid rgba(68,34,102,0.4); border-radius:3px;
+  background:rgba(10,3,25,0.9); color:#8866aa; cursor:pointer;
+  pointer-events:all; letter-spacing:1px;
+}
+#lpoi-exit-btn:hover { border-color:#aa66ff; color:#ccaaff; }
+#lpoi-log {
+  position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
+  background:rgba(4,0,14,0.9); border:1px solid rgba(68,34,136,0.2); border-radius:4px;
+  padding:5px 18px; font-size:0.625em; color:#8877bb; font-style:italic;
+  pointer-events:none; max-width:540px; text-align:center; z-index:10;
+  transition:color 0.4s;
+}
+#lpoi-interact-panel {
+  position:absolute; bottom:56px; left:50%; transform:translateX(-50%);
+  background:rgba(5,0,16,0.97); border:1px solid rgba(136,68,255,0.3);
+  border-radius:6px; padding:9px 14px;
+  display:none; flex-direction:column; gap:7px;
+  min-width:0; max-width:88vw; width:fit-content;
+  box-shadow:0 0 24px rgba(68,0,136,0.2); z-index:15;
+}
+#lpoi-interact-panel.on { display:flex; }
+#lpoi-interact-name { font-family:'Cinzel',serif; font-size:0.688em; color:#cc99ff; letter-spacing:1px; }
+#lpoi-interact-btns { display:flex; gap:6px; flex-wrap:wrap; }
+#lpoi-interact-btns .btn { font-size:0.688em; padding:4px 12px; }
+
 /* ── HUD elements ── */
 #ls-hud {
   position:absolute; top:0; left:0; right:0;
@@ -2649,6 +2691,20 @@ body {
       <button class="btn" onclick="restart()" style="border-color:rgba(136,0,102,0.533);color:#cc44ff;">⬡ End the Expedition</button>
       <button class="btn" onclick="continueSailing()" style="border-color:rgba(68,136,255,0.333);color:#88ccff;">⭐ Keep Sailing</button>
     </div>
+  </div>
+</div>
+
+<!-- ═══ LANE POI OVERLAY ═══ -->
+<div id="ov-lane-poi">
+  <canvas id="lpoi-canvas"></canvas>
+  <div id="lpoi-hud">
+    <div id="lpoi-title">🔮 Drift Anomaly</div>
+    <button id="lpoi-exit-btn" onclick="exitLanePoi()">⛵ Return to Drift</button>
+  </div>
+  <div id="lpoi-log">Proceed carefully.</div>
+  <div id="lpoi-interact-panel">
+    <div id="lpoi-interact-name"></div>
+    <div id="lpoi-interact-btns"></div>
   </div>
 </div>
 
@@ -7449,6 +7505,9 @@ function travelTick(){
   G.tvl.prog = segStart + (G.tvl.cur / G.tvl.steps) * watchPct;
   G.tvl.prog = Math.min(G.tvl.prog, segEnd);
   document.getElementById('tvlf').style.width = (isFinite(G.tvl.prog) ? G.tvl.prog : 0) + '%';
+
+  // ── Lane POI check — once per segment at ~40% progress ──────────────────
+  _lpoiTriggerCheck(segEnd);
 
   // ── Clock-driven segment snap ────────────────────────────────────────────
   // If the real-time clock has already reached 14:00 (LEG_HOURS) on a fresh leg
@@ -14343,6 +14402,14 @@ function endCbt(won){
   const invPanel = document.getElementById('cbt-inv-panel');
   if (invPanel) invPanel.classList.remove('on');
   setAmbient('map');
+  // Lane POI combat — return to POI overlay instead of resuming travel
+  if(G._resumeLanePoi){
+    G._resumeLanePoi=false;
+    if(won){ _lpoiResumePOI(); return; }
+    // Defeat while in POI — exit POI, then doDefeat handles the rest
+    G._inLanePoi=false; G._resumeLanePoi=false;
+    return;
+  }
   // Local space / dungeon combat — return to LS instead of resuming travel
   if(_lsPendingReturn) {
     // Kill any stale travel timer so it can't double-tick when travel restarts
@@ -22561,6 +22628,504 @@ function stopCinVoice() {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
+
+// ╔══════════════════════════════════════════════════════════════════════╗
+// ║  LANE POI SYSTEM — Procedural drift encounters during travel         ║
+// ╚══════════════════════════════════════════════════════════════════════╝
+
+// ── State ────────────────────────────────────────────────────────────────
+const LPOI = {
+  active:false, canvas:null, ctx:null, animId:null,
+  map:null, mapW:0, mapH:0, TILE:64,
+  camX:0, camY:0,
+  px:0, py:0, pTargetX:0, pTargetY:0, pFacing:1,
+  pSpeed:185,
+  enemies:[], pois:[],
+  nearPoi:null, interactOpen:false,
+  config:null, questId:null, _rooms:null,
+  _lastTs:0, _imgs:{},
+};
+const LT = { VOID:0, FLOOR:1, FLOOR_ALT:2, FLOOR_DARK:3, WALL:4, PROP:5 };
+
+const LPOI_IMGS = [
+  'lpoi_floor_main','lpoi_floor_alt','lpoi_floor_crack','lpoi_floor_dark',
+  'lpoi_wall','lpoi_wall_damaged',
+  'lpoi_crate','lpoi_barrel','lpoi_console','lpoi_debris','lpoi_pillar','lpoi_crystal',
+  'lpoi_chest','lpoi_npc_survivor','lpoi_exit',
+];
+function lpoiPreloadImgs(){
+  LPOI_IMGS.forEach(k=>{
+    if(LPOI._imgs[k]!==undefined) return;
+    const img=new Image(); img.src=`images/${k}.png`;
+    img.onload=()=>{LPOI._imgs[k]=img;};
+    img.onerror=()=>{LPOI._imgs[k]=null;};
+  });
+}
+
+// ── Lane configs ──────────────────────────────────────────────────────────
+const LANE_POI_CONFIGS = {
+  'refuge->realm':{
+    names:['Drift Derelict','Abandoned Relay Station','Void Wreckage Field'],
+    icon:'🔮', bgCol:'#030009',
+    enemies:['trull_patrol','trull_patrol','phlog_mote','phlog_mote'],
+    toughEnemy:'trull_enforcer',
+    questChance:0.35, questSpheres:['refuge','realm'],
+    questTypes:['kill','collect'],
+  },
+  'realm->refuge':{
+    names:['Drift Derelict','Abandoned Relay Station','Corsair Ambush Site'],
+    icon:'🔮', bgCol:'#030009',
+    enemies:['trull_patrol','phlog_mote','corsair'],
+    toughEnemy:'trull_enforcer',
+    questChance:0.35, questSpheres:['refuge','realm'],
+    questTypes:['kill','collect'],
+  },
+};
+
+// ── Trigger check — called from travelTick ────────────────────────────────
+function _lpoiTriggerCheck(segEnd){
+  if(!G.tvl||G._idleMode||G._autoRest||G._inLanePoi) return;
+  if(G.tvl._lpoiOffered||G.tvl._eventLocked) return;
+  const laneKey = G.tvl.from&&G.tvl.to ? `${G.tvl.from}->${G.tvl.to}` : null;
+  if(!laneKey||!LANE_POI_CONFIGS[laneKey]) return;
+  // Fire at ~40% through the current segment only once
+  const midProg = (segEnd || 100) - (100/(G._journeyOrigWatches||8))*0.58;
+  if(G.tvl.prog < midProg) return;
+  G.tvl._lpoiOffered = true;
+  // 12% chance per lane crossing
+  if(Math.random() > 0.12) return;
+  // Pause travel and show offer
+  G.tvl._eventLocked = true;
+  _tvlStop(); if(G.tvl) G.tvl.timer=null;
+  pauseLiveClock();
+  if(TS.animId){cancelAnimationFrame(TS.animId);TS.animId=null;}
+  stopTravelHum();
+  const cfg = LANE_POI_CONFIGS[laneKey];
+  const poiName = cfg.names[Math.floor(Math.random()*cfg.names.length)];
+  showMsg(
+    `${cfg.icon} ${poiName} Detected`,
+    `Your sensors flag a ${poiName.toLowerCase()} drifting off the lane heading. Weak power signature. Could be salvage — or a trap.\n\nInvestigate?`,
+    '🔍 Investigate',
+    ()=>{ enterLanePoi(laneKey, poiName); },
+    '⏩ Push On',
+    ()=>{
+      G.tvl._eventLocked=false; G.tvl.timer=_tvlStart(G.tvl.tickMs||100);
+      resumeLiveClock();
+      if(!TS.animId&&TS.active){TS._lastTs=0;TS.animId=requestAnimationFrame(tsRender);}
+      startTravelHum();
+    }
+  );
+}
+
+// ── Enter POI ─────────────────────────────────────────────────────────────
+function enterLanePoi(laneKey, poiName){
+  _tvlStop(); if(G.tvl){G.tvl.timer=null;G.tvl._eventLocked=true;}
+  pauseLiveClock();
+  if(TS.animId){cancelAnimationFrame(TS.animId);TS.animId=null;}
+  stopTravelHum();
+  G._inLanePoi=true; G._lpoiLaneKey=laneKey; G._lpoiPoiName=poiName;
+  const cfg = LANE_POI_CONFIGS[laneKey];
+  LPOI.config=cfg; LPOI.questId=null; LPOI.enemies=[]; LPOI.pois=[]; LPOI.interactOpen=false; LPOI.nearPoi=null;
+  const {map,mapW,mapH,startX,startY,rooms} = _lpoiGenMap();
+  LPOI.map=map; LPOI.mapW=mapW; LPOI.mapH=mapH; LPOI._rooms=rooms;
+  LPOI.px=(startX+0.5)*LPOI.TILE; LPOI.py=(startY+0.5)*LPOI.TILE;
+  LPOI.pTargetX=LPOI.px; LPOI.pTargetY=LPOI.py; LPOI.pFacing=1;
+  _lpoiPlaceEntities(rooms,cfg);
+  if(Math.random()<cfg.questChance) _lpoiGenerateQuest(cfg,laneKey,rooms);
+  document.getElementById('lpoi-title').textContent=`${cfg.icon} ${poiName}`;
+  _lpoiSetLog('Entering '+poiName+' — proceed carefully.');
+  document.getElementById('ov-lane-poi').classList.add('on');
+  lpoiPreloadImgs();
+  LPOI.active=true; LPOI._lastTs=0; LPOI.canvas=document.getElementById('lpoi-canvas');
+  LPOI.ctx=LPOI.canvas.getContext('2d');
+  LPOI.animId=requestAnimationFrame(lpoiRender);
+  snd('sphere_click',0.5);
+  addLog(`🔍 Entering ${poiName}.`,'imp');
+}
+
+// ── Procedural map generation ─────────────────────────────────────────────
+function _lpoiGenMap(){
+  const T=LPOI.TILE, mapW=22, mapH=16;
+  const map=Array.from({length:mapH},()=>new Array(mapW).fill(LT.VOID));
+  const numRooms=3+Math.floor(Math.random()*2);
+  const rooms=[]; const spacing=Math.floor((mapW-4)/numRooms);
+  for(let i=0;i<numRooms;i++){
+    const rw=5+Math.floor(Math.random()*3), rh=4+Math.floor(Math.random()*3);
+    const rx=1+i*spacing;
+    const ry=Math.max(1,Math.min(mapH-rh-1, Math.floor((mapH-rh)/2)+Math.floor(Math.random()*3)-1));
+    rooms.push({x:rx,y:ry,w:rw,h:rh});
+    const floorT=i===numRooms-1?LT.FLOOR_DARK:(i%2===0?LT.FLOOR:LT.FLOOR_ALT);
+    for(let ty=ry;ty<ry+rh;ty++) for(let tx=rx;tx<rx+rw;tx++) if(tx<mapW&&ty<mapH) map[ty][tx]=floorT;
+  }
+  // Corridors between rooms
+  for(let i=0;i<rooms.length-1;i++){
+    const r1=rooms[i], r2=rooms[i+1];
+    const my=Math.max(1,Math.min(mapH-3, Math.round((r1.y+r1.h/2+r2.y+r2.h/2)/2)));
+    for(let tx=r1.x+r1.w;tx<=r2.x;tx++){
+      if(tx>=0&&tx<mapW){
+        if(my>=0&&my<mapH) map[my][tx]=LT.FLOOR;
+        if(my+1<mapH) map[my+1][tx]=LT.FLOOR;
+      }
+    }
+  }
+  // Walls around floor
+  for(let ty=0;ty<mapH;ty++) for(let tx=0;tx<mapW;tx++){
+    if(map[ty][tx]!==LT.VOID) continue;
+    let adj=false;
+    for(let dy=-1;dy<=1&&!adj;dy++) for(let dx=-1;dx<=1&&!adj;dx++){
+      const ny=ty+dy,nx=tx+dx;
+      if(ny>=0&&ny<mapH&&nx>=0&&nx<mapW&&map[ny][nx]>=LT.FLOOR&&map[ny][nx]<=LT.FLOOR_DARK) adj=true;
+    }
+    if(adj) map[ty][tx]=LT.WALL;
+  }
+  // Props (8% of alt/main floor tiles, skip edges)
+  for(let ty=1;ty<mapH-1;ty++) for(let tx=1;tx<mapW-1;tx++){
+    if((map[ty][tx]===LT.FLOOR||map[ty][tx]===LT.FLOOR_ALT)&&Math.random()<0.08) map[ty][tx]=LT.PROP;
+  }
+  const sr=rooms[0];
+  const startX=sr.x+Math.floor(sr.w/2), startY=sr.y+Math.floor(sr.h/2);
+  map[startY][startX]=LT.FLOOR; // ensure start is walkable
+  return {map,mapW,mapH,startX,startY,rooms};
+}
+
+// ── Entity placement ──────────────────────────────────────────────────────
+function _lpoiPlaceEntities(rooms,cfg){
+  const T=LPOI.TILE;
+  const pool=[...cfg.enemies];
+  // Middle rooms — regular enemies
+  for(let i=1;i<rooms.length-1;i++){
+    const r=rooms[i]; const n=1+Math.floor(Math.random()*2);
+    for(let e=0;e<n&&pool.length>0;e++){
+      const key=pool.splice(Math.floor(Math.random()*pool.length),1)[0];
+      const def=ENEMIES[key]; if(!def) continue;
+      const ex=(r.x+1+Math.floor(Math.random()*(r.w-2)))*T+T/2;
+      const ey=(r.y+1+Math.floor(Math.random()*(r.h-2)))*T+T/2;
+      LPOI.enemies.push({x:ex,y:ey,_bx:ex,_by:ey,key,hp:def.hp,maxHp:def.hp,
+        pa:Math.random()*Math.PI*2,pr:35+Math.random()*25,spd:55+Math.random()*35,
+        defeated:false,isTough:false});
+    }
+  }
+  // Last room — tough enemy
+  const lr=rooms[rooms.length-1]; const tkey=cfg.toughEnemy; const tdef=ENEMIES[tkey];
+  if(tdef){
+    const tx2=(lr.x+Math.floor(lr.w/2))*T+T/2, ty2=(lr.y+Math.floor(lr.h/2))*T+T/2;
+    LPOI.enemies.push({x:tx2,y:ty2,_bx:tx2,_by:ty2,key:tkey,hp:tdef.hp,maxHp:tdef.hp,
+      pa:0,pr:50,spd:65,defeated:false,isTough:true});
+  }
+  // Chest — in last room, right side, only unlockable after tough enemy down
+  LPOI.pois.push({type:'chest',interacted:false,locked:true,
+    x:(lr.x+lr.w-2)*T+T/2, y:(lr.y+Math.floor(lr.h/2))*T+T/2, label:'💎 Loot Cache'});
+  // Exit — last room top
+  LPOI.pois.push({type:'exit',x:(lr.x+lr.w-1)*T+T/2,y:(lr.y+1)*T+T/2,label:'⛵ Return to Drift'});
+}
+
+// ── Quest generation ──────────────────────────────────────────────────────
+function _lpoiGenerateQuest(cfg,laneKey,rooms){
+  const qType=(cfg.questTypes||['kill'])[Math.floor(Math.random()*(cfg.questTypes||['kill']).length)];
+  const turnin=cfg.questSpheres[Math.floor(Math.random()*cfg.questSpheres.length)];
+  const qId='lpoi_'+laneKey.replace('->','_')+'_'+Date.now();
+  const T=LPOI.TILE;
+  let quest;
+  if(qType==='kill'){
+    const ekey=cfg.enemies[0]; const edef=ENEMIES[ekey]; const cnt=2+Math.floor(Math.random()*2);
+    quest={id:qId,type:'lpoi_kill',state:'active',title:'Clear the Wreckage',
+      desc:`Eliminate ${cnt} ${edef?.sub||'hostiles'} found in the drift site, then return to ${cfg.questSpheres.find(s=>s!==turnin)||turnin}.`,
+      target:{key:ekey,count:cnt,killed:0},turnin,reward:{gold:80+Math.floor(Math.random()*60)},source:'lpoi',laneKey};
+  } else {
+    const other=cfg.questSpheres.find(s=>s!==turnin)||cfg.questSpheres[0];
+    quest={id:qId,type:'lpoi_collect',state:'active',title:'Recover the Cargo',
+      desc:`A sealed cargo container is inside. Recover it and deliver it to ${other}.`,
+      turnin:other,reward:{gold:130+Math.floor(Math.random()*80)},source:'lpoi',laneKey};
+  }
+  G.quests=G.quests||[]; G.quests.push(quest); LPOI.questId=qId;
+  // Place survivor NPC in second room
+  if(rooms&&rooms.length>=2){
+    const mr=rooms[1];
+    LPOI.pois.push({type:'npc_survivor',interacted:false,
+      x:(mr.x+1)*T+T/2, y:(mr.y+1)*T+T/2, label:'! Survivor',questId:qId});
+  }
+  addLog(`📋 A distress signal inside. Someone may need help.`,'imp');
+}
+
+// ── Render loop ───────────────────────────────────────────────────────────
+function lpoiRender(ts){
+  if(!LPOI.active){LPOI.animId=null;return;}
+  LPOI.animId=requestAnimationFrame(lpoiRender);
+  const cv=LPOI.canvas; if(!cv) return;
+  cv.width=cv.offsetWidth||window.innerWidth; cv.height=cv.offsetHeight||window.innerHeight;
+  const ctx=LPOI.ctx, cW=cv.width, cH=cv.height;
+  const dt=LPOI._lastTs?Math.min(0.08,(ts-LPOI._lastTs)/1000):0; LPOI._lastTs=ts;
+  const T=LPOI.TILE;
+
+  // Move player toward target
+  const dx=LPOI.pTargetX-LPOI.px, dy=LPOI.pTargetY-LPOI.py, dist=Math.hypot(dx,dy);
+  if(dist>4){
+    const spd=LPOI.pSpeed*dt; const move=Math.min(spd,dist);
+    const nx=LPOI.px+dx/dist*move, ny=LPOI.py+dy/dist*move;
+    if(_lpoiWalkable(nx,LPOI.py)) LPOI.px=nx; else LPOI.pTargetX=LPOI.px;
+    if(_lpoiWalkable(LPOI.px,ny)) LPOI.py=ny; else LPOI.pTargetY=LPOI.py;
+    if(dx!==0) LPOI.pFacing=dx>0?1:-1;
+  }
+
+  // Patrol enemies
+  const liveEnemies=LPOI.enemies.filter(e=>!e.defeated);
+  liveEnemies.forEach(e=>{
+    e.pa+=dt*(e.isTough?0.7:0.9);
+    e.x=e._bx+Math.cos(e.pa)*e.pr; e.y=e._by+Math.sin(e.pa)*e.pr;
+  });
+
+  // Camera
+  LPOI.camX=LPOI.px-cW/2; LPOI.camY=LPOI.py-cH/2;
+  const maxCX=LPOI.mapW*T-cW, maxCY=LPOI.mapH*T-cH;
+  LPOI.camX=Math.max(0,Math.min(maxCX,LPOI.camX));
+  LPOI.camY=Math.max(0,Math.min(maxCY,LPOI.camY));
+
+  // Background
+  ctx.fillStyle=LPOI.config?.bgCol||'#030009'; ctx.fillRect(0,0,cW,cH);
+
+  ctx.save(); ctx.translate(-LPOI.camX,-LPOI.camY);
+
+  // Tiles
+  const tx0=Math.floor(LPOI.camX/T), ty0=Math.floor(LPOI.camY/T);
+  const txN=Math.ceil((LPOI.camX+cW)/T)+1, tyN=Math.ceil((LPOI.camY+cH)/T)+1;
+  const TILE_COLS={[LT.FLOOR]:'#1a0d2e',[LT.FLOOR_ALT]:'#18092b',[LT.FLOOR_DARK]:'#0e0520',
+    [LT.WALL]:'#2d1a44',[LT.PROP]:'#160b26'};
+  const TILE_IMGS={[LT.FLOOR]:'lpoi_floor_main',[LT.FLOOR_ALT]:'lpoi_floor_alt',
+    [LT.FLOOR_DARK]:'lpoi_floor_dark',[LT.WALL]:'lpoi_wall',[LT.PROP]:'lpoi_crate'};
+  for(let ty=ty0;ty<tyN&&ty<LPOI.mapH;ty++){
+    for(let tx=tx0;tx<txN&&tx<LPOI.mapW;tx++){
+      if(tx<0||ty<0) continue;
+      const tile=LPOI.map[ty][tx]; if(tile===LT.VOID) continue;
+      const px2=tx*T, py2=ty*T;
+      const imgKey=TILE_IMGS[tile]; const img=imgKey&&LPOI._imgs[imgKey];
+      if(img){ctx.drawImage(img,px2,py2,T,T);}
+      else{ctx.fillStyle=TILE_COLS[tile]||'#111'; ctx.fillRect(px2,py2,T,T);
+        if(tile===LT.WALL){ctx.fillStyle='rgba(0,0,0,0.35)';ctx.fillRect(px2,py2+T*0.85,T,T*0.15);}
+        if(tile===LT.PROP){ctx.fillStyle='#2a1040';ctx.fillRect(px2+8,py2+8,T-16,T-16);}
+      }
+      // Grid lines on floor
+      if(tile>=LT.FLOOR&&tile<=LT.FLOOR_DARK){
+        ctx.strokeStyle='rgba(80,40,120,0.12)';ctx.lineWidth=0.5;
+        ctx.strokeRect(px2,py2,T,T);
+      }
+    }
+  }
+
+  // POIs
+  LPOI.pois.forEach(p=>{
+    if(p.interacted&&p.type!=='exit') return;
+    const sx=p.x-LPOI.camX, sy=p.y-LPOI.camY; // screen coords for distance check
+    const img=LPOI._imgs[p.type==='chest'?'lpoi_chest':p.type==='exit'?'lpoi_exit':p.type==='npc_survivor'?'lpoi_npc_survivor':null];
+    const isLocked=p.type==='chest'&&p.locked;
+    const cols={chest:'#ffdd44',exit:'#4488ff',npc_survivor:'#44ff88'};
+    const col=cols[p.type]||'#ffffff';
+    if(img){ctx.save();ctx.globalAlpha=isLocked?0.4:0.9;ctx.drawImage(img,p.x-24,p.y-24,48,48);ctx.restore();}
+    else{
+      ctx.fillStyle=isLocked?'#443300':col; ctx.beginPath();
+      ctx.arc(p.x,p.y,p.type==='exit'?14:12,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.font='bold 14px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(p.type==='chest'?'💎':p.type==='exit'?'⛵':'!',p.x,p.y);
+    }
+    // Label
+    ctx.fillStyle=isLocked?'#554400':col; ctx.font="bold 11px 'Cinzel',serif";
+    ctx.textAlign='center'; ctx.fillText(p.label,p.x,p.y-18);
+    // Pulse ring when in range
+    const distP=Math.hypot(LPOI.px-p.x,LPOI.py-p.y);
+    if(distP<72&&!isLocked){
+      ctx.strokeStyle=col+'66'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.arc(p.x,p.y,22+Math.sin(ts*0.004)*4,0,Math.PI*2); ctx.stroke();
+    }
+  });
+
+  // Enemies
+  liveEnemies.forEach(e=>{
+    const def=ENEMIES[e.key]; const col=e.isTough?'#ff6633':'#ff3355';
+    drawShipImg(e.key,ctx,e.x,e.y,Math.round(32*_uiScale()),Math.round(20*_uiScale()),true,()=>{
+      ctx.fillStyle=col; ctx.beginPath();
+      ctx.moveTo(e.x+12,e.y); ctx.lineTo(e.x-8,e.y-6); ctx.lineTo(e.x-8,e.y+6); ctx.closePath(); ctx.fill();
+    });
+    // HP bar
+    const bw=34, bh=4; const bx=e.x-bw/2, by=e.y-20;
+    ctx.fillStyle='#330011'; ctx.fillRect(bx,by,bw,bh);
+    ctx.fillStyle=e.isTough?'#ff6600':'#ff2244';
+    ctx.fillRect(bx,by,bw*(e.hp/e.maxHp),bh);
+    // Vision cone proximity
+    const distE=Math.hypot(LPOI.px-e.x,LPOI.py-e.y);
+    if(distE<90){
+      ctx.fillStyle='rgba(255,0,50,0.06)'; ctx.beginPath(); ctx.arc(e.x,e.y,85,0,Math.PI*2); ctx.fill();
+    }
+  });
+
+  // Player ship
+  const pw=Math.round(36*_uiScale()), ph=Math.round(22*_uiScale());
+  drawShipImg(G.ship?.type||'pinnace',ctx,LPOI.px,LPOI.py,pw,ph,LPOI.pFacing<0,()=>{
+    ctx.fillStyle='#88aaff'; ctx.beginPath();
+    ctx.moveTo(LPOI.px+10*LPOI.pFacing,LPOI.py);
+    ctx.lineTo(LPOI.px-7*LPOI.pFacing,LPOI.py-5);
+    ctx.lineTo(LPOI.px-7*LPOI.pFacing,LPOI.py+5); ctx.closePath(); ctx.fill();
+  });
+  // Engine glow
+  const pulse=0.7+Math.sin(ts*0.005)*0.3;
+  ctx.fillStyle=`rgba(100,60,220,${0.3*pulse})`;
+  ctx.beginPath(); ctx.arc(LPOI.px-8*LPOI.pFacing,LPOI.py,5*pulse,0,Math.PI*2); ctx.fill();
+
+  ctx.restore();
+
+  // Proximity check
+  _lpoiCheckProximity();
+
+  // Combat proximity (enemy approach)
+  if(!LPOI.interactOpen){
+    for(const e of liveEnemies){
+      if(Math.hypot(LPOI.px-e.x,LPOI.py-e.y)<52){
+        _lpoiStartCombat(e); break;
+      }
+    }
+  }
+}
+
+// ── Walkability ───────────────────────────────────────────────────────────
+function _lpoiWalkable(wx,wy){
+  const T=LPOI.TILE;
+  const tx=Math.floor(wx/T), ty=Math.floor(wy/T);
+  if(tx<0||ty<0||tx>=LPOI.mapW||ty>=LPOI.mapH) return false;
+  const tile=LPOI.map[ty][tx];
+  return tile===LT.FLOOR||tile===LT.FLOOR_ALT||tile===LT.FLOOR_DARK;
+}
+
+// ── Proximity check ───────────────────────────────────────────────────────
+function _lpoiCheckProximity(){
+  const panel=document.getElementById('lpoi-interact-panel');
+  const nameEl=document.getElementById('lpoi-interact-name');
+  const btnsEl=document.getElementById('lpoi-interact-btns');
+  // Chest: only available after all tough enemies defeated
+  const toughAlive=LPOI.enemies.some(e=>e.isTough&&!e.defeated);
+  LPOI.pois.forEach(p=>{ if(p.type==='chest') p.locked=toughAlive; });
+  // Find nearest accessible POI
+  const near=LPOI.pois.filter(p=>!p.interacted||p.type==='exit').find(p=>{
+    if(p.type==='chest'&&p.locked) return false;
+    return Math.hypot(LPOI.px-p.x,LPOI.py-p.y)<68;
+  });
+  if(near===LPOI.nearPoi) return;
+  LPOI.nearPoi=near;
+  if(!near){ panel.classList.remove('on'); LPOI.interactOpen=false; return; }
+  nameEl.textContent=near.label; btnsEl.innerHTML='';
+  const makeBtn=(txt,fn)=>{ const b=document.createElement('button');
+    b.className='btn'; b.textContent=txt; b.onclick=fn; btnsEl.appendChild(b); };
+  if(near.type==='chest'){
+    makeBtn('💎 Open Cache',()=>_lpoiOpenChest(near));
+  } else if(near.type==='exit'){
+    makeBtn('⛵ Return to Drift',()=>exitLanePoi());
+  } else if(near.type==='npc_survivor'){
+    if(!near.interacted){
+      makeBtn('💬 Speak',()=>_lpoiTalkSurvivor(near));
+    }
+  }
+  panel.classList.add('on'); LPOI.interactOpen=true;
+  _lpoiSetLog(near.type==='chest'?'Loot cache within reach.':near.type==='exit'?'Drift lane beacon active.':'Survivor is signalling.');
+}
+
+// ── Combat ────────────────────────────────────────────────────────────────
+function _lpoiStartCombat(enemy){
+  if(G._inLanePoi&&!G.tvl?._poiCombatEnemy){
+    G.tvl._poiCombatEnemy=enemy;
+    G._resumeLanePoi=true;
+    document.getElementById('ov-lane-poi').classList.remove('on');
+    if(LPOI.animId){cancelAnimationFrame(LPOI.animId);LPOI.animId=null;}
+    LPOI.active=false;
+    snd('enemy_approach',0.7);
+    setTimeout(()=>startCombat(enemy.key),200);
+  }
+}
+
+function _lpoiResumePOI(){
+  // Mark the fought enemy as defeated
+  const e=G.tvl?._poiCombatEnemy;
+  if(e) e.defeated=true;
+  if(G.tvl) G.tvl._poiCombatEnemy=null;
+  // Kill quest counter
+  if(LPOI.questId){
+    const q=G.quests?.find(q=>q.id===LPOI.questId&&q.type==='lpoi_kill');
+    if(q&&e&&e.key===q.target?.key){ q.target.killed=(q.target.killed||0)+1;
+      if(q.target.killed>=q.target.count){ q.state='ready'; addLog(`📋 ${q.title} — objectives complete. Deliver to ${G.spheres?.find(s=>s.id===q.turnin)?.n||q.turnin}.`,'gd'); }
+    }
+  }
+  document.getElementById('ov-lane-poi').classList.add('on');
+  LPOI.active=true; LPOI._lastTs=0;
+  LPOI.animId=requestAnimationFrame(lpoiRender);
+  _lpoiSetLog('Enemy destroyed. Continue exploring.');
+}
+
+// ── Chest ─────────────────────────────────────────────────────────────────
+function _lpoiOpenChest(poi){
+  poi.interacted=true;
+  document.getElementById('lpoi-interact-panel').classList.remove('on');
+  LPOI.interactOpen=false; LPOI.nearPoi=null;
+  // Collect loot — use existing loot system with a LPOI-specific enemy key placeholder
+  const lootKey='lpoi_chest';
+  // Build a basic loot pool: TS + random item
+  const gold=60+Math.floor(Math.random()*80); G.ship.gold+=gold;
+  const items=['repkit','crewmead','stimpack','phasedis','levblood','almend'];
+  const drop=items[Math.floor(Math.random()*items.length)];
+  const dropDef=ITEMS[drop];
+  let msg=`💎 Cache opened — ${gold} TS recovered`;
+  if(dropDef){ G.ship.inv=G.ship.inv||[]; G.ship.inv.push({...dropDef,id:drop,uid:'lpoi_'+Date.now()});
+    msg+=` and ${dropDef.n} recovered`; }
+  msg+='.';
+  addLog(msg,'gd'); updateUI(); snd('purchase',0.8);
+  // Quest collect completion
+  if(LPOI.questId){
+    const q=G.quests?.find(q=>q.id===LPOI.questId&&q.type==='lpoi_collect');
+    if(q){ q.state='ready'; addLog(`📋 ${q.title} — cargo secured. Deliver to ${G.spheres?.find(s=>s.id===q.turnin)?.n||q.turnin}.`,'gd'); }
+  }
+  _lpoiSetLog(msg);
+}
+
+// ── Survivor NPC ──────────────────────────────────────────────────────────
+function _lpoiTalkSurvivor(poi){
+  poi.interacted=true;
+  const q=G.quests?.find(q=>q.id===poi.questId);
+  const msg=q?`"Captain — you came. I have coordinates, and a task that needs doing. ${q.desc}"`
+    :'"Thank the stars. I have nothing to offer but this." The survivor presses a data-chip into your hand.';
+  addLog(`💬 Survivor: ${msg}`,'imp');
+  if(!q){ G.ship.gold+=(30+Math.floor(Math.random()*30)); addLog('Received 30–60 TS.','gd'); updateUI(); }
+  _lpoiSetLog('Survivor briefed.'); applyRep('ien',3);
+  document.getElementById('lpoi-interact-panel').classList.remove('on');
+  LPOI.interactOpen=false; LPOI.nearPoi=null;
+}
+
+// ── Log helper ────────────────────────────────────────────────────────────
+function _lpoiSetLog(txt){ const el=document.getElementById('lpoi-log'); if(el) el.textContent=txt; }
+
+// ── Input ─────────────────────────────────────────────────────────────────
+function _lpoiHandleClick(e){
+  if(!LPOI.active) return;
+  const cv=LPOI.canvas; if(!cv) return;
+  const r=cv.getBoundingClientRect();
+  const mx=(e.clientX-r.left)*(cv.width/r.width)+LPOI.camX;
+  const my=(e.clientY-r.top)*(cv.height/r.height)+LPOI.camY;
+  if(_lpoiWalkable(mx,my)){ LPOI.pTargetX=mx; LPOI.pTargetY=my; }
+}
+
+// ── Exit ──────────────────────────────────────────────────────────────────
+function exitLanePoi(){
+  if(!LPOI.active&&!G._inLanePoi) return;
+  LPOI.active=false;
+  if(LPOI.animId){cancelAnimationFrame(LPOI.animId);LPOI.animId=null;}
+  document.getElementById('ov-lane-poi').classList.remove('on');
+  document.getElementById('lpoi-interact-panel').classList.remove('on');
+  G._inLanePoi=false; G._resumeLanePoi=false;
+  if(G.phase==='traveling'&&G.tvl){
+    G.tvl._eventLocked=false; G.tvl.timer=_tvlStart(G.tvl.tickMs||100);
+    resumeLiveClock();
+    if(!TS.animId&&TS.active){TS._lastTs=0;TS.animId=requestAnimationFrame(tsRender);}
+    else if(!TS.active&&G.tvl) tsOpen(G.tvl.lane||getLane(G.tvl.from,G.tvl.to));
+    startTravelHum();
+  }
+  addLog('⛵ Returning to the drift lane.','');
+  snd('sphere_click',0.4);
+}
+
 function skipIntroVideo() {
   if (window._skipIntroVideoExternal) window._skipIntroVideoExternal();
 }
@@ -22823,6 +23388,16 @@ document.addEventListener('DOMContentLoaded', () => {
   if(spEl){
     spEl.addEventListener('touchend', function(e){ e.preventDefault(); _dismiss(); }, {passive:false});
     spEl.addEventListener('click', _dismiss);
+  }
+
+  // Lane POI canvas — click to move
+  const lpoiCv = document.getElementById('lpoi-canvas');
+  if(lpoiCv){
+    lpoiCv.addEventListener('click', _lpoiHandleClick);
+    lpoiCv.addEventListener('touchend', e=>{
+      e.preventDefault();
+      _lpoiHandleClick({clientX:e.changedTouches[0].clientX,clientY:e.changedTouches[0].clientY});
+    },{passive:false});
   }
 
   // Close font panel on outside click
