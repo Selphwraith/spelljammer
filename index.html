@@ -15323,7 +15323,11 @@ function showMsg(title,body,btn,cb,btn2,cb2){
   const _mb1 = document.getElementById('msgbtn');
   _mb1.textContent = btn||'Continue';
   _mb1.onclick = dismissMsg;
-  document.getElementById('msgbox').classList.add('on');
+  // doDefeat sets style.display='none' as an inline style that beats CSS class rules.
+  // Always clear it before adding .on so the box is never silently invisible.
+  const _mbEl = document.getElementById('msgbox');
+  _mbEl.style.display = '';
+  _mbEl.classList.add('on');
   G._msgCb=cb||null;
   const btn2El = document.getElementById('msgbtn2');
   if(btn2El){
@@ -16583,6 +16587,11 @@ function _applyLoad(save) {
     ['ov-cbt-inv','ov-travel-seq','ov-wpnpicker','ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','ov-localspace','ov-armory','ov-faction-rep','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay','ov-lane-poi'].forEach(id=>{
       const el=document.getElementById(id); if(el)el.classList.remove('on','active');
     });
+    // doDefeat sets msgbox.style.display='none' as an inline style which beats any CSS
+    // class rule — including #msgbox.on { display:block }.  Clear it so showMsg() works
+    // correctly on the next journey after loading from a defeat save.
+    const _mb = document.getElementById('msgbox');
+    if (_mb) { _mb.style.display = ''; }
     // Kill lane POI render loop if it was running
     if(typeof LPOI !== 'undefined'){
       LPOI.active=false;
