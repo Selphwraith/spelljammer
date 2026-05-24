@@ -16570,13 +16570,12 @@ function _applyLoad(save) {
     // Kill any pending rest-resume countdown so it can't fire 1 s after load and
     // force-start stale travel using pre-death route data via the old resumeFn closure.
     if (_restCountdownTimer) { clearInterval(_restCountdownTimer); _restCountdownTimer = null; }
-    // Reset live-clock paused state.  Without this, _clockPaused stays true from the
-    // death's pauseLiveClock() call, so the next startTravel() sees _wasClockPaused=true
-    // and skips resetLiveClock().  If _clockAccumH happened to be at its 8-hour cap
-    // (fully accumulated before death), the clock-snap in travelTick fires on the very
-    // first tick of the new journey, immediately completing watch 1 before the player
-    // sees anything.  Clearing it here lets startTravel() reset the clock normally.
-    _clockPaused = false; _clockAccumH = 0;
+    // Reset live-clock state fully — _clockAccumH, _clockStartMs, and the paused flag.
+    // Without updating _clockStartMs, the first travelTick fires before startLiveClock()
+    // refreshes it, so _clockAccumulated() uses a stale delta and can instantly report
+    // ≥8 game hours (LEG_HOURS), triggering the clock-snap on tick 1.  resetLiveClock()
+    // sets both _clockAccumH=0 and _clockStartMs=now so the new journey starts clean.
+    _clockPaused = false; resetLiveClock();
     // Kill TS render loop cleanly — doDefeat cancels animId but doesn't clear TS.active,
     // which can leave the travel sequence in a half-open state after load.
     if (typeof TS !== 'undefined') { TS.active = false; if(TS.animId){cancelAnimationFrame(TS.animId);TS.animId=null;} }
