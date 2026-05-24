@@ -22695,9 +22695,16 @@ const LPOI = {
   active:false, canvas:null, ctx:null, animId:null,
   map:null, mapW:0, mapH:0, TILE:64,
   camX:0, camY:0,
-  px:0, py:0, pTargetX:0, pTargetY:0, pFacing:1, pAngle:0,
-  pSpeed:185,
+  // position & physics — mirrors LS movement model for smooth gliding
+  px:0, py:0,
+  pvx:0, pvy:0,           // velocity
+  pAngle:0, pFacing:1,
+  pSpeed:160,             // max px/s
+  pAccel:480,             // acceleration px/s²
+  pFriction:0.88,         // per-frame friction (lower = snappier stop)
+  pTargetX:null, pTargetY:null,
   keys:{},
+  particles:[],           // engine trail VFX
   enemies:[], pois:[],
   nearPoi:null, interactOpen:false,
   config:null, questId:null, _rooms:null,
@@ -22806,7 +22813,8 @@ function enterLanePoi(laneKey, poiName){
   G._inLanePoi=true; G._lpoiLaneKey=laneKey; G._lpoiPoiName=poiName;
   LPOI.keys={};
   const cfg = LANE_POI_CONFIGS[laneKey];
-  LPOI.config=cfg; LPOI.questId=null; LPOI.enemies=[]; LPOI.pois=[]; LPOI.interactOpen=false; LPOI.nearPoi=null;
+  LPOI.config=cfg; LPOI.questId=null; LPOI.enemies=[]; LPOI.pois=[]; LPOI.particles=[];
+  LPOI.pvx=0; LPOI.pvy=0; LPOI.interactOpen=false; LPOI.nearPoi=null;
   const {map,mapW,mapH,startX,startY,rooms} = _lpoiGenMap();
   LPOI.map=map; LPOI.mapW=mapW; LPOI.mapH=mapH; LPOI._rooms=rooms;
   LPOI.px=(startX+0.5)*LPOI.TILE; LPOI.py=(startY+0.5)*LPOI.TILE;
@@ -22938,34 +22946,65 @@ function lpoiRender(ts){
   const dt=LPOI._lastTs?Math.min(0.08,(ts-LPOI._lastTs)/1000):0; LPOI._lastTs=ts;
   const T=LPOI.TILE;
 
-  // Move player — WASD or click-to-move
+  // ── Player movement — LS-style velocity + friction ───────────────────────
   const K=LPOI.keys;
-  let kax=0, kay=0;
-  if(K['w']||K['W']||K['ArrowUp'])    kay-=1;
-  if(K['s']||K['S']||K['ArrowDown'])  kay+=1;
-  if(K['a']||K['A']||K['ArrowLeft'])  kax-=1;
-  if(K['d']||K['D']||K['ArrowRight']) kax+=1;
-  const kmag=Math.hypot(kax,kay);
-  if(kmag>0.05){
-    // WASD cancels click-to-move
-    LPOI.pTargetX=LPOI.px; LPOI.pTargetY=LPOI.py;
-    const spd=LPOI.pSpeed*dt;
-    const nx=LPOI.px+kax/kmag*spd, ny=LPOI.py+kay/kmag*spd;
-    if(_lpoiWalkable(nx,LPOI.py)) LPOI.px=nx; else LPOI.pTargetX=LPOI.px;
-    if(_lpoiWalkable(LPOI.px,ny)) LPOI.py=ny; else LPOI.pTargetY=LPOI.py;
-    LPOI.pAngle=Math.atan2(kay,kax);
-    LPOI.pFacing=kax<0?-1:kax>0?1:LPOI.pFacing;
-  } else {
-    // Click-to-move
-    const dx=LPOI.pTargetX-LPOI.px, dy=LPOI.pTargetY-LPOI.py, dist=Math.hypot(dx,dy);
-    if(dist>4){
-      const spd=LPOI.pSpeed*dt; const move=Math.min(spd,dist);
-      const nx=LPOI.px+dx/dist*move, ny=LPOI.py+dy/dist*move;
-      if(_lpoiWalkable(nx,LPOI.py)) LPOI.px=nx; else LPOI.pTargetX=LPOI.px;
-      if(_lpoiWalkable(LPOI.px,ny)) LPOI.py=ny; else LPOI.pTargetY=LPOI.py;
-      if(dx!==0||dy!==0){ LPOI.pAngle=Math.atan2(dy,dx); LPOI.pFacing=dx>0?1:-1; }
+  let ax=0, ay=0;
+  if(K['w']||K['W']||K['ArrowUp'])    ay-=1;
+  if(K['s']||K['S']||K['ArrowDown'])  ay+=1;
+  if(K['a']||K['A']||K['ArrowLeft'])  ax-=1;
+  if(K['d']||K['D']||K['ArrowRight']) ax+=1;
+  const kmag=Math.hypot(ax,ay);
+  const hasKey=(kmag>0.05);
+  if(hasKey){
+    ax/=kmag; ay/=kmag;
+    LPOI.pTargetX=null; LPOI.pTargetY=null; // WASD cancels click-to-move
+    LPOI.pvx+=ax*LPOI.pAccel*dt;
+    LPOI.pvy+=ay*LPOI.pAccel*dt;
+    LPOI.pAngle=Math.atan2(ay,ax);
+    LPOI.pFacing=ax<0?-1:ax>0?1:LPOI.pFacing;
+  }
+  // Click-to-move autopilot (only when no key held)
+  if(!hasKey&&LPOI.pTargetX!==null){
+    const tdx=LPOI.pTargetX-LPOI.px, tdy=LPOI.pTargetY-LPOI.py;
+    const td=Math.hypot(tdx,tdy);
+    if(td<10){ LPOI.pTargetX=null; LPOI.pTargetY=null; LPOI.pvx*=0.5; LPOI.pvy*=0.5; }
+    else {
+      const steer=Math.min(LPOI.pSpeed, td*4);
+      LPOI.pvx+=(tdx/td)*steer*dt*10;
+      LPOI.pvy+=(tdy/td)*steer*dt*10;
+      LPOI.pAngle=Math.atan2(tdy,tdx);
+      LPOI.pFacing=tdx<0?-1:1;
     }
   }
+  // Speed cap
+  const spd=Math.hypot(LPOI.pvx,LPOI.pvy);
+  if(spd>LPOI.pSpeed){ const s=LPOI.pSpeed/spd; LPOI.pvx*=s; LPOI.pvy*=s; }
+  // Friction
+  const fric=Math.pow(LPOI.pFriction, dt*60);
+  LPOI.pvx*=fric; LPOI.pvy*=fric;
+  // Integrate position with wall collision (axis-separated)
+  const nx=LPOI.px+LPOI.pvx*dt, ny=LPOI.py+LPOI.pvy*dt;
+  if(_lpoiWalkable(nx,LPOI.py)) LPOI.px=nx; else { LPOI.pvx*=-0.15; LPOI.pTargetX=null; }
+  if(_lpoiWalkable(LPOI.px,ny)) LPOI.py=ny; else { LPOI.pvy*=-0.15; LPOI.pTargetY=null; }
+  // Engine trail particles
+  if(spd>8){
+    const trailAngle=LPOI.pAngle+Math.PI+(Math.random()-0.5)*0.35;
+    LPOI.particles.push({
+      x:LPOI.px+Math.cos(trailAngle)*10, y:LPOI.py+Math.sin(trailAngle)*10,
+      vx:Math.cos(trailAngle)*(18+Math.random()*14),
+      vy:Math.sin(trailAngle)*(18+Math.random()*14),
+      life:1, maxLife:0.45+Math.random()*0.2,
+      r:2+Math.random()*1.8,
+      col:`rgba(${110+Math.floor(Math.random()*90)},70,255,`
+    });
+  }
+  // Update + cull particles
+  LPOI.particles=LPOI.particles.filter(p=>{
+    p.x+=p.vx*dt; p.y+=p.vy*dt;
+    p.vx*=0.88; p.vy*=0.88;
+    p.life-=dt/p.maxLife;
+    return p.life>0;
+  });
 
   // Patrol enemies
   const liveEnemies=LPOI.enemies.filter(e=>!e.defeated);
@@ -23056,6 +23095,14 @@ function lpoiRender(ts){
     }
   });
 
+  // ── Engine trail particles ──
+  LPOI.particles.forEach(p=>{
+    ctx.globalAlpha=Math.max(0,p.life)*0.65;
+    ctx.fillStyle=p.col+(Math.floor(p.life*200).toString(16).padStart(2,'0'))+')';
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2); ctx.fill();
+  });
+  ctx.globalAlpha=1;
+
   // Player ship — rotated to face movement direction
   const pw=Math.round(36*_uiScale()), ph=Math.round(22*_uiScale());
   ctx.save(); ctx.translate(LPOI.px,LPOI.py); ctx.rotate(LPOI.pAngle);
@@ -23070,6 +23117,18 @@ function lpoiRender(ts){
   const glowAngle=LPOI.pAngle+Math.PI;
   ctx.fillStyle=`rgba(100,60,220,${0.3*pulse})`;
   ctx.beginPath(); ctx.arc(LPOI.px+Math.cos(glowAngle)*8,LPOI.py+Math.sin(glowAngle)*8,5*pulse,0,Math.PI*2); ctx.fill();
+
+  // Click-to-move target indicator
+  if(LPOI.pTargetX!==null){
+    const tpulse=0.5+0.5*Math.sin(ts*0.008);
+    ctx.strokeStyle=`rgba(100,180,255,${0.3+0.4*tpulse})`;
+    ctx.lineWidth=1.5; ctx.setLineDash([3,5]);
+    ctx.beginPath(); ctx.arc(LPOI.pTargetX,LPOI.pTargetY,7+tpulse*4,0,Math.PI*2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.strokeStyle='rgba(80,140,220,0.15)'; ctx.lineWidth=1; ctx.setLineDash([4,8]);
+    ctx.beginPath(); ctx.moveTo(LPOI.px,LPOI.py); ctx.lineTo(LPOI.pTargetX,LPOI.pTargetY); ctx.stroke();
+    ctx.setLineDash([]);
+  }
 
   ctx.restore();
 
@@ -23152,8 +23211,7 @@ function _lpoiResumePOI(){
       if(q.target.killed>=q.target.count){ q.state='ready'; addLog(`📋 ${q.title} — objectives complete. Deliver to ${G.spheres?.find(s=>s.id===q.turnin)?.n||q.turnin}.`,'gd'); }
     }
   }
-  LPOI.keys={};
-  // endCbt returns early for LPOI combat without resetting G.phase — do it here
+  LPOI.keys={}; LPOI.particles=[]; LPOI.pvx=0; LPOI.pvy=0;
   // so that exitLanePoi's guard (G.phase==='traveling') correctly resumes travel
   // when the player clicks "Return to Drift" after the fight.
   G.phase = 'traveling';
@@ -23217,7 +23275,7 @@ function _lpoiHandleClick(e){
 // ── Exit ──────────────────────────────────────────────────────────────────
 function exitLanePoi(){
   if(!LPOI.active&&!G._inLanePoi) return;
-  LPOI.active=false; LPOI.keys={};
+  LPOI.active=false; LPOI.keys={}; LPOI.particles=[];
   if(LPOI.animId){cancelAnimationFrame(LPOI.animId);LPOI.animId=null;}
   document.getElementById('ov-lane-poi').classList.remove('on');
   document.getElementById('lpoi-interact-panel').classList.remove('on');
