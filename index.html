@@ -22943,6 +22943,28 @@ function _lpoiGenMap(){
 }
 
 // ── Entity placement ──────────────────────────────────────────────────────
+// Find a walkable world-coord spawn point inside a room, avoiding walls/props.
+// Tries up to `attempts` random interior tiles, falls back to room centre.
+function _lpoiFindSpawn(r, T, attempts=12){
+  for(let i=0;i<attempts;i++){
+    const tx=r.x+1+Math.floor(Math.random()*(r.w-2));
+    const ty=r.y+1+Math.floor(Math.random()*(r.h-2));
+    const wx=tx*T+T/2, wy=ty*T+T/2;
+    if(_lpoiWalkable(wx,wy)) return {wx,wy};
+  }
+  // Fallback: scan every interior tile for the first walkable one
+  for(let ty=r.y+1;ty<r.y+r.h-1;ty++){
+    for(let tx=r.x+1;tx<r.x+r.w-1;tx++){
+      const wx=tx*T+T/2, wy=ty*T+T/2;
+      if(_lpoiWalkable(wx,wy)) return {wx,wy};
+    }
+  }
+  // Last resort: room centre (clear it on the map directly)
+  const cx=r.x+Math.floor(r.w/2), cy=r.y+Math.floor(r.h/2);
+  if(LPOI.map[cy]&&LPOI.map[cy][cx]!==undefined) LPOI.map[cy][cx]=LT.FLOOR;
+  return {wx:cx*T+T/2, wy:cy*T+T/2};
+}
+
 function _lpoiPlaceEntities(rooms,cfg){
   const T=LPOI.TILE;
   const pool=[...cfg.enemies];
@@ -22952,8 +22974,7 @@ function _lpoiPlaceEntities(rooms,cfg){
     for(let e=0;e<n&&pool.length>0;e++){
       const key=pool.splice(Math.floor(Math.random()*pool.length),1)[0];
       const def=ENM[key]; if(!def) continue;
-      const ex=(r.x+1+Math.floor(Math.random()*(r.w-2)))*T+T/2;
-      const ey=(r.y+1+Math.floor(Math.random()*(r.h-2)))*T+T/2;
+      const {wx:ex,wy:ey}=_lpoiFindSpawn(r,T);
       LPOI.enemies.push({
         x:ex, y:ey, _bx:ex, _by:ey, key, hp:def.hp, maxHp:def.hp,
         vx:0, vy:0, angle:Math.random()*Math.PI*2,
@@ -22970,7 +22991,7 @@ function _lpoiPlaceEntities(rooms,cfg){
   // Last room — tough enemy
   const lr=rooms[rooms.length-1]; const tkey=cfg.toughEnemy; const tdef=ENM[tkey];
   if(tdef){
-    const tx2=(lr.x+Math.floor(lr.w/2))*T+T/2, ty2=(lr.y+Math.floor(lr.h/2))*T+T/2;
+    const {wx:tx2,wy:ty2}=_lpoiFindSpawn(lr,T);
     LPOI.enemies.push({
       x:tx2, y:ty2, _bx:tx2, _by:ty2, key:tkey, hp:tdef.hp, maxHp:tdef.hp,
       vx:0, vy:0, angle:Math.random()*Math.PI*2,
