@@ -22762,7 +22762,7 @@ function _lpoiTriggerCheck(segEnd){
   // even if the roll misses — but do NOT set _eventLocked until the roll succeeds.
   G.tvl._lpoiOffered = true;
   // 12% chance per lane crossing
-  if(Math.random() > 0.12) return;
+  if(Math.random() > 0.99) return;
   // Roll succeeded — now lock travel and show the offer
   G.tvl._eventLocked = true;
   _tvlStop(); if(G.tvl) G.tvl.timer=null;
