@@ -19976,6 +19976,22 @@ document.addEventListener('keyup', e => {
   delete LS.keys[e.key];
 });
 
+// ── LPOI keyboard movement — mirrors LS pattern ───────────────────────────
+document.addEventListener('keydown', e => {
+  if(!document.getElementById('ov-lane-poi')?.classList.contains('on')) return;
+  if(LPOI.interactOpen) return;
+  LPOI.keys[e.key] = true;
+  if(e.key==='Escape'){
+    const panel=document.getElementById('lpoi-interact-panel');
+    if(panel&&panel.classList.contains('on')){ panel.classList.remove('on'); LPOI.interactOpen=false; LPOI.nearPoi=null; }
+  }
+  e.stopPropagation();
+});
+document.addEventListener('keyup', e => {
+  if(!document.getElementById('ov-lane-poi')?.classList.contains('on')) return;
+  delete LPOI.keys[e.key];
+});
+
 // ── CLICK-TO-MOVE ON CANVAS ───────────────────────────────────────────────
 document.getElementById('ls-canvas').addEventListener('click', e => {
   if(!document.getElementById('ov-localspace')?.classList.contains('on')) return;
@@ -22679,8 +22695,9 @@ const LPOI = {
   active:false, canvas:null, ctx:null, animId:null,
   map:null, mapW:0, mapH:0, TILE:64,
   camX:0, camY:0,
-  px:0, py:0, pTargetX:0, pTargetY:0, pFacing:1,
+  px:0, py:0, pTargetX:0, pTargetY:0, pFacing:1, pAngle:0,
   pSpeed:185,
+  keys:{},
   enemies:[], pois:[],
   nearPoi:null, interactOpen:false,
   config:null, questId:null, _rooms:null,
@@ -22783,9 +22800,11 @@ function _lpoiTriggerCheck(segEnd){
 function enterLanePoi(laneKey, poiName){
   _tvlStop(); if(G.tvl){G.tvl.timer=null;G.tvl._eventLocked=true;}
   pauseLiveClock();
-  if(TS.animId){cancelAnimationFrame(TS.animId);TS.animId=null;}
+  // Close the chart overlay so it doesn't intercept pointer events behind ov-lane-poi
+  tsClose();
   stopTravelHum();
   G._inLanePoi=true; G._lpoiLaneKey=laneKey; G._lpoiPoiName=poiName;
+  LPOI.keys={};
   const cfg = LANE_POI_CONFIGS[laneKey];
   LPOI.config=cfg; LPOI.questId=null; LPOI.enemies=[]; LPOI.pois=[]; LPOI.interactOpen=false; LPOI.nearPoi=null;
   const {map,mapW,mapH,startX,startY,rooms} = _lpoiGenMap();
@@ -22919,14 +22938,33 @@ function lpoiRender(ts){
   const dt=LPOI._lastTs?Math.min(0.08,(ts-LPOI._lastTs)/1000):0; LPOI._lastTs=ts;
   const T=LPOI.TILE;
 
-  // Move player toward target
-  const dx=LPOI.pTargetX-LPOI.px, dy=LPOI.pTargetY-LPOI.py, dist=Math.hypot(dx,dy);
-  if(dist>4){
-    const spd=LPOI.pSpeed*dt; const move=Math.min(spd,dist);
-    const nx=LPOI.px+dx/dist*move, ny=LPOI.py+dy/dist*move;
+  // Move player — WASD or click-to-move
+  const K=LPOI.keys;
+  let kax=0, kay=0;
+  if(K['w']||K['W']||K['ArrowUp'])    kay-=1;
+  if(K['s']||K['S']||K['ArrowDown'])  kay+=1;
+  if(K['a']||K['A']||K['ArrowLeft'])  kax-=1;
+  if(K['d']||K['D']||K['ArrowRight']) kax+=1;
+  const kmag=Math.hypot(kax,kay);
+  if(kmag>0.05){
+    // WASD cancels click-to-move
+    LPOI.pTargetX=LPOI.px; LPOI.pTargetY=LPOI.py;
+    const spd=LPOI.pSpeed*dt;
+    const nx=LPOI.px+kax/kmag*spd, ny=LPOI.py+kay/kmag*spd;
     if(_lpoiWalkable(nx,LPOI.py)) LPOI.px=nx; else LPOI.pTargetX=LPOI.px;
     if(_lpoiWalkable(LPOI.px,ny)) LPOI.py=ny; else LPOI.pTargetY=LPOI.py;
-    if(dx!==0) LPOI.pFacing=dx>0?1:-1;
+    LPOI.pAngle=Math.atan2(kay,kax);
+    LPOI.pFacing=kax<0?-1:kax>0?1:LPOI.pFacing;
+  } else {
+    // Click-to-move
+    const dx=LPOI.pTargetX-LPOI.px, dy=LPOI.pTargetY-LPOI.py, dist=Math.hypot(dx,dy);
+    if(dist>4){
+      const spd=LPOI.pSpeed*dt; const move=Math.min(spd,dist);
+      const nx=LPOI.px+dx/dist*move, ny=LPOI.py+dy/dist*move;
+      if(_lpoiWalkable(nx,LPOI.py)) LPOI.px=nx; else LPOI.pTargetX=LPOI.px;
+      if(_lpoiWalkable(LPOI.px,ny)) LPOI.py=ny; else LPOI.pTargetY=LPOI.py;
+      if(dx!==0||dy!==0){ LPOI.pAngle=Math.atan2(dy,dx); LPOI.pFacing=dx>0?1:-1; }
+    }
   }
 
   // Patrol enemies
@@ -23018,18 +23056,20 @@ function lpoiRender(ts){
     }
   });
 
-  // Player ship
+  // Player ship — rotated to face movement direction
   const pw=Math.round(36*_uiScale()), ph=Math.round(22*_uiScale());
-  drawShipImg(G.ship?.type||'pinnace',ctx,LPOI.px,LPOI.py,pw,ph,LPOI.pFacing<0,()=>{
+  ctx.save(); ctx.translate(LPOI.px,LPOI.py); ctx.rotate(LPOI.pAngle);
+  ctx.shadowColor='#88aaff'; ctx.shadowBlur=18;
+  drawShipImg(G.ship?.type||'pinnace',ctx,0,0,pw,ph,false,()=>{
     ctx.fillStyle='#88aaff'; ctx.beginPath();
-    ctx.moveTo(LPOI.px+10*LPOI.pFacing,LPOI.py);
-    ctx.lineTo(LPOI.px-7*LPOI.pFacing,LPOI.py-5);
-    ctx.lineTo(LPOI.px-7*LPOI.pFacing,LPOI.py+5); ctx.closePath(); ctx.fill();
+    ctx.moveTo(10,0); ctx.lineTo(-7,-5); ctx.lineTo(-7,5); ctx.closePath(); ctx.fill();
   });
+  ctx.shadowBlur=0; ctx.restore();
   // Engine glow
   const pulse=0.7+Math.sin(ts*0.005)*0.3;
+  const glowAngle=LPOI.pAngle+Math.PI;
   ctx.fillStyle=`rgba(100,60,220,${0.3*pulse})`;
-  ctx.beginPath(); ctx.arc(LPOI.px-8*LPOI.pFacing,LPOI.py,5*pulse,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(LPOI.px+Math.cos(glowAngle)*8,LPOI.py+Math.sin(glowAngle)*8,5*pulse,0,Math.PI*2); ctx.fill();
 
   ctx.restore();
 
@@ -23112,6 +23152,7 @@ function _lpoiResumePOI(){
       if(q.target.killed>=q.target.count){ q.state='ready'; addLog(`📋 ${q.title} — objectives complete. Deliver to ${G.spheres?.find(s=>s.id===q.turnin)?.n||q.turnin}.`,'gd'); }
     }
   }
+  LPOI.keys={};
   document.getElementById('ov-lane-poi').classList.add('on');
   LPOI.active=true; LPOI._lastTs=0;
   LPOI.animId=requestAnimationFrame(lpoiRender);
@@ -23172,7 +23213,7 @@ function _lpoiHandleClick(e){
 // ── Exit ──────────────────────────────────────────────────────────────────
 function exitLanePoi(){
   if(!LPOI.active&&!G._inLanePoi) return;
-  LPOI.active=false;
+  LPOI.active=false; LPOI.keys={};
   if(LPOI.animId){cancelAnimationFrame(LPOI.animId);LPOI.animId=null;}
   document.getElementById('ov-lane-poi').classList.remove('on');
   document.getElementById('lpoi-interact-panel').classList.remove('on');
