@@ -23153,6 +23153,10 @@ function _lpoiResumePOI(){
     }
   }
   LPOI.keys={};
+  // endCbt returns early for LPOI combat without resetting G.phase — do it here
+  // so that exitLanePoi's guard (G.phase==='traveling') correctly resumes travel
+  // when the player clicks "Return to Drift" after the fight.
+  G.phase = 'traveling';
   document.getElementById('ov-lane-poi').classList.add('on');
   LPOI.active=true; LPOI._lastTs=0;
   LPOI.animId=requestAnimationFrame(lpoiRender);
@@ -23218,6 +23222,9 @@ function exitLanePoi(){
   document.getElementById('ov-lane-poi').classList.remove('on');
   document.getElementById('lpoi-interact-panel').classList.remove('on');
   G._inLanePoi=false; G._resumeLanePoi=false;
+  // Restore traveling phase — it may still be 'combat' if the player fought and
+  // returned to the POI without endCbt having a chance to reset it.
+  if(G.tvl) G.phase='traveling';
   if(G.phase==='traveling'&&G.tvl){
     G.tvl._eventLocked=false; G.tvl.timer=_tvlStart(G.tvl.tickMs||100);
     resumeLiveClock();
