@@ -22850,7 +22850,7 @@ function _lpoiPlaceEntities(rooms,cfg){
     const r=rooms[i]; const n=1+Math.floor(Math.random()*2);
     for(let e=0;e<n&&pool.length>0;e++){
       const key=pool.splice(Math.floor(Math.random()*pool.length),1)[0];
-      const def=ENEMIES[key]; if(!def) continue;
+      const def=ENM[key]; if(!def) continue;
       const ex=(r.x+1+Math.floor(Math.random()*(r.w-2)))*T+T/2;
       const ey=(r.y+1+Math.floor(Math.random()*(r.h-2)))*T+T/2;
       LPOI.enemies.push({x:ex,y:ey,_bx:ex,_by:ey,key,hp:def.hp,maxHp:def.hp,
@@ -22859,7 +22859,7 @@ function _lpoiPlaceEntities(rooms,cfg){
     }
   }
   // Last room — tough enemy
-  const lr=rooms[rooms.length-1]; const tkey=cfg.toughEnemy; const tdef=ENEMIES[tkey];
+  const lr=rooms[rooms.length-1]; const tkey=cfg.toughEnemy; const tdef=ENM[tkey];
   if(tdef){
     const tx2=(lr.x+Math.floor(lr.w/2))*T+T/2, ty2=(lr.y+Math.floor(lr.h/2))*T+T/2;
     LPOI.enemies.push({x:tx2,y:ty2,_bx:tx2,_by:ty2,key:tkey,hp:tdef.hp,maxHp:tdef.hp,
@@ -22880,7 +22880,7 @@ function _lpoiGenerateQuest(cfg,laneKey,rooms){
   const T=LPOI.TILE;
   let quest;
   if(qType==='kill'){
-    const ekey=cfg.enemies[0]; const edef=ENEMIES[ekey]; const cnt=2+Math.floor(Math.random()*2);
+    const ekey=cfg.enemies[0]; const edef=ENM[ekey]; const cnt=2+Math.floor(Math.random()*2);
     quest={id:qId,type:'lpoi_kill',state:'active',title:'Clear the Wreckage',
       desc:`Eliminate ${cnt} ${edef?.sub||'hostiles'} found in the drift site, then return to ${cfg.questSpheres.find(s=>s!==turnin)||turnin}.`,
       target:{key:ekey,count:cnt,killed:0},turnin,reward:{gold:80+Math.floor(Math.random()*60)},source:'lpoi',laneKey};
@@ -22992,7 +22992,7 @@ function lpoiRender(ts){
 
   // Enemies
   liveEnemies.forEach(e=>{
-    const def=ENEMIES[e.key]; const col=e.isTough?'#ff6633':'#ff3355';
+    const def=ENM[e.key]; const col=e.isTough?'#ff6633':'#ff3355';
     drawShipImg(e.key,ctx,e.x,e.y,Math.round(32*_uiScale()),Math.round(20*_uiScale()),true,()=>{
       ctx.fillStyle=col; ctx.beginPath();
       ctx.moveTo(e.x+12,e.y); ctx.lineTo(e.x-8,e.y-6); ctx.lineTo(e.x-8,e.y+6); ctx.closePath(); ctx.fill();
