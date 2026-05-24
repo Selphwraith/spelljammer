@@ -1192,6 +1192,25 @@ body {
   pointer-events:none;
 }
 
+/* ── LPOI virtual joystick (mobile) ── */
+#lpoi-joystick-zone {
+  position:absolute; bottom:60px; left:20px;
+  width:100px; height:100px; z-index:20;
+  display:none;
+  touch-action:none;
+}
+#lpoi-joystick-base {
+  width:100px; height:100px; border-radius:50%;
+  background:rgba(170,100,255,0.08); border:1px solid rgba(170,100,255,0.22);
+}
+#lpoi-joystick-knob {
+  position:absolute; top:50%; left:50%;
+  width:36px; height:36px; border-radius:50%;
+  background:rgba(170,100,255,0.28); border:1px solid rgba(170,100,255,0.5);
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+}
+
 /* ── NPC Hail dialog ── */
 #ls-npc-dialog {
   position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
@@ -2705,6 +2724,12 @@ body {
   <div id="lpoi-interact-panel">
     <div id="lpoi-interact-name"></div>
     <div id="lpoi-interact-btns"></div>
+  </div>
+  <!-- Mobile virtual joystick -->
+  <div id="lpoi-joystick-zone">
+    <div id="lpoi-joystick-base">
+      <div id="lpoi-joystick-knob"></div>
+    </div>
   </div>
 </div>
 
@@ -20096,6 +20121,41 @@ document.getElementById('ls-canvas').addEventListener('click', e => {
     if(d>4) FD.pAngle=Math.atan2(dy,dx);
   }
 })();
+
+// ── LPOI (Lane POI) MOBILE JOYSTICK ─────────────────────────────────────
+(function() {
+  const zone = document.getElementById('lpoi-joystick-zone');
+  const knob = document.getElementById('lpoi-joystick-knob');
+  if(!zone || !knob) return;
+  let startX=0, startY=0, _active=false;
+  const R=32;
+  zone.addEventListener('touchstart', e=>{
+    e.preventDefault(); _active=true; LPOI.joystickActive=true;
+    const rect=zone.getBoundingClientRect();
+    startX=rect.left+rect.width/2; startY=rect.top+rect.height/2;
+    _updateLpoiKnob(e.touches[0].clientX, e.touches[0].clientY);
+  },{passive:false});
+  zone.addEventListener('touchmove', e=>{
+    e.preventDefault(); if(!_active) return;
+    _updateLpoiKnob(e.touches[0].clientX, e.touches[0].clientY);
+  },{passive:false});
+  zone.addEventListener('touchend', ()=>{
+    _active=false; LPOI.joystickActive=false; LPOI.joystickX=0; LPOI.joystickY=0;
+    knob.style.transform='translate(-50%,-50%)';
+  });
+  zone.addEventListener('touchcancel', ()=>{
+    _active=false; LPOI.joystickActive=false; LPOI.joystickX=0; LPOI.joystickY=0;
+    knob.style.transform='translate(-50%,-50%)';
+  });
+  function _updateLpoiKnob(cx,cy){
+    let dx=cx-startX, dy=cy-startY;
+    const d=Math.sqrt(dx*dx+dy*dy);
+    if(d>R){dx*=R/d;dy*=R/d;}
+    knob.style.transform=`translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+    LPOI.joystickX=dx/R; LPOI.joystickY=dy/R;
+    if(d>4) LPOI.pAngle=Math.atan2(dy,dx);
+  }
+})();
 // Must run after _lsDefinePois sets up the pois array
 function _lsInitPatrolBases() {
   LS.pois.forEach(p => {
@@ -22704,6 +22764,7 @@ const LPOI = {
   pFriction:0.88,         // per-frame friction (lower = snappier stop)
   pTargetX:null, pTargetY:null,
   keys:{},
+  joystickActive:false, joystickX:0, joystickY:0,
   particles:[],           // engine trail VFX
   enemies:[], pois:[],
   nearPoi:null, interactOpen:false,
@@ -22814,7 +22875,11 @@ function enterLanePoi(laneKey, poiName){
   LPOI.keys={};
   const cfg = LANE_POI_CONFIGS[laneKey];
   LPOI.config=cfg; LPOI.questId=null; LPOI.enemies=[]; LPOI.pois=[]; LPOI.particles=[];
-  LPOI.pvx=0; LPOI.pvy=0; LPOI.interactOpen=false; LPOI.nearPoi=null;
+  LPOI.pvx=0; LPOI.pvy=0; LPOI.joystickActive=false; LPOI.joystickX=0; LPOI.joystickY=0;
+  LPOI.interactOpen=false; LPOI.nearPoi=null;
+  // Show joystick on touch devices
+  const _lpoiJz=document.getElementById('lpoi-joystick-zone');
+  if(_lpoiJz&&('ontouchstart' in window||navigator.maxTouchPoints>0)) _lpoiJz.style.display='block';
   const {map,mapW,mapH,startX,startY,rooms} = _lpoiGenMap();
   LPOI.map=map; LPOI.mapW=mapW; LPOI.mapH=mapH; LPOI._rooms=rooms;
   LPOI.px=(startX+0.5)*LPOI.TILE; LPOI.py=(startY+0.5)*LPOI.TILE;
@@ -22969,6 +23034,7 @@ function lpoiRender(ts){
   if(K['s']||K['S']||K['ArrowDown'])  ay+=1;
   if(K['a']||K['A']||K['ArrowLeft'])  ax-=1;
   if(K['d']||K['D']||K['ArrowRight']) ax+=1;
+  if(LPOI.joystickActive){ ax+=LPOI.joystickX; ay+=LPOI.joystickY; }
   const kmag=Math.hypot(ax,ay);
   const hasKey=(kmag>0.05);
   if(hasKey){
@@ -23022,12 +23088,9 @@ function lpoiRender(ts){
     return p.life>0;
   });
 
-  // Patrol enemies
+
+  // Live enemies (used by AI, draw, and combat check)
   const liveEnemies=LPOI.enemies.filter(e=>!e.defeated);
-  liveEnemies.forEach(e=>{
-    e.pa+=dt*(e.isTough?0.7:0.9);
-    e.x=e._bx+Math.cos(e.pa)*e.pr; e.y=e._by+Math.sin(e.pa)*e.pr;
-  });
 
   // Camera
   LPOI.camX=LPOI.px-cW/2; LPOI.camY=LPOI.py-cH/2;
@@ -23230,7 +23293,7 @@ function lpoiRender(ts){
     ctx.setLineDash([]);
   }
 
-  ctx.restore(); // end world transform
+  ctx.restore(); // end world transform — MUST be after all world-space draws
 
   // Proximity check for POI interact panel
   _lpoiCheckProximity();
@@ -23312,6 +23375,11 @@ function _lpoiResumePOI(){
     }
   }
   LPOI.keys={}; LPOI.particles=[]; LPOI.pvx=0; LPOI.pvy=0;
+  LPOI.joystickActive=false; LPOI.joystickX=0; LPOI.joystickY=0;
+  const _lpoiJzR=document.getElementById('lpoi-joystick-zone');
+  if(_lpoiJzR&&('ontouchstart' in window||navigator.maxTouchPoints>0)) _lpoiJzR.style.display='block';
+  const _lpoiJkR=document.getElementById('lpoi-joystick-knob');
+  if(_lpoiJkR) _lpoiJkR.style.transform='translate(-50%,-50%)';
   // so that exitLanePoi's guard (G.phase==='traveling') correctly resumes travel
   // when the player clicks "Return to Drift" after the fight.
   G.phase = 'traveling';
@@ -23376,6 +23444,11 @@ function _lpoiHandleClick(e){
 function exitLanePoi(){
   if(!LPOI.active&&!G._inLanePoi) return;
   LPOI.active=false; LPOI.keys={}; LPOI.particles=[];
+  LPOI.joystickActive=false; LPOI.joystickX=0; LPOI.joystickY=0;
+  const _lpoiJzE=document.getElementById('lpoi-joystick-zone');
+  if(_lpoiJzE){ _lpoiJzE.style.display='none'; }
+  const _lpoiJkE=document.getElementById('lpoi-joystick-knob');
+  if(_lpoiJkE) _lpoiJkE.style.transform='translate(-50%,-50%)';
   if(LPOI.animId){cancelAnimationFrame(LPOI.animId);LPOI.animId=null;}
   document.getElementById('ov-lane-poi').classList.remove('on');
   document.getElementById('lpoi-interact-panel').classList.remove('on');
