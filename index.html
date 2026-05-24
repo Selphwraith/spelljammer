@@ -22889,17 +22889,33 @@ function _lpoiPlaceEntities(rooms,cfg){
       const def=ENM[key]; if(!def) continue;
       const ex=(r.x+1+Math.floor(Math.random()*(r.w-2)))*T+T/2;
       const ey=(r.y+1+Math.floor(Math.random()*(r.h-2)))*T+T/2;
-      LPOI.enemies.push({x:ex,y:ey,_bx:ex,_by:ey,key,hp:def.hp,maxHp:def.hp,
-        pa:Math.random()*Math.PI*2,pr:35+Math.random()*25,spd:55+Math.random()*35,
-        defeated:false,isTough:false});
+      LPOI.enemies.push({
+        x:ex, y:ey, _bx:ex, _by:ey, key, hp:def.hp, maxHp:def.hp,
+        vx:0, vy:0, angle:Math.random()*Math.PI*2,
+        speed: 55+Math.random()*35,
+        state:'wander', alertTimer:0,
+        wanderAngle:Math.random()*Math.PI*2, wanderTimer:1+Math.random()*2,
+        visionRange:160, aggroRange:52, visionCone:Math.PI*0.42,
+        particles:[],
+        defeated:false, isTough:false,
+        _blinkT:0,
+      });
     }
   }
   // Last room — tough enemy
   const lr=rooms[rooms.length-1]; const tkey=cfg.toughEnemy; const tdef=ENM[tkey];
   if(tdef){
     const tx2=(lr.x+Math.floor(lr.w/2))*T+T/2, ty2=(lr.y+Math.floor(lr.h/2))*T+T/2;
-    LPOI.enemies.push({x:tx2,y:ty2,_bx:tx2,_by:ty2,key:tkey,hp:tdef.hp,maxHp:tdef.hp,
-      pa:0,pr:50,spd:65,defeated:false,isTough:true});
+    LPOI.enemies.push({
+      x:tx2, y:ty2, _bx:tx2, _by:ty2, key:tkey, hp:tdef.hp, maxHp:tdef.hp,
+      vx:0, vy:0, angle:Math.random()*Math.PI*2,
+      speed:68, state:'wander', alertTimer:0,
+      wanderAngle:Math.random()*Math.PI*2, wanderTimer:1+Math.random()*2,
+      visionRange:210, aggroRange:60, visionCone:Math.PI*0.5,
+      particles:[],
+      defeated:false, isTough:true,
+      _blinkT:0,
+    });
   }
   // Chest — in last room, right side, only unlockable after tough enemy down
   LPOI.pois.push({type:'chest',interacted:false,locked:true,
@@ -23076,26 +23092,110 @@ function lpoiRender(ts){
     }
   });
 
-  // Enemies
+  // ── Enemy AI update + draw ────────────────────────────────────────────────
   liveEnemies.forEach(e=>{
-    const def=ENM[e.key]; const col=e.isTough?'#ff6633':'#ff3355';
-    drawShipImg(e.key,ctx,e.x,e.y,Math.round(32*_uiScale()),Math.round(20*_uiScale()),true,()=>{
-      ctx.fillStyle=col; ctx.beginPath();
-      ctx.moveTo(e.x+12,e.y); ctx.lineTo(e.x-8,e.y-6); ctx.lineTo(e.x-8,e.y+6); ctx.closePath(); ctx.fill();
+    e._blinkT=(e._blinkT||0)+dt;
+
+    // — AI: vision cone + state machine —
+    const edx=LPOI.px-e.x, edy=LPOI.py-e.y;
+    const edist=Math.hypot(edx,edy);
+    let canSee=edist<e.aggroRange;
+    if(!canSee&&edist<e.visionRange){
+      const toPlayer=Math.atan2(edy,edx);
+      let diff=toPlayer-e.angle;
+      while(diff>Math.PI)  diff-=Math.PI*2;
+      while(diff<-Math.PI) diff+=Math.PI*2;
+      canSee=Math.abs(diff)<e.visionCone;
+    }
+    if(canSee){ e.state='chase'; e.alertTimer=2.5; }
+    else if(e.alertTimer>0){ e.alertTimer-=dt; if(e.alertTimer<=0) e.state='wander'; }
+    else e.state='wander';
+
+    // — Movement —
+    if(e.state==='chase'){
+      if(edist>1){ e.vx+=(edx/edist)*e.speed*dt*2.8; e.vy+=(edy/edist)*e.speed*dt*2.8; }
+      const es=Math.hypot(e.vx,e.vy);
+      if(es>e.speed){ e.vx*=e.speed/es; e.vy*=e.speed/es; }
+      e.angle=Math.atan2(edy,edx);
+    } else {
+      e.wanderTimer-=dt;
+      if(e.wanderTimer<=0){
+        e.wanderAngle=Math.random()*Math.PI*2;
+        e.wanderTimer=2+Math.random()*3;
+        e.angle=e.wanderAngle;
+      }
+      e.vx+=Math.cos(e.wanderAngle)*e.speed*0.28*dt;
+      e.vy+=Math.sin(e.wanderAngle)*e.speed*0.28*dt;
+      const es=Math.hypot(e.vx,e.vy), maxW=e.speed*0.45;
+      if(es>maxW){ e.vx*=maxW/es; e.vy*=maxW/es; }
+      const ef=Math.pow(0.91,dt*60);
+      e.vx*=ef; e.vy*=ef;
+      if(e.vx||e.vy) e.angle=Math.atan2(e.vy||0.001,e.vx||0.001);
+    }
+    // Wall collision — axis separated
+    const enx=e.x+e.vx*dt, eny=e.y+e.vy*dt;
+    if(_lpoiWalkable(enx,e.y)) e.x=enx; else { e.vx*=-0.5; e.wanderAngle+=Math.PI; }
+    if(_lpoiWalkable(e.x,eny)) e.y=eny; else { e.vy*=-0.5; e.wanderAngle+=Math.PI*0.5; }
+
+    // — Engine trail particles —
+    const espd=Math.hypot(e.vx,e.vy);
+    if(espd>6&&Math.random()<0.6){
+      const eTrail=e.angle+Math.PI+(Math.random()-0.5)*0.4;
+      const ecol=e.isTough?`rgba(255,${80+Math.floor(Math.random()*50)},20,`
+                          :`rgba(255,${20+Math.floor(Math.random()*40)},60,`;
+      e.particles.push({
+        x:e.x+Math.cos(eTrail)*10, y:e.y+Math.sin(eTrail)*10,
+        vx:Math.cos(eTrail)*(15+Math.random()*12), vy:Math.sin(eTrail)*(15+Math.random()*12),
+        life:1, maxLife:0.35+Math.random()*0.2, r:1.8+Math.random()*1.5, col:ecol
+      });
+    }
+    e.particles=e.particles.filter(p=>{
+      p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=0.87; p.vy*=0.87;
+      p.life-=dt/p.maxLife; return p.life>0;
     });
-    // HP bar
-    const bw=34, bh=4; const bx=e.x-bw/2, by=e.y-20;
+    e.particles.forEach(p=>{
+      ctx.globalAlpha=Math.max(0,p.life)*0.6;
+      ctx.fillStyle=p.col+(Math.floor(p.life*180).toString(16).padStart(2,'0'))+')';
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2); ctx.fill();
+    });
+    ctx.globalAlpha=1;
+
+    // — Draw: vision cone —
+    const ec=e.isTough?'#ff6633':'#ff3355';
+    if(e.state==='wander'){
+      ctx.save(); ctx.globalAlpha=0.07; ctx.fillStyle=ec;
+      ctx.beginPath(); ctx.moveTo(e.x,e.y);
+      ctx.arc(e.x,e.y,e.visionRange,e.angle-e.visionCone,e.angle+e.visionCone);
+      ctx.closePath(); ctx.fill(); ctx.restore();
+    } else {
+      ctx.save(); ctx.globalAlpha=0.28+0.22*Math.sin(ts*0.006);
+      ctx.strokeStyle='#ff4444'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(e.x,e.y,22,0,Math.PI*2); ctx.stroke();
+      ctx.restore();
+    }
+
+    // — Draw: ship rotated to facing angle —
+    const blinkA=e.state==='chase'?(0.6+0.4*Math.sin(ts*0.005+e._blinkT)):1;
+    ctx.save(); ctx.translate(e.x,e.y); ctx.rotate(e.angle);
+    ctx.globalAlpha=blinkA;
+    ctx.shadowColor=e.state==='chase'?'#ff4422':ec; ctx.shadowBlur=e.state==='chase'?16:8;
+    const ew=Math.round(32*_uiScale()), eh=Math.round(20*_uiScale());
+    drawShipImg(e.key,ctx,0,0,ew,eh,true,()=>{
+      ctx.fillStyle=e.state==='chase'?'#ff6644':ec;
+      ctx.beginPath(); ctx.moveTo(-12,0); ctx.lineTo(8,-6); ctx.lineTo(8,6); ctx.closePath(); ctx.fill();
+    });
+    ctx.shadowBlur=0; ctx.restore(); ctx.globalAlpha=1;
+
+    // — HP bar + name —
+    const bw=36, bh=4; const bx=e.x-bw/2, by=e.y-24;
     ctx.fillStyle='#330011'; ctx.fillRect(bx,by,bw,bh);
     ctx.fillStyle=e.isTough?'#ff6600':'#ff2244';
     ctx.fillRect(bx,by,bw*(e.hp/e.maxHp),bh);
-    // Vision cone proximity
-    const distE=Math.hypot(LPOI.px-e.x,LPOI.py-e.y);
-    if(distE<90){
-      ctx.fillStyle='rgba(255,0,50,0.06)'; ctx.beginPath(); ctx.arc(e.x,e.y,85,0,Math.PI*2); ctx.fill();
-    }
+    ctx.font=`8px 'Cinzel',serif`; ctx.textAlign='center';
+    ctx.fillStyle=e.state==='chase'?'#ff8866':'#ff8899';
+    ctx.fillText((ENM[e.key]?.name||e.key).split(' ').slice(0,2).join(' '),e.x,e.y-28);
+    if(e.state==='chase'){ ctx.font='bold 9px Arial'; ctx.fillStyle='#ff4444'; ctx.fillText('⚔',e.x,e.y-38); }
   });
-
-  // ── Engine trail particles ──
   LPOI.particles.forEach(p=>{
     ctx.globalAlpha=Math.max(0,p.life)*0.65;
     ctx.fillStyle=p.col+(Math.floor(p.life*200).toString(16).padStart(2,'0'))+')';
@@ -23130,15 +23230,15 @@ function lpoiRender(ts){
     ctx.setLineDash([]);
   }
 
-  ctx.restore();
+  ctx.restore(); // end world transform
 
-  // Proximity check
+  // Proximity check for POI interact panel
   _lpoiCheckProximity();
 
-  // Combat proximity (enemy approach)
+  // Combat proximity — triggered by AI when chasing and close enough
   if(!LPOI.interactOpen){
     for(const e of liveEnemies){
-      if(Math.hypot(LPOI.px-e.x,LPOI.py-e.y)<52){
+      if(e.state==='chase'&&Math.hypot(LPOI.px-e.x,LPOI.py-e.y)<e.aggroRange){
         _lpoiStartCombat(e); break;
       }
     }
