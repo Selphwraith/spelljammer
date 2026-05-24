@@ -16567,6 +16567,19 @@ function _applyLoad(save) {
     if (G.tvl && G.tvl.timer) _tvlStop(); if(G.tvl) G.tvl.timer = null;
     if (G.animId) cancelAnimationFrame(G.animId);
     _stopLoop();
+    // Kill any pending rest-resume countdown so it can't fire 1 s after load and
+    // force-start stale travel using pre-death route data via the old resumeFn closure.
+    if (_restCountdownTimer) { clearInterval(_restCountdownTimer); _restCountdownTimer = null; }
+    // Reset live-clock paused state.  Without this, _clockPaused stays true from the
+    // death's pauseLiveClock() call, so the next startTravel() sees _wasClockPaused=true
+    // and skips resetLiveClock().  If _clockAccumH happened to be at its 8-hour cap
+    // (fully accumulated before death), the clock-snap in travelTick fires on the very
+    // first tick of the new journey, immediately completing watch 1 before the player
+    // sees anything.  Clearing it here lets startTravel() reset the clock normally.
+    _clockPaused = false; _clockAccumH = 0;
+    // Kill TS render loop cleanly — doDefeat cancels animId but doesn't clear TS.active,
+    // which can leave the travel sequence in a half-open state after load.
+    if (typeof TS !== 'undefined') { TS.active = false; if(TS.animId){cancelAnimationFrame(TS.animId);TS.animId=null;} }
     // Close all overlays including local space
     ['ov-cbt-inv','ov-travel-seq','ov-wpnpicker','ov-combat','ov-port','ov-waypoint','ov-loot','ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-dockmaster','ov-localquest','ov-localspace','ov-armory','ov-faction-rep','scr-defeat','scr-win','scr-farwin','tvlbar','msgbox','save-overlay','ov-lane-poi'].forEach(id=>{
       const el=document.getElementById(id); if(el)el.classList.remove('on','active');
@@ -16621,6 +16634,12 @@ function _applyLoad(save) {
     for (let i = 0; i < 220; i++) G.stars.push({ x:Math.random(),y:Math.random(),r:Math.random()*1.8+0.3,twk:Math.random()*Math.PI*2,spd:Math.random()*0.014+0.003,br:Math.random() });
     const PC = ['rgba(255,90,0,','rgba(255,40,100,','rgba(150,30,255,','rgba(30,80,255,','rgba(30,230,200,','rgba(255,190,0,'];
     for (let i = 0; i < 55; i++) G.phlo.push({ x:Math.random(),y:Math.random(),vx:(Math.random()-.5)*0.0006,vy:(Math.random()-.5)*0.0006,sz:Math.random()*90+35,col:PC[i%PC.length],a:Math.random()*0.10+0.03,da:(Math.random()-.5)*0.0008 });
+    // Clear watch flags that must never persist across a load.
+    // _pauseShown=true in a manual save + stale _clockAccumH = immediate watch-end on
+    // first tick, watchExpiredMidJourney() returning early, and ov-travel-seq staying
+    // open with no dialog — the "frozen behind the chart overlay" bug.
+    // restingPhase=true would make _anyOverlayOpen() block all map interaction forever.
+    if (G.watch) { G.watch._pauseShown = false; G.watch.restingPhase = false; }
     G.localQuests = state.localQuests || {};
     G._journeyOrigWatches = state.journeyOrigWatches || 0;
     G._journeyWpHit       = state.journeyWpHit       || false;
