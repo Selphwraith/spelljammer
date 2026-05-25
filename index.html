@@ -6493,7 +6493,7 @@ function renderLoop(ts=0) {
     {
       // Yellow ❗ — faction delivery quest: carrying cargo, this is the turnin sphere
       const hasFactionTurnin = G.quests &&
-        G.quests.some(q=>q.turnin===sph.id && q.state==='active' && G.ship.inv.some(i=>i.id===q.cargo.id));
+        G.quests.some(q=>q.turnin===sph.id && q.state==='active' && q.cargo && G.ship.inv.some(i=>i.id===q.cargo.id));
       // Amber ❗ — quest accepted, need to visit pickup sphere to collect cargo
       const hasPickup = G.quests &&
         G.quests.some(q=>q.pickup===sph.id && q.state==='accepted');
@@ -7879,7 +7879,7 @@ function arrive(id){
       return;
     }
     addLog(`Arrived at ${sph.n}. Entering local space…`, '');
-    const hasTurnin = G.quests.some(q=>q.turnin===id&&q.state==='active'&&G.ship.inv.some(i=>i.id===q.cargo.id));
+    const hasTurnin = G.quests.some(q=>q.turnin===id&&q.state==='active'&&q.cargo&&G.ship.inv.some(i=>i.id===q.cargo.id));
     if(hasTurnin) {
       G._afterTurninCb = () => { setTimeout(()=>openLocalSpace(), 300); };
     } else {
@@ -23009,6 +23009,7 @@ function enterLanePoi(laneKey, poiName){
   if(_lpoiJz&&('ontouchstart' in window||navigator.maxTouchPoints>0)) _lpoiJz.style.display='block';
   const {map,mapW,mapH,startX,startY,rooms} = _lpoiGenMap();
   LPOI.map=map; LPOI.mapW=mapW; LPOI.mapH=mapH; LPOI._rooms=rooms;
+  _lpoiInitVis();
   LPOI.px=(startX+0.5)*LPOI.TILE; LPOI.py=(startY+0.5)*LPOI.TILE;
   LPOI.pTargetX=LPOI.px; LPOI.pTargetY=LPOI.py; LPOI.pFacing=1;
   _lpoiPlaceEntities(rooms,cfg);
@@ -23028,29 +23029,49 @@ function enterLanePoi(laneKey, poiName){
 function _lpoiGenMap(){
   const T=LPOI.TILE, mapW=55, mapH=40;
   const map=Array.from({length:mapH},()=>new Array(mapW).fill(LT.VOID));
-  const numRooms=7+Math.floor(Math.random()*3); // 7–9 rooms
+  const numRooms=6+Math.floor(Math.random()*3); // 6–8 rooms
   const rooms=[]; const spacing=Math.floor((mapW-6)/numRooms);
   for(let i=0;i<numRooms;i++){
-    const rw=7+Math.floor(Math.random()*5), rh=6+Math.floor(Math.random()*5);
+    const rw=6+Math.floor(Math.random()*5), rh=5+Math.floor(Math.random()*5);
     const rx=2+i*spacing;
     const ry=Math.max(2,Math.min(mapH-rh-2, Math.floor((mapH-rh)/2)+Math.floor(Math.random()*5)-2));
     rooms.push({x:rx,y:ry,w:rw,h:rh});
     const floorT=i===numRooms-1?LT.FLOOR_DARK:(i%2===0?LT.FLOOR:LT.FLOOR_ALT);
     for(let ty=ry;ty<ry+rh;ty++) for(let tx=rx;tx<rx+rw;tx++) if(tx<mapW&&ty<mapH) map[ty][tx]=floorT;
   }
-  // Corridors between rooms (3 tiles wide for big ships)
+  // Corridors — exactly 2 tiles wide, connecting room centres (tight hallways)
   for(let i=0;i<rooms.length-1;i++){
     const r1=rooms[i], r2=rooms[i+1];
-    const my=Math.max(2,Math.min(mapH-4, Math.round((r1.y+r1.h/2+r2.y+r2.h/2)/2)));
-    for(let tx=r1.x+r1.w;tx<=r2.x;tx++){
-      if(tx>=0&&tx<mapW){
-        if(my-1>=0&&my-1<mapH) map[my-1][tx]=LT.FLOOR;
-        if(my>=0&&my<mapH)     map[my][tx]=LT.FLOOR;
-        if(my+1<mapH)          map[my+1][tx]=LT.FLOOR;
+    // Centre rows of each room
+    const cy1=r1.y+Math.floor(r1.h/2);
+    const cy2=r2.y+Math.floor(r2.h/2);
+    const midY=Math.round((cy1+cy2)/2);
+    const clampedY=Math.max(2,Math.min(mapH-4,midY));
+    // Horizontal run from end of r1 to start of r2
+    for(let tx=r1.x+r1.w;tx<r2.x;tx++){
+      if(tx<0||tx>=mapW) continue;
+      if(clampedY>=0&&clampedY<mapH)   map[clampedY][tx]=LT.FLOOR;
+      if(clampedY+1<mapH)              map[clampedY+1][tx]=LT.FLOOR;
+    }
+    // Short vertical jog if rows differ — staircase shape
+    if(cy1!==clampedY){
+      const jx=r1.x+r1.w;
+      if(jx>=0&&jx<mapW){
+        const y0=Math.min(cy1,clampedY), y1=Math.max(cy1,clampedY)+1;
+        for(let ty=y0;ty<y1&&ty<mapH;ty++) map[ty][jx]=LT.FLOOR;
+        if(jx+1<mapW) for(let ty=y0;ty<y1&&ty<mapH;ty++) map[ty][jx+1]=LT.FLOOR;
+      }
+    }
+    if(cy2!==clampedY){
+      const jx=r2.x-1;
+      if(jx>=0&&jx<mapW){
+        const y0=Math.min(cy2,clampedY), y1=Math.max(cy2,clampedY)+1;
+        for(let ty=y0;ty<y1&&ty<mapH;ty++) if(jx>=0) map[ty][jx]=LT.FLOOR;
+        if(jx+1<mapW) for(let ty=y0;ty<y1&&ty<mapH;ty++) map[ty][jx+1]=LT.FLOOR;
       }
     }
   }
-  // Walls around floor
+  // Walls — single ring around all floor tiles
   for(let ty=0;ty<mapH;ty++) for(let tx=0;tx<mapW;tx++){
     if(map[ty][tx]!==LT.VOID) continue;
     let adj=false;
@@ -23060,14 +23081,58 @@ function _lpoiGenMap(){
     }
     if(adj) map[ty][tx]=LT.WALL;
   }
-  // Props (8% of alt/main floor tiles, skip edges)
+  // Props (7% of interior alt/main floor, skip 1-tile border of each room)
   for(let ty=1;ty<mapH-1;ty++) for(let tx=1;tx<mapW-1;tx++){
-    if((map[ty][tx]===LT.FLOOR||map[ty][tx]===LT.FLOOR_ALT)&&Math.random()<0.08) map[ty][tx]=LT.PROP;
+    if((map[ty][tx]===LT.FLOOR||map[ty][tx]===LT.FLOOR_ALT)&&Math.random()<0.07) map[ty][tx]=LT.PROP;
   }
   const sr=rooms[0];
   const startX=sr.x+Math.floor(sr.w/2), startY=sr.y+Math.floor(sr.h/2);
-  map[startY][startX]=LT.FLOOR; // ensure start is walkable
+  map[startY][startX]=LT.FLOOR;
   return {map,mapW,mapH,startX,startY,rooms};
+}
+
+// ── Fog-of-war visibility — tile-based raycasting ─────────────────────────
+// Returns a 2-D boolean array: vis[ty][tx] = true if tile is visible from player.
+// Vision radius: 12 tiles. Walls block LOS (rays stop at first wall hit).
+const LPOI_VIS_RADIUS = 12;
+function _lpoiComputeVisibility(){
+  const T=LPOI.TILE, R=LPOI_VIS_RADIUS;
+  const ptx=Math.floor(LPOI.px/T), pty=Math.floor(LPOI.py/T);
+  const vis=LPOI._vis;
+  // Clear just the bounding box that might have changed
+  const x0=Math.max(0,ptx-R-1), y0=Math.max(0,pty-R-1);
+  const x1=Math.min(LPOI.mapW-1,ptx+R+1), y1=Math.min(LPOI.mapH-1,pty+R+1);
+  for(let ty=y0;ty<=y1;ty++) for(let tx=x0;tx<=x1;tx++) vis[ty][tx]=false;
+  // Always reveal player tile
+  if(pty>=0&&pty<LPOI.mapH&&ptx>=0&&ptx<LPOI.mapW) vis[pty][ptx]=true;
+  // Cast rays to the perimeter of the bounding square
+  const perimeter=[];
+  for(let dx=-R;dx<=R;dx++){ perimeter.push([ptx+dx,pty-R]); perimeter.push([ptx+dx,pty+R]); }
+  for(let dy=-R+1;dy<R;dy++){ perimeter.push([ptx-R,pty+dy]); perimeter.push([ptx+R,pty+dy]); }
+  for(const [ex,ey] of perimeter){
+    let x=ptx+0.5, y=pty+0.5;
+    const dx=ex-ptx, dy=ey-pty;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    const steps=Math.ceil(dist*2);
+    const sx=(dx/dist)/2, sy=(dy/dist)/2;
+    let hitWall=false;
+    for(let s=0;s<=steps;s++){
+      const tx2=Math.floor(x), ty2=Math.floor(y);
+      if(tx2<0||ty2<0||tx2>=LPOI.mapW||ty2>=LPOI.mapH) break;
+      const d2=(tx2-ptx)*(tx2-ptx)+(ty2-pty)*(ty2-pty);
+      if(d2>R*R) break;
+      if(!hitWall) vis[ty2][tx2]=true;
+      const tile=LPOI.map[ty2]?.[tx2];
+      if(tile===LT.WALL||tile===LT.VOID){ hitWall=true; break; }
+      x+=sx; y+=sy;
+    }
+  }
+  return vis;
+}
+// Initialise visibility grid when map is created (called after _lpoiGenMap)
+function _lpoiInitVis(){
+  LPOI._vis=Array.from({length:LPOI.mapH},()=>new Uint8Array(LPOI.mapW));
+  LPOI._explored=Array.from({length:LPOI.mapH},()=>new Uint8Array(LPOI.mapW));
 }
 
 // ── Entity placement ──────────────────────────────────────────────────────
@@ -23095,10 +23160,10 @@ function _lpoiFindSpawn(r, T, attempts=12){
 
 function _lpoiPlaceEntities(rooms,cfg){
   const T=LPOI.TILE;
-  const pool=[...cfg.enemies,...cfg.enemies,...cfg.enemies]; // triple pool for bigger maps
-  // Middle rooms — 2–4 regular enemies each
+  const pool=[...cfg.enemies,...cfg.enemies]; // doubled pool for bigger maps
+  // Middle rooms — 1–2 regular enemies each
   for(let i=1;i<rooms.length-1;i++){
-    const r=rooms[i]; const n=2+Math.floor(Math.random()*3);
+    const r=rooms[i]; const n=1+Math.floor(Math.random()*2);
     for(let e=0;e<n&&pool.length>0;e++){
       const key=pool.splice(Math.floor(Math.random()*pool.length),1)[0];
       const def=ENM[key]; if(!def) continue;
@@ -23118,7 +23183,7 @@ function _lpoiPlaceEntities(rooms,cfg){
   }
   // Last room — 2–3 tough enemies
   const lr=rooms[rooms.length-1]; const tkey=cfg.toughEnemy; const tdef=ENM[tkey];
-  const numTough=2+Math.floor(Math.random()*2);
+  const numTough=1+Math.floor(Math.random()*2);
   if(tdef){
     for(let t=0;t<numTough;t++){
       const {wx:tx2,wy:ty2}=_lpoiFindSpawn(lr,T);
@@ -23251,6 +23316,18 @@ function lpoiRender(ts){
   });
 
 
+  // ── Fog of war — compute visibility this frame ───────────────────────────
+  let _vis=null;
+  if(LPOI._vis){ _vis=_lpoiComputeVisibility();
+    // Accumulate explored tiles
+    const _exp=LPOI._explored;
+    const T2=LPOI.TILE, ptx2=Math.floor(LPOI.px/T2), pty2=Math.floor(LPOI.py/T2);
+    const R2=LPOI_VIS_RADIUS+1;
+    for(let ty=Math.max(0,pty2-R2);ty<=Math.min(LPOI.mapH-1,pty2+R2);ty++)
+      for(let tx=Math.max(0,ptx2-R2);tx<=Math.min(LPOI.mapW-1,ptx2+R2);tx++)
+        if(_vis[ty]?.[tx]) _exp[ty][tx]=1;
+  }
+
   // Live enemies (used by AI, draw, and combat check)
   const liveEnemies=LPOI.enemies.filter(e=>!e.defeated);
 
@@ -23276,18 +23353,25 @@ function lpoiRender(ts){
     for(let tx=tx0;tx<txN&&tx<LPOI.mapW;tx++){
       if(tx<0||ty<0) continue;
       const tile=LPOI.map[ty][tx]; if(tile===LT.VOID) continue;
+      // Fog check
+      const isVisible=!_vis||(_vis[ty]?.[tx]);
+      const isExplored=!_vis||(LPOI._explored[ty]?.[tx]);
+      if(!isExplored) continue; // never seen — pure black (void)
       const px2=tx*T, py2=ty*T;
       const imgKey=TILE_IMGS[tile]; const img=imgKey&&LPOI._imgs[imgKey];
+      ctx.save();
+      ctx.globalAlpha=isVisible?1:0.28; // explored but not visible = dim
       if(img){ctx.drawImage(img,px2,py2,T,T);}
       else{ctx.fillStyle=TILE_COLS[tile]||'#111'; ctx.fillRect(px2,py2,T,T);
         if(tile===LT.WALL){ctx.fillStyle='rgba(0,0,0,0.35)';ctx.fillRect(px2,py2+T*0.85,T,T*0.15);}
         if(tile===LT.PROP){ctx.fillStyle='#2a1040';ctx.fillRect(px2+8,py2+8,T-16,T-16);}
       }
       // Grid lines on floor
-      if(tile>=LT.FLOOR&&tile<=LT.FLOOR_DARK){
+      if(isVisible&&tile>=LT.FLOOR&&tile<=LT.FLOOR_DARK){
         ctx.strokeStyle='rgba(80,40,120,0.12)';ctx.lineWidth=0.5;
         ctx.strokeRect(px2,py2,T,T);
       }
+      ctx.restore();
     }
   }
 
@@ -23392,8 +23476,10 @@ function lpoiRender(ts){
   // ── Enemy AI update + draw ────────────────────────────────────────────────
   liveEnemies.forEach(e=>{
     e._blinkT=(e._blinkT||0)+dt;
+    const eTx=Math.floor(e.x/T), eTy=Math.floor(e.y/T);
+    const eVisible=!_vis||(_vis[eTy]?.[eTx]);
 
-    // — AI: vision cone + state machine —
+    // — AI: vision cone + state machine — (always runs, not gated by fog)
     const edx=LPOI.px-e.x, edy=LPOI.py-e.y;
     const edist=Math.hypot(edx,edy);
     let canSee=edist<e.aggroRange;
@@ -23403,6 +23489,11 @@ function lpoiRender(ts){
       while(diff>Math.PI)  diff-=Math.PI*2;
       while(diff<-Math.PI) diff+=Math.PI*2;
       canSee=Math.abs(diff)<e.visionCone;
+    }
+    // Wall-blocked vision — enemy cannot see through walls
+    if(canSee&&_vis){
+      const ptx3=Math.floor(LPOI.px/T), pty3=Math.floor(LPOI.py/T);
+      if(!_vis[pty3]?.[ptx3]) canSee=false;
     }
     if(canSee){ e.state='chase'; e.alertTimer=2.5; }
     else if(e.alertTimer>0){ e.alertTimer-=dt; if(e.alertTimer<=0) e.state='wander'; }
@@ -23434,9 +23525,9 @@ function lpoiRender(ts){
     if(_lpoiWalkable(enx,e.y)) e.x=enx; else { e.vx*=-0.5; e.wanderAngle+=Math.PI; }
     if(_lpoiWalkable(e.x,eny)) e.y=eny; else { e.vy*=-0.5; e.wanderAngle+=Math.PI*0.5; }
 
-    // — Engine trail particles —
+    // — Engine trail particles — only generate when visible
     const espd=Math.hypot(e.vx,e.vy);
-    if(espd>6&&Math.random()<0.6){
+    if(eVisible&&espd>6&&Math.random()<0.6){
       const eTrail=e.angle+Math.PI+(Math.random()-0.5)*0.4;
       const ecol=e.isTough?`rgba(255,${80+Math.floor(Math.random()*50)},20,`
                           :`rgba(255,${20+Math.floor(Math.random()*40)},60,`;
@@ -23450,12 +23541,16 @@ function lpoiRender(ts){
       p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=0.87; p.vy*=0.87;
       p.life-=dt/p.maxLife; return p.life>0;
     });
-    e.particles.forEach(p=>{
-      ctx.globalAlpha=Math.max(0,p.life)*0.6;
-      ctx.fillStyle=p.col+(Math.floor(p.life*180).toString(16).padStart(2,'0'))+')';
-      ctx.beginPath(); ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2); ctx.fill();
-    });
+    if(eVisible){
+      e.particles.forEach(p=>{
+        ctx.globalAlpha=Math.max(0,p.life)*0.6;
+        ctx.fillStyle=p.col+(Math.floor(p.life*180).toString(16).padStart(2,'0'))+')';
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2); ctx.fill();
+      });
+    }
     ctx.globalAlpha=1;
+
+    if(!eVisible) return; // don't draw ship, HP bar, or vision cone if fogged
 
     // — Draw: vision cone —
     const ec=e.isTough?'#ff6633':'#ff3355';
@@ -23538,6 +23633,24 @@ function lpoiRender(ts){
     ctx.strokeStyle='rgba(80,140,220,0.15)'; ctx.lineWidth=1; ctx.setLineDash([4,8]);
     ctx.beginPath(); ctx.moveTo(LPOI.px,LPOI.py); ctx.lineTo(LPOI.pTargetX,LPOI.pTargetY); ctx.stroke();
     ctx.setLineDash([]);
+  }
+
+  // ── Fog of war overlay — dark veil over unexplored/out-of-sight tiles ────
+  if(_vis&&LPOI._explored){
+    const T3=LPOI.TILE;
+    const ftx0=Math.floor(LPOI.camX/T3)-1, fty0=Math.floor(LPOI.camY/T3)-1;
+    const ftxN=Math.ceil((LPOI.camX+cW)/T3)+2, ftyN=Math.ceil((LPOI.camY+cH)/T3)+2;
+    for(let ty=fty0;ty<ftyN;ty++){
+      for(let tx=ftx0;tx<ftxN;tx++){
+        if(tx<0||ty<0||tx>=LPOI.mapW||ty>=LPOI.mapH) continue;
+        const visible=_vis[ty]?.[tx];
+        const explored=LPOI._explored[ty]?.[tx];
+        if(visible) continue; // fully lit — no overlay
+        const px3=tx*T3, py3=ty*T3;
+        ctx.fillStyle=explored?'rgba(0,0,0,0.62)':'rgba(0,0,0,0.92)';
+        ctx.fillRect(px3,py3,T3,T3);
+      }
+    }
   }
 
   ctx.restore(); // end world transform — MUST be after all world-space draws
