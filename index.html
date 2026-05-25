@@ -23040,7 +23040,7 @@ function _lpoiGenMap(){
     const rx=2+i*spacing;
     const ry=Math.max(2,Math.min(mapH-rh-2, Math.floor((mapH-rh)/2)+Math.floor(Math.random()*5)-2));
     rooms.push({x:rx,y:ry,w:rw,h:rh});
-    const floorT=i===numRooms-1?LT.FLOOR_DARK:(i%2===0?LT.FLOOR:LT.FLOOR_ALT);
+    const floorT=LT.FLOOR; // all rooms start as main floor — variants sprinkled below
     for(let ty=ry;ty<ry+rh;ty++) for(let tx=rx;tx<rx+rw;tx++) if(tx<mapW&&ty<mapH) map[ty][tx]=floorT;
   }
   // Corridors — exactly 2 tiles wide, connecting room centres (tight hallways)
@@ -23084,6 +23084,14 @@ function _lpoiGenMap(){
       if(ny>=0&&ny<mapH&&nx>=0&&nx<mapW&&map[ny][nx]>=LT.FLOOR&&map[ny][nx]<=LT.FLOOR_DARK) adj=true;
     }
     if(adj) map[ty][tx]=LT.WALL;
+  }
+  // Sprinkle floor variants — main floor dominates, alt and dark just occasional accents
+  for(let ty=1;ty<mapH-1;ty++) for(let tx=1;tx<mapW-1;tx++){
+    if(map[ty][tx]!==LT.FLOOR) continue;
+    const r=Math.random();
+    if(r<0.04)       map[ty][tx]=LT.FLOOR_DARK; // 4% dark accent
+    else if(r<0.14)  map[ty][tx]=LT.FLOOR_ALT;  // 10% alt accent
+    // else stays FLOOR (86%)
   }
   // Props (7% of interior alt/main floor, skip 1-tile border of each room)
   for(let ty=1;ty<mapH-1;ty++) for(let tx=1;tx<mapW-1;tx++){
