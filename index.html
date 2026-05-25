@@ -22888,7 +22888,11 @@ const LPOI = {
   config:null, questId:null, _rooms:null,
   _lastTs:0, _imgs:{},
 };
-const LT = { VOID:0, FLOOR:1, FLOOR_ALT:2, FLOOR_DARK:3, WALL:4, PROP:5 };
+const LT = {
+  VOID:0, FLOOR:1, FLOOR_ALT:2, FLOOR_DARK:3, WALL:4,
+  // Obstacle tiles — one per image so each renders correctly
+  PROP:5, PROP_BARREL:6, PROP_CONSOLE:7, PROP_DEBRIS:8, PROP_PILLAR:9, PROP_CRYSTAL:10
+};
 
 const LPOI_IMGS = [
   'lpoi_floor_main','lpoi_floor_alt','lpoi_floor_crack','lpoi_floor_dark',
@@ -22922,6 +22926,24 @@ const LANE_POI_CONFIGS = {
     toughEnemy:'trull_enforcer',
     questChance:0.35, questSpheres:['refuge','realm'],
     questTypes:['kill','collect'],
+  },
+  'realm->grey':{
+    names:['Harvester Ambush Site','Corsair Staging Wreck','Dwarven Outrider Hulk','Abandoned Void Station'],
+    icon:'⚙️', bgCol:'#020b06',
+    enemies:['trull_warship','trull_slaver','harvester','corsair','trull_warship','plunderer'],
+    toughEnemy:'harvester',
+    questChance:0.45, questSpheres:['realm','grey'],
+    questTypes:['kill','collect'],
+    mapScale:'large',
+  },
+  'grey->realm':{
+    names:['Harvester Outpost Wreck','Corsair Raider Den','Void Slaver Hulk','Phlogiston Debris Cache'],
+    icon:'⚙️', bgCol:'#020b06',
+    enemies:['trull_slaver','plunderer','harvester','corsair','trull_warship','trull_patrol'],
+    toughEnemy:'trull_warship',
+    questChance:0.45, questSpheres:['grey','realm'],
+    questTypes:['kill','collect'],
+    mapScale:'large',
   },
 };
 
@@ -23093,9 +23115,12 @@ function _lpoiGenMap(){
     else if(r<0.14)  map[ty][tx]=LT.FLOOR_ALT;  // 10% alt accent
     // else stays FLOOR (86%)
   }
-  // Props (7% of interior alt/main floor, skip 1-tile border of each room)
+  // Props — 7% of interior floor tiles, random obstacle type each
+  const _propTypes=[LT.PROP,LT.PROP_BARREL,LT.PROP_CONSOLE,LT.PROP_DEBRIS,LT.PROP_PILLAR,LT.PROP_CRYSTAL];
   for(let ty=1;ty<mapH-1;ty++) for(let tx=1;tx<mapW-1;tx++){
-    if((map[ty][tx]===LT.FLOOR||map[ty][tx]===LT.FLOOR_ALT)&&Math.random()<0.07) map[ty][tx]=LT.PROP;
+    if(map[ty][tx]===LT.FLOOR||map[ty][tx]===LT.FLOOR_ALT||map[ty][tx]===LT.FLOOR_DARK){
+      if(Math.random()<0.07) map[ty][tx]=_propTypes[Math.floor(Math.random()*_propTypes.length)];
+    }
   }
   const sr=rooms[0];
   const startX=sr.x+Math.floor(sr.w/2), startY=sr.y+Math.floor(sr.h/2);
@@ -23135,7 +23160,7 @@ function _lpoiComputeVisibility(){
       if(d2>R*R) break;
       if(!hitWall) vis[ty2][tx2]=true;
       const tile=LPOI.map[ty2]?.[tx2];
-      if(tile===LT.WALL||tile===LT.VOID){ hitWall=true; break; }
+      if(tile===LT.WALL||tile===LT.VOID||tile>=LT.PROP){ hitWall=true; break; }
       x+=sx; y+=sy;
     }
   }
@@ -23172,10 +23197,11 @@ function _lpoiFindSpawn(r, T, attempts=12){
 
 function _lpoiPlaceEntities(rooms,cfg){
   const T=LPOI.TILE;
-  const pool=[...cfg.enemies,...cfg.enemies]; // doubled pool for bigger maps
-  // Middle rooms — 1–2 regular enemies each
+  const isLarge=cfg.mapScale==='large';
+  const pool=[...cfg.enemies,...cfg.enemies,...(isLarge?cfg.enemies:[])]; // triple pool for large
+  // Middle rooms — 1–2 regular enemies (2–3 for large)
   for(let i=1;i<rooms.length-1;i++){
-    const r=rooms[i]; const n=1+Math.floor(Math.random()*2);
+    const r=rooms[i]; const n=isLarge?(2+Math.floor(Math.random()*2)):(1+Math.floor(Math.random()*2));
     for(let e=0;e<n&&pool.length>0;e++){
       const key=pool.splice(Math.floor(Math.random()*pool.length),1)[0];
       const def=ENM[key]; if(!def) continue;
@@ -23193,9 +23219,9 @@ function _lpoiPlaceEntities(rooms,cfg){
       });
     }
   }
-  // Last room — 2–3 tough enemies
+  // Last room — 1–2 tough enemies (2–3 for large)
   const lr=rooms[rooms.length-1]; const tkey=cfg.toughEnemy; const tdef=ENM[tkey];
-  const numTough=1+Math.floor(Math.random()*2);
+  const numTough=isLarge?(2+Math.floor(Math.random()*2)):(1+Math.floor(Math.random()*2));
   if(tdef){
     for(let t=0;t<numTough;t++){
       const {wx:tx2,wy:ty2}=_lpoiFindSpawn(lr,T);
@@ -23211,15 +23237,17 @@ function _lpoiPlaceEntities(rooms,cfg){
       });
     }
   }
-  // Loot caches — 2–3 spread across the last two rooms
-  const numChests=2+Math.floor(Math.random()*2);
-  const chestRooms=rooms.slice(-2); // last two rooms
-  for(let c=0;c<numChests;c++){
-    const cr=chestRooms[c%chestRooms.length];
-    const offX=c===0?cr.w-2:Math.max(1,Math.floor(cr.w/2));
-    const offY=c===1?cr.h-2:Math.floor(cr.h/2);
+  // Loot caches — spread across the whole map, not just the last rooms
+  // 2–3 for standard, 3–4 for large. Place in random non-first, non-adjacent rooms.
+  const numChests=isLarge?(3+Math.floor(Math.random()*2)):(2+Math.floor(Math.random()*2));
+  const eligibleRooms=rooms.slice(1); // skip spawn room
+  // Shuffle eligible rooms for random placement
+  const shuffled=[...eligibleRooms].sort(()=>Math.random()-0.5);
+  for(let c=0;c<numChests&&c<shuffled.length;c++){
+    const cr=shuffled[c];
+    const {wx:cx2,wy:cy2}=_lpoiFindSpawn(cr,T,20);
     LPOI.pois.push({type:'chest',interacted:false,locked:false,
-      x:(cr.x+offX)*T+T/2, y:(cr.y+offY)*T+T/2, label:'💎 Loot Cache'});
+      x:cx2, y:cy2, label:'💎 Loot Cache'});
   }
   // Exit — last room far corner
   LPOI.pois.push({type:'exit',x:(lr.x+lr.w-1)*T+T/2,y:(lr.y+1)*T+T/2,label:'⛵ Return to Drift'});
@@ -23357,10 +23385,17 @@ function lpoiRender(ts){
   // Tiles
   const tx0=Math.floor(LPOI.camX/T), ty0=Math.floor(LPOI.camY/T);
   const txN=Math.ceil((LPOI.camX+cW)/T)+1, tyN=Math.ceil((LPOI.camY+cH)/T)+1;
+  const _propCol='#160b26';
   const TILE_COLS={[LT.FLOOR]:'#1a0d2e',[LT.FLOOR_ALT]:'#18092b',[LT.FLOOR_DARK]:'#0e0520',
-    [LT.WALL]:'#2d1a44',[LT.PROP]:'#160b26'};
-  const TILE_IMGS={[LT.FLOOR]:'lpoi_floor_main',[LT.FLOOR_ALT]:'lpoi_floor_alt',
-    [LT.FLOOR_DARK]:'lpoi_floor_dark',[LT.WALL]:'lpoi_wall',[LT.PROP]:'lpoi_crate'};
+    [LT.WALL]:'#2d1a44',
+    [LT.PROP]:_propCol,[LT.PROP_BARREL]:_propCol,[LT.PROP_CONSOLE]:_propCol,
+    [LT.PROP_DEBRIS]:_propCol,[LT.PROP_PILLAR]:_propCol,[LT.PROP_CRYSTAL]:_propCol};
+  const TILE_IMGS={
+    [LT.FLOOR]:'lpoi_floor_main',[LT.FLOOR_ALT]:'lpoi_floor_alt',
+    [LT.FLOOR_DARK]:'lpoi_floor_dark',[LT.WALL]:'lpoi_wall',
+    [LT.PROP]:'lpoi_crate',[LT.PROP_BARREL]:'lpoi_barrel',
+    [LT.PROP_CONSOLE]:'lpoi_console',[LT.PROP_DEBRIS]:'lpoi_debris',
+    [LT.PROP_PILLAR]:'lpoi_pillar',[LT.PROP_CRYSTAL]:'lpoi_crystal'};
   for(let ty=ty0;ty<tyN&&ty<LPOI.mapH;ty++){
     for(let tx=tx0;tx<txN&&tx<LPOI.mapW;tx++){
       if(tx<0||ty<0) continue;
@@ -23376,7 +23411,7 @@ function lpoiRender(ts){
       if(img){ctx.drawImage(img,px2,py2,T,T);}
       else{ctx.fillStyle=TILE_COLS[tile]||'#111'; ctx.fillRect(px2,py2,T,T);
         if(tile===LT.WALL){ctx.fillStyle='rgba(0,0,0,0.35)';ctx.fillRect(px2,py2+T*0.85,T,T*0.15);}
-        if(tile===LT.PROP){ctx.fillStyle='#2a1040';ctx.fillRect(px2+8,py2+8,T-16,T-16);}
+        if(tile>=LT.PROP){ctx.fillStyle='#2a1040';ctx.fillRect(px2+8,py2+8,T-16,T-16);}
       }
       // Grid lines on floor
       if(isVisible&&tile>=LT.FLOOR&&tile<=LT.FLOOR_DARK){
