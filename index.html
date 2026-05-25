@@ -23026,26 +23026,27 @@ function enterLanePoi(laneKey, poiName){
 
 // ── Procedural map generation ─────────────────────────────────────────────
 function _lpoiGenMap(){
-  const T=LPOI.TILE, mapW=22, mapH=16;
+  const T=LPOI.TILE, mapW=55, mapH=40;
   const map=Array.from({length:mapH},()=>new Array(mapW).fill(LT.VOID));
-  const numRooms=3+Math.floor(Math.random()*2);
-  const rooms=[]; const spacing=Math.floor((mapW-4)/numRooms);
+  const numRooms=7+Math.floor(Math.random()*3); // 7–9 rooms
+  const rooms=[]; const spacing=Math.floor((mapW-6)/numRooms);
   for(let i=0;i<numRooms;i++){
-    const rw=5+Math.floor(Math.random()*3), rh=4+Math.floor(Math.random()*3);
-    const rx=1+i*spacing;
-    const ry=Math.max(1,Math.min(mapH-rh-1, Math.floor((mapH-rh)/2)+Math.floor(Math.random()*3)-1));
+    const rw=7+Math.floor(Math.random()*5), rh=6+Math.floor(Math.random()*5);
+    const rx=2+i*spacing;
+    const ry=Math.max(2,Math.min(mapH-rh-2, Math.floor((mapH-rh)/2)+Math.floor(Math.random()*5)-2));
     rooms.push({x:rx,y:ry,w:rw,h:rh});
     const floorT=i===numRooms-1?LT.FLOOR_DARK:(i%2===0?LT.FLOOR:LT.FLOOR_ALT);
     for(let ty=ry;ty<ry+rh;ty++) for(let tx=rx;tx<rx+rw;tx++) if(tx<mapW&&ty<mapH) map[ty][tx]=floorT;
   }
-  // Corridors between rooms
+  // Corridors between rooms (3 tiles wide for big ships)
   for(let i=0;i<rooms.length-1;i++){
     const r1=rooms[i], r2=rooms[i+1];
-    const my=Math.max(1,Math.min(mapH-3, Math.round((r1.y+r1.h/2+r2.y+r2.h/2)/2)));
+    const my=Math.max(2,Math.min(mapH-4, Math.round((r1.y+r1.h/2+r2.y+r2.h/2)/2)));
     for(let tx=r1.x+r1.w;tx<=r2.x;tx++){
       if(tx>=0&&tx<mapW){
-        if(my>=0&&my<mapH) map[my][tx]=LT.FLOOR;
-        if(my+1<mapH) map[my+1][tx]=LT.FLOOR;
+        if(my-1>=0&&my-1<mapH) map[my-1][tx]=LT.FLOOR;
+        if(my>=0&&my<mapH)     map[my][tx]=LT.FLOOR;
+        if(my+1<mapH)          map[my+1][tx]=LT.FLOOR;
       }
     }
   }
@@ -23094,10 +23095,10 @@ function _lpoiFindSpawn(r, T, attempts=12){
 
 function _lpoiPlaceEntities(rooms,cfg){
   const T=LPOI.TILE;
-  const pool=[...cfg.enemies];
-  // Middle rooms — regular enemies
+  const pool=[...cfg.enemies,...cfg.enemies,...cfg.enemies]; // triple pool for bigger maps
+  // Middle rooms — 2–4 regular enemies each
   for(let i=1;i<rooms.length-1;i++){
-    const r=rooms[i]; const n=1+Math.floor(Math.random()*2);
+    const r=rooms[i]; const n=2+Math.floor(Math.random()*3);
     for(let e=0;e<n&&pool.length>0;e++){
       const key=pool.splice(Math.floor(Math.random()*pool.length),1)[0];
       const def=ENM[key]; if(!def) continue;
@@ -23108,32 +23109,42 @@ function _lpoiPlaceEntities(rooms,cfg){
         speed: 55+Math.random()*35,
         state:'wander', alertTimer:0,
         wanderAngle:Math.random()*Math.PI*2, wanderTimer:1+Math.random()*2,
-        visionRange:160, aggroRange:52, visionCone:Math.PI*0.42,
+        visionRange:300, aggroRange:100, visionCone:Math.PI*0.42,
         particles:[],
         defeated:false, isTough:false,
         _blinkT:0,
       });
     }
   }
-  // Last room — tough enemy
+  // Last room — 2–3 tough enemies
   const lr=rooms[rooms.length-1]; const tkey=cfg.toughEnemy; const tdef=ENM[tkey];
+  const numTough=2+Math.floor(Math.random()*2);
   if(tdef){
-    const {wx:tx2,wy:ty2}=_lpoiFindSpawn(lr,T);
-    LPOI.enemies.push({
-      x:tx2, y:ty2, _bx:tx2, _by:ty2, key:tkey, hp:tdef.hp, maxHp:tdef.hp,
-      vx:0, vy:0, angle:Math.random()*Math.PI*2,
-      speed:68, state:'wander', alertTimer:0,
-      wanderAngle:Math.random()*Math.PI*2, wanderTimer:1+Math.random()*2,
-      visionRange:210, aggroRange:60, visionCone:Math.PI*0.5,
-      particles:[],
-      defeated:false, isTough:true,
-      _blinkT:0,
-    });
+    for(let t=0;t<numTough;t++){
+      const {wx:tx2,wy:ty2}=_lpoiFindSpawn(lr,T);
+      LPOI.enemies.push({
+        x:tx2, y:ty2, _bx:tx2, _by:ty2, key:tkey, hp:tdef.hp, maxHp:tdef.hp,
+        vx:0, vy:0, angle:Math.random()*Math.PI*2,
+        speed:68, state:'wander', alertTimer:0,
+        wanderAngle:Math.random()*Math.PI*2, wanderTimer:1+Math.random()*2,
+        visionRange:380, aggroRange:110, visionCone:Math.PI*0.5,
+        particles:[],
+        defeated:false, isTough:true,
+        _blinkT:0,
+      });
+    }
   }
-  // Chest — in last room, right side, only unlockable after tough enemy down
-  LPOI.pois.push({type:'chest',interacted:false,locked:true,
-    x:(lr.x+lr.w-2)*T+T/2, y:(lr.y+Math.floor(lr.h/2))*T+T/2, label:'💎 Loot Cache'});
-  // Exit — last room top
+  // Loot caches — 2–3 spread across the last two rooms
+  const numChests=2+Math.floor(Math.random()*2);
+  const chestRooms=rooms.slice(-2); // last two rooms
+  for(let c=0;c<numChests;c++){
+    const cr=chestRooms[c%chestRooms.length];
+    const offX=c===0?cr.w-2:Math.max(1,Math.floor(cr.w/2));
+    const offY=c===1?cr.h-2:Math.floor(cr.h/2);
+    LPOI.pois.push({type:'chest',interacted:false,locked:true,
+      x:(cr.x+offX)*T+T/2, y:(cr.y+offY)*T+T/2, label:'💎 Loot Cache'});
+  }
+  // Exit — last room far corner
   LPOI.pois.push({type:'exit',x:(lr.x+lr.w-1)*T+T/2,y:(lr.y+1)*T+T/2,label:'⛵ Return to Drift'});
 }
 
@@ -23294,47 +23305,51 @@ function lpoiRender(ts){
       const glowPhase=0.55+0.45*Math.sin(ts*0.003);
       ctx.save();
       ctx.shadowColor='#ffdd44';
-      ctx.shadowBlur=16*glowPhase;
+      ctx.shadowBlur=32*glowPhase;
       ctx.strokeStyle=`rgba(255,220,68,${0.35+0.45*glowPhase})`;
-      ctx.lineWidth=2.5;
-      const hw=26, hh=26;
+      ctx.lineWidth=4;
+      const hw=52, hh=52; // doubled from 26
       ctx.beginPath();
-      ctx.roundRect(p.x-hw,p.y-hh,hw*2,hh*2,5);
+      ctx.roundRect(p.x-hw,p.y-hh,hw*2,hh*2,8);
       ctx.stroke();
       ctx.restore();
     }
 
-    if(img){ctx.save();ctx.globalAlpha=isLocked?0.4:0.92;ctx.drawImage(img,p.x-24,p.y-24,48,48);ctx.restore();}
-    else{
+    // Sprite or fallback circle — chest 2× bigger (96×96 vs 48×48)
+    if(img){
+      const sz=p.type==='chest'?96:48;
+      ctx.save();ctx.globalAlpha=isLocked?0.4:0.92;
+      ctx.drawImage(img,p.x-sz/2,p.y-sz/2,sz,sz);
+      ctx.restore();
+    } else {
       ctx.fillStyle=isLocked?'#443300':col; ctx.beginPath();
-      ctx.arc(p.x,p.y,p.type==='exit'?14:12,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='#fff'; ctx.font='bold 14px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.arc(p.x,p.y,p.type==='exit'?28:24,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.font='bold 28px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.fillText(p.type==='chest'?'💎':p.type==='exit'?'⛵':'!',p.x,p.y);
     }
 
     // ── EXIT: neon "EXIT" label with flicker ────────────────────────────
     if(p.type==='exit'){
       const flickerCycle=ts*0.00175;
-      // simulate the CSS flicker pattern in canvas
       const fc=flickerCycle%1;
       const flicker=(fc>0.18&&fc<0.20)||(fc>0.22&&fc<0.24)||(fc>0.57&&fc<0.59)?0.28:1;
       ctx.save();
       ctx.globalAlpha=flicker;
-      ctx.font="bold 11px 'Cinzel',serif";
+      ctx.font="bold 22px 'Cinzel',serif"; // doubled from 11px
       ctx.textAlign='center';
       ctx.shadowColor='#44aaff';
-      ctx.shadowBlur=14;
+      ctx.shadowBlur=22;
       ctx.fillStyle='#88ddff';
-      ctx.fillText('EXIT',p.x,p.y-34);
-      ctx.shadowBlur=28;
+      ctx.fillText('EXIT',p.x,p.y-60); // pushed further up for bigger sprite
+      ctx.shadowBlur=44;
       ctx.globalAlpha=flicker*0.55;
       ctx.fillStyle='#aaeeff';
-      ctx.fillText('EXIT',p.x,p.y-34);
+      ctx.fillText('EXIT',p.x,p.y-60);
       ctx.restore();
     } else if(p.type==='npc_survivor'&&!p.interacted){
       // ── Survivor: pulsing exclamation point ─────────────────────────
       const excPhase=Math.sin(ts*0.005);
-      const excY=p.y-42+(excPhase>0?-3*excPhase:0);
+      const excY=p.y-70+(excPhase>0?-5*excPhase:0); // higher offset for bigger sprite
       const excAlpha=0.7+0.3*Math.abs(excPhase);
       const excScale=0.92+0.12*Math.max(0,excPhase);
       ctx.save();
@@ -23342,8 +23357,8 @@ function lpoiRender(ts){
       ctx.translate(p.x,excY);
       ctx.scale(excScale,excScale);
       ctx.shadowColor='#44ff88';
-      ctx.shadowBlur=12+8*Math.abs(excPhase);
-      ctx.font="bold 20px 'Cinzel',serif";
+      ctx.shadowBlur=22+14*Math.abs(excPhase); // doubled
+      ctx.font="bold 40px 'Cinzel',serif"; // doubled from 20px
       ctx.textAlign='center';
       ctx.textBaseline='middle';
       ctx.fillStyle='#55ffaa';
@@ -23353,22 +23368,24 @@ function lpoiRender(ts){
       ctx.save();
       ctx.globalAlpha=0.18+0.12*Math.abs(excPhase);
       ctx.strokeStyle='#44ff88';
-      ctx.lineWidth=1.5;
+      ctx.lineWidth=2.5;
       ctx.beginPath();
-      ctx.arc(p.x,excY,14+4*Math.abs(excPhase),0,Math.PI*2);
+      ctx.arc(p.x,excY,28+8*Math.abs(excPhase),0,Math.PI*2); // doubled radius
       ctx.stroke();
       ctx.restore();
     } else {
-      // Label for chest (non-exit, non-survivor)
-      ctx.fillStyle=isLocked?'#554400':col; ctx.font="bold 11px 'Cinzel',serif";
-      ctx.textAlign='center'; ctx.fillText(p.label,p.x,p.y-30);
+      // Label for chest
+      ctx.fillStyle=isLocked?'#554400':col;
+      ctx.font="bold 22px 'Cinzel',serif"; // doubled from 11px
+      ctx.textAlign='center';
+      ctx.fillText(p.label,p.x,p.y-(p.type==='chest'?70:50));
     }
 
     // Proximity pulse ring when in range
     const distP=Math.hypot(LPOI.px-p.x,LPOI.py-p.y);
-    if(distP<72&&!isLocked){
-      ctx.strokeStyle=col+'66'; ctx.lineWidth=1.5;
-      ctx.beginPath(); ctx.arc(p.x,p.y,22+Math.sin(ts*0.004)*4,0,Math.PI*2); ctx.stroke();
+    if(distP<120&&!isLocked){ // wider trigger radius for bigger POI
+      ctx.strokeStyle=col+'66'; ctx.lineWidth=2.5;
+      ctx.beginPath(); ctx.arc(p.x,p.y,44+Math.sin(ts*0.004)*7,0,Math.PI*2); ctx.stroke();
     }
   });
 
@@ -23558,7 +23575,7 @@ function _lpoiCheckProximity(){
   // Find nearest accessible POI
   const near=LPOI.pois.filter(p=>!p.interacted||p.type==='exit').find(p=>{
     if(p.type==='chest'&&p.locked) return false;
-    return Math.hypot(LPOI.px-p.x,LPOI.py-p.y)<68;
+    return Math.hypot(LPOI.px-p.x,LPOI.py-p.y)<120;
   });
   if(near===LPOI.nearPoi) return;
   LPOI.nearPoi=near;
