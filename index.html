@@ -8582,17 +8582,6 @@ const KBNav = (() => {
       confirm:   (el) => el.click(),
     },
     {
-      id: 'roam',
-      container: () => document.getElementById('roam-result'),
-      selector:  'button:not([disabled])',
-      allSelector: 'button',
-      isActive:  () => {
-        const el = document.getElementById('ov-roam');
-        return el && (el.style.display === 'flex' || el.style.display === 'block');
-      },
-      confirm:   (el) => el.click(),
-    },
-    {
       id: 'loot',
       container: () => document.getElementById('loot-grid'),
       selector:  '.loot-card',
@@ -8630,6 +8619,41 @@ const KBNav = (() => {
       selector:  'button:not([disabled])',
       allSelector: 'button',
       isActive:  () => document.getElementById('ov-dockmaster')?.classList.contains('on'),
+      confirm:   (el) => el.click(),
+    },
+    {
+      id: 'rest-overlay',
+      container: () => document.getElementById('rest-overlay'),
+      selector:  'button:not([disabled])',
+      allSelector: 'button',
+      isActive:  () => document.getElementById('rest-overlay')?.classList.contains('on'),
+      confirm:   (el) => el.click(),
+    },
+    {
+      id: 'roam',
+      container: () => document.getElementById('roam-result'),
+      selector:  'button:not([disabled])',
+      allSelector: 'button',
+      isActive:  () => {
+        const el = document.getElementById('ov-roam');
+        return el && (el.style.display === 'flex' || el.style.display === 'block');
+      },
+      confirm:   (el) => el.click(),
+    },
+    {
+      id: 'lpoi-survivor',
+      container: () => document.getElementById('lpoi-survivor-dialog'),
+      selector:  'button:not([disabled])',
+      allSelector: 'button',
+      isActive:  () => document.getElementById('lpoi-survivor-dialog')?.classList.contains('on'),
+      confirm:   (el) => el.click(),
+    },
+    {
+      id: 'cin',
+      container: () => document.getElementById('cin-ovl'),
+      selector:  '#cin-next-btn',
+      allSelector: '#cin-next-btn',
+      isActive:  () => document.getElementById('cin-ovl')?.style.display === 'flex',
       confirm:   (el) => el.click(),
     },
   ];
@@ -15437,6 +15461,11 @@ function showMsg(title,body,btn,cb,btn2,cb2){
     else    { btn2El.style.display='none'; btn2El.onclick=null; G._msgCb2=null; }
   }
   _syncWatchHud();
+  // Auto-focus first button so Enter works immediately without requiring an arrow press
+  requestAnimationFrame(()=>{
+    KBNav.activate();
+    KBNav.moveDown(); // focuses index 0
+  });
 }
 function dismissMsg(){
   if (_restCountdownTimer) { clearInterval(_restCountdownTimer); _restCountdownTimer = null; }
@@ -22755,48 +22784,23 @@ window.addEventListener('keydown', e=>{
     return;
   }
 
-  // ── ENTER — trigger primary confirm for whatever is on top ──
+  // ── ENTER — unified: KBNav handles all dialogs, with narrow fallbacks only ──
   if(e.key==='Enter'){
     // During travel sequence with no overlay open — Enter does nothing
     if(TS?.active && G.phase==='traveling') return;
 
-    // Weapon slot picker — confirm if slot is selected
+    // KBNav covers: msgbox, combat, loot, shop, wpnpicker, dockmaster,
+    //               rest-overlay, roam, lpoi-survivor, cin, inv, wpn-loadout, etc.
+    // Activate so it can see what's on top even without a prior arrow press.
+    KBNav.activate();
+    if(KBNav.confirm()){ e.preventDefault(); return; }
+
+    // ── Narrow fallbacks for contexts not in KBNav ──
+    // Weapon slot picker — confirm button (KBNav handles slot selection; this fires confirm)
     if(document.getElementById('ov-wpnpicker')?.classList.contains('on')){
       const btn=document.getElementById('wpnpicker-confirm-btn');
       if(btn&&btn.style.display!=='none'){ e.preventDefault(); btn.click(); }
       return;
-    }
-    // Message box — primary button
-    if(document.getElementById('msgbox')?.classList.contains('on')){
-      e.preventDefault(); document.getElementById('msgbtn')?.click(); return;
-    }
-    // Loot overlay — claim all
-    if(document.getElementById('ov-loot')?.classList.contains('on')){
-      e.preventDefault(); claimLoot?.(); return;
-    }
-    // Cinematic — next slide
-    if(document.getElementById('cin-ovl')?.style.display==='flex'){
-      e.preventDefault(); document.getElementById('cin-next-btn')?.click(); return;
-    }
-    // Dockmaster — advance dialogue
-    if(document.getElementById('ov-dockmaster')?.classList.contains('on')){
-      e.preventDefault(); document.getElementById('dm-next-btn')?.click(); return;
-    }
-    // Rest overlay — dismiss when "Watch Complete" banner is showing
-    if(document.getElementById('rest-overlay')?.classList.contains('on')){
-      const done=document.getElementById('rest-complete');
-      if(done?.classList.contains('on')){ e.preventDefault(); done.click(); }
-      return;
-    }
-    // Roaming encounter — continue when continue button visible
-    if(document.getElementById('ov-roam')?.style.display==='flex'){
-      const btn=document.getElementById('roam-continue-btn');
-      if(btn&&btn.style.display!=='none'){ e.preventDefault(); btn.click(); }
-      return;
-    }
-    // Waystation — depart
-    if(document.getElementById('ov-waypoint')?.classList.contains('on')){
-      e.preventDefault(); departWaypoint?.(); return;
     }
   }
 });
@@ -23206,7 +23210,7 @@ function _lpoiPlaceEntities(rooms,cfg){
     const cr=chestRooms[c%chestRooms.length];
     const offX=c===0?cr.w-2:Math.max(1,Math.floor(cr.w/2));
     const offY=c===1?cr.h-2:Math.floor(cr.h/2);
-    LPOI.pois.push({type:'chest',interacted:false,locked:true,
+    LPOI.pois.push({type:'chest',interacted:false,locked:false,
       x:(cr.x+offX)*T+T/2, y:(cr.y+offY)*T+T/2, label:'💎 Loot Cache'});
   }
   // Exit — last room far corner
@@ -23682,12 +23686,8 @@ function _lpoiCheckProximity(){
   const panel=document.getElementById('lpoi-interact-panel');
   const nameEl=document.getElementById('lpoi-interact-name');
   const btnsEl=document.getElementById('lpoi-interact-btns');
-  // Chest: only available after all tough enemies defeated
-  const toughAlive=LPOI.enemies.some(e=>e.isTough&&!e.defeated);
-  LPOI.pois.forEach(p=>{ if(p.type==='chest') p.locked=toughAlive; });
   // Find nearest accessible POI
   const near=LPOI.pois.filter(p=>!p.interacted||p.type==='exit').find(p=>{
-    if(p.type==='chest'&&p.locked) return false;
     return Math.hypot(LPOI.px-p.x,LPOI.py-p.y)<120;
   });
   if(near===LPOI.nearPoi) return;
@@ -23938,6 +23938,8 @@ function _lpoiTalkSurvivor(poi){
   dlg.classList.add('on');
   document.getElementById('lpoi-interact-panel').classList.remove('on');
   LPOI.interactOpen=true;
+  // Auto-focus Accept button so Enter works immediately
+  requestAnimationFrame(()=>{ KBNav.activate(); KBNav.moveDown(); });
 }
 // Legacy fallback (no dialog div found)
 function _lpoiTalkSurvivorLegacy(poi,sc){
