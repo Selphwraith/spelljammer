@@ -22905,6 +22905,16 @@ function _lpoiTriggerCheck(segEnd){
 }
 
 // ── Enter POI ─────────────────────────────────────────────────────────────
+// Mirror of _lsShipMoveStats — scales LPOI movement to ship speed upgrades
+// Speed tiers: 4 (base Pinnace), 6, 8, 10 (max)
+function _lpoiShipMoveStats() {
+  const s = G.ship?.speed || 4;
+  if      (s >= 10) return { pSpeed:200, pAccel:1200 };
+  else if (s >= 8)  return { pSpeed:150, pAccel:1000 };
+  else if (s >= 6)  return { pSpeed:110, pAccel:820 };
+  else              return { pSpeed: 70, pAccel:600 };
+}
+
 function enterLanePoi(laneKey, poiName){
   _tvlStop(); if(G.tvl){G.tvl.timer=null;G.tvl._eventLocked=true;}
   pauseLiveClock();
@@ -22916,6 +22926,10 @@ function enterLanePoi(laneKey, poiName){
   const cfg = LANE_POI_CONFIGS[laneKey];
   LPOI.config=cfg; LPOI.questId=null; LPOI.enemies=[]; LPOI.pois=[]; LPOI.particles=[];
   LPOI.pvx=0; LPOI.pvy=0; LPOI.joystickActive=false; LPOI.joystickX=0; LPOI.joystickY=0;
+  // Apply ship-speed-scaled movement stats so upgrades carry into POIs
+  const _lpoiMs = _lpoiShipMoveStats();
+  LPOI.pSpeed = _lpoiMs.pSpeed;
+  LPOI.pAccel = _lpoiMs.pAccel;
   LPOI.interactOpen=false; LPOI.nearPoi=null;
   // Show joystick on touch devices
   const _lpoiJz=document.getElementById('lpoi-joystick-zone');
@@ -23113,8 +23127,8 @@ function lpoiRender(ts){
     if(td<10){ LPOI.pTargetX=null; LPOI.pTargetY=null; LPOI.pvx*=0.5; LPOI.pvy*=0.5; }
     else {
       const steer=Math.min(LPOI.pSpeed, td*4);
-      LPOI.pvx+=(tdx/td)*steer*dt*10;
-      LPOI.pvy+=(tdy/td)*steer*dt*10;
+      LPOI.pvx+=(tdx/td)*steer*dt*12;
+      LPOI.pvy+=(tdy/td)*steer*dt*12;
       LPOI.pAngle=Math.atan2(tdy,tdx);
       LPOI.pFacing=tdx<0?-1:1;
     }
