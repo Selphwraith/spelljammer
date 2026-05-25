@@ -15333,6 +15333,43 @@ function addLog(msg,type){
   d.className='le'+(type?' '+type:''); d.textContent='▸ '+msg; la.appendChild(d); la.trullllTop=la.trullllHeight;
   while(la.children.length>7)la.removeChild(la.firstChild);
 }
+// ── Watch HUD overlay-hide sync ────────────────────────────────────────────
+// Hides the watch HUD whenever any overlay/menu/popup is covering the screen,
+// restores it when everything is closed.  Called explicitly from showMsg /
+// dismissMsg and automatically by a MutationObserver on all overlay elements.
+function _syncWatchHud() {
+  const hud = document.getElementById('watch-hud');
+  if (!hud) return;
+  // Check all named overlays via _anyOverlayOpen, plus msgbox and the main menu
+  const anyOpen = _anyOverlayOpen() ||
+    document.getElementById('msgbox')?.classList.contains('on') ||
+    !document.getElementById('main-menu')?.classList.contains('hidden');
+  hud.classList.toggle('hidden-by-overlay', !!anyOpen);
+}
+
+// Observe every overlay element so open/close is caught regardless of which
+// function adds or removes .on — no need to patch each call site individually.
+(function _initWatchHudObserver() {
+  const overlayIds = [
+    'ov-port','ov-waypoint','ov-wpnpicker','ov-inv','ov-wpn','ov-shp',
+    'ov-qlog','ov-journal','ov-loot','ov-dockmaster','ov-combat',
+    'ov-localquest','ov-localspace','ov-faction-rep','ov-roam',
+    'ov-lane-poi','ov-travel-seq','rest-overlay',
+    'msgbox','main-menu','save-overlay','briefing-overlay',
+    'scr-defeat','scr-win','scr-farwin','cin-ovl',
+  ];
+  const obs = new MutationObserver(_syncWatchHud);
+  // Defer until DOM is ready
+  function _attach() {
+    overlayIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) obs.observe(el, { attributes: true, attributeFilter: ['class','style'] });
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _attach);
+  else _attach();
+})();
+
 function showMsg(title,body,btn,cb,btn2,cb2){
   // If a rest-resume backup exists and this new msg has no callback (e.g. waypoint "Understood"),
   // don't overwrite the pending resume — silently skip it so the player still gets Resume Course.
@@ -15359,6 +15396,7 @@ function showMsg(title,body,btn,cb,btn2,cb2){
     if(btn2){ btn2El.textContent=btn2; btn2El.style.display=''; btn2El.onclick=dismissMsg2; G._msgCb2=cb2||null; }
     else    { btn2El.style.display='none'; btn2El.onclick=null; G._msgCb2=null; }
   }
+  _syncWatchHud();
 }
 function dismissMsg(){
   if (_restCountdownTimer) { clearInterval(_restCountdownTimer); _restCountdownTimer = null; }
@@ -15366,12 +15404,14 @@ function dismissMsg(){
   document.getElementById('msgbtn2').style.display='none';
   if(G._msgCb){const cb=G._msgCb;G._msgCb=null;cb();}
   G._msgCb2=null;
+  _syncWatchHud();
 }
 function dismissMsg2(){
   document.getElementById('msgbox').classList.remove('on');
   document.getElementById('msgbtn2').style.display='none';
   if(G._msgCb2){const cb=G._msgCb2;G._msgCb2=null;cb();}
   G._msgCb=null;
+  _syncWatchHud();
 }
 
 
