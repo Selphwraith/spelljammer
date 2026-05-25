@@ -977,6 +977,39 @@ body {
 #lpoi-interact-btns { display:flex; gap:6px; flex-wrap:wrap; }
 #lpoi-interact-btns .btn { font-size:0.688em; padding:4px 12px; }
 
+/* ── Survivor dialog modal ── */
+#lpoi-survivor-dialog {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  background:rgba(4,0,14,0.98); border:1px solid rgba(68,170,100,0.4);
+  border-radius:8px; padding:22px 24px 18px; display:none; flex-direction:column; gap:14px;
+  min-width:280px; max-width:min(480px,90vw); z-index:20;
+  box-shadow:0 0 40px rgba(30,180,80,0.15);
+}
+#lpoi-survivor-dialog.on { display:flex; }
+#lpoi-survivor-dialog-portrait { font-size:2em; text-align:center; line-height:1; }
+#lpoi-survivor-dialog-speaker {
+  font-family:'Cinzel',serif; font-size:0.625em; letter-spacing:3px; text-transform:uppercase;
+  color:#66cc88; border-bottom:1px solid rgba(68,136,80,0.25); padding-bottom:6px;
+}
+#lpoi-survivor-dialog-text {
+  font-family:'Crimson Text',serif; font-size:0.875em; color:#ccddcc; line-height:1.55;
+  font-style:italic;
+}
+#lpoi-survivor-dialog-btns { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; margin-top:4px; }
+#lpoi-survivor-dialog-btns .btn { font-size:0.688em; padding:5px 14px; }
+.lpoi-dlg-decline {
+  font-family:'Cinzel',serif; font-size:0.625em; padding:5px 14px;
+  border:1px solid rgba(102,34,34,0.5); border-radius:3px;
+  background:rgba(20,5,5,0.88); color:#885566; cursor:pointer; letter-spacing:1px;
+}
+.lpoi-dlg-decline:hover { border-color:#cc4455; color:#ffaabb; }
+
+/* ── Neon EXIT flicker ── */
+@keyframes lpoi-neon-flicker {
+  0%,18%,20%,24%,55%,57%,60%,100% { opacity:1; }
+  19%,22%,58%                      { opacity:0.3; }
+}
+
 /* ── HUD elements ── */
 #ls-hud {
   position:absolute; top:0; left:0; right:0;
@@ -2730,6 +2763,13 @@ body {
     <div id="lpoi-joystick-base">
       <div id="lpoi-joystick-knob"></div>
     </div>
+  </div>
+  <!-- Survivor dialog modal -->
+  <div id="lpoi-survivor-dialog">
+    <div id="lpoi-survivor-dialog-portrait"></div>
+    <div id="lpoi-survivor-dialog-speaker"></div>
+    <div id="lpoi-survivor-dialog-text"></div>
+    <div id="lpoi-survivor-dialog-btns"></div>
   </div>
 </div>
 
@@ -16024,27 +16064,60 @@ function checkQuestPickup(sphereId){
 }
 
 function checkQuestTurnin(sphereId){
-  const active = G.quests.filter(q=>q.turnin===sphereId&&q.state==='active');
+  // LPOI quest types: no cargo required, reward stored as {gold:N}, states: 'active' (escort)
+  // or 'ready' (kill/collect after objectives met). All resolve on sphere arrival.
+  const LPOI_TYPES = new Set(['lpoi_kill','lpoi_collect','lpoi_escort']);
+  const lpoiReady = G.quests.filter(q=>
+    q.turnin===sphereId &&
+    LPOI_TYPES.has(q.type) &&
+    (q.state==='ready' || (q.type==='lpoi_escort' && q.state==='active'))
+  );
+  lpoiReady.forEach(q=>{
+    const gold = (q.reward && typeof q.reward==='object') ? (q.reward.gold||0) : (q.reward||0);
+    G.ship.gold += gold;
+    q.state='complete';
+    G.completedQuests = G.completedQuests || new Set();
+    G.completedQuests.add(q.id);
+    applyRep('ien', 4); // LPOI quests always reward IEN rep
+    addLog(`✅ MISSION COMPLETE: ${q.title} — Reward: ${gold} TS.`,'imp');
+    snd('fragment_collect', 0.9);
+    updateUI();
+    if(G._idleMode && G._idleBounce){
+      addLog(`✅ Idle: auto-collected mission reward — ${q.title} (+${gold} TS).`,'gd');
+    } else {
+      const sphereName = G.spheres?.find(s=>s.id===sphereId)?.n || sphereId;
+      setTimeout(()=>showMsg('✅ Mission Complete',
+        `"${q.title}" — delivered to ${sphereName}.\n\nReward: ${gold} TS\nIEN reputation increased.`,
+        'Excellent!',()=>{ if(G._afterTurninCb){ const cb=G._afterTurninCb; G._afterTurninCb=null; cb(); } }
+      ),400);
+    }
+  });
+
+  // Standard cargo-delivery quests
+  const active = G.quests.filter(q=>q.turnin===sphereId&&q.state==='active'&&!LPOI_TYPES.has(q.type));
   active.forEach(q=>{
-    const cargoIdx = G.ship.inv.findIndex(i=>i.id===q.cargo.id);
+    const cargoIdx = G.ship.inv.findIndex(i=>i.id===q.cargo?.id);
     if(cargoIdx===-1) return; // cargo not in hold
     // Remove cargo and reward player
     G.ship.inv.splice(cargoIdx,1);
-    G.ship.gold += q.reward;
+    const gold = typeof q.reward==='object' ? (q.reward.gold||0) : (q.reward||0);
+    G.ship.gold += gold;
     q.state='complete';
+    G.completedQuests = G.completedQuests || new Set();
     G.completedQuests.add(q.id);
     if(!G._questRefreshDay) G._questRefreshDay = {};
     G._questRefreshDay[q.id] = G.watch?.day || 1; // start 10-day cooldown
     applyRep(q.faction, q.repGain);
-    addLog(`✅ MISSION COMPLETE: ${q.title} — Reward: ${q.reward} TS.`,'imp');
+    addLog(`✅ MISSION COMPLETE: ${q.title} — Reward: ${gold} TS.`,'imp');
     snd('fragment_collect', 0.9);
     updateUI();
     // In idle bounce, skip the turnin popup — just log the reward and keep moving
     if(G._idleMode && G._idleBounce) {
-      addLog(`✅ Idle: auto-collected mission reward — ${q.title} (+${q.reward} TS).`, 'gd');
+      addLog(`✅ Idle: auto-collected mission reward — ${q.title} (+${gold} TS).`, 'gd');
       G._afterTurninCb = null; // clear any stale callback
     } else {
-      setTimeout(()=>showMsg(`✅ Mission Complete`,`"${q.title}" delivered successfully.\n\nReward: ${q.reward} TS\n${FACTIONS[q.faction].n} reputation increased.`,'Excellent!',()=>{
+      const factionName = q.faction && FACTIONS[q.faction] ? FACTIONS[q.faction].n : 'IEN';
+      setTimeout(()=>showMsg(`✅ Mission Complete`,`"${q.title}" delivered successfully.\n\nReward: ${gold} TS\n${factionName} reputation increased.`,'Excellent!',()=>{
         if(G._afterTurninCb){ const cb=G._afterTurninCb; G._afterTurninCb=null; cb(); }
       }),400);
     }
@@ -22863,7 +22936,7 @@ function _lpoiTriggerCheck(segEnd){
   // even if the roll misses — but do NOT set _eventLocked until the roll succeeds.
   G.tvl._lpoiOffered = true;
   // 12% chance per lane crossing
-  if(Math.random() > 0.12) return;
+  if(Math.random() > 0.99) return;
   // Roll succeeded — now lock travel and show the offer
   G.tvl._eventLocked = true;
   _tvlStop(); if(G.tvl) G.tvl.timer=null;
@@ -23103,13 +23176,16 @@ function lpoiRender(ts){
   const T=LPOI.TILE;
 
   // ── Player movement — LS-style velocity + friction ───────────────────────
+  const _dlgOpen=document.getElementById('lpoi-survivor-dialog')?.classList.contains('on');
   const K=LPOI.keys;
   let ax=0, ay=0;
+  if(!_dlgOpen){
   if(K['w']||K['W']||K['ArrowUp'])    ay-=1;
   if(K['s']||K['S']||K['ArrowDown'])  ay+=1;
   if(K['a']||K['A']||K['ArrowLeft'])  ax-=1;
   if(K['d']||K['D']||K['ArrowRight']) ax+=1;
   if(LPOI.joystickActive){ ax+=LPOI.joystickX; ay+=LPOI.joystickY; }
+  }
   const kmag=Math.hypot(ax,ay);
   const hasKey=(kmag>0.05);
   if(hasKey){
@@ -23212,17 +23288,83 @@ function lpoiRender(ts){
     const isLocked=p.type==='chest'&&p.locked;
     const cols={chest:'#ffdd44',exit:'#4488ff',npc_survivor:'#44ff88'};
     const col=cols[p.type]||'#ffffff';
-    if(img){ctx.save();ctx.globalAlpha=isLocked?0.4:0.9;ctx.drawImage(img,p.x-24,p.y-24,48,48);ctx.restore();}
+
+    // ── Chest: animated glow outline pulse ──────────────────────────────
+    if(p.type==='chest'&&!isLocked){
+      const glowPhase=0.55+0.45*Math.sin(ts*0.003);
+      ctx.save();
+      ctx.shadowColor='#ffdd44';
+      ctx.shadowBlur=16*glowPhase;
+      ctx.strokeStyle=`rgba(255,220,68,${0.35+0.45*glowPhase})`;
+      ctx.lineWidth=2.5;
+      const hw=26, hh=26;
+      ctx.beginPath();
+      ctx.roundRect(p.x-hw,p.y-hh,hw*2,hh*2,5);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    if(img){ctx.save();ctx.globalAlpha=isLocked?0.4:0.92;ctx.drawImage(img,p.x-24,p.y-24,48,48);ctx.restore();}
     else{
       ctx.fillStyle=isLocked?'#443300':col; ctx.beginPath();
       ctx.arc(p.x,p.y,p.type==='exit'?14:12,0,Math.PI*2); ctx.fill();
       ctx.fillStyle='#fff'; ctx.font='bold 14px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.fillText(p.type==='chest'?'💎':p.type==='exit'?'⛵':'!',p.x,p.y);
     }
-    // Label
-    ctx.fillStyle=isLocked?'#554400':col; ctx.font="bold 11px 'Cinzel',serif";
-    ctx.textAlign='center'; ctx.fillText(p.label,p.x,p.y-18);
-    // Pulse ring when in range
+
+    // ── EXIT: neon "EXIT" label with flicker ────────────────────────────
+    if(p.type==='exit'){
+      const flickerCycle=ts*0.00175;
+      // simulate the CSS flicker pattern in canvas
+      const fc=flickerCycle%1;
+      const flicker=(fc>0.18&&fc<0.20)||(fc>0.22&&fc<0.24)||(fc>0.57&&fc<0.59)?0.28:1;
+      ctx.save();
+      ctx.globalAlpha=flicker;
+      ctx.font="bold 11px 'Cinzel',serif";
+      ctx.textAlign='center';
+      ctx.shadowColor='#44aaff';
+      ctx.shadowBlur=14;
+      ctx.fillStyle='#88ddff';
+      ctx.fillText('EXIT',p.x,p.y-34);
+      ctx.shadowBlur=28;
+      ctx.globalAlpha=flicker*0.55;
+      ctx.fillStyle='#aaeeff';
+      ctx.fillText('EXIT',p.x,p.y-34);
+      ctx.restore();
+    } else if(p.type==='npc_survivor'&&!p.interacted){
+      // ── Survivor: pulsing exclamation point ─────────────────────────
+      const excPhase=Math.sin(ts*0.005);
+      const excY=p.y-42+(excPhase>0?-3*excPhase:0);
+      const excAlpha=0.7+0.3*Math.abs(excPhase);
+      const excScale=0.92+0.12*Math.max(0,excPhase);
+      ctx.save();
+      ctx.globalAlpha=excAlpha;
+      ctx.translate(p.x,excY);
+      ctx.scale(excScale,excScale);
+      ctx.shadowColor='#44ff88';
+      ctx.shadowBlur=12+8*Math.abs(excPhase);
+      ctx.font="bold 20px 'Cinzel',serif";
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillStyle='#55ffaa';
+      ctx.fillText('!',0,0);
+      ctx.restore();
+      // Outer glow ring
+      ctx.save();
+      ctx.globalAlpha=0.18+0.12*Math.abs(excPhase);
+      ctx.strokeStyle='#44ff88';
+      ctx.lineWidth=1.5;
+      ctx.beginPath();
+      ctx.arc(p.x,excY,14+4*Math.abs(excPhase),0,Math.PI*2);
+      ctx.stroke();
+      ctx.restore();
+    } else {
+      // Label for chest (non-exit, non-survivor)
+      ctx.fillStyle=isLocked?'#554400':col; ctx.font="bold 11px 'Cinzel',serif";
+      ctx.textAlign='center'; ctx.fillText(p.label,p.x,p.y-30);
+    }
+
+    // Proximity pulse ring when in range
     const distP=Math.hypot(LPOI.px-p.x,LPOI.py-p.y);
     if(distP<72&&!isLocked){
       ctx.strokeStyle=col+'66'; ctx.lineWidth=1.5;
@@ -23502,14 +23644,176 @@ function _lpoiOpenChest(poi){
   _lpoiSetLog(msg);
 }
 
-// ── Survivor NPC ──────────────────────────────────────────────────────────
+// ── Survivor NPC — 10 dialogue scenarios with Accept / Decline ────────────
+const LPOI_SURVIVOR_SCENARIOS = [
+  {
+    portrait:'🧑‍✈️', speaker:'Stranded Navigator',
+    text:'"Thank the maker! I thought I was going to die out here. My ship — gone. I only have one request, Captain: can you take me back to Fentheris Orbital Facility? I know someone at the docks who will make it worth your while."',
+    questTitle:'Passage to Fentheris Orbital',
+    questDesc:'Return the stranded navigator to Fentheris Orbital Facility.',
+    turnin:'realm', reward:160,
+    acceptLog:'You agree to carry the navigator to Fentheris Orbital. The crew helps them aboard.',
+    declineLog:'You cannot take passengers at this time. The navigator presses a few credits into your hand and nods grimly.',
+    declineGold:40,
+  },
+  {
+    portrait:'🧑‍🔬', speaker:'Drifting Researcher',
+    text:'"Refuge Station — please. My entire research archive is stored at the facility there, and the backup crystal I am holding is the only copy of three years of void-current mapping. I will pay well."',
+    questTitle:'Research Archive Recovery',
+    questDesc:'Deliver the researcher and their backup crystal safely to Refuge Station.',
+    turnin:'refuge', reward:150,
+    acceptLog:'You take the researcher aboard. They clutch their crystal data archive and barely speak the whole voyage.',
+    declineLog:'You wave off the researcher. They look crestfallen but manage a salute as you leave.',
+    declineGold:30,
+  },
+  {
+    portrait:'💀', speaker:'— Silent —',
+    text:'"You find the body of a fellow captain, long perished. Her dogtags bear the insignia of Fentheris Orbital Facility — the old patrol wing. Perhaps returning them would be a kindness to whoever waits for her there."',
+    questTitle:'The Captain\'s Dogtags',
+    questDesc:'Return the fallen captain\'s dogtags to Fentheris Orbital Facility.',
+    turnin:'realm', reward:80,
+    acceptLog:'You pocket the dogtags with quiet respect. Someone at Fentheris Orbital will want to know.',
+    declineLog:'You leave the dogtags where they rest. Some things are better left to the drift.',
+    declineGold:0,
+  },
+  {
+    portrait:'👨‍🔧', speaker:'Salvage Engineer',
+    text:'"My crew is dead. The ship is dead. I have been eating emergency rations for six days. I\'m not proud — I\'ll scrub your hull plating if you take me back to Refuge Station. Just get me out of the drift."',
+    questTitle:'Salvage Engineer Rescue',
+    questDesc:'Return the salvage engineer to Refuge Station.',
+    turnin:'refuge', reward:120,
+    acceptLog:'You pull the engineer aboard. They immediately start checking your engine couplings — old habits.',
+    declineLog:'The engineer accepts your refusal with the exhausted dignity of someone who has run out of options. You leave supplies.',
+    declineGold:25,
+  },
+  {
+    portrait:'🧓', speaker:'Elder Merchant',
+    text:'"I\'ve been trading the drift lanes for forty years and I have never seen anything like what hit us. I need to reach Fentheris Orbital — there is a Guild factor there who must be warned. This is bigger than cargo, Captain."',
+    questTitle:'Merchant\'s Warning',
+    questDesc:'Escort the elder merchant to Fentheris Orbital Facility with their urgent message.',
+    turnin:'realm', reward:200,
+    acceptLog:'You take the merchant aboard. They spend the voyage writing notes in a small leather ledger, barely sleeping.',
+    declineLog:'The merchant understands. They hand you a sealed letter. "If you reach Fentheris before I do — please."',
+    declineGold:50,
+  },
+  {
+    portrait:'🤕', speaker:'Wounded Crewman',
+    text:'"I don\'t know who you are, but you\'re not Trull, and right now that\'s all I need. My captain went down with the ship. I have her personal log — her family is at Refuge Station. Please. They deserve to know what happened."',
+    questTitle:'The Captain\'s Last Log',
+    questDesc:'Deliver the fallen captain\'s personal log to her family at Refuge Station.',
+    turnin:'refuge', reward:100,
+    acceptLog:'You take the log and the crewman aboard. The crewman stares out the viewport the entire trip and says nothing.',
+    declineLog:'You cannot help with passage, but you copy the log coordinates into your own nav system and promise to send word.',
+    declineGold:0,
+  },
+  {
+    portrait:'🧑‍⚕️', speaker:'IEF Medic',
+    text:'"I\'m IEF — field medic, seconded to the void patrol out of Fentheris Orbital. My transport was taken by corsairs. I have wounded in a survival pod one sector over. I need to reach Fentheris Orbital and get a rescue authorised."',
+    questTitle:'IEF Medic — Urgent Return',
+    questDesc:'Get the IEF medic back to Fentheris Orbital Facility to organise a rescue operation.',
+    turnin:'realm', reward:180,
+    acceptLog:'You take the medic aboard immediately. They spend the transit drafting a terse rescue brief for their commanding officer.',
+    declineLog:'The medic acknowledges with a soldier\'s curt nod and asks if you can at least send a distress relay on their behalf.',
+    declineGold:0,
+  },
+  {
+    portrait:'👩‍🎤', speaker:'Void Drifter',
+    text:'"I am going to level with you, friend — I owe people at Refuge Station a significant sum, and if I do not show up in person soon, they will assume I ran. I did not run. My ship just... exploded. I swear. Take me back and I will owe you instead."',
+    questTitle:'Passage for a Debtor',
+    questDesc:'Take the void drifter back to Refuge Station so they can settle their accounts.',
+    turnin:'refuge', reward:90,
+    acceptLog:'You take the drifter aboard. They talk the entire voyage — mostly about people they\'ve owed money to.',
+    declineLog:'The drifter shrugs philosophically. "Fair enough. I\'ll figure something out. Always do."',
+    declineGold:35,
+  },
+  {
+    portrait:'🧒', speaker:'Young Apprentice',
+    text:'"My master\'s workshop is at Fentheris Orbital. He does not know what happened to me. I have our navigation research in this satchel — three months of work. Please — I must get it back to him."',
+    questTitle:'The Apprentice\'s Research',
+    questDesc:'Deliver the apprentice and their research safely to Fentheris Orbital Facility.',
+    turnin:'realm', reward:110,
+    acceptLog:'You take the apprentice aboard. They guard the satchel of research notes as though it were the most precious thing in the drift.',
+    declineLog:'You cannot take passengers. The apprentice nods bravely and asks if you can at least send a message ahead to their master.',
+    declineGold:20,
+  },
+  {
+    portrait:'🪖', speaker:'Veteran Soldier',
+    text:'"I have two things: a name, and a directive. The name is Captain Orus Vel. The directive is for the commanding officer at Refuge Station. I cannot tell you what it says. I can tell you that lives depend on it arriving. Will you take me?"',
+    questTitle:'Directive for Refuge Station',
+    questDesc:'Carry the veteran soldier and their sealed directive to Refuge Station.',
+    turnin:'refuge', reward:190,
+    acceptLog:'You take the soldier aboard. They say nothing further the entire voyage, sitting bolt upright and watching the drift.',
+    declineLog:'The soldier holds your gaze for three long seconds, then nods once. "I understand. Safe travels, Captain."',
+    declineGold:0,
+  },
+];
+
 function _lpoiTalkSurvivor(poi){
+  // Pick a scenario — stored on the POI so repeat visits show the same one
+  if(poi._scenarioIdx===undefined){
+    poi._scenarioIdx=Math.floor(Math.random()*LPOI_SURVIVOR_SCENARIOS.length);
+  }
+  const sc=LPOI_SURVIVOR_SCENARIOS[poi._scenarioIdx];
+  const dlg=document.getElementById('lpoi-survivor-dialog');
+  if(!dlg) { _lpoiTalkSurvivorLegacy(poi,sc); return; }
+  document.getElementById('lpoi-survivor-dialog-portrait').textContent=sc.portrait;
+  document.getElementById('lpoi-survivor-dialog-speaker').textContent=sc.speaker;
+  document.getElementById('lpoi-survivor-dialog-text').textContent=sc.text;
+  const btns=document.getElementById('lpoi-survivor-dialog-btns');
+  btns.innerHTML='';
+  // Accept button
+  const accept=document.createElement('button');
+  accept.className='btn'; accept.textContent='✔ Accept';
+  accept.onclick=()=>{
+    dlg.classList.remove('on');
+    LPOI.interactOpen=false;
+    poi.interacted=true;
+    // Create a proper quest for this scenario
+    const qId='lpoi_surv_'+Date.now();
+    const quest={
+      id:qId, type:'lpoi_escort', state:'active',
+      title:sc.questTitle, desc:sc.questDesc,
+      turnin:sc.turnin, reward:{gold:sc.reward},
+      source:'lpoi', laneKey:G._lpoiLaneKey||'',
+    };
+    G.quests=G.quests||[]; G.quests.push(quest);
+    poi.questId=qId; if(!LPOI.questId) LPOI.questId=qId;
+    addLog(`💬 ${sc.speaker}: ${sc.acceptLog}`,'imp');
+    addLog(`📋 Quest accepted: ${sc.questTitle} — deliver to ${sc.turnin==='realm'?'Fentheris Orbital Facility':'Refuge Station'}.`,'gd');
+    _lpoiSetLog('Quest accepted. Find the exit.');
+    applyRep('ien',4);
+    document.getElementById('lpoi-interact-panel').classList.remove('on');
+    LPOI.nearPoi=null;
+  };
+  btns.appendChild(accept);
+  // Decline button
+  const decline=document.createElement('button');
+  decline.className='lpoi-dlg-decline'; decline.textContent='✖ Decline';
+  decline.onclick=()=>{
+    dlg.classList.remove('on');
+    LPOI.interactOpen=false;
+    poi.interacted=true;
+    if(sc.declineGold>0){
+      G.ship.gold+=sc.declineGold;
+      addLog(`💬 ${sc.speaker}: ${sc.declineLog} (+${sc.declineGold} TS)`,'');
+      updateUI();
+    } else {
+      addLog(`💬 ${sc.speaker}: ${sc.declineLog}`,'');
+    }
+    _lpoiSetLog('You declined the request.');
+    document.getElementById('lpoi-interact-panel').classList.remove('on');
+    LPOI.nearPoi=null;
+  };
+  btns.appendChild(decline);
+  dlg.classList.add('on');
+  document.getElementById('lpoi-interact-panel').classList.remove('on');
+  LPOI.interactOpen=true;
+}
+// Legacy fallback (no dialog div found)
+function _lpoiTalkSurvivorLegacy(poi,sc){
   poi.interacted=true;
-  const q=G.quests?.find(q=>q.id===poi.questId);
-  const msg=q?`"Captain — you came. I have coordinates, and a task that needs doing. ${q.desc}"`
-    :'"Thank the stars. I have nothing to offer but this." The survivor presses a data-chip into your hand.';
-  addLog(`💬 Survivor: ${msg}`,'imp');
-  if(!q){ G.ship.gold+=(30+Math.floor(Math.random()*30)); addLog('Received 30–60 TS.','gd'); updateUI(); }
+  addLog(`💬 ${sc.speaker}: ${sc.text}`,'imp');
+  addLog(`📋 ${sc.questTitle} — ${sc.questDesc}`,'gd');
   _lpoiSetLog('Survivor briefed.'); applyRep('ien',3);
   document.getElementById('lpoi-interact-panel').classList.remove('on');
   LPOI.interactOpen=false; LPOI.nearPoi=null;
