@@ -4870,6 +4870,7 @@ function doRest() {
   titleEl.textContent = titles[Math.min(fatigLvl, titles.length-1)];
   descEl.textContent  = descs[Math.min(fatigLvl, descs.length-1)];
   overlay.classList.add('on');
+  snd('anchor_rest', 0.7); // gentle ship hum / rest ambience — file: sounds/anchor_rest.mp3
 
   setTimeout(() => {
     doneEl.classList.add('on');
@@ -5248,6 +5249,7 @@ const SOUND_DATA = {
   'flee_escape': 'sounds/flee_escape.mp3',
   'port_dock': 'sounds/port_dock.mp3',
   'purchase': 'sounds/purchase.mp3',
+  'anchor_rest': 'sounds/anchor_rest.mp3',   // soft engine hum + ambience; plays on ship anchor/rest
   'ship_upgrade': 'sounds/ship_upgrade.mp3',
   'loot_open': 'sounds/loot_open.mp3',
   'title':   'sounds/title.mp3',
