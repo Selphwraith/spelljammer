@@ -7840,7 +7840,7 @@ function travelTick(){
       // ─ ARRIVED — tick the final leg (day/air via tickLeg inside advanceWatch) ─
       advanceWatch();
       document.getElementById('tvlbar').classList.remove('on');
-      tsClose(); stopLiveClock(); // close travel sequence on arrival
+      tsClose(true); stopLiveClock(); // close travel sequence on arrival
       if(G.tvl.toWp)          arriveAtWaypoint(G.tvl.toWp);
       else if(G.tvl.toFragSite) arriveAtFragSite(G.tvl.toFragSite);
       else                    arrive(G.tvl.to);
@@ -10069,11 +10069,25 @@ function tsOpen(lane) {
   TS._lastTs   = 0;
   // Reset sphere state on fresh journey (prog near start), but NOT on mid-journey
   // resumes (roamContinue, watch transitions) so approach animations survive pauses.
-  const _isResume = G.tvl?.prog > 5 && _CS.active;
-  if (!_isResume) {
+  const _isResume = G.tvl?.prog > 5 && ((_CS._preserved) || _CS.active);
+  if (_CS._preserved) {
+    // Restore the preserved approach state so it continues from where it left off
+    const p = _CS._preserved;
+    _CS.active   = true;
+    _CS.t        = p.t;
+    _CS.alpha    = p.alpha;
+    _CS.name     = p.name;
+    _CS.duration = p.duration;
+    _CS._stars   = p._stars;
+    _CS._nebulae = p._nebulae;
+    _CS._worlds  = p._worlds;
+    _CS._preserved = null;
+    startSphereAudio();
+  } else if (!_isResume) {
     _CS.active = false;
     _CS.t      = 0;
     _CS.alpha  = 0;
+    _CS._preserved = null;
     stopSphereAudio();
   }
 
@@ -10101,14 +10115,26 @@ function tsOpen(lane) {
   TS.animId = requestAnimationFrame(tsRender);
 }
 
-function tsClose() {
+function tsClose(isArrival) {
   TS.active = false;
   if (TS.animId) { cancelAnimationFrame(TS.animId); TS.animId = null; }
   TS._lastTs = 0;
-  _CS.active = false;
-  _CS.t = 0;
-  _CS.alpha = 0;
-  stopSphereAudio();
+  // On true arrival, wipe sphere state. On interruption (rest, roam, combat mid-journey),
+  // preserve it so the approach resumes from where it left off.
+  if (isArrival || !_CS.active) {
+    _CS.active = false;
+    _CS.t = 0;
+    _CS.alpha = 0;
+    _CS._preserved = null;
+    stopSphereAudio();
+  } else {
+    // Mid-journey pause — snapshot the approach progress so tsOpen can restore it
+    _CS._preserved = { t: _CS.t, alpha: _CS.alpha, active: _CS.active,
+      name: _CS.name, duration: _CS.duration,
+      _stars: _CS._stars, _nebulae: _CS._nebulae, _worlds: _CS._worlds };
+    _CS.active = false; // stop rendering while overlay is hidden
+    stopSphereAudio();
+  }
   document.getElementById('ov-travel-seq')?.classList.remove('on');
   const whClose = document.getElementById('watch-hud');
   if(whClose) whClose.style.cssText = '';
