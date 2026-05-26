@@ -943,29 +943,17 @@ body {
 }
 #ov-lane-poi.on { display:flex; pointer-events:all; }
 #lpoi-canvas { position:absolute; inset:0; width:100%; height:100%; display:block; cursor:crosshair; z-index:1; }
-#lpoi-hud {
-  position:absolute; top:0; left:0; right:0; z-index:10;
-  display:flex; align-items:center; justify-content:space-between;
-  padding:8px 14px; pointer-events:none;
-  background:linear-gradient(180deg,rgba(2,0,12,0.92) 0%,transparent 100%);
-}
-#lpoi-title { font-family:'Cinzel',serif; font-size:0.75em; color:#bb88ff; letter-spacing:2px; }
-#lpoi-exit-btn {
-  font-family:'Cinzel',serif; font-size:0.563em; padding:5px 14px;
-  border:1px solid rgba(68,34,102,0.4); border-radius:3px;
-  background:rgba(10,3,25,0.9); color:#8866aa; cursor:pointer;
-  pointer-events:all; letter-spacing:1px;
-}
-#lpoi-exit-btn:hover { border-color:#aa66ff; color:#ccaaff; }
+/* ── LPOI canvas and menu bar ── */
+#lpoi-canvas { position:absolute; inset:0; width:100%; height:100%; display:block; cursor:crosshair; z-index:1; }
 #lpoi-log {
-  position:absolute; bottom:50px; left:50%; transform:translateX(-50%);
+  position:absolute; bottom:12px; left:50%; transform:translateX(-50%);
   background:rgba(4,0,14,0.9); border:1px solid rgba(68,34,136,0.2); border-radius:4px;
   padding:5px 18px; font-size:0.625em; color:#8877bb; font-style:italic;
   pointer-events:none; max-width:540px; text-align:center; z-index:10;
   transition:color 0.4s;
 }
 #lpoi-interact-panel {
-  position:absolute; bottom:96px; left:50%; transform:translateX(-50%);
+  position:absolute; bottom:52px; left:50%; transform:translateX(-50%);
   background:rgba(5,0,16,0.97); border:1px solid rgba(136,68,255,0.3);
   border-radius:6px; padding:9px 14px;
   display:none; flex-direction:column; gap:7px;
@@ -1010,18 +998,18 @@ body {
   19%,22%,58%                      { opacity:0.3; }
 }
 
-/* ── LPOI Menu Bar ── */
+/* ── LPOI Menu Bar — top strip, right side of the HUD ── */
 #lpoi-menu-bar {
-  position:absolute; bottom:0; left:0; right:0;
-  display:flex; align-items:center; justify-content:center;
-  gap:6px; padding:6px 10px;
-  background:linear-gradient(0deg,rgba(3,0,12,0.97) 0%,rgba(3,0,12,0.80) 100%);
-  border-top:1px solid rgba(136,68,255,0.2);
+  position:absolute; top:0; left:0; right:0;
+  display:flex; align-items:center;
+  gap:5px; padding:6px 14px;
   z-index:12; pointer-events:auto;
+  background:linear-gradient(180deg,rgba(3,0,12,0.97) 0%,rgba(3,0,12,0.80) 100%);
+  border-bottom:1px solid rgba(136,68,255,0.18);
 }
 #lpoi-menu-bar .lpoi-mbar-btn {
-  font-family:'Cinzel',serif; font-size:0.625em; letter-spacing:0.5px;
-  padding:5px 13px; border-radius:3px; cursor:pointer;
+  font-family:'Cinzel',serif; font-size:0.563em; letter-spacing:0.5px;
+  padding:4px 11px; border-radius:3px; cursor:pointer;
   border:1px solid rgba(136,68,255,0.3);
   background:rgba(12,3,28,0.90); color:#aa88dd;
   transition:all 0.15s;
@@ -1031,12 +1019,17 @@ body {
   background:rgba(30,8,60,0.95);
   box-shadow:0 0 10px rgba(136,68,255,0.2);
 }
+#lpoi-menu-bar .lpoi-mbar-title {
+  font-family:'Cinzel',serif; font-size:0.75em; color:#bb88ff;
+  letter-spacing:2px; margin-right:auto;
+}
 #lpoi-menu-bar .lpoi-mbar-status {
-  font-size:0.625em; color:#664488; font-family:'Cinzel',serif;
-  margin-right:auto; letter-spacing:1px; white-space:nowrap;
+  font-size:0.563em; color:#664488; font-family:'Cinzel',serif;
+  letter-spacing:1px; white-space:nowrap; margin-left:auto;
 }
 @media (max-width:700px) {
-  #lpoi-menu-bar .lpoi-mbar-btn { font-size:0.563em; padding:4px 9px; }
+  #lpoi-menu-bar .lpoi-mbar-btn { font-size:0.5em; padding:3px 8px; }
+  #lpoi-menu-bar .lpoi-mbar-title { font-size:0.625em; }
 }
 
 /* ── HUD elements ── */
@@ -1421,6 +1414,18 @@ body {
 
 /* These overlays open from the travel-sequence header buttons and must render above it */
 #ov-inv.on, #ov-shp.on, #ov-wpn.on, #ov-qlog.on, #ov-journal.on { z-index: 320; }
+
+/* When inside a Lane POI (z-index 7000), overlays must render above it */
+#ov-lane-poi.on ~ #ov-inv,
+#ov-lane-poi.on ~ #ov-shp,
+#ov-lane-poi.on ~ #ov-wpn,
+#ov-lane-poi.on ~ #ov-qlog,
+#ov-lane-poi.on ~ #ov-journal { z-index: 7100; }
+body.in-lpoi #ov-inv.on,
+body.in-lpoi #ov-shp.on,
+body.in-lpoi #ov-wpn.on,
+body.in-lpoi #ov-qlog.on,
+body.in-lpoi #ov-journal.on { z-index: 7100; }
 
 /* ── Travel sequence top bar — mirrors the main header ── */
 #ts-topbar {
@@ -2778,8 +2783,15 @@ body {
 <!-- ═══ LANE POI OVERLAY ═══ -->
 <div id="ov-lane-poi">
   <canvas id="lpoi-canvas"></canvas>
-  <div id="lpoi-hud">
-    <div id="lpoi-title">🔮 Drift Anomaly</div>
+  <!-- Top HUD strip: title + menu buttons + status, all in one bar -->
+  <div id="lpoi-menu-bar" style="display:none">
+    <span class="lpoi-mbar-title" id="lpoi-title">🔮 Drift Anomaly</span>
+    <button class="lpoi-mbar-btn" onclick="openOverlay('inv')">📦 Items</button>
+    <button class="lpoi-mbar-btn" onclick="openOverlay('shp')">⛵ Ship</button>
+    <button class="lpoi-mbar-btn" onclick="openOverlay('wpn')">⚔ Weapons</button>
+    <button class="lpoi-mbar-btn" onclick="openOverlay('qlog')">📋 Quests</button>
+    <button class="lpoi-mbar-btn" onclick="openOverlay('journal')">📖 Journal</button>
+    <span class="lpoi-mbar-status" id="lpoi-mbar-status">✅ CLEAR</span>
     <button id="lpoi-exit-btn" onclick="exitLanePoi()">⛵ Return to Drift</button>
   </div>
   <div id="lpoi-log">Proceed carefully.</div>
@@ -23081,6 +23093,7 @@ function enterLanePoi(laneKey, poiName){
   document.getElementById('lpoi-title').textContent=`${cfg.icon} ${poiName}`;
   _lpoiSetLog('Entering '+poiName+' — proceed carefully.');
   document.getElementById('ov-lane-poi').classList.add('on');
+  document.body.classList.add('in-lpoi');
   lpoiPreloadImgs();
   LPOI.active=true; LPOI._lastTs=0; LPOI.canvas=document.getElementById('lpoi-canvas');
   LPOI.ctx=LPOI.canvas.getContext('2d');
@@ -24074,6 +24087,7 @@ function exitLanePoi(){
   if(LPOI.animId){cancelAnimationFrame(LPOI.animId);LPOI.animId=null;}
   // Hide menu bar and close any overlays the player had open
   _lpoiSyncMenuBar(false);
+  document.body.classList.remove('in-lpoi');
   ['inv','shp','wpn','qlog','journal'].forEach(w=>{
     document.getElementById('ov-'+w)?.classList.remove('on');
   });
