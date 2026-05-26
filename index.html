@@ -474,6 +474,53 @@ body {
 .mm-btn .mm-ico { font-size: 1em; width:20px; text-align:center; }
 .mm-btn .mm-desc { font-size: 0.563em; color:#9988bb; letter-spacing:1px; display:block; margin-top:2px; font-family:'Crimson Text',serif; font-style:italic; }
 
+/* ── Main Menu — Options section with Sound / Graphics tabs ── */
+.mm-options {
+  width:100%; background:rgba(5,0,18,0.6);
+  border:1px solid rgba(68,17,136,0.267); border-radius:6px;
+  overflow:hidden;
+}
+.mm-options-header {
+  font-family:'Cinzel',serif; font-size:0.563em; letter-spacing:3px;
+  color:#7755aa; text-transform:uppercase; padding:8px 14px 0;
+}
+.mm-tabs {
+  display:flex; gap:0; border-bottom:1px solid rgba(68,17,136,0.2);
+  padding:0 10px; margin-top:6px;
+}
+.mm-tab {
+  font-family:'Cinzel',serif; font-size:0.563em; letter-spacing:1px;
+  padding:5px 14px; cursor:pointer; border:none; background:none;
+  color:#554477; border-bottom:2px solid transparent; margin-bottom:-1px;
+  transition:all 0.15s;
+}
+.mm-tab:hover { color:#9977cc; }
+.mm-tab.act { color:#cc99ff; border-bottom-color:#9966dd; }
+.mm-tab-panel { display:none; padding:12px 14px 14px; }
+.mm-tab-panel.act { display:block; }
+.mm-vol-row {
+  display:flex; align-items:center; gap:8px; margin-bottom:9px;
+}
+.mm-vol-lbl {
+  font-size:0.625em; color:#9977cc; width:62px; flex-shrink:0;
+}
+.mm-vol-val {
+  font-size:0.625em; color:#6655aa; width:30px; text-align:right; flex-shrink:0;
+}
+.mm-vol-row input[type=range] {
+  flex:1; accent-color:#9966dd; height:3px; cursor:pointer;
+}
+.mm-vol-note {
+  font-size:0.563em; color:#443355; font-style:italic; margin-top:-4px; margin-bottom:8px;
+}
+.mm-vol-actions {
+  display:flex; gap:8px; margin-top:10px;
+}
+.mm-vol-actions button {
+  flex:1; font-family:'Cinzel',serif; font-size:0.563em; padding:6px 4px;
+  border-radius:3px; cursor:pointer; letter-spacing:0.5px;
+}
+
 /* ── CAPTAIN'S BRIEFING ── */
 .briefing-overlay {
   position:fixed; top:0; left:0; right:0; bottom:0; z-index:600;
@@ -998,38 +1045,47 @@ body {
   19%,22%,58%                      { opacity:0.3; }
 }
 
-/* ── LPOI Menu Bar — top strip, right side of the HUD ── */
+/* ── LPOI Top Bar — mirrors the travel sequence / main header style ── */
 #lpoi-menu-bar {
-  position:absolute; top:0; left:0; right:0;
-  display:flex; align-items:center;
-  gap:5px; padding:6px 14px;
-  z-index:12; pointer-events:auto;
-  background:linear-gradient(180deg,rgba(3,0,12,0.97) 0%,rgba(3,0,12,0.80) 100%);
-  border-bottom:1px solid rgba(136,68,255,0.18);
+  position:absolute; top:0; left:0; right:0; z-index:12;
+  background:linear-gradient(90deg,#07001a,#160038,#07001a);
+  border-bottom:1px solid rgba(68,17,136,0.267);
+  padding:0 16px; height:42px;
+  display:flex; align-items:center; justify-content:space-between;
+  pointer-events:auto;
 }
-#lpoi-menu-bar .lpoi-mbar-btn {
-  font-family:'Cinzel',serif; font-size:0.563em; letter-spacing:0.5px;
-  padding:4px 11px; border-radius:3px; cursor:pointer;
-  border:1px solid rgba(136,68,255,0.3);
-  background:rgba(12,3,28,0.90); color:#aa88dd;
-  transition:all 0.15s;
+#lpoi-bar-title {
+  font-family:'Cinzel',serif; font-size:1em; font-weight:900; letter-spacing:2px;
+  background:linear-gradient(135deg,#ffd700,#ff8c00,#ffe066);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:42%;
 }
-#lpoi-menu-bar .lpoi-mbar-btn:hover {
-  border-color:#9966ff; color:#ddbbff;
-  background:rgba(30,8,60,0.95);
-  box-shadow:0 0 10px rgba(136,68,255,0.2);
+#lpoi-bar-btns { display:flex; align-items:center; gap:6px; }
+.lpoi-tbtn {
+  font-family:'Cinzel',serif; font-size:0.625em; letter-spacing:1px;
+  padding:4px 10px; border:1px solid rgba(68,17,136,0.4); border-radius:3px;
+  background:rgba(15,3,35,0.8); color:#9977cc; cursor:pointer;
 }
-#lpoi-menu-bar .lpoi-mbar-title {
-  font-family:'Cinzel',serif; font-size:0.75em; color:#bb88ff;
-  letter-spacing:2px; margin-right:auto;
+.lpoi-tbtn:hover { border-color:#7755cc; color:#ccaaff; background:rgba(30,8,60,0.9); }
+#lpoi-mbar-status {
+  font-family:'Cinzel',serif; font-size:0.625em; color:#9966dd;
+  letter-spacing:2px; text-transform:uppercase; white-space:nowrap;
 }
-#lpoi-menu-bar .lpoi-mbar-status {
-  font-size:0.563em; color:#664488; font-family:'Cinzel',serif;
-  letter-spacing:1px; white-space:nowrap; margin-left:auto;
+/* Abort dungeon — floats just below the top bar, right side */
+#lpoi-abort-btn {
+  position:absolute; top:50px; right:16px; z-index:12;
+  font-family:'Cinzel',serif; font-size:0.563em; letter-spacing:1px;
+  padding:4px 12px; border-radius:3px; cursor:pointer;
+  border:1px solid rgba(136,34,34,0.4);
+  background:rgba(20,4,4,0.88); color:#885555;
+  transition:all 0.15s; pointer-events:auto;
 }
+#lpoi-abort-btn:hover { border-color:#cc4444; color:#ffaaaa; background:rgba(50,8,8,0.95); }
 @media (max-width:700px) {
-  #lpoi-menu-bar .lpoi-mbar-btn { font-size:0.5em; padding:3px 8px; }
-  #lpoi-menu-bar .lpoi-mbar-title { font-size:0.625em; }
+  #lpoi-menu-bar { padding:0 6px; gap:4px; height:38px; }
+  #lpoi-bar-title { display:none; }
+  .lpoi-tbtn { font-size:0.563em; padding:3px 7px; }
+  #lpoi-abort-btn { top:46px; right:8px; font-size:0.5em; }
 }
 
 /* ── HUD elements ── */
@@ -1939,7 +1995,6 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
   <h1>⚓ Fentheris<span class="hdr-long">: Voyage Through the Drift</span></h1>
   <div style="display:flex;align-items:center;gap:8px;">
     <button onclick="showMainMenu()" style="font-family:'Cinzel',serif;font-size:0.625em;letter-spacing:1px;padding:4px 10px;border:1px solid rgba(68,17,136,0.4);border-radius:3px;background:rgba(15,3,35,0.8);color:#9977cc;cursor:pointer;">☰ Menu</button>
-    <button id="mute-btn" onclick="toggleVolPanel(event)" style="font-family:'Cinzel',serif;font-size:0.625em;letter-spacing:1px;padding:4px 10px;border:1px solid rgba(68,17,136,0.4);border-radius:3px;background:rgba(15,3,35,0.8);color:#9977cc;cursor:pointer;">🔊 Sound</button>
     <button onclick="showFontPanel()" style="font-family:'Cinzel',serif;font-size:0.625em;letter-spacing:1px;padding:4px 10px;border:1px solid rgba(68,17,136,0.4);border-radius:3px;background:rgba(15,3,35,0.8);color:#9977cc;cursor:pointer;">🔠 Text</button>
     <div id="phase-tag">Navigation</div>
   </div>
@@ -2424,7 +2479,6 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
       <h1 id="ts-topbar-title">⚓ Fentheris<span class="hdr-long">: Voyage Through the Drift</span></h1>
       <div style="display:flex;align-items:center;gap:6px;">
         <button class="ts-tbtn" onclick="showMainMenu()">☰ Menu</button>
-        <button class="ts-tbtn" id="ts-mute-btn" onclick="toggleVolPanel(event)">🔊 Sound</button>
         <button class="ts-tbtn" onclick="showFontPanel()">🔠 Text</button>
         <button class="ts-tbtn" onclick="openCbtInv()" title="Open cargo — use items during travel">🎒 Items</button>
         <button class="ts-tbtn" onclick="toggleStatsDrawer(event)" title="Ship stats">⊞ Stats</button>
@@ -2783,17 +2837,21 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
 <!-- ═══ LANE POI OVERLAY ═══ -->
 <div id="ov-lane-poi">
   <canvas id="lpoi-canvas"></canvas>
-  <!-- Top HUD strip: title + menu buttons + status, all in one bar -->
+  <!-- Top bar — mirrors travel sequence header exactly -->
   <div id="lpoi-menu-bar" style="display:none">
-    <span class="lpoi-mbar-title" id="lpoi-title">🔮 Drift Anomaly</span>
-    <button class="lpoi-mbar-btn" onclick="openOverlay('inv')">📦 Items</button>
-    <button class="lpoi-mbar-btn" onclick="openOverlay('shp')">⛵ Ship</button>
-    <button class="lpoi-mbar-btn" onclick="openOverlay('wpn')">⚔ Weapons</button>
-    <button class="lpoi-mbar-btn" onclick="openOverlay('qlog')">📋 Quests</button>
-    <button class="lpoi-mbar-btn" onclick="openOverlay('journal')">📖 Journal</button>
-    <span class="lpoi-mbar-status" id="lpoi-mbar-status">✅ CLEAR</span>
-    <button id="lpoi-exit-btn" onclick="exitLanePoi()">⛵ Return to Drift</button>
+    <span id="lpoi-bar-title">🔮 Drift Anomaly</span>
+    <div id="lpoi-bar-btns">
+      <button class="lpoi-tbtn" onclick="openOverlay('inv')" title="Cargo Manifest">🎒 Items</button>
+      <button class="lpoi-tbtn" onclick="openOverlay('wpn')" title="Weapon Loadout">⚔ Weapons</button>
+      <button class="lpoi-tbtn" onclick="openOverlay('shp')" title="Ship Details">🚀 Ship</button>
+      <button class="lpoi-tbtn" onclick="openOverlay('qlog')" title="Quest Log">📋 Quests</button>
+      <button class="lpoi-tbtn" onclick="openOverlay('journal')" title="Captain's Log">📖 Log</button>
+      <button class="lpoi-tbtn" id="lpoi-exit-btn" onclick="exitLanePoi()">⛵ Return</button>
+    </div>
+    <span id="lpoi-mbar-status">EXPLORING</span>
   </div>
+  <!-- Abort button — below top bar, right side. Only shown while exploring. -->
+  <button id="lpoi-abort-btn" style="display:none" onclick="lpoiAbortDungeon()">⚠ Abort Dungeon</button>
   <div id="lpoi-log">Proceed carefully.</div>
   <div id="lpoi-interact-panel">
     <div id="lpoi-interact-name"></div>
@@ -5098,14 +5156,18 @@ function hideFontPanel() {
   document.getElementById('font-panel').style.display = 'none';
 }
 
-function toggleVolPanel(e) {
-  if (e) e.stopPropagation();
-  const p = document.getElementById('vol-panel');
-  if (!p) return;
-  const open = p.style.display !== 'none';
-  p.style.display = open ? 'none' : 'block';
-  if (!open) _updateVolSliders();
+// Tab switcher for Options section inside the main menu
+function mmSwitchTab(tab, btn) {
+  document.querySelectorAll('.mm-tab').forEach(t => t.classList.remove('act'));
+  document.querySelectorAll('.mm-tab-panel').forEach(p => p.classList.remove('act'));
+  if (btn) btn.classList.add('act');
+  const panel = document.getElementById('mm-tab-' + tab);
+  if (panel) panel.classList.add('act');
+  _updateVolSliders(); // sync sliders whenever tab opens
 }
+
+// toggleVolPanel is kept as a no-op for any remaining legacy call-sites
+function toggleVolPanel(e) { if (e) e.stopPropagation(); }
 
 function _updateVolSliders() {
   ['master','music','sfx','voice','particles'].forEach(k => {
@@ -5133,10 +5195,6 @@ function applyVolumes() {
   if (_loopEl) _loopEl.volume = Math.min(1, _VOL.master * _VOL.music * 0.45); // combat loop
   if (_titleEl) _titleVolume(G?.phase === 'combat' ? 0.00 : 0.35); // ducked in combat
   if (_victoryEl) _victoryEl.volume = Math.min(1, _VOL.master * _VOL.music * 1.0);
-  const btn = document.getElementById('mute-btn');
-  if (btn) btn.textContent = _VOL.master === 0 ? '🔇 Sound' : '🔊 Sound';
-  const tsBtn = document.getElementById('ts-mute-btn');
-  if (tsBtn) tsBtn.textContent = _VOL.master === 0 ? '🔇 Sound' : '🔊 Sound';
 }
 
 function setAllVol(pct) {
@@ -5145,24 +5203,6 @@ function setAllVol(pct) {
   _updateVolSliders();
   applyVolumes();
 }
-
-// Close vol panel on click/tap outside it
-document.addEventListener('click', e => {
-  const panel = document.getElementById('vol-panel');
-  const btn   = document.getElementById('mute-btn');
-  if (panel && panel.style.display !== 'none' &&
-      !panel.contains(e.target) && !btn.contains(e.target)) {
-    panel.style.display = 'none';
-  }
-});
-document.addEventListener('touchstart', e => {
-  const panel = document.getElementById('vol-panel');
-  const btn   = document.getElementById('mute-btn');
-  if (panel && panel.style.display !== 'none' &&
-      !panel.contains(e.target) && btn && !btn.contains(e.target)) {
-    panel.style.display = 'none';
-  }
-}, { passive: true });
 
 // Keep toggleMute for backwards compatibility (keyboard shortcut M etc)
 function toggleMute() {
@@ -16598,6 +16638,8 @@ function showMainMenu() {
   setTag('Main Menu');
   if (_gameActive) _stopLoop();
   playTitle();
+  // Sync Options sliders to current values every time the menu opens
+  requestAnimationFrame(_updateVolSliders);
 }
 
 function menuShowSave() {
@@ -23090,7 +23132,7 @@ function enterLanePoi(laneKey, poiName){
   LPOI.pTargetX=LPOI.px; LPOI.pTargetY=LPOI.py; LPOI.pFacing=1;
   _lpoiPlaceEntities(rooms,cfg);
   if(Math.random()<cfg.questChance) _lpoiGenerateQuest(cfg,laneKey,rooms);
-  document.getElementById('lpoi-title').textContent=`${cfg.icon} ${poiName}`;
+  document.getElementById('lpoi-bar-title').textContent=`${cfg.icon} ${poiName}`;
   _lpoiSetLog('Entering '+poiName+' — proceed carefully.');
   document.getElementById('ov-lane-poi').classList.add('on');
   document.body.classList.add('in-lpoi');
@@ -23808,16 +23850,32 @@ function _lpoiCheckProximity(){
 // Sync menu bar: visible when exploring (not in combat), hidden during combat/transitions
 function _lpoiSyncMenuBar(exploring){
   const bar=document.getElementById('lpoi-menu-bar');
+  const abort=document.getElementById('lpoi-abort-btn');
   const status=document.getElementById('lpoi-mbar-status');
   if(!bar) return;
   bar.style.display=exploring?'flex':'none';
+  if(abort) abort.style.display=exploring?'block':'none';
   if(status){
     const alive=LPOI.enemies.filter(e=>!e.defeated).length;
     const toughAlive=LPOI.enemies.filter(e=>e.isTough&&!e.defeated).length;
-    if(alive===0) status.textContent='✅ CLEAR';
-    else if(toughAlive>0) status.textContent=`⚠ ${alive} HOSTILE${alive>1?'S':''}`;
-    else status.textContent=`⚡ ${alive} HOSTILE${alive>1?'S':''}`;
+    if(alive===0)       status.textContent='CLEAR';
+    else if(toughAlive) status.textContent=`⚠ ${alive} HOSTILE${alive!==1?'S':''}`;
+    else                status.textContent=`⚡ ${alive} HOSTILE${alive!==1?'S':''}`;
   }
+  // Update the title to show the POI name
+  const titleEl=document.getElementById('lpoi-bar-title');
+  if(titleEl&&G._lpoiPoiName) titleEl.textContent=G._lpoiPoiName;
+}
+
+// Abort dungeon — immediate emergency exit, no quest reward, log the retreat
+function lpoiAbortDungeon(){
+  showMsg('Abort Dungeon?',
+    'Retreat from this location immediately? Any progress will be lost and no rewards will be given.',
+    '⚠ Abort & Retreat',
+    ()=>{ addLog('⚠ Tactical retreat — you abandon the location.',''); exitLanePoi(); },
+    '✕ Stay',
+    null
+  );
 }
 function _lpoiStartCombat(enemy){
   if(G._inLanePoi&&!G.tvl?._poiCombatEnemy){
@@ -24921,6 +24979,52 @@ document.addEventListener('visibilitychange', () => {
       <span class="mm-ico">⏻</span>
       <span><span>Quit Game</span><span class="mm-desc">Close the game window</span></span>
     </button>
+    <div class="mm-divider"></div>
+    <!-- ── OPTIONS: Sound + Graphics tabs ── -->
+    <div class="mm-options">
+      <div class="mm-options-header">⚙ Options</div>
+      <div class="mm-tabs">
+        <button class="mm-tab act" onclick="mmSwitchTab('sound',this)">🔊 Sound</button>
+        <button class="mm-tab" onclick="mmSwitchTab('graphics',this)">✦ Graphics</button>
+      </div>
+      <!-- Sound tab -->
+      <div class="mm-tab-panel act" id="mm-tab-sound">
+        <div class="mm-vol-row">
+          <span class="mm-vol-lbl">🔊 Master</span>
+          <input type="range" id="vol-master" min="0" max="100" value="80" oninput="applyVolumes()">
+          <span class="mm-vol-val" id="vol-master-val">80%</span>
+        </div>
+        <div class="mm-vol-row">
+          <span class="mm-vol-lbl">🎵 Music</span>
+          <input type="range" id="vol-music" min="0" max="100" value="80" oninput="applyVolumes()">
+          <span class="mm-vol-val" id="vol-music-val">80%</span>
+        </div>
+        <div class="mm-vol-row">
+          <span class="mm-vol-lbl">💥 SFX</span>
+          <input type="range" id="vol-sfx" min="0" max="100" value="80" oninput="applyVolumes()">
+          <span class="mm-vol-val" id="vol-sfx-val">80%</span>
+        </div>
+        <div class="mm-vol-row">
+          <span class="mm-vol-lbl">🗣 Voice</span>
+          <input type="range" id="vol-voice" min="0" max="100" value="80" oninput="applyVolumes()">
+          <span class="mm-vol-val" id="vol-voice-val">80%</span>
+        </div>
+        <div class="mm-vol-actions">
+          <button onclick="setAllVol(0)" style="background:rgba(30,0,0,0.8);border:1px solid rgba(102,34,51,0.533);color:#aa6688;">🔇 Mute All</button>
+          <button onclick="setAllVol(80)" style="background:rgba(0,10,30,0.8);border:1px solid rgba(51,68,153,0.533);color:#7799cc;">↺ Reset</button>
+        </div>
+      </div>
+      <!-- Graphics tab -->
+      <div class="mm-tab-panel" id="mm-tab-graphics">
+        <div style="font-family:'Cinzel',serif;font-size:0.563em;letter-spacing:2px;color:#554477;margin-bottom:8px;text-transform:uppercase;">✦ Lane Particles</div>
+        <div class="mm-vol-row">
+          <span class="mm-vol-lbl">✦ Density</span>
+          <input type="range" id="vol-particles" min="0" max="100" value="50" oninput="applyVolumes()">
+          <span class="mm-vol-val" id="vol-particles-val">50%</span>
+        </div>
+        <div class="mm-vol-note">0 = off · 50 = default · 100 = full density</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -25405,42 +25509,5 @@ document.addEventListener('visibilitychange', () => {
     cursor:pointer;border-radius:2px;">⏭ SKIP INTRO</div>
 </div>
 <!-- ═══ VOLUME PANEL (fixed position, always accessible) ═══ -->
-<div id="vol-panel" style="display:none;position:fixed;top:44px;right:8px;z-index:9998;background:rgba(5,0,18,0.97);border:1px solid rgba(68,17,136,0.533);border-radius:6px;padding:14px 18px;width:240px;box-shadow:0 4px 32px rgba(0,0,0,0.9);" onclick="event.stopPropagation()">
-  <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:2px;color:#7755aa;margin-bottom:12px;text-transform:uppercase;">⚙ Audio &amp; Display</div>
-  <div class="vol-row">
-    <span class="vol-lbl">🔊 Master</span>
-    <input type="range" id="vol-master" min="0" max="100" value="80" oninput="applyVolumes()" style="flex:1;">
-    <span class="vol-val" id="vol-master-val">80%</span>
-  </div>
-  <div class="vol-row">
-    <span class="vol-lbl">🎵 Music</span>
-    <input type="range" id="vol-music" min="0" max="100" value="80" oninput="applyVolumes()" style="flex:1;">
-    <span class="vol-val" id="vol-music-val">80%</span>
-  </div>
-  <div class="vol-row">
-    <span class="vol-lbl">💥 SFX</span>
-    <input type="range" id="vol-sfx" min="0" max="100" value="80" oninput="applyVolumes()" style="flex:1;">
-    <span class="vol-val" id="vol-sfx-val">80%</span>
-  </div>
-  <div class="vol-row">
-    <span class="vol-lbl">🗣 Voice</span>
-    <input type="range" id="vol-voice" min="0" max="100" value="80" oninput="applyVolumes()" style="flex:1;">
-    <span class="vol-val" id="vol-voice-val">80%</span>
-  </div>
-  <div style="height:1px;background:rgba(51,17,85,0.2);margin:10px 0;"></div>
-  <div style="font-family:'Cinzel',serif;font-size:8px;letter-spacing:2px;color:#554477;margin-bottom:8px;text-transform:uppercase;">✦ Lane Particles</div>
-  <div class="vol-row">
-    <span class="vol-lbl">✦ Density</span>
-    <input type="range" id="vol-particles" min="0" max="100" value="50" oninput="applyVolumes()" style="flex:1;">
-    <span class="vol-val" id="vol-particles-val">50%</span>
-  </div>
-  <div style="font-size:9px;color:#443355;margin-top:-4px;margin-bottom:6px;font-style:italic;">0 = off · 50 = default · 100 = full</div>
-  <div style="margin-top:12px;display:flex;gap:8px;">
-    <button onclick="setAllVol(0)" style="flex:1;font-family:'Cinzel',serif;font-size:10px;padding:7px 4px;background:rgba(30,0,0,0.8);border:1px solid rgba(102,34,51,0.533);border-radius:3px;color:#aa6688;cursor:pointer;">🔇 Mute All</button>
-    <button onclick="setAllVol(80)" style="flex:1;font-family:'Cinzel',serif;font-size:10px;padding:7px 4px;background:rgba(0,10,30,0.8);border:1px solid rgba(51,68,153,0.533);border-radius:3px;color:#7799cc;cursor:pointer;">↺ Reset</button>
-    <button onclick="toggleVolPanel(event)" style="font-family:'Cinzel',serif;font-size:10px;padding:7px 8px;background:rgba(20,5,40,0.8);border:1px solid rgba(68,17,136,0.333);border-radius:3px;color:#554477;cursor:pointer;">✕</button>
-  </div>
-</div>
-
 </body>
 </html>
