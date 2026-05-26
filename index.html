@@ -958,14 +958,14 @@ body {
 }
 #lpoi-exit-btn:hover { border-color:#aa66ff; color:#ccaaff; }
 #lpoi-log {
-  position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
+  position:absolute; bottom:50px; left:50%; transform:translateX(-50%);
   background:rgba(4,0,14,0.9); border:1px solid rgba(68,34,136,0.2); border-radius:4px;
   padding:5px 18px; font-size:0.625em; color:#8877bb; font-style:italic;
   pointer-events:none; max-width:540px; text-align:center; z-index:10;
   transition:color 0.4s;
 }
 #lpoi-interact-panel {
-  position:absolute; bottom:56px; left:50%; transform:translateX(-50%);
+  position:absolute; bottom:96px; left:50%; transform:translateX(-50%);
   background:rgba(5,0,16,0.97); border:1px solid rgba(136,68,255,0.3);
   border-radius:6px; padding:9px 14px;
   display:none; flex-direction:column; gap:7px;
@@ -1008,6 +1008,35 @@ body {
 @keyframes lpoi-neon-flicker {
   0%,18%,20%,24%,55%,57%,60%,100% { opacity:1; }
   19%,22%,58%                      { opacity:0.3; }
+}
+
+/* ── LPOI Menu Bar ── */
+#lpoi-menu-bar {
+  position:absolute; bottom:0; left:0; right:0;
+  display:flex; align-items:center; justify-content:center;
+  gap:6px; padding:6px 10px;
+  background:linear-gradient(0deg,rgba(3,0,12,0.97) 0%,rgba(3,0,12,0.80) 100%);
+  border-top:1px solid rgba(136,68,255,0.2);
+  z-index:12; pointer-events:auto;
+}
+#lpoi-menu-bar .lpoi-mbar-btn {
+  font-family:'Cinzel',serif; font-size:0.625em; letter-spacing:0.5px;
+  padding:5px 13px; border-radius:3px; cursor:pointer;
+  border:1px solid rgba(136,68,255,0.3);
+  background:rgba(12,3,28,0.90); color:#aa88dd;
+  transition:all 0.15s;
+}
+#lpoi-menu-bar .lpoi-mbar-btn:hover {
+  border-color:#9966ff; color:#ddbbff;
+  background:rgba(30,8,60,0.95);
+  box-shadow:0 0 10px rgba(136,68,255,0.2);
+}
+#lpoi-menu-bar .lpoi-mbar-status {
+  font-size:0.625em; color:#664488; font-family:'Cinzel',serif;
+  margin-right:auto; letter-spacing:1px; white-space:nowrap;
+}
+@media (max-width:700px) {
+  #lpoi-menu-bar .lpoi-mbar-btn { font-size:0.563em; padding:4px 9px; }
 }
 
 /* ── HUD elements ── */
@@ -2770,6 +2799,15 @@ body {
     <div id="lpoi-survivor-dialog-speaker"></div>
     <div id="lpoi-survivor-dialog-text"></div>
     <div id="lpoi-survivor-dialog-btns"></div>
+  </div>
+  <!-- Menu bar — hidden during combat, visible when exploring -->
+  <div id="lpoi-menu-bar" style="display:none">
+    <span class="lpoi-mbar-status" id="lpoi-mbar-status">⚠ COMBAT</span>
+    <button class="lpoi-mbar-btn" onclick="openOverlay('inv')">📦 Items</button>
+    <button class="lpoi-mbar-btn" onclick="openOverlay('shp')">⛵ Ship</button>
+    <button class="lpoi-mbar-btn" onclick="openOverlay('wpn')">⚔ Weapons</button>
+    <button class="lpoi-mbar-btn" onclick="openOverlay('qlog')">📋 Quests</button>
+    <button class="lpoi-mbar-btn" onclick="openOverlay('journal')">📖 Journal</button>
   </div>
 </div>
 
@@ -23049,6 +23087,7 @@ function enterLanePoi(laneKey, poiName){
   LPOI.animId=requestAnimationFrame(lpoiRender);
   snd('sphere_click',0.5);
   addLog(`🔍 Entering ${poiName}.`,'imp');
+  _lpoiSyncMenuBar(true);
 }
 
 // ── Procedural map generation ─────────────────────────────────────────────
@@ -23753,10 +23792,25 @@ function _lpoiCheckProximity(){
 }
 
 // ── Combat ────────────────────────────────────────────────────────────────
+// Sync menu bar: visible when exploring (not in combat), hidden during combat/transitions
+function _lpoiSyncMenuBar(exploring){
+  const bar=document.getElementById('lpoi-menu-bar');
+  const status=document.getElementById('lpoi-mbar-status');
+  if(!bar) return;
+  bar.style.display=exploring?'flex':'none';
+  if(status){
+    const alive=LPOI.enemies.filter(e=>!e.defeated).length;
+    const toughAlive=LPOI.enemies.filter(e=>e.isTough&&!e.defeated).length;
+    if(alive===0) status.textContent='✅ CLEAR';
+    else if(toughAlive>0) status.textContent=`⚠ ${alive} HOSTILE${alive>1?'S':''}`;
+    else status.textContent=`⚡ ${alive} HOSTILE${alive>1?'S':''}`;
+  }
+}
 function _lpoiStartCombat(enemy){
   if(G._inLanePoi&&!G.tvl?._poiCombatEnemy){
     G.tvl._poiCombatEnemy=enemy;
     G._resumeLanePoi=true;
+    _lpoiSyncMenuBar(false); // hide during combat
     document.getElementById('ov-lane-poi').classList.remove('on');
     if(LPOI.animId){cancelAnimationFrame(LPOI.animId);LPOI.animId=null;}
     LPOI.active=false;
@@ -23790,6 +23844,7 @@ function _lpoiResumePOI(){
   LPOI.active=true; LPOI._lastTs=0;
   LPOI.animId=requestAnimationFrame(lpoiRender);
   _lpoiSetLog('Enemy destroyed. Continue exploring.');
+  _lpoiSyncMenuBar(true);
 }
 
 // ── Chest ─────────────────────────────────────────────────────────────────
@@ -24017,6 +24072,12 @@ function exitLanePoi(){
   const _lpoiJkE=document.getElementById('lpoi-joystick-knob');
   if(_lpoiJkE) _lpoiJkE.style.transform='translate(-50%,-50%)';
   if(LPOI.animId){cancelAnimationFrame(LPOI.animId);LPOI.animId=null;}
+  // Hide menu bar and close any overlays the player had open
+  _lpoiSyncMenuBar(false);
+  ['inv','shp','wpn','qlog','journal'].forEach(w=>{
+    document.getElementById('ov-'+w)?.classList.remove('on');
+  });
+  document.getElementById('lpoi-survivor-dialog')?.classList.remove('on');
   document.getElementById('ov-lane-poi').classList.remove('on');
   document.getElementById('lpoi-interact-panel').classList.remove('on');
   G._inLanePoi=false; G._resumeLanePoi=false;
