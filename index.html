@@ -4612,6 +4612,8 @@ function _clockGameHoursPerMs() {
 }
 
 function _clockAccumulated() {
+  // Outside active travel the accumulator is meaningless — return 0 so display stays clean
+  if (G?.phase !== 'traveling') return 0;
   if (_clockPaused) return _clockAccumH;
   const raw = _clockAccumH + (performance.now() - _clockStartMs) * _clockGameHoursPerMs();
   // Cap at 14:00 (LEG_HOURS) on fresh legs. Push legs have legsPushed > 0 and
@@ -4635,6 +4637,8 @@ function _clockRender() {
 }
 
 function startLiveClock() {
+  // The live clock only runs during active travel — never during LS, map, combat, port etc.
+  if (G?.phase !== 'traveling') return;
   const wasPaused = _clockPaused;
   if (!wasPaused) { _clockAccumH = 0; }
   _clockStartMs = performance.now();
@@ -4665,12 +4669,12 @@ function resetLiveClock(_ignored) {
 
 function pauseLiveClock() {
   if (_clockPaused) return;
-  // Guard: if _clockStartMs is 0 (never properly started), don't accumulate junk time
-  if (_clockStartMs > 0) {
+  // Guard: only accumulate real hours if we were actually in a travel session.
+  // If _clockStartMs is 0 (never started) or phase isn't traveling, don't bank junk time.
+  if (_clockStartMs > 0 && G?.phase === 'traveling') {
     _clockAccumH += (performance.now() - _clockStartMs) * _clockGameHoursPerMs();
   }
-  // Clamp to 1 leg max — prevents background-tab overshoot from showing 18:00/22:00
-  // when the worker fires many queued ticks at once after the tab is restored.
+  // Clamp to 1 leg max — prevents background-tab overshoot
   _clockAccumH = Math.min(_clockAccumH, LEG_HOURS);
   _clockPaused  = true;
   if (_clockWorker) _clockWorker.postMessage('stop');
@@ -4679,6 +4683,8 @@ function pauseLiveClock() {
 
 function resumeLiveClock() {
   if (!_clockPaused) return;
+  // Only resume if we're in an active travel phase
+  if (G?.phase !== 'traveling') { _clockPaused = false; return; }
   _clockStartMs = performance.now();
   _clockPaused  = false;
   _clockEnsureWorker();
