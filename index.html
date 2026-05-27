@@ -2630,6 +2630,13 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
       <div id="ts-watch-label"></div>
     </div>
 
+    <!-- Mobile joystick — mirrors LS joystick pattern -->
+    <div id="ts-joystick-zone" style="display:none;position:absolute;bottom:60px;left:18px;width:100px;height:100px;z-index:20;touch-action:none;">
+      <div id="ts-joystick-base" style="position:relative;width:100px;height:100px;border-radius:50%;background:rgba(100,80,200,0.10);border:1px solid rgba(120,80,255,0.267);">
+        <div id="ts-joystick-knob" style="position:absolute;top:50%;left:50%;width:36px;height:36px;border-radius:50%;background:rgba(140,100,255,0.40);border:1px solid rgba(170,130,255,0.6);transform:translate(-50%,-50%);touch-action:none;"></div>
+      </div>
+    </div>
+
   </div>
 
   <!-- LANE / WAYPOINT HOVER TOOLTIP -->
@@ -9277,6 +9284,15 @@ const TS = {
   lane:      null,       // current lane data
   _spawnTimer: 0,        // seconds until next random object spawn
   _imgs:     {},         // preloaded env images keyed by filename stem
+  // ── Player ship state ───────────────────────────────────────────────────
+  px: 0, py: 0,          // player canvas position (set in tsOpen)
+  pvx: 0, pvy: 0,        // player velocity (px/sec)
+  pAngle: -Math.PI/2,    // facing angle; -PI/2 = nose up
+  pRadius: 22,           // collision radius
+  joystickX: 0, joystickY: 0, // mobile virtual joystick input
+  keys: {},              // WASD keydown state
+  _hitFlash: 0,          // screen flash timer on hull impact
+  _playerHitCd: 0,       // brief cooldown so multi-object hits don't stack
 };
 
 // ── Image preload registry ──────────────────────────────────────────────
@@ -9309,37 +9325,37 @@ function tsPreloadImgs() {
 // Each entry: { key, side ('L'|'R'|'C'), weight, rare }
 // side L/R = flanking objects; C = center-ish (wrecks, beacons)
 const TS_CATALOG = [
-  // ── Asteroids & rocks ──
-  { key:'env_asteroid',        side:'LR', weight:16 },
-  { key:'env_asteroid_small',  side:'LR', weight:20 }, // small, common
-  { key:'env_asteroid_cluster',side:'LR', weight:10 }, // tight group of 3-4
-  { key:'env_asteroid_flat',   side:'LR', weight:8  }, // disc-shaped
-  { key:'env_void_boulder',    side:'LR', weight:12 },
-  { key:'env_rock_ring',       side:'LR', weight:6  },
-  { key:'env_ice_comet',       side:'LR', weight:5  }, // icy tail trailing
-  // ── Jellyfish & creatures ──
+  // ── Asteroids & rocks — COLLIDABLE ──
+  { key:'env_asteroid',        side:'LR', weight:16, collidable:true, dangerous:true, hullDmgMin:6,  hullDmgMax:14 },
+  { key:'env_asteroid_small',  side:'LR', weight:20, collidable:true, dangerous:true, hullDmgMin:3,  hullDmgMax:7  },
+  { key:'env_asteroid_cluster',side:'LR', weight:10, collidable:true, dangerous:true, hullDmgMin:8,  hullDmgMax:16 },
+  { key:'env_asteroid_flat',   side:'LR', weight:8,  collidable:true, dangerous:true, hullDmgMin:5,  hullDmgMax:11 },
+  { key:'env_void_boulder',    side:'LR', weight:12, collidable:true, dangerous:true, hullDmgMin:7,  hullDmgMax:15 },
+  { key:'env_rock_ring',       side:'LR', weight:6,  collidable:true, dangerous:true, hullDmgMin:5,  hullDmgMax:12 },
+  { key:'env_ice_comet',       side:'LR', weight:5,  collidable:true, dangerous:true, hullDmgMin:4,  hullDmgMax:10 },
+  // ── Jellyfish & creatures — DECORATIVE (hazy background) ──
   { key:'env_void_jellyfish',  side:'C',  weight:5  },
-  { key:'env_jelly_bloom',     side:'C',  weight:4  }, // cluster of small jellies
-  { key:'env_jelly_arc',       side:'LR', weight:3  }, // single arcing jelly
-  // ── Wrecks & debris ──
-  { key:'env_wreck_hull',      side:'C',  weight:3  },
-  { key:'env_wreck_prow',      side:'C',  weight:3  },
-  { key:'env_debris_field',    side:'LR', weight:7  },
+  { key:'env_jelly_bloom',     side:'C',  weight:4  },
+  { key:'env_jelly_arc',       side:'LR', weight:3  },
+  // ── Wrecks & debris — COLLIDABLE ──
+  { key:'env_wreck_hull',      side:'C',  weight:3,  collidable:true, dangerous:true, hullDmgMin:5,  hullDmgMax:12 },
+  { key:'env_wreck_prow',      side:'C',  weight:3,  collidable:true, dangerous:true, hullDmgMin:5,  hullDmgMax:12 },
+  { key:'env_debris_field',    side:'LR', weight:7,  collidable:true, dangerous:true, hullDmgMin:4,  hullDmgMax:9  },
   { key:'env_cargo_drift',     side:'C',  weight:3  },
-  // ── Skeletons & bones ──
-  { key:'env_leviathan_bones', side:'C',  weight:1, rare:true },
-  { key:'env_skeleton_helm',   side:'C',  weight:2  }, // giant creature skull
-  { key:'env_skeleton_ribcage',side:'C',  weight:1, rare:true }, // exposed ribcage arch
-  // ── Crystal & phenomena ──
+  // ── Skeletons & bones — COLLIDABLE (large hazards) ──
+  { key:'env_leviathan_bones', side:'C',  weight:1,  rare:true, collidable:true, dangerous:true, hullDmgMin:10, hullDmgMax:20 },
+  { key:'env_skeleton_helm',   side:'C',  weight:2,  collidable:true, dangerous:true, hullDmgMin:7,  hullDmgMax:14 },
+  { key:'env_skeleton_ribcage',side:'C',  weight:1,  rare:true, collidable:true, dangerous:true, hullDmgMin:8,  hullDmgMax:16 },
+  // ── Crystal & phenomena — DECORATIVE ──
   { key:'env_crystal_spire',   side:'LR', weight:5  },
   { key:'env_mote_cluster',    side:'LR', weight:4  },
   { key:'env_phlog_eddy',      side:'LR', weight:5  },
-  // ── Structures & ruins ──
+  // ── Structures & ruins — DECORATIVE (background depth) ──
   { key:'env_beacon_buoy',     side:'LR', weight:1  },
   { key:'env_nav_marker',      side:'LR', weight:2  },
-  { key:'env_elven_ruin',      side:'C',  weight:1, rare:true },
-  { key:'env_ruined_column',   side:'LR', weight:2  }, // single broken column
-  { key:'env_void_vault',      side:'C',  weight:1, rare:true },
+  { key:'env_elven_ruin',      side:'C',  weight:1,  rare:true },
+  { key:'env_ruined_column',   side:'LR', weight:2,  collidable:true, dangerous:true, hullDmgMin:4,  hullDmgMax:8  },
+  { key:'env_void_vault',      side:'C',  weight:1,  rare:true },
 ];
 
 // weight-based random pick, scaling rare objects up on high-danger lanes
@@ -9424,6 +9440,12 @@ function tsSpawnObject(cv, forced) {
     w: baseW * scale,
     h: baseH * scale,
     parallax: 0.85 + Math.random() * 0.3,
+    collidable:  entry.collidable  || false,
+    dangerous:   entry.dangerous   || false,
+    hullDmgMin:  entry.hullDmgMin  || 0,
+    hullDmgMax:  entry.hullDmgMax  || 0,
+    flashTimer:  entry.dangerous   ? 2.2 : 0,  // seconds of warning flash on appear
+    _hitCooldown: 0,  // frames until this object can deal damage again
   });
 }
 
@@ -9538,6 +9560,32 @@ const TS_LANE_COLS = [
   { fog:'#110003', bank:'#2a0008', glow:'#cc0044', particle:'rgba(200,0,60,',    fog2:'#1a0005', nebA:'rgba(180,0,40,',  nebB:'rgba(80,0,120,'  },  // tier 5 — deep crimson
 ];
 
+// ── Travel sequence key handlers ─────────────────────────────────────────
+function _tsKeyDown(e) {
+  if (!TS.active) return;
+  if (document.getElementById('msgbox')?.classList.contains('on')) return;
+  TS.keys[e.key] = true;
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault();
+}
+function _tsKeyUp(e) {
+  if (!TS.active) return;
+  delete TS.keys[e.key];
+}
+
+// Aggro/hail radius by event type and lane tier
+function _tsEventRadius(ev, tier) {
+  if (ev.type === 'enemy')   return 58 + (tier - 1) * 20; // tier 1:58 … tier 5:138
+  if (ev.type === 'roam')    return 92;
+  if (ev.type === 'waypoint')return 74;
+  return 70;
+}
+
+// Called when a non-triggered event drifts off screen without player engagement
+function _tsEventMissed(ev) {
+  if (ev.type === 'enemy') addLog('You navigated clear of the hostile. They drift away into the Drift.', '');
+  // roam and waypoint: silent miss
+}
+
 // ── Main render loop ──────────────────────────────────────────────────────
 function tsRender(timestamp) {
   if (!TS.active) return;
@@ -9557,6 +9605,42 @@ function tsRender(timestamp) {
 
   const tier = TS.lane?.d || 1;
   const col  = TS_LANE_COLS[Math.min(tier - 1, TS_LANE_COLS.length - 1)];
+
+  // ── Player ship input & physics ──────────────────────────────────────────
+  {
+    const pAccel    = 500;
+    const pFriction = 0.87;
+    const pMaxSpeed = 140 + (G.ship?.speed || 4) * 9;
+
+    let ax = 0, ay = 0;
+    if (TS.keys['a'] || TS.keys['A'] || TS.keys['ArrowLeft'])  ax -= 1;
+    if (TS.keys['d'] || TS.keys['D'] || TS.keys['ArrowRight']) ax += 1;
+    if (TS.keys['w'] || TS.keys['W'] || TS.keys['ArrowUp'])    ay -= 1;
+    if (TS.keys['s'] || TS.keys['S'] || TS.keys['ArrowDown'])  ay += 1;
+    ax += TS.joystickX;
+    ay += TS.joystickY;
+    const aMag = Math.hypot(ax, ay);
+    if (aMag > 1) { ax /= aMag; ay /= aMag; }
+
+    TS.pvx = (TS.pvx + ax * pAccel * dt) * pFriction;
+    TS.pvy = (TS.pvy + ay * pAccel * dt) * pFriction;
+    const pSpd = Math.hypot(TS.pvx, TS.pvy);
+    if (pSpd > pMaxSpeed) { TS.pvx *= pMaxSpeed / pSpd; TS.pvy *= pMaxSpeed / pSpd; }
+
+    TS.px += TS.pvx * dt;
+    TS.py += TS.pvy * dt;
+
+    // Update facing angle from velocity
+    if (pSpd > 10) TS.pAngle = Math.atan2(TS.pvy, TS.pvx);
+
+    // Canvas bounds — avoid HUD areas
+    TS.px = Math.max(W * 0.07, Math.min(W * 0.93, TS.px));
+    TS.py = Math.max(H * 0.12, Math.min(H * 0.90, TS.py));
+
+    // Countdown cooldown timers
+    if (TS._hitFlash     > 0) TS._hitFlash     -= dt;
+    if (TS._playerHitCd  > 0) TS._playerHitCd  -= dt;
+  }
 
   // ── Background: deep void with radial depth ──────────────────────────
   ctx.fillStyle = col.fog;
@@ -9717,12 +9801,41 @@ function tsRender(timestamp) {
     obj.y += TS.trullllSpeed * obj.parallax * dt;
     obj.rot += obj.rotSpd * dt;
     obj.alpha = Math.min(1, obj.alpha + dt * 1.5); // fade in
+    if (obj.flashTimer   > 0) obj.flashTimer   -= dt;
+    if (obj._hitCooldown > 0) obj._hitCooldown -= dt;
 
     if (obj.y > H + 100) return false; // gone off bottom
 
+    // ── Collision detection — collidable objects vs player ship ───────────
+    if (obj.collidable && obj._hitCooldown <= 0 && TS._playerHitCd <= 0) {
+      const objR  = Math.min(obj.w, obj.h) * 0.32;
+      const hitD  = Math.hypot(TS.px - obj.x, TS.py - obj.y);
+      if (hitD < objR + TS.pRadius) {
+        const dmgScale = 0.7 + tier * 0.2;
+        const rawDmg   = obj.hullDmgMin + Math.random() * (obj.hullDmgMax - obj.hullDmgMin);
+        const dmg      = Math.max(1, Math.round(rawDmg * dmgScale));
+        G.ship.hull    = Math.max(0, G.ship.hull - dmg);
+        obj._hitCooldown  = 0.9;
+        TS._playerHitCd   = 0.35;
+        TS._hitFlash      = 0.40;
+        addLog(`⚠ Hull impact! −${dmg} HP (${G.ship.hull}/${G.ship.maxHull})`, 'dmg');
+        snd('cbt_hit_enemy', 0.6);
+        updateUI();
+        if (G.ship.hull <= 0) setTimeout(() => doDefeat('hull_travel'), 500);
+      }
+    }
+
     const img = TS._imgs[obj.key];
     ctx.save();
-    ctx.globalAlpha = obj.alpha * 0.82;
+    // Non-collidable objects rendered in a haze (faded, slightly blued) — background depth
+    // Collidable/dangerous objects render at full opacity so they read as threats
+    if (!obj.collidable) {
+      ctx.globalAlpha = obj.alpha * 0.38;
+      // Subtle blue tint pass to push them visually "below" the player
+      ctx.filter = 'brightness(0.6) saturate(0.5)';
+    } else {
+      ctx.globalAlpha = obj.alpha * 0.88;
+    }
     ctx.translate(obj.x, obj.y);
     ctx.rotate(obj.rot);
     if (img) {
@@ -9731,66 +9844,63 @@ function tsRender(timestamp) {
       tsFallbackDraw(ctx, obj.key, obj.w, obj.h, col.glow);
     }
     ctx.restore();
+
+    // ── Flash warning ring — appears on first 2s for dangerous objects ────
+    if (obj.dangerous && obj.flashTimer > 0) {
+      const flashPhase = Math.sin(obj.flashTimer * 14);          // fast strobe
+      const flashA     = Math.min(1, obj.flashTimer / 0.8) * (0.5 + 0.5 * flashPhase);
+      const flashR     = Math.max(obj.w, obj.h) * 0.55 + (1 - obj.flashTimer / 2.2) * 8;
+      ctx.save();
+      ctx.translate(obj.x, obj.y);
+      ctx.globalAlpha = flashA * 0.9;
+      ctx.strokeStyle = '#ff3300';
+      ctx.lineWidth   = 2.5;
+      ctx.setLineDash([6, 5]);
+      ctx.beginPath(); ctx.arc(0, 0, flashR, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
+      // Inner solid ring pulse on strobe peak
+      if (flashPhase > 0.5) {
+        ctx.globalAlpha = flashA * 0.4;
+        ctx.strokeStyle = '#ff8800';
+        ctx.lineWidth   = 1.5;
+        ctx.beginPath(); ctx.arc(0, 0, flashR * 0.72, 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
     return true;
   });
 
   // ── Draw & update event objects (enemy/waypoint/roam) ────────────────────
-  const shipCX = W / 2; // ship centre X for enemy targeting
-  const shipCY = H * 0.55;
   TS.skipBlocked = false;
   TS.events = TS.events.filter(ev => {
     ev.alpha = Math.min(1, ev.alpha + dt * 1.2);
+    if (ev.flashTimer > 0) ev.flashTimer -= dt;
 
-    if (ev.type === 'enemy') {
-      // Resolve fractional spawn coords on first frame (W/H now known)
-      if (ev.x === null) {
-        ev.x = W * ev.xFrac;
-        ev.y = H * ev.yFrac;
-      }
+    // Resolve fractional spawn coords on first frame (W/H now known, fallback only)
+    if (ev.x === null) {
+      ev.x = W * (ev.xFrac ?? 0.5);
+      ev.y = H * (ev.yFrac ?? -0.14);
+    }
 
-      // Move toward ship at this enemy's individual approach speed
-      const speed = ev.approachSpeed || 90;
-      const dx = shipCX - ev.x;
-      const dy = shipCY - ev.y;
-      const dist = Math.max(1, Math.sqrt(dx*dx + dy*dy));
-      ev.x += (dx / dist) * speed * dt;
-      ev.y += (dy / dist) * speed * dt;
+    // ── All events drift — they do NOT home toward the player ────────────
+    ev.x += (ev.vx || 0) * dt;
+    ev.y += (ev.vy || 0) * dt;
 
-      // Trigger when close enough to ship
-      if (!ev.triggered && Math.abs(ev.x - shipCX) < 55 && Math.abs(ev.y - shipCY) < 55) {
-        ev.triggered = true;
-        tsResolveEvent(ev);
-        return false;
-      }
-    } else if (ev.type === 'roam') {
-      // Roam ships approach from their spawn direction toward the player
-      if (ev.x === null) {
-        ev.x = W * ev.xFrac;
-        ev.y = H * ev.yFrac;
-      }
-      const speed = ev.approachSpeed || 75;
-      const dx = shipCX - ev.x;
-      const dy = shipCY - ev.y;
-      const dist = Math.max(1, Math.sqrt(dx*dx + dy*dy));
-      ev.x += (dx / dist) * speed * dt;
-      ev.y += (dy / dist) * speed * dt;
-      if (!ev.triggered && Math.abs(ev.x - shipCX) < 65 && Math.abs(ev.y - shipCY) < 65) {
-        ev.triggered = true;
-        tsResolveEvent(ev);
-        return false;
-      }
-    } else if (ev.type === 'waypoint') {
-      if (ev.x === null) {
-        ev.x = W * (ev.xFrac ?? 0.5);
-        ev.y = H * (ev.yFrac ?? -0.14);
-      }
-      // Simple trullll down the lane like any other object
-      ev.y += TS.trullllSpeed * 0.9 * dt;
-      if (!ev.triggered && ev.y >= H * 0.52) {
-        ev.triggered = true;
-        tsResolveEvent(ev);
-        return false;
-      }
+    // Despawn if drifted off screen — count as avoided/missed
+    if (ev.y > H + 110 || ev.x < -130 || ev.x > W + 130) {
+      if (!ev.triggered) _tsEventMissed(ev);
+      return false;
+    }
+
+    // ── Proximity trigger — player steers into range ─────────────────────
+    const aggroR = _tsEventRadius(ev, tier);
+    const pDist  = Math.hypot(ev.x - TS.px, ev.y - TS.py);
+
+    if (!ev.triggered && pDist < aggroR) {
+      ev.triggered = true;
+      tsResolveEvent(ev);
+      return false;
     }
 
     if (!ev.triggered) TS.skipBlocked = true;
@@ -9800,29 +9910,46 @@ function tsRender(timestamp) {
     tsDrawEvent(ctx, ev, W, H);
     ctx.restore();
 
+    // ── Warning ring around event (enemy / roam) ─────────────────────────
+    if (!ev.triggered && (ev.type === 'enemy' || ev.type === 'roam')) {
+      const ringPulse = 0.35 + 0.35 * Math.sin(TS.t * 3.2 + (ev.type === 'enemy' ? 0 : 1.2));
+      const isEnemy   = ev.type === 'enemy';
+      const ringCol   = isEnemy ? `rgba(255,50,0,${ringPulse.toFixed(2)})` : `rgba(80,200,255,${ringPulse.toFixed(2)})`;
+      ctx.save();
+      ctx.strokeStyle = ringCol;
+      ctx.lineWidth   = 1.5;
+      ctx.setLineDash([5, 6]);
+      ctx.beginPath(); ctx.arc(ev.x, ev.y, aggroR, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
+      // Flash strobe ring on first appear
+      if (ev.flashTimer > 0 && isEnemy) {
+        const fp = 0.6 + 0.4 * Math.sin(ev.flashTimer * 16);
+        ctx.globalAlpha = Math.min(1, ev.flashTimer / 0.6) * fp * 0.9;
+        ctx.strokeStyle = '#ff2200';
+        ctx.lineWidth   = 3;
+        ctx.setLineDash([]);
+        ctx.beginPath(); ctx.arc(ev.x, ev.y, aggroR * 1.08, 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
     return !ev.triggered;
   });
 
   // ── Flow direction for this lane ────────────────────────────────────────
-  // flow:  1 = river flows upward (same direction ship moves) = WITH flow
-  //        -1 = river flows upward but ship travels against it = AGAINST flow
-  //        0  = bidirectional / no dominant current
-  const laneFlow = TS.lane?.flow ?? 0;  // 1, -1, or 0
+  const laneFlow = TS.lane?.flow ?? 0;
 
-  // ── Draw your ship (centered, bobbing) ─────────────────────────────────
-  const shipX = W / 2;
-  const shipY = H * 0.55;
-  const bob   = Math.sin(TS.t * 1.4) * 5 * (1 + (tier - 1) * 0.4);
-  const sway  = Math.sin(TS.t * 0.9) * 3 * (1 + (tier - 1) * 0.3);
+  // ── Player ship position — controlled + cosmetic offset ───────────────
+  const bob   = Math.sin(TS.t * 1.4) * 3 * (1 + (tier - 1) * 0.3);
+  const sway  = Math.sin(TS.t * 0.9) * 2;
   const tilt  = Math.sin(TS.t * 1.1) * 0.04 + (laneFlow === -1 ? Math.sin(TS.t * 2.3) * 0.06 : 0);
 
   const sType = G.ship?.type || 'pinnace';
   const _s = _uiScale();
   const [sw, sh] = shipSz(sType, 100 * _s, 60 * _s);
 
-  // ── SCREEN-SPACE ship position (for effects drawn before ctx.rotate) ───
-  const sxScreen = shipX + sway;
-  const syScreen = shipY + bob;
+  const sxScreen = TS.px + sway;
+  const syScreen = TS.py + bob;
 
   // ── RIVER LANE — colored flow stream through the center of the channel ─
   // Drawn first (behind everything). Color and direction based on lane tier + flow.
@@ -10008,8 +10135,8 @@ function tsRender(timestamp) {
   ctx.save();
   ctx.save();
   ctx.translate(sxScreen, syScreen);
-  // Rotate ship to face UP — ships are drawn nose-right, so -90° points nose upward
-  ctx.rotate(-Math.PI / 2 + tilt);
+  // Ship faces movement direction; TS.pAngle = atan2(vy,vx), nose-right draw → pAngle directly
+  ctx.rotate(TS.pAngle + tilt);
 
   drawShipImg(sType, ctx, 0, 0, sw, sh, false, () => {
     if      (sType === 'pinnace') drawPinnace(ctx, 0, 0, 34, false);
@@ -10067,6 +10194,17 @@ function tsRender(timestamp) {
     }
   }
   ctx.restore();
+
+  // ── Hull-impact flash — red vignette when player collides ────────────────
+  if (TS._hitFlash > 0) {
+    const flashA = (TS._hitFlash / 0.40) * 0.45;
+    const vg = ctx.createRadialGradient(W/2, H/2, H*0.22, W/2, H/2, H*0.72);
+    vg.addColorStop(0, 'rgba(0,0,0,0)');
+    vg.addColorStop(0.6, `rgba(200,20,0,${(flashA*0.6).toFixed(2)})`);
+    vg.addColorStop(1,   `rgba(255,0,0,${flashA.toFixed(2)})`);
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, W, H);
+  }
 
   // ── Update progress HUD ───────────────────────────────────────────────
   if (G.tvl) {
@@ -10245,10 +10383,8 @@ function tsFallbackDraw(ctx, key, w, h, glowCol) {
 // ── Draw incoming event (enemy ship or waypoint indicator) ────────────────
 function tsDrawEvent(ctx, ev, W, H) {
   if (ev.type === 'enemy') {
-    const shipCX = W / 2;
-    const shipCY = H * 0.55;
-    // Angle toward ship centre — works for all spawn directions
-    const angle = Math.atan2(shipCY - ev.y, shipCX - ev.x);
+    // Angle toward current player position
+    const angle = Math.atan2(TS.py - ev.y, TS.px - ev.x);
     ctx.save();
     ctx.translate(ev.x, ev.y);
     ctx.rotate(angle);
@@ -10330,12 +10466,10 @@ function tsDrawEvent(ctx, ev, W, H) {
     ctx.fillText(ev.label, 0, 42);
     ctx.restore();
   } else if (ev.type === 'roam') {
-    const shipCX = W / 2;
-    const shipCY = H * 0.55;
     const rx = ev.x ?? W/2;
     const ry = ev.y ?? -90;
     // Face toward the player ship from whatever direction it came from
-    const roamAngle = Math.atan2(shipCY - ry, shipCX - rx);
+    const roamAngle = Math.atan2(TS.py - ry, TS.px - rx);
     ctx.save();
     ctx.translate(rx, ry);
     ctx.rotate(roamAngle);
@@ -10480,10 +10614,34 @@ function tsOpen(lane) {
   document.getElementById('ts-dest-label').style.color = col.glow;
 
   TS.animId = requestAnimationFrame(tsRender);
+
+  // ── Player ship init ──────────────────────────────────────────────────
+  const _tsOv = document.getElementById('ov-travel-seq');
+  const _tsW  = _tsOv?.clientWidth  || window.innerWidth;
+  const _tsH  = _tsOv?.clientHeight || window.innerHeight;
+  TS.px = _tsW / 2;
+  TS.py = _tsH * 0.64;
+  TS.pvx = 0; TS.pvy = 0;
+  TS.pAngle = -Math.PI / 2;
+  TS.joystickX = 0; TS.joystickY = 0;
+  TS.keys = {};
+  TS._hitFlash = 0;
+  TS._playerHitCd = 0;
+  document.addEventListener('keydown', _tsKeyDown);
+  document.addEventListener('keyup',   _tsKeyUp);
+  if ('ontouchstart' in window) {
+    const jz = document.getElementById('ts-joystick-zone');
+    if (jz) jz.style.display = 'block';
+  }
 }
 
 function tsClose(isArrival) {
   TS.active = false;
+  document.removeEventListener('keydown', _tsKeyDown);
+  document.removeEventListener('keyup',   _tsKeyUp);
+  TS.keys = {};
+  const jz = document.getElementById('ts-joystick-zone');
+  if (jz) jz.style.display = 'none';
   if (TS.animId) { cancelAnimationFrame(TS.animId); TS.animId = null; }
   TS._lastTs = 0;
   // On true arrival, wipe sphere state. On interruption (rest, roam, combat mid-journey),
@@ -10515,50 +10673,89 @@ function tsClose(isArrival) {
   }
 }
 
-// Queue an enemy approach event (called from travelTick intercept)
+// Queue an enemy drift object — spawns from top or sides, drifts across screen
 function tsQueueEnemy(enemyKey) {
   const cv = document.getElementById('ts-canvas');
   const cW = cv ? cv.width  : 400;
   const cH = cv ? cv.height : 700;
-  const fromLeft = Math.random() < 0.5;
+  const tier = TS.lane?.d || 1;
+  const driftSpeed = 32 + tier * 11 + Math.random() * 12;
+
+  let x, y, vx, vy;
+  const scenario = Math.random();
+  if (scenario < 0.55) {
+    // From top — drift downward with slight horizontal drift
+    x  = (0.12 + Math.random() * 0.76) * cW;
+    y  = -75;
+    vx = (Math.random() - 0.5) * (8 + tier * 4);
+    vy = driftSpeed;
+  } else if (scenario < 0.78) {
+    // From left side
+    x  = -75;
+    y  = (0.06 + Math.random() * 0.44) * cH;
+    vx = driftSpeed;
+    vy = 14 + Math.random() * 22;
+  } else {
+    // From right side
+    x  = cW + 75;
+    y  = (0.06 + Math.random() * 0.44) * cH;
+    vx = -driftSpeed;
+    vy = 14 + Math.random() * 22;
+  }
+
   const ev = {
     type: 'enemy', key: enemyKey,
     label: ENM[enemyKey]?.name || 'Unknown',
-    x:  fromLeft ? -120 : cW + 120,
-    y:  cH * 0.18 + Math.random() * cH * 0.15,
+    x, y, vx, vy,
     alpha: 0, triggered: false,
-    _fromLeft: fromLeft,
+    flashTimer: 1.8,   // warning flash on appear
   };
   TS.events.push(ev);
   const alertEl = document.getElementById('ts-alert');
-  if (alertEl) { alertEl.textContent = '⚠ ENEMY APPROACHING'; alertEl.className = 'show'; }
-  setTimeout(() => { if (alertEl && alertEl.textContent === '⚠ ENEMY APPROACHING') alertEl.className = ''; }, 1700);
+  if (alertEl) { alertEl.textContent = '⚠ ENEMY DETECTED'; alertEl.className = 'show'; }
+  setTimeout(() => { if (alertEl && alertEl.textContent === '⚠ ENEMY DETECTED') alertEl.className = ''; }, 1700);
 }
 
-// Queue a roaming friendly encounter — varied approach direction like enemies
+// Queue a roaming friendly encounter — drifts across from a side
 function tsQueueRoam(factionId) {
   const fac = FACTIONS[factionId];
   const shipKey = fac?.shipKey || 'corsair';
-  // Use tsSpawnEvent for direction variety, then patch in roam-specific fields
-  tsSpawnEvent('roam', (fac?.n || 'Vessel') + ' HAILS', shipKey);
-  const ev = TS.events[TS.events.length - 1];
-  ev.factionId = factionId;
-  ev.col = fac?.col || '#88ccff';
+  const cv = document.getElementById('ts-canvas');
+  const cW = cv ? cv.width  : 400;
+  const cH = cv ? cv.height : 700;
+
+  const fromLeft = Math.random() < 0.5;
+  const driftSpeed = 26 + Math.random() * 14;
+  const ev = {
+    type: 'roam', key: shipKey,
+    label: (fac?.n || 'Vessel') + ' HAILS',
+    factionId, col: fac?.col || '#88ccff',
+    x: fromLeft ? -70 : cW + 70,
+    y: (0.10 + Math.random() * 0.38) * cH,
+    vx: fromLeft ? driftSpeed : -driftSpeed,
+    vy: 10 + Math.random() * 16,
+    alpha: 0, triggered: false,
+    flashTimer: 0,
+  };
+  TS.events.push(ev);
   const alertEl = document.getElementById('ts-alert');
   if (alertEl) { alertEl.textContent = `📡 ${fac?.n || 'VESSEL'} HAILING`; alertEl.className = 'show waypoint'; }
   setTimeout(() => { if (alertEl) alertEl.className = ''; }, 1700);
 }
 
-// Queue a waypoint approach event — always dead ahead, it's a fixed station
+// Queue a waypoint approach event — drifts slowly from top center
 function tsQueueWaypoint(ws) {
+  const cv = document.getElementById('ts-canvas');
+  const cW = cv ? cv.width  : 400;
   TS.events.push({
     type: 'waypoint', key: ws.id,
     label: ws.n, icon: ws.ico, ws,
-    xFrac: 0.46 + Math.random() * 0.08,  // near-center with tiny variance
-    yFrac: -0.14,
-    x: null, y: null,
-    approachSpeed: 70,
+    x: (0.36 + Math.random() * 0.28) * cW,
+    y: -65,
+    vx: (Math.random() - 0.5) * 6,
+    vy: 22 + Math.random() * 10,
     alpha: 0, triggered: false,
+    flashTimer: 0,
   });
   const alertEl = document.getElementById('ts-alert');
   if (alertEl) { alertEl.textContent = '📡 WAYSTATION AHEAD'; alertEl.className = 'show waypoint'; }
@@ -20912,6 +21109,37 @@ document.getElementById('ls-canvas').addEventListener('click', e => {
     knob.style.transform=`translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
     FD.joystickX=dx/R; FD.joystickY=dy/R;
     if(d>4) FD.pAngle=Math.atan2(dy,dx);
+  }
+})();
+
+// ── TS (Travel Sequence) MOBILE JOYSTICK ─────────────────────────────────
+(function() {
+  const zone = document.getElementById('ts-joystick-zone');
+  const knob = document.getElementById('ts-joystick-knob');
+  if(!zone || !knob) return;
+  let startX=0, startY=0, _active=false;
+  const R=32;
+  zone.addEventListener('touchstart', e=>{
+    e.preventDefault(); _active=true;
+    const rect=zone.getBoundingClientRect();
+    startX=rect.left+rect.width/2; startY=rect.top+rect.height/2;
+    _updateTsKnob(e.touches[0].clientX, e.touches[0].clientY);
+  },{passive:false});
+  zone.addEventListener('touchmove', e=>{
+    e.preventDefault(); if(!_active) return;
+    _updateTsKnob(e.touches[0].clientX, e.touches[0].clientY);
+  },{passive:false});
+  zone.addEventListener('touchend', ()=>{
+    _active=false; TS.joystickX=0; TS.joystickY=0;
+    knob.style.transform='translate(-50%,-50%)';
+  });
+  function _updateTsKnob(cx,cy){
+    let dx=cx-startX, dy=cy-startY;
+    const d=Math.sqrt(dx*dx+dy*dy);
+    if(d>R){dx*=R/d;dy*=R/d;}
+    knob.style.transform=`translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+    TS.joystickX=dx/R; TS.joystickY=dy/R;
+    if(d>4) TS.pAngle=Math.atan2(dy,dx);
   }
 })();
 
