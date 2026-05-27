@@ -4665,7 +4665,10 @@ function resetLiveClock(_ignored) {
 
 function pauseLiveClock() {
   if (_clockPaused) return;
-  _clockAccumH += (performance.now() - _clockStartMs) * _clockGameHoursPerMs();
+  // Guard: if _clockStartMs is 0 (never properly started), don't accumulate junk time
+  if (_clockStartMs > 0) {
+    _clockAccumH += (performance.now() - _clockStartMs) * _clockGameHoursPerMs();
+  }
   // Clamp to 1 leg max — prevents background-tab overshoot from showing 18:00/22:00
   // when the worker fires many queued ticks at once after the tab is restored.
   _clockAccumH = Math.min(_clockAccumH, LEG_HOURS);
@@ -7929,8 +7932,15 @@ function startTravel(toId, _resumeWatchesLeft, _pausedPos, _pausedProg, _savedLa
   if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = _tvlStart(tickMs);
   startTravelHum();
   const _wasClockPaused = _clockPaused;
+  // Fresh leg (not resuming from combat): force clock to clean state.
+  // Guards against stale _clockAccumH from pre-travel pauseLiveClock calls
+  // (e.g. menu opened when _clockStartMs was still 0 from page load).
+  if (!_wasClockPaused && !_pausedProg) {
+    _clockAccumH  = 0;
+    _clockStartMs = performance.now();
+    _clockPaused  = false;
+  }
   startLiveClock();
-  // Resuming from combat — keep accumulated time. Fresh leg — always reset to 06:00.
   if (!_wasClockPaused) resetLiveClock();
   // Open the drift travel sequence visual
   if (!_pausedProg) {
