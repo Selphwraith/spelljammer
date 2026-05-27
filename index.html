@@ -1757,14 +1757,267 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
 
 /* ── CAPTAIN'S LOG ── */
 #ov-journal {
-  align-items: flex-start; justify-content: flex-start;
-  padding: 20px 24px; gap: 0;
+  padding: 0;
+  overflow: hidden;
+  align-items: stretch;
+  justify-content: stretch;
 }
+
+/* ── Manual shell: tab rail + content pane ── */
+#manual-shell {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── Left tab rail ── */
+#manual-tabs {
+  width: 168px;
+  min-width: 168px;
+  background: rgba(6, 2, 20, 0.98);
+  border-right: 1px solid rgba(80, 40, 160, 0.3);
+  display: flex;
+  flex-direction: column;
+  padding: 14px 0 10px;
+  gap: 2px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+.manual-wordmark {
+  font-family: 'Cinzel', serif;
+  font-size: 0.563em;
+  letter-spacing: 3px;
+  color: rgba(170, 130, 255, 0.5);
+  text-transform: uppercase;
+  padding: 0 14px 12px;
+  border-bottom: 1px solid rgba(80, 40, 160, 0.2);
+  margin-bottom: 6px;
+}
+.mtab {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 14px;
+  background: transparent;
+  border: none;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #9080b0;
+  width: 100%;
+}
+.mtab:hover {
+  background: rgba(100, 60, 200, 0.1);
+  color: #d0c0f0;
+}
+.mtab.active {
+  background: rgba(120, 60, 220, 0.15);
+  border-left-color: #9966ff;
+  color: #f0e8ff;
+}
+.mtab-ico {
+  font-size: 14px;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+.mtab-lbl {
+  font-size: 0.688em;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mtab-spacer { flex: 1; }
+.mtab-log {
+  border-top: 1px solid rgba(80, 40, 160, 0.2);
+  margin-top: 4px;
+  padding-top: 10px;
+  color: #8878a8;
+}
+.mtab-close {
+  color: #664466;
+  border-top: 1px solid rgba(80, 40, 160, 0.15);
+  margin-top: 2px;
+  padding-top: 8px;
+}
+.mtab-close:hover { color: #ff8888; background: rgba(100, 0, 0, 0.1); }
+
+/* ── Right content pane ── */
+#manual-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  background: rgba(4, 1, 16, 0.97);
+}
+.mpane {
+  display: none;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  animation: mpaneIn 0.2s ease-out;
+}
+.mpane.active { display: flex; }
+@keyframes mpaneIn {
+  from { opacity: 0; transform: translateX(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── Pane header ── */
+.mpane-header {
+  padding: 18px 24px 14px;
+  border-bottom: 1px solid rgba(80, 40, 160, 0.25);
+  flex-shrink: 0;
+  background: rgba(10, 3, 28, 0.6);
+}
+.mpane-title {
+  font-family: 'Cinzel', serif;
+  font-size: 0.875em;
+  letter-spacing: 3px;
+  color: #d4b8ff;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.mpane-sub {
+  font-size: 0.688em;
+  color: #8878a8;
+  font-style: italic;
+  letter-spacing: 0.3px;
+}
+
+/* ── Pane body ── */
+.mpane-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  -webkit-overflow-scrolling: touch;
+}
+.mpane-body-log {
+  padding: 0;
+}
+.mpane-body-log .jlog-body {
+  padding: 16px 22px;
+  max-width: 100%;
+}
+
+/* ── Content cards ── */
+.mcard {
+  background: rgba(14, 6, 36, 0.7);
+  border: 1px solid rgba(80, 40, 160, 0.22);
+  border-radius: 6px;
+  padding: 14px 16px;
+}
+.mcard-tip  { border-color: rgba(80, 160, 255, 0.22); background: rgba(6, 14, 36, 0.7); }
+.mcard-warn { border-color: rgba(255, 140, 40, 0.22); background: rgba(24, 10, 4, 0.7); }
+.mcard-head {
+  font-family: 'Cinzel', serif;
+  font-size: 0.688em;
+  letter-spacing: 2px;
+  color: #c4a8ff;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.mcard-tip  .mcard-head { color: #88c8ff; }
+.mcard-warn .mcard-head { color: #ffb060; }
+.mcard p {
+  font-size: 0.75em;
+  color: #d8d0ec;
+  line-height: 1.65;
+  margin: 0 0 8px;
+}
+.mcard p:last-child { margin-bottom: 0; }
+.mcard strong { color: #f0e8ff; }
+.mcard em { color: #aa99cc; font-style: italic; }
+
+/* ── Stat grid ── */
+.mstat-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+.mstat {
+  display: flex;
+  gap: 10px;
+  font-size: 0.75em;
+  line-height: 1.5;
+}
+.mstat-k {
+  font-family: 'Cinzel', serif;
+  font-size: 0.875em;
+  color: #c4a8ff;
+  min-width: 100px;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+.mstat-v { color: #d8d0ec; }
+
+/* ── List ── */
+.mlist {
+  font-size: 0.75em;
+  color: #d8d0ec;
+  line-height: 1.65;
+  padding-left: 18px;
+  margin: 6px 0 0;
+}
+.mlist li { margin-bottom: 4px; }
+.mlist strong { color: #f0e8ff; }
+.mlist em { color: #aa99cc; }
+
+/* ── Mobile: tabs become top strip ── */
+@media (max-width: 700px) {
+  #manual-shell { flex-direction: column; }
+  #manual-tabs {
+    width: 100%;
+    min-width: 0;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0;
+    border-right: none;
+    border-bottom: 1px solid rgba(80, 40, 160, 0.3);
+    gap: 0;
+    height: 48px;
+    min-height: 48px;
+    flex-shrink: 0;
+  }
+  .manual-wordmark { display: none; }
+  .mtab {
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 10px;
+    border-left: none;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .mtab.active {
+    border-left-color: transparent;
+    border-bottom-color: #9966ff;
+  }
+  .mtab-ico { font-size: 13px; width: auto; }
+  .mtab-lbl { font-size: 0.563em; }
+  .mtab-spacer { display: none; }
+  .mtab-log, .mtab-close { border-top: none; margin-top: 0; padding-top: 6px; }
+  .mpane-header { padding: 12px 14px 10px; }
+  .mpane-body { padding: 12px 14px 16px; }
+  .mstat-k { min-width: 80px; }
+}
+
+/* ── Preserve existing captain's log styles ── */
 .jlog-header {
   font-family:'Cinzel',serif; font-size: 1.125em; color:#d4a96a;
   letter-spacing:3px; margin-bottom:2px;
 }
-.jlog-sub { font-size: 0.688em; color:#5a3e22; letter-spacing:1px; margin-bottom:14px; font-style:italic; }
+.jlog-sub { font-size: 0.688em; color:#8a6e52; letter-spacing:1px; margin-bottom:14px; font-style:italic; }
 .jlog-body {
   width:100%; max-width:640px; flex:1; overflow-y:auto;
   display:flex; flex-direction:column; gap:0;
@@ -1795,11 +2048,11 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
 .jlog-entry.type-frag  { border-left-color: rgba(255,215,0,0.6); }
 .jlog-entry.type-frag::before { background: #5a4000; border-color: #ffd700; box-shadow:0 0 6px rgba(255,215,0,0.467); }
 .jlog-date {
-  font-family:'Cinzel',serif; font-size: 0.563em; color:#5a3e22;
+  font-family:'Cinzel',serif; font-size: 0.563em; color:#8a6e52;
   letter-spacing:2px; text-transform:uppercase; margin-bottom:5px;
 }
 .jlog-loc {
-  font-size: 0.563em; color:#7a5a38; letter-spacing:1px;
+  font-size: 0.563em; color:#9a8a68; letter-spacing:1px;
   margin-bottom:6px; font-style:italic;
 }
 .jlog-text {
@@ -1807,7 +2060,7 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
   line-height:1.65; font-style:italic;
 }
 .jlog-empty {
-  font-size: 0.813em; color:#5a3e22; font-style:italic;
+  font-size: 0.813em; color:#8a6e52; font-style:italic;
   text-align:center; padding:40px 0;
 }
 .jlog-divider {
@@ -1815,7 +2068,6 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
   border:none; border-top:1px solid rgba(58,26,0,0.333);
   margin: 0;
 }
-/* Newest-first fade-in */
 @keyframes jlogIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
 .jlog-entry.new { animation: jlogIn 0.4s ease-out; }
 
@@ -2369,12 +2621,357 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
 
   <!-- CAPTAIN'S LOG / JOURNAL -->
   <div class="ovlay" id="ov-journal">
-    <div class="ovl-title-row">
-      <div class="jlog-header">📖 Captain's Log</div>
-      <button class="ovl-close-btn" onclick="closeOverlay('journal')">✕</button>
-    </div>
-    <div class="jlog-sub">Personal record — IEF Void Ship, Year 3350 CG</div>
-    <div class="jlog-body" id="jlog-body"></div>
+    <!-- ══ CAPTAIN'S MANUAL ══ -->
+    <div id="manual-shell">
+
+      <!-- Left tab rail -->
+      <nav id="manual-tabs" aria-label="Manual sections">
+        <div class="manual-wordmark">📖 MANUAL</div>
+        <button class="mtab active" data-tab="welcome"    onclick="manualTab('welcome')">
+          <span class="mtab-ico">✦</span><span class="mtab-lbl">Welcome</span>
+        </button>
+        <button class="mtab" data-tab="ship"       onclick="manualTab('ship')">
+          <span class="mtab-ico">⛵</span><span class="mtab-lbl">Your Ship</span>
+        </button>
+        <button class="mtab" data-tab="navigation" onclick="manualTab('navigation')">
+          <span class="mtab-ico">🗺</span><span class="mtab-lbl">Navigation</span>
+        </button>
+        <button class="mtab" data-tab="travel"     onclick="manualTab('travel')">
+          <span class="mtab-ico">⏱</span><span class="mtab-lbl">Travel &amp; Watch</span>
+        </button>
+        <button class="mtab" data-tab="localspace" onclick="manualTab('localspace')">
+          <span class="mtab-ico">🔭</span><span class="mtab-lbl">Local Space</span>
+        </button>
+        <button class="mtab" data-tab="combat"     onclick="manualTab('combat')">
+          <span class="mtab-ico">⚔</span><span class="mtab-lbl">Combat</span>
+        </button>
+        <button class="mtab" data-tab="quests"     onclick="manualTab('quests')">
+          <span class="mtab-ico">📋</span><span class="mtab-lbl">Quests &amp; Factions</span>
+        </button>
+        <button class="mtab" data-tab="dungeons"   onclick="manualTab('dungeons')">
+          <span class="mtab-ico">🔮</span><span class="mtab-lbl">Fragment Sites</span>
+        </button>
+        <button class="mtab" data-tab="saving"     onclick="manualTab('saving')">
+          <span class="mtab-ico">💾</span><span class="mtab-lbl">Saving</span>
+        </button>
+        <div class="mtab-spacer"></div>
+        <button class="mtab mtab-log" data-tab="captainlog" onclick="manualTab('captainlog')">
+          <span class="mtab-ico">📜</span><span class="mtab-lbl">Captain's Log</span>
+        </button>
+        <button class="mtab mtab-close" onclick="closeOverlay('journal')">
+          <span class="mtab-ico">✕</span><span class="mtab-lbl">Close</span>
+        </button>
+      </nav>
+
+      <!-- Right content pane -->
+      <div id="manual-content">
+
+        <!-- ── WELCOME ── -->
+        <section class="mpane active" id="mpane-welcome">
+          <div class="mpane-header">
+            <div class="mpane-title">✦ WELCOME, CAPTAIN</div>
+            <div class="mpane-sub">IEF Void Ship — Orders received. Navigate the Drift. Recover the Navigation Cores.</div>
+          </div>
+          <div class="mpane-body">
+            <div class="mcard">
+              <div class="mcard-head">Your Mission</div>
+              <p>Six <strong>Navigation Core fragments</strong> were scattered across the spheres when the Trull Overmind shattered the Astral Chart. You are the captain of an IEF void ship. Your orders: recover all six before the Overmind reassembles them.</p>
+              <p>Each fragment is held in a <strong>Fragment Site</strong> — a guarded ruin or anomaly inside a sphere's local space. Reach the sphere, enter the site, defeat the guardian, and claim the Core.</p>
+            </div>
+            <div class="mcard mcard-tip">
+              <div class="mcard-head">🧭 Getting Started</div>
+              <ul class="mlist">
+                <li>You begin at <strong>Refuge Station</strong>. Dock to repair and resupply.</li>
+                <li>Hail <strong>Admiral Soreth</strong> for your first mission briefing.</li>
+                <li>Use the <strong>navigation map</strong> to plot a course between spheres.</li>
+                <li>Each tab in this manual covers a core system — read what you need, skip what you know.</li>
+              </ul>
+            </div>
+            <div class="mcard mcard-warn">
+              <div class="mcard-head">⚠ Key Survival Tips</div>
+              <ul class="mlist">
+                <li><strong>💨 Air</strong> drains every day of travel. Run out and the voyage ends.</li>
+                <li><strong>Enemies</strong> in the travel sequence can be avoided — you don't have to fight.</li>
+                <li><strong>Anchor &amp; Rest</strong> at watch-end to keep your crew combat-ready.</li>
+                <li><strong>ESC</strong> pauses the game during travel and opens the menu.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── YOUR SHIP ── -->
+        <section class="mpane" id="mpane-ship">
+          <div class="mpane-header">
+            <div class="mpane-title">⛵ YOUR SHIP</div>
+            <div class="mpane-sub">Stats, resources, and upgrades.</div>
+          </div>
+          <div class="mpane-body">
+            <div class="mcard">
+              <div class="mcard-head">Ship Stats</div>
+              <div class="mstat-grid">
+                <div class="mstat"><span class="mstat-k">⚓ Hull</span><span class="mstat-v">Structural integrity. Reaches zero → ship destroyed.</span></div>
+                <div class="mstat"><span class="mstat-k">👥 Crew</span><span class="mstat-v">Your fighting force. Exhausted crew deals reduced damage. Reaches zero → cannot fight effectively.</span></div>
+                <div class="mstat"><span class="mstat-k">💨 Air</span><span class="mstat-v">Days of breathable air remaining. Drains by 1 every day of travel. Resupply at any dock.</span></div>
+                <div class="mstat"><span class="mstat-k">🔷 TS</span><span class="mstat-v">Toril Shards — the void's currency. Earned from combat, quests, and cargo. Spent at docks.</span></div>
+                <div class="mstat"><span class="mstat-k">⚡ Speed</span><span class="mstat-v">Reduces travel days on long lanes. Upgrade at any port with a Speed Engine.</span></div>
+              </div>
+            </div>
+            <div class="mcard">
+              <div class="mcard-head">The Dock — Services Available</div>
+              <ul class="mlist">
+                <li><strong>🔧 Hull Repair</strong> — costs TS per point restored.</li>
+                <li><strong>💨 Air Resupply</strong> — refill air to maximum.</li>
+                <li><strong>👥 Hire Crew</strong> — replace lost crew members.</li>
+                <li><strong>🛒 Quartermaster</strong> — buy consumable items, upgrades, and weapons.</li>
+                <li><strong>⛵ Depart System</strong> — leave local space and return to the map.</li>
+              </ul>
+            </div>
+            <div class="mcard mcard-tip">
+              <div class="mcard-head">Ship Classes</div>
+              <p>Four hull classes are available. Upgrade at major ports. Each has different stat maximums and a unique <strong>Signature Ability</strong> that unlocks at higher tiers.</p>
+              <div class="mstat-grid">
+                <div class="mstat"><span class="mstat-k">Pinnace</span><span class="mstat-v">Balanced starter — good all-round. Sig: Evasive Maneuver.</span></div>
+                <div class="mstat"><span class="mstat-k">Squid</span><span class="mstat-v">Fast raider — low hull, high speed. Sig: Void Sprint.</span></div>
+                <div class="mstat"><span class="mstat-k">Hammer</span><span class="mstat-v">Heavy bruiser — high hull, slow. Sig: Ironhull Ram.</span></div>
+                <div class="mstat"><span class="mstat-k">Man-o'-War</span><span class="mstat-v">Elite warship — high everything, expensive. Sig: Broadside.</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── NAVIGATION ── -->
+        <section class="mpane" id="mpane-navigation">
+          <div class="mpane-header">
+            <div class="mpane-title">🗺 NAVIGATION</div>
+            <div class="mpane-sub">The Drift map, lanes, and how to move between spheres.</div>
+          </div>
+          <div class="mpane-body">
+            <div class="mcard">
+              <div class="mcard-head">The Map</div>
+              <p>The main screen shows the <strong>Drift</strong> — the phlogiston void between crystal spheres. Each glowing circle is a sphere containing worlds. Tap or click a connected sphere to plot a course and begin travel.</p>
+            </div>
+            <div class="mcard">
+              <div class="mcard-head">Drift Flow Rivers</div>
+              <p>Each lane carries a <em>current</em>. Watch which way the glowing particles drift — that is the flow direction.</p>
+              <div class="mstat-grid">
+                <div class="mstat"><span class="mstat-k">〜 With Flow</span><span class="mstat-v">Faster travel — fewer days. The current carries you.</span></div>
+                <div class="mstat"><span class="mstat-k">⚡ Against Flow</span><span class="mstat-v">Slower travel — more days. Fighting the current costs time.</span></div>
+              </div>
+            </div>
+            <div class="mcard">
+              <div class="mcard-head">Lane Danger Tiers</div>
+              <div class="mstat-grid">
+                <div class="mstat"><span class="mstat-k">Tier 1–2</span><span class="mstat-v">Safe lanes — weak enemies, slow hazards.</span></div>
+                <div class="mstat"><span class="mstat-k">Tier 3</span><span class="mstat-v">Dangerous — enemies track faster, more obstacles.</span></div>
+                <div class="mstat"><span class="mstat-k">Tier 4–5</span><span class="mstat-v">Extreme / War Zone — aggressive hunters, dense hazards.</span></div>
+              </div>
+            </div>
+            <div class="mcard mcard-tip">
+              <div class="mcard-head">Waystations &amp; Locked Spheres</div>
+              <p><strong>Waystations</strong> appear mid-lane during travel. Steer toward them to stop for emergency air and hull repair — at a premium price. Fly past and they drift away without penalty.</p>
+              <p><strong>Locked spheres</strong> show a lock icon — some require Navigation Cores or story progress to reach.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── TRAVEL & WATCH ── -->
+        <section class="mpane" id="mpane-travel">
+          <div class="mpane-header">
+            <div class="mpane-title">⏱ TRAVEL &amp; THE WATCH SYSTEM</div>
+            <div class="mpane-sub">Crossing the Drift — days, rest, and fatigue.</div>
+          </div>
+          <div class="mpane-body">
+            <div class="mcard">
+              <div class="mcard-head">The Travel Sequence</div>
+              <p>When you depart a sphere, the <strong>travel sequence</strong> begins. You pilot your ship through the Drift in real time — dodge hazards, avoid or engage enemies, and steer toward points of interest.</p>
+              <ul class="mlist">
+                <li><strong>WASD / Arrow keys</strong> or the on-screen joystick to move your ship.</li>
+                <li><strong>Collidable objects</strong> (asteroids, wrecks, bones) flash red when they appear — they deal hull damage on contact.</li>
+                <li><strong>Faded background objects</strong> (jellyfish, crystals, motes) are decorative — no damage, no interaction.</li>
+                <li><strong>Enemies</strong> drift toward you — steer away to avoid them, or fly close to engage combat.</li>
+                <li><strong>ESC</strong> pauses travel and opens the menu.</li>
+              </ul>
+            </div>
+            <div class="mcard">
+              <div class="mcard-head">The Watch System</div>
+              <p>Each lane is measured in <strong>watches</strong> — 8-hour shifts starting at 06:00. The clock in the top bar counts up. At 14:00 the watch ends and you choose:</p>
+              <div class="mstat-grid">
+                <div class="mstat"><span class="mstat-k">⚓ Anchor &amp; Rest</span><span class="mstat-v">Sleep until 06:00. Crew returns to <em>Fresh</em>. Hull repairs slightly.</span></div>
+                <div class="mstat"><span class="mstat-k">➤ Push On</span><span class="mstat-v">Continue through the night. Crew becomes Fatigued then Exhausted.</span></div>
+              </div>
+            </div>
+            <div class="mcard mcard-warn">
+              <div class="mcard-head">Fatigue Levels</div>
+              <div class="mstat-grid">
+                <div class="mstat"><span class="mstat-k">✦ Fresh</span><span class="mstat-v">Full combat effectiveness — 100% damage.</span></div>
+                <div class="mstat"><span class="mstat-k">⚠ Fatigued</span><span class="mstat-v">One push past rest — combat damage 85%.</span></div>
+                <div class="mstat"><span class="mstat-k">⚠ Exhausted</span><span class="mstat-v">Two pushes — combat damage 70%. Hull ticks damage from navigation errors.</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── LOCAL SPACE ── -->
+        <section class="mpane" id="mpane-localspace">
+          <div class="mpane-header">
+            <div class="mpane-title">🔭 LOCAL SPACE</div>
+            <div class="mpane-sub">Piloting within a sphere — docks, NPCs, enemies, and fragment sites.</div>
+          </div>
+          <div class="mpane-body">
+            <div class="mcard">
+              <div class="mcard-head">Moving in Local Space</div>
+              <p>When you arrive at a sphere you enter its <strong>Local Space</strong> — a top-down view of the sphere's interior. Pilot your ship with <strong>WASD</strong>, arrow keys, or tap/click to set a destination.</p>
+              <p>Fly to the <strong>sphere boundary</strong> to return to the map. Or use <strong>⛵ Depart System</strong> from the dock.</p>
+            </div>
+            <div class="mcard">
+              <div class="mcard-head">Points of Interest</div>
+              <div class="mstat-grid">
+                <div class="mstat"><span class="mstat-k">⚓ Dock</span><span class="mstat-v">Repairs, resupply, crew, and the Quartermaster's shop.</span></div>
+                <div class="mstat"><span class="mstat-k">🎖 NPCs</span><span class="mstat-v">Captains, admirals, merchants. Approach and press Hail. Blinking <strong>!</strong> means a quest is available or ready to turn in.</span></div>
+                <div class="mstat"><span class="mstat-k">🔮 Fragment Site</span><span class="mstat-v">Guarded anomaly containing a Navigation Core. Approach to enter.</span></div>
+                <div class="mstat"><span class="mstat-k">⚔ Enemies</span><span class="mstat-v">Hostile ships that will charge if you get close. Engage or avoid.</span></div>
+              </div>
+            </div>
+            <div class="mcard mcard-tip">
+              <div class="mcard-head">Highlighted POIs</div>
+              <p>During the tutorial, the target POI pulses with a gold ring. In general play, NPCs with quests ready show a blinking <strong>!</strong> above their ship. Fragment Sites glow brighter as you approach.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── COMBAT ── -->
+        <section class="mpane" id="mpane-combat">
+          <div class="mpane-header">
+            <div class="mpane-title">⚔ COMBAT</div>
+            <div class="mpane-sub">Turn-based ship battles — weapons, abilities, and survival.</div>
+          </div>
+          <div class="mpane-body">
+            <div class="mcard">
+              <div class="mcard-head">How Combat Works</div>
+              <p>Combat is <strong>turn-based</strong>. You act first each round — select a weapon and fire. The enemy fires back. This repeats until one ship is destroyed or retreats.</p>
+              <p>Use <strong>↑↓ arrow keys</strong> to navigate options and <strong>Enter</strong> to confirm. <strong>ESC</strong> clears focus.</p>
+            </div>
+            <div class="mcard">
+              <div class="mcard-head">Your Options Each Turn</div>
+              <div class="mstat-grid">
+                <div class="mstat"><span class="mstat-k">Weapons</span><span class="mstat-v">Each weapon rolls damage dice. Heavier guns hit harder but have reload cooldowns — they sit idle for several rounds after firing.</span></div>
+                <div class="mstat"><span class="mstat-k">🎒 Items</span><span class="mstat-v">Use a consumable from your hold — repair kits, crew mead, relics. Opens the item overlay.</span></div>
+                <div class="mstat"><span class="mstat-k">Evade</span><span class="mstat-v">Reduces incoming damage this round. Good when weapons are reloading.</span></div>
+                <div class="mstat"><span class="mstat-k">Signature</span><span class="mstat-v">Your ship's unique ability. Powerful — has a cooldown between uses.</span></div>
+                <div class="mstat"><span class="mstat-k">💨 Flee</span><span class="mstat-v">50% chance to escape. You survive but lose the fight and any reward.</span></div>
+              </div>
+            </div>
+            <div class="mcard mcard-warn">
+              <div class="mcard-head">Watch Your Hull &amp; Crew</div>
+              <p><strong>Hull to zero</strong> → your ship is destroyed. Game over. <strong>Crew to zero</strong> → specials go offline and effectiveness drops sharply. Repair hull between fights whenever possible — it does not recover automatically.</p>
+            </div>
+            <div class="mcard mcard-tip">
+              <div class="mcard-head">Enemy Special Abilities</div>
+              <p>Most enemies have a <strong>special ability</strong> that triggers at a set probability each round — boarding hooks, void breath, psionic blasts. The ability description is shown in the enemy panel. Plan around it.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── QUESTS & FACTIONS ── -->
+        <section class="mpane" id="mpane-quests">
+          <div class="mpane-header">
+            <div class="mpane-title">📋 QUESTS &amp; FACTIONS</div>
+            <div class="mpane-sub">Missions, reputation, cargo, and the factions of the Drift.</div>
+          </div>
+          <div class="mpane-body">
+            <div class="mcard">
+              <div class="mcard-head">Quest Loop</div>
+              <p>Quests are given by NPCs in local space. Approach an NPC with a blinking <strong>!</strong> and press <strong>Hail</strong> to accept. Complete the objective and return to the same NPC to collect your reward.</p>
+              <div class="mstat-grid">
+                <div class="mstat"><span class="mstat-k">Combat quests</span><span class="mstat-v">Destroy a number of enemy ships. Kills count anywhere in the sphere or on lanes.</span></div>
+                <div class="mstat"><span class="mstat-k">Cargo quests</span><span class="mstat-v">Collect cargo mid-lane and deliver it. Cargo appears as a floating POI during travel.</span></div>
+              </div>
+            </div>
+            <div class="mcard">
+              <div class="mcard-head">Factions</div>
+              <p>Five factions operate in the Drift. <strong>Reputation</strong> with each faction rises from trading and missions, and falls from attacking their ships.</p>
+              <div class="mstat-grid">
+                <div class="mstat"><span class="mstat-k">Rep ≥ 50</span><span class="mstat-v">15% discount at that faction's docks.</span></div>
+                <div class="mstat"><span class="mstat-k">Rep ≥ 25</span><span class="mstat-v">8% discount.</span></div>
+                <div class="mstat"><span class="mstat-k">Rep &lt; −25</span><span class="mstat-v">10% surcharge.</span></div>
+                <div class="mstat"><span class="mstat-k">Rep &lt; −50</span><span class="mstat-v">20% surcharge — and faction ships will intercept you in lanes.</span></div>
+              </div>
+            </div>
+            <div class="mcard mcard-tip">
+              <div class="mcard-head">Roaming Ships</div>
+              <p>Faction vessels drift through lanes during travel. Steer toward them to receive a hail — they may offer cargo missions or trade. Fly past and they continue without incident. Enemy factions will pursue you instead of offering trade.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── FRAGMENT SITES ── -->
+        <section class="mpane" id="mpane-dungeons">
+          <div class="mpane-header">
+            <div class="mpane-title">🔮 FRAGMENT SITES</div>
+            <div class="mpane-sub">Recovering the Navigation Cores — the heart of the mission.</div>
+          </div>
+          <div class="mpane-body">
+            <div class="mcard">
+              <div class="mcard-head">Entering a Site</div>
+              <p>Each sphere contains one <strong>Fragment Site</strong> — a ruin, anomaly, or derelict structure housing a Navigation Core. Find it in local space and fly close to enter.</p>
+              <p>Inside, you navigate a top-down dungeon with WASD or the joystick. Rooms contain enemies and environmental hazards. Reach the guardian's chamber to claim the Core.</p>
+            </div>
+            <div class="mcard mcard-warn">
+              <div class="mcard-head">Guardians</div>
+              <p>Every site is protected by a <strong>Guardian</strong> — a powerful enemy unique to that sphere. Guardians have high HP, special abilities, and often multiple attack phases. Enter sites only when your hull and crew are in good shape.</p>
+            </div>
+            <div class="mcard">
+              <div class="mcard-head">Site Rules</div>
+              <ul class="mlist">
+                <li>Enemies inside a site can <strong>stack</strong> — nearby hostiles join the fight simultaneously.</li>
+                <li>Use <strong>⬅ Abort Mission</strong> to leave safely if things go wrong — no Core, but you survive.</li>
+                <li>The minimap in the corner shows explored rooms and your current position.</li>
+                <li>Loot chests and cargo crates inside sites may contain rare items and TS.</li>
+              </ul>
+            </div>
+            <div class="mcard mcard-tip">
+              <div class="mcard-head">After the Core</div>
+              <p>Recovering a Navigation Core is logged in the <strong>Captain's Log</strong> and tracked in your quest log. Six Cores unlock the confrontation with the Trull Overmind.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── SAVING ── -->
+        <section class="mpane" id="mpane-saving">
+          <div class="mpane-header">
+            <div class="mpane-title">💾 SAVING YOUR VOYAGE</div>
+            <div class="mpane-sub">Auto-save, manual saves, and how they work.</div>
+          </div>
+          <div class="mpane-body">
+            <div class="mcard">
+              <div class="mcard-head">Auto Save</div>
+              <p>The game <strong>auto-saves</strong> automatically whenever you arrive at a new sphere, complete a major quest, and at certain other story moments. The auto-save slot is always overwritten — it reflects your most recent activity.</p>
+            </div>
+            <div class="mcard">
+              <div class="mcard-head">Manual Saves</div>
+              <p>Open <strong>☰ Menu → Save Game</strong> to write to one of three named save slots. You can name each slot. Manual saves persist until you overwrite them.</p>
+              <p>To load a save, open the menu and select <strong>Load Game</strong> from the title screen, or use the save manager.</p>
+            </div>
+            <div class="mcard mcard-warn">
+              <div class="mcard-head">Saving Restrictions</div>
+              <p>You cannot save during <strong>combat</strong>, during the <strong>defeat</strong> screen, or during the <strong>victory</strong> sequence. Save from the map, in local space, or at a dock for best results.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── CAPTAIN'S LOG ── -->
+        <section class="mpane" id="mpane-captainlog">
+          <div class="mpane-header">
+            <div class="mpane-title">📜 CAPTAIN'S LOG</div>
+            <div class="mpane-sub">Personal record — IEF Void Ship, Year 3350 CG</div>
+          </div>
+          <div class="mpane-body mpane-body-log">
+            <div class="jlog-body" id="jlog-body"></div>
+          </div>
+        </section>
+
+      </div><!-- end #manual-content -->
+    </div><!-- end #manual-shell -->
   </div>
 
   <!-- COMBAT -->
@@ -9246,9 +9843,9 @@ const KBNav = (() => {
     },
     {
       id: 'journal',
-      container: () => document.getElementById('ov-journal'),
-      selector:  '.journal-entry, button:not([disabled])',
-      allSelector: '.journal-entry, button',
+      container: () => document.getElementById('manual-tabs'),
+      selector:  '.mtab',
+      allSelector: '.mtab',
       isActive:  () => document.getElementById('ov-journal')?.classList.contains('on'),
       confirm:   (el) => el.click(),
     },
@@ -15761,7 +16358,11 @@ function openOverlay(which){
   if(which==='wpn'){     buildWpnOverlay();    document.getElementById('ov-wpn').classList.add('on'); }
   if(which==='shp'){     buildShipOverlay();   document.getElementById('ov-shp').classList.add('on'); }
   if(which==='qlog'){    buildQuestLog('active'); document.getElementById('ov-qlog').classList.add('on'); }
-  if(which==='journal'){ buildJournal();       document.getElementById('ov-journal').classList.add('on'); }
+  if(which==='journal'){
+    // Reset to welcome tab each open, then show
+    manualTab(_manualActiveTab || 'welcome');
+    document.getElementById('ov-journal').classList.add('on');
+  }
   _syncWatchHudVisibility();
 }
 function closeOverlay(which){ document.getElementById('ov-'+which).classList.remove('on'); _kbNavResetOnClose(); _syncWatchHudVisibility(); }
@@ -23593,6 +24194,20 @@ function addJournalEntry(text, type) {
 }
 
 // Render the journal overlay
+// ── Manual tab switching ─────────────────────────────────────────────────
+let _manualActiveTab = 'welcome';
+function manualTab(tabId) {
+  _manualActiveTab = tabId;
+  document.querySelectorAll('.mtab').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tabId);
+  });
+  document.querySelectorAll('.mpane').forEach(p => {
+    p.classList.toggle('active', p.id === 'mpane-' + tabId);
+  });
+  // Build log entries when switching to captain's log
+  if (tabId === 'captainlog') buildJournal();
+}
+
 function buildJournal() {
   const body = document.getElementById('jlog-body');
   if (!body) return;
