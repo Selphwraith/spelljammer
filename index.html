@@ -9883,7 +9883,24 @@ function tsRender(timestamp) {
       ev.y = H * (ev.yFrac ?? -0.14);
     }
 
-    // ── All events drift — they do NOT home toward the player ────────────
+    // ── All events drift — enemies/NPCs steer loosely toward the player ─────
+    // Pure waypoints just drift down; enemies and roam ships have a homing component
+    if ((ev.type === 'enemy' || ev.type === 'roam') && ev.steerForce) {
+      const toPX = TS.px - ev.x;
+      const toPY = TS.py - ev.y;
+      const toPDist = Math.hypot(toPX, toPY);
+      if (toPDist > 1) {
+        // Steer toward player — acceleration proportional to steerForce
+        ev.vx += (toPX / toPDist) * ev.steerForce * dt;
+        ev.vy += (toPY / toPDist) * ev.steerForce * dt;
+        // Cap to maxSpeed so they can be outrun
+        const spd = Math.hypot(ev.vx, ev.vy);
+        if (spd > ev.maxSpeed) {
+          ev.vx *= ev.maxSpeed / spd;
+          ev.vy *= ev.maxSpeed / spd;
+        }
+      }
+    }
     ev.x += (ev.vx || 0) * dt;
     ev.y += (ev.vy || 0) * dt;
 
@@ -10210,9 +10227,10 @@ function tsRender(timestamp) {
   if (G.tvl) {
     const pct = G.tvl.prog || 0;
     document.getElementById('ts-prog-bar').style.width = (isFinite(pct) ? pct : 0) + '%';
-    const wl = G.tvl._watchesLeft || 0;
+    // +1 to include the current active watch — an 8-day trip shows "8 days remaining" from the start
+    const wl = (G.tvl._watchesLeft || 0) + 1;
     document.getElementById('ts-watch-label').textContent =
-      wl > 0 ? `${wl} day${wl !== 1 ? 's' : ''} remaining` : 'approaching…';
+      wl > 1 ? `${wl} days remaining` : wl === 1 ? '1 day remaining' : 'approaching…';
   }
 
   // Update skip button disabled state
@@ -10709,6 +10727,8 @@ function tsQueueEnemy(enemyKey) {
     x, y, vx, vy,
     alpha: 0, triggered: false,
     flashTimer: 1.8,   // warning flash on appear
+    steerForce: 28 + tier * 14,   // px/s² toward player — tier 1: 42, tier 5: 98
+    maxSpeed:   52 + tier * 14,   // tier 1: 66, tier 5: 122
   };
   TS.events.push(ev);
   const alertEl = document.getElementById('ts-alert');
@@ -10736,6 +10756,8 @@ function tsQueueRoam(factionId) {
     vy: 10 + Math.random() * 16,
     alpha: 0, triggered: false,
     flashTimer: 0,
+    steerForce: 22,   // gentle drift toward player — curious, not aggressive
+    maxSpeed:   46,
   };
   TS.events.push(ev);
   const alertEl = document.getElementById('ts-alert');
