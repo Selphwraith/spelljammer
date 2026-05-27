@@ -450,8 +450,7 @@ body {
   background:rgba(10,2,28,0.97); border:1px solid rgba(85,34,170,0.333);
   border-radius:8px; padding:36px 44px;
   box-shadow:0 0 60px rgba(102,51,170,0.2), inset 0 0 40px rgba(20,0,50,0.6);
-  min-width:320px; max-height:92vh; overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
+  min-width:320px; width:min(480px, 92vw);
 }
 .mm-title {
   font-family:'Cinzel',serif; font-size: 1.75em; font-weight:900;
@@ -872,7 +871,7 @@ body {
   .b-body { font-size: 0.813em; line-height: 1.65; padding: 10px 12px; }
 
   /* ── Main menu ─────────────────────────────────────────── */
-  .mm-card { padding: 24px 18px; min-width: 0; width: 94vw; max-height: none; }
+  .mm-card { padding: 24px 18px; min-width: 0; width: 94vw; }
   .mm-title { font-size: 1.375em; letter-spacing: 3px; }
   .mm-btn { font-size: 0.813em; padding: 13px 16px; }
   .mm-desc { font-size: 0.688em; }
