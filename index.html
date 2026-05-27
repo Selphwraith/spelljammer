@@ -6491,16 +6491,17 @@ function renderLoop(ts=0) {
       const travelAngle = Math.atan2(dy, dx);
       const bob   = Math.sin(t*1.8)*2.2;
       const rock  = Math.sin(t*1.3)*0.055;
-      // Engine trail
-      const trailX = sx - Math.cos(travelAngle)*22;
-      const trailY = sy - Math.sin(travelAngle)*22;
+      // Engine trail — scaled with _uiScale() so dots match ship size on PC
+      const _tsc = _uiScale();
+      const trailX = sx - Math.cos(travelAngle)*22*_tsc;
+      const trailY = sy - Math.sin(travelAngle)*22*_tsc;
       for(let i=0;i<4;i++){
-        const tr = 0.6-i*0.13; const td = i*6;
+        const tr = 0.6-i*0.13; const td = i*6*_tsc;
         const tx2 = trailX - Math.cos(travelAngle)*td;
         const ty2 = trailY - Math.sin(travelAngle)*td;
         cx.globalAlpha = tr*0.55;
         cx.fillStyle = i<2 ? '#cc66ff' : '#7733aa';
-        cx.beginPath(); cx.arc(tx2,ty2,(3.5-i*0.6)*tr,0,Math.PI*2); cx.fill();
+        cx.beginPath(); cx.arc(tx2,ty2,(3.5-i*0.6)*tr*_tsc,0,Math.PI*2); cx.fill();
       }
       cx.globalAlpha=1;
       cx.save(); cx.translate(sx,sy); cx.rotate(travelAngle+rock);
@@ -19499,15 +19500,16 @@ function _lsUpdatePlayer(dt) {
     }
   }
 
-  // Engine trail particles
-  if(spd > 8) {
+  // Engine trail particles — scaled with _uiScale() so they match ship size on PC
+  const _sc = _uiScale();
+  if(spd > 8 * _sc) {
     const trailAngle = LS.pAngle + Math.PI + (Math.random()-0.5)*0.3;
     LS.particles.push({
-      x: LS.px + Math.cos(trailAngle)*12,
-      y: LS.py + Math.sin(trailAngle)*12,
-      vx: Math.cos(trailAngle)*(20+Math.random()*15),
-      vy: Math.sin(trailAngle)*(20+Math.random()*15),
-      life:1, maxLife:0.55+Math.random()*0.25, r:2.5+Math.random()*2,
+      x: LS.px + Math.cos(trailAngle)*12*_sc,
+      y: LS.py + Math.sin(trailAngle)*12*_sc,
+      vx: Math.cos(trailAngle)*(20+Math.random()*15)*_sc,
+      vy: Math.sin(trailAngle)*(20+Math.random()*15)*_sc,
+      life:1, maxLife:0.55+Math.random()*0.25, r:(2.5+Math.random()*2)*_sc,
       col:`rgba(${120+Math.floor(Math.random()*80)},80,255,`
     });
   }
@@ -23576,15 +23578,16 @@ function lpoiRender(ts){
   const nx=LPOI.px+LPOI.pvx*dt, ny=LPOI.py+LPOI.pvy*dt;
   if(_lpoiWalkable(nx,LPOI.py)) LPOI.px=nx; else { LPOI.pvx*=-0.15; LPOI.pTargetX=null; }
   if(_lpoiWalkable(LPOI.px,ny)) LPOI.py=ny; else { LPOI.pvy*=-0.15; LPOI.pTargetY=null; }
-  // Engine trail particles
-  if(spd>8){
+  // Engine trail particles — scaled with _uiScale() so they match ship size on PC
+  const _lsc = _uiScale();
+  if(spd>8*_lsc){
     const trailAngle=LPOI.pAngle+Math.PI+(Math.random()-0.5)*0.35;
     LPOI.particles.push({
-      x:LPOI.px+Math.cos(trailAngle)*10, y:LPOI.py+Math.sin(trailAngle)*10,
-      vx:Math.cos(trailAngle)*(18+Math.random()*14),
-      vy:Math.sin(trailAngle)*(18+Math.random()*14),
+      x:LPOI.px+Math.cos(trailAngle)*10*_lsc, y:LPOI.py+Math.sin(trailAngle)*10*_lsc,
+      vx:Math.cos(trailAngle)*(18+Math.random()*14)*_lsc,
+      vy:Math.sin(trailAngle)*(18+Math.random()*14)*_lsc,
       life:1, maxLife:0.45+Math.random()*0.2,
-      r:2+Math.random()*1.8,
+      r:(2+Math.random()*1.8)*_lsc,
       col:`rgba(${110+Math.floor(Math.random()*90)},70,255,`
     });
   }
@@ -23829,14 +23832,15 @@ function lpoiRender(ts){
 
     // — Engine trail particles — only generate when visible
     const espd=Math.hypot(e.vx,e.vy);
-    if(eVisible&&espd>6&&Math.random()<0.6){
+    const _esc=_uiScale();
+    if(eVisible&&espd>6*_esc&&Math.random()<0.6){
       const eTrail=e.angle+Math.PI+(Math.random()-0.5)*0.4;
       const ecol=e.isTough?`rgba(255,${80+Math.floor(Math.random()*50)},20,`
                           :`rgba(255,${20+Math.floor(Math.random()*40)},60,`;
       e.particles.push({
-        x:e.x+Math.cos(eTrail)*10, y:e.y+Math.sin(eTrail)*10,
-        vx:Math.cos(eTrail)*(15+Math.random()*12), vy:Math.sin(eTrail)*(15+Math.random()*12),
-        life:1, maxLife:0.35+Math.random()*0.2, r:1.8+Math.random()*1.5, col:ecol
+        x:e.x+Math.cos(eTrail)*10*_esc, y:e.y+Math.sin(eTrail)*10*_esc,
+        vx:Math.cos(eTrail)*(15+Math.random()*12)*_esc, vy:Math.sin(eTrail)*(15+Math.random()*12)*_esc,
+        life:1, maxLife:0.35+Math.random()*0.2, r:(1.8+Math.random()*1.5)*_esc, col:ecol
       });
     }
     e.particles=e.particles.filter(p=>{
