@@ -18287,10 +18287,17 @@ function menuContinue() {
 }
 
 function menuShowBriefing() {
-  document.getElementById('briefing-overlay').classList.remove('hidden');
-  // Ensure first tab is active
+  const el = document.getElementById('briefing-overlay');
+  el.style.display = '';
+  el.classList.remove('hidden');
   bpTab('mission');
 }
+
+// Force briefing hidden on every page load — guards against stale cached state
+document.addEventListener('DOMContentLoaded', () => {
+  const b = document.getElementById('briefing-overlay');
+  if (b) { b.classList.add('hidden'); b.style.display = 'none'; }
+});
 
 function bpTab(tabId) {
   document.querySelectorAll('.bptab').forEach(b => b.classList.toggle('active', b.dataset.bptab === tabId));
@@ -18298,7 +18305,9 @@ function bpTab(tabId) {
 }
 
 function hideBriefing() {
-  document.getElementById('briefing-overlay').classList.add('hidden');
+  const el = document.getElementById('briefing-overlay');
+  el.style.display = 'none';
+  el.classList.add('hidden');
 }
 
 function menuShowLoad() {
@@ -26972,7 +26981,7 @@ document.addEventListener('visibilitychange', () => {
 </div>
 
 <!-- ═══ CAPTAIN'S BRIEFING ═══ -->
-<div id="briefing-overlay" class="briefing-overlay hidden">
+<div id="briefing-overlay" class="briefing-overlay hidden" style="display:none">
   <div class="briefing-panel">
     <div class="briefing-title">📖 Captain's Handbook</div>
 
@@ -27310,366 +27319,6 @@ document.addEventListener('visibilitychange', () => {
     </div>
   </div>
 </div>
-
-      <!-- MISSION -->
-      <div class="b-section">
-        <div class="b-head">⚓ Your Mission</div>
-        <div class="b-body">
-          You command a void sailing vessel for the <strong>International Earth Federation (IEF)</strong>, launching from <em>Refuge Station</em> — a hidden IEF forward base. The known spheres are under threat from the <strong>Trull Overmind Flagship</strong>, drifting through The Far Dark and consuming all conscious life in its path.<br><br>
-          Your orders: travel the Drift, recover all <strong>six Navigation Cores</strong> hidden across six spheres, assemble the completed Astral Chart, unlock The Far Dark, and destroy the Flagship before it reaches the inner worlds. Each Core is guarded — find clues at each sphere's dock before you can locate and fight for them.
-        </div>
-      </div>
-
-      <!-- CURRENCY -->
-      <div class="b-section">
-        <div class="b-head"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> Currency — Topazine Shards (TS)</div>
-        <div class="b-body">
-          The currency of the Known Spheres is the <strong>Topazine Shard (TS)</strong> — named for the yellow gems the ancient dragons of Fentheris used as trade tokens during their reign.<br><br>
-          TS is earned from <strong>combat loot</strong>, <strong>selling cargo</strong>, and <strong>completing quests</strong>. Spent on hull repairs, crew, weapons, ship upgrades, and supplies. Each sphere's dock and quartermaster sets its own prices.
-        </div>
-      </div>
-
-      <!-- NAVIGATION -->
-      <div class="b-section">
-        <div class="b-head">🗺 Navigation &amp; The Map</div>
-        <div class="b-body">
-          The main screen shows the <strong>Drift</strong> — the space between spheres. Spheres appear as glowing circles. <strong>Lanes</strong> connect them across the void.<br><br>
-          <strong>To travel:</strong> tap any connected sphere to chart a course. Your ship animates across the Drift.<br>
-          <strong>To dock:</strong> arrive at a sphere — you'll automatically enter its local space.<br>
-          <strong>Locked spheres</strong> show a lock icon — some require story progress or Navigation Cores to reach.<br><br>
-          <strong>Drift Flow Rivers</strong> — each lane carries a <em>current</em>. Watch which way the glowing particles drift — that is the flow direction. Travelling <em>with</em> the current is faster and costs fewer days. Travelling <em>against</em> it takes longer.<br><br>
-          <strong>Waystations</strong> — small beacons in the Drift — appear mid-lane. When your ship intercepts one, you can stop for emergency supplies or pass through. Waystations charge a premium over dock prices.
-        </div>
-      </div>
-
-      <!-- WATCH SYSTEM -->
-      <div class="b-section">
-        <div class="b-head">⏱ The Watch System — Travel Days</div>
-        <div class="b-body">
-          Each lane crossing is measured in <strong>watches</strong> — 8-hour shifts starting at 06:00 and ending at 14:00. The clock in the top bar counts up through the watch in real time.<br><br>
-          <strong>At the end of every watch</strong> you are prompted:<br>
-          &nbsp;&nbsp;• <strong>⚓ Anchor &amp; Rest</strong> — Sleep until 06:00 the next day. Restores the helmsman to <em>Fresh</em> status and repairs the hull slightly.<br>
-          &nbsp;&nbsp;• <strong>➤ Push On</strong> — Continue through the night. Helmsman becomes <em>Fatigued</em> then <em>Exhausted</em>.<br><br>
-          <strong>Fatigue levels:</strong><br>
-          &nbsp;&nbsp;• ✦ <strong>Fresh</strong> — Full effectiveness. Combat damage at 100%.<br>
-          &nbsp;&nbsp;• ⚠ <strong>Fatigued</strong> — One push past rest. Combat damage at 85%.<br>
-          &nbsp;&nbsp;• ⚠ <strong>Exhausted</strong> — Two pushes past rest. Combat damage at 70%. Hull damage ticks every few ticks from navigation errors.<br><br>
-          Longer lanes require <strong>multiple watches</strong> — each watch ends with the anchor/push prompt before the next leg begins. Resting always resets fatigue to Fresh.<br><br>
-          <em>The day counter in the Watch HUD shows your current day and hour. Air supply drains once per rest (once per game day).</em>
-        </div>
-      </div>
-
-      <!-- LOCAL SPACE -->
-      <div class="b-section">
-        <div class="b-head">🌐 Local Space</div>
-        <div class="b-body">
-          Arriving at a sphere automatically opens its <strong>Local Space</strong> — a top-down exploration zone where you pilot your ship directly.<br><br>
-          <strong>Moving:</strong> WASD keys, virtual joystick (mobile), or tap/click anywhere to set a destination.<br>
-          <strong>Points of Interest:</strong> approach any POI to interact with it.<br><br>
-          <strong>The Dock (⚓):</strong> Approach to dock for hull repair, air resupply, crew hire, and the sphere's Quartermaster shop. A pulsing amber <strong>!</strong> on the dock means you have a cargo mission ready to deliver.<br><br>
-          <strong>NPC Ships:</strong> Exclamation marks (!) above a ship mean they have a quest available or ready to turn in. Approach and hail them. QM ships open their shop after the greeting dialog.<br><br>
-          <strong>Fragment Sites (🔮):</strong> Approach to enter the Fragment Dungeon and fight for the Navigation Core inside.<br><br>
-          <strong>Hazard Zones (⚠):</strong> Enemy-heavy regions. Enemies spawn more frequently here. Avoid if your hull is low.<br><br>
-          <strong>Enemies</strong> patrol the outer fringes with vision cones. If they see you, they give chase. Enemies respawn every 10 days.
-        </div>
-      </div>
-
-      <!-- FRAGMENT DUNGEONS -->
-      <div class="b-section">
-        <div class="b-head">🏚 Fragment Dungeons</div>
-        <div class="b-body">
-          Each Navigation Core is held inside a <strong>Fragment Dungeon</strong> — a multi-room site unique to each sphere. Approach the Fragment Site (🔮) in local space to enter.<br><br>
-          <strong>Inside the dungeon:</strong> you pilot your ship through corridors in a top-down view — the same controls as local space. The dungeon is filled with hostile ships patrolling rooms.<br><br>
-          <strong>Room enemies:</strong> minion-tier enemies guard the approach rooms. Each sphere has two enemy types. Defeat them to clear the path.<br><br>
-          <strong>The Guardian:</strong> at the far end of the dungeon — a named, unique boss significantly tougher than anything in the lanes. A warning screen describes them before the fight. They have special abilities and higher stats. Come prepared.<br><br>
-          <strong>Dungeon names and guardians:</strong><br>
-          &nbsp;&nbsp;• <em>Fentheris System</em> — The Flotsam Field · Corsair Captain Aldren<br>
-          &nbsp;&nbsp;• <em>Korreth</em> — The Dwarven Vault · Iron Warden Drekk<br>
-          &nbsp;&nbsp;• <em>Vael</em> — The Star Nest · War-Commander Zith'ral<br>
-          &nbsp;&nbsp;• <em>Varuun</em> — The Broker's Cache · The Broker<br>
-          &nbsp;&nbsp;• <em>Thyss</em> — Pre-Sundering Vault · Vault-Keeper Xorrath<br>
-          &nbsp;&nbsp;• <em>Serath</em> — The Dark Mote · The Void Prophet<br><br>
-          <em>Dungeons also contain loot rooms — random item drops along the path reward exploration.</em>
-        </div>
-      </div>
-
-      <!-- NAVIGATION CORES -->
-      <div class="b-section">
-        <div class="b-head">🧩 Navigation Cores — The Four Steps</div>
-        <div class="b-body">
-          <strong>Step 1 — Find the Clue.</strong> Dock at a sphere and speak to the dockmaster. They know something. Accept their clue to reveal the Fragment Site on your chart.<br><br>
-          <strong>Step 2 — Locate the Site.</strong> The Fragment Site appears in local space as a glowing 🔮 marker. Navigate to it.<br><br>
-          <strong>Step 3 — Clear the Dungeon.</strong> Fight through minion rooms, then defeat the Guardian at the far end.<br><br>
-          <strong>Step 4 — Claim the Core.</strong> Defeat the Guardian and the Core is yours. Collect all six to unlock The Far Dark.
-        </div>
-      </div>
-
-      <!-- RESOURCES -->
-      <div class="b-section">
-        <div class="b-head">📊 Your Four Resources</div>
-        <div class="b-body">
-          Losing any one of these ends your voyage:<br><br>
-          <strong>⚔ Hull</strong> — Ship structure. Reaches 0 = broken apart. Repair at dock or use hull items mid-combat.<br>
-          <strong>👥 Crew</strong> — Your sailors. Reaches 0 = helm goes dark, ship drifts. Lost to boarding attacks. Hire crew at dock.<br>
-          <strong>💨 Air Supply</strong> — Drains 1 per game day (each anchor rest). Runs out mid-voyage = suffocation. Always refill before leaving. Base: 10 days. Upgradeable at quartermasters.<br>
-          <strong><img src="images/ts_coin.png" class="ts-ico" alt="TS"> TS (Topazine Shards)</strong> — Currency of the Drift. Earned from loot and cargo sales. Spent on everything.
-        </div>
-      </div>
-
-      <!-- COMBAT BASICS -->
-      <div class="b-section">
-        <div class="b-head">⚔ Combat — The Basics</div>
-        <div class="b-body">
-          Random encounters fire during travel. Combat is <strong>strictly turn-based</strong> — you act first, then the enemy, then back to you.<br><br>
-          <strong>Left panel — Your Weapons:</strong> tap any ready weapon card to fire it. Green glow = ready. Dimmed with a number = reloading.<br>
-          <strong>Right panel — Enemy Systems:</strong> named weapons with threat ratings (◆◆◆◆◆). High-threat weapons are worth disabling.<br><br>
-          <strong>Hull bars</strong> track both ships. The enemy also shows a <strong>crew bar</strong> — drain their crew to 0 and their specials go offline.
-        </div>
-      </div>
-
-      <!-- COMBAT ACTIONS -->
-      <div class="b-section">
-        <div class="b-head">⚔ Combat — Your Actions</div>
-        <div class="b-body">
-          <strong>🔥 Fire Weapon</strong> — Tap a weapon card. Each has a reload time in rounds. Ballista fires every round; heavier weapons take 1–5 rounds.<br><br>
-          <strong>🌀 Evasive Maneuver</strong> — 50% chance to dodge the next enemy attack entirely. Seeking weapons cannot be dodged.<br><br>
-          <strong>🔧 Emergency Repair</strong> — Spends 2 Crew to restore up to 25 Hull. Only appears when hull is damaged and crew &gt; 2.<br><br>
-          <strong>Item Buttons</strong> — Any usable item in your hold appears here. Tap to use instantly.<br><br>
-          <strong>💨 Flee</strong> — 50% chance of escape. On failure the enemy still attacks. Emergency Beacon guarantees escape.
-        </div>
-      </div>
-
-      <!-- COMBAT UPGRADES -->
-      <div class="b-section">
-        <div class="b-head">⚔ Combat — Special Upgrades</div>
-        <div class="b-body">
-          Purchase from dock shops to unlock powerful combat options:<br><br>
-          <strong>🎯 Linked Fire</strong> (Fire Control System) — Fire two ready weapons simultaneously once per few rounds.<br>
-          <strong>🌊 Volley Fire</strong> (Volley Array) — Fire <em>all</em> ready weapons at once. Replaces Linked Fire.<br>
-          <strong>⚡ Chain Reaction Crystal</strong> — Every hit has a 30% chance to trigger a free bonus shot. Exclusive to Varuun (Thousand Sails Freeport).<br>
-          <strong>🔄 Rapid Reload</strong> — All weapon cooldowns permanently reduced by 1 round.
-        </div>
-      </div>
-
-      <!-- SHIP SIGS -->
-      <div class="b-section">
-        <div class="b-head">🚀 Ship Signature Abilities</div>
-        <div class="b-body">
-          Each ship class (except the starting Pinnace) has a <strong>built-in signature ability</strong> with three upgrade tiers:<br><br>
-          <strong>🦑 Void Runner — Tentacle Grapple:</strong> Halves enemy attack damage for 2 turns. Tier 2 adds 8 damage. Tier 3 stuns for one turn + 15 damage. Cooldown: 5–6 rounds.<br><br>
-          <strong>🔨 Ironhull — Siege Ram:</strong> 2d10–4d10 impact damage but you take 2–5 hull damage. Tier 3 permanently reduces enemy max hull by 10. High risk, high reward. Cooldown: 5–6 rounds.<br><br>
-          <strong>⚓ Sovereign — Starfire Broadside:</strong> Fires all ready weapons simultaneously. Tier 2 adds +20% damage. Tier 3 suppresses the enemy's next attack. Cooldown: 5–7 rounds.
-        </div>
-      </div>
-
-      <!-- ENEMY WEAPONS -->
-      <div class="b-section">
-        <div class="b-head">👁 Dangerous Enemy Weapons</div>
-        <div class="b-body">
-          Threat ratings run from ◆ (low) to ◆◆◆◆◆ (extreme). Prioritise disabling these:<br><br>
-          <strong>Sentinel Drone — Disintegration Beam ◆◆◆◆◆</strong> — Permanently reduces your max hull per hit. Disable immediately.<br>
-          <strong>Shell Drifter — Psionic Lancer ◆◆◆◆</strong> — Stuns your crew, skipping your next turn.<br>
-          <strong>Astral Leviathan — Void Breath Cannon ◆◆◆◆◆</strong> — Adds +2 reload rounds to all your weapons.<br>
-          <strong>Harvester — Web Cannon ◆◆◆</strong> — Disables a random player weapon for 2 rounds.<br>
-          <strong>Trull Command — Rage Cannon ◆◆◆◆◆</strong> — Damage escalates every round. Kill or disable fast.<br>
-          <strong>Void Rift Stalker — Reality Shear ◆◆◆◆◆</strong> — Ignores all your damage resistance.<br>
-          <strong>Trull Overmind — Void Singularity ◆◆◆◆◆</strong> — Pierces resistance AND permanently shreds max hull by 8 per hit.
-        </div>
-      </div>
-
-      <!-- DISABLING -->
-      <div class="b-section">
-        <div class="b-head">⬡ Disabling Enemy Weapons</div>
-        <div class="b-body">
-          Use a <strong>Phase Disruptor</strong> or <strong>Phase Disruptor Mk.II</strong> from your cargo to enter targeting mode. Enemy weapon cards glow — tap the one you want to disable. Goes dark for 2–3 turns.<br><br>
-          <em>Always disable the highest-threat weapon first. A disabled Disintegration Beam or Rage Cannon is worth more than any damage you could deal instead.</em>
-        </div>
-      </div>
-
-      <!-- PERM HULL -->
-      <div class="b-section">
-        <div class="b-head">💀 Permanent Hull Damage</div>
-        <div class="b-body">
-          Certain weapons <strong>permanently reduce your maximum hull</strong> — not restored by ordinary repairs or items.<br><br>
-          <strong>Sentinel Drone — Disintegration Beam:</strong> −4 max hull per hit.<br>
-          <strong>Trull Overmind — Void Singularity:</strong> −8 max hull per hit.<br>
-          <strong>World Bosses — Sphere Unmaking Pulse:</strong> −8 max hull per hit.<br><br>
-          <strong>Restore lost max hull via:</strong><br>
-          🔩⚡ <strong>Void Welder</strong> — Consumable. Restores 20 max hull. Rare loot from Sentinel Drones and Thyss/Serath dungeons.<br>
-          ⚙️ <strong>Structural Drydock</strong> — Available at Refuge, Fentheris System, and Vael. Fully restores max hull for 8 TS per lost point.
-        </div>
-      </div>
-
-      <!-- PORT -->
-      <div class="b-section">
-        <div class="b-head">⚓ Ports, Docks &amp; Quartermasters</div>
-        <div class="b-body">
-          Each sphere has its own dock with a <strong>Quartermaster (QM)</strong> who stocks sphere-specific items. Shops restock every <strong>30 in-game days</strong>.<br><br>
-          <strong>Services at every dock:</strong> hull repair, air resupply, crew hire.<br>
-          <strong>Sell Cargo:</strong> convert trade goods, components, and artifacts to TS. Usable items can also be sold here.<br>
-          <strong>Deliver Cargo Missions:</strong> if you have a cargo mission item for this sphere, a pulsing amber <strong>!</strong> appears on the dock — tap 📦 Deliver to complete it without leaving local space.<br><br>
-          <strong>Sphere QM highlights:</strong><br>
-          &nbsp;&nbsp;• <strong>Refuge Station</strong> — Starter upgrades: Hull Plating, Speed Engine, Crew Quarters, Air Recycler, Structural Drydock.<br>
-          &nbsp;&nbsp;• <strong>Fentheris System (Korreth)</strong> — Light Cannon, upgrade components, Structural Drydock.<br>
-          &nbsp;&nbsp;• <strong>Korreth (Ironhaven)</strong> — Super Ballista, Siege Bombard, heavy forge-grade gear.<br>
-          &nbsp;&nbsp;• <strong>Varuun (Thousand Sails Freeport)</strong> — Void Ram, Force Cannon, Chain Reaction Crystal (exclusive).<br>
-          &nbsp;&nbsp;• <strong>Vael, Thyss, Serath</strong> — Endgame weapons and upgrades as you explore further out.
-        </div>
-      </div>
-
-      <!-- SHIPS -->
-      <div class="b-section">
-        <div class="b-head">🚀 Ship Classes</div>
-        <div class="b-body">
-          Upgrade your ship at port shipyards. Larger ships have more weapon slots, higher hull, and bigger crews:<br><br>
-          <strong>Pinnace</strong> — Starting ship. 2 weapon slots, 65 hull, 6 crew. No signature ability.<br>
-          <strong>🦑 Void Runner (350 TS)</strong> — 3 slots, 80 hull, 8 crew. Tentacle Grapple.<br>
-          <strong>🔨 Ironhull (700 TS)</strong> — 4 slots, 100 hull, 12 crew. Siege Ram.<br>
-          <strong>⚓ Sovereign (1,400 TS)</strong> — 5 slots, 130 hull, 16 crew. Starfire Broadside.<br><br>
-          <em>Upgrade when you have reliable income and at least one solid weapon already purchased. Crew Quarters (Refuge QM) doubles your crew capacity on any ship — buy it early.</em>
-        </div>
-      </div>
-
-      <!-- ARMORY -->
-      <div class="b-section">
-        <div class="b-head">🛠 Armory — Equipping Weapons from Cargo</div>
-        <div class="b-body">
-          Weapons you loot from combat or buy at a shop go directly into your <strong>cargo hold</strong> — they are not automatically equipped. To use them in battle you must install them first.<br><br>
-          <strong>To equip a weapon:</strong> open the <strong>🛠 Armory</strong> from the sidebar. Any weapon in your cargo appears here with its stats and an <em>Equip</em> button. Tap it to open the slot selector and choose which slot to install it in.<br><br>
-          <em>Already-equipped weapons show ✓ Equipped and cannot be double-installed. You can also sell unwanted weapons from the Armory screen while docked.</em>
-        </div>
-      </div>
-
-      <!-- WEAPONS -->
-      <div class="b-section">
-        <div class="b-head">🔫 Weapons Guide</div>
-        <div class="b-body">
-          Each weapon occupies one slot. Mix fast low-damage with slow high-damage for best results:<br><br>
-          <strong>Ballista</strong> — Free. Fires every round. 1d6. Reliable baseline — never skip a turn.<br>
-          <strong>Light Cannon</strong> — 1 round reload. 2d6. Good second weapon for Pinnace.<br>
-          <strong>Heavy Ballista Mk.II</strong> — 0 reload. 3d6. Upgraded Ballista — fires every round, higher damage.<br>
-          <strong>Heavy Cannon</strong> — 2 round reload. 3d8. Strong mid-game weapon.<br>
-          <strong>Super Ballista</strong> — 0 reload. 3d6. Elven-forged, never jams. Korreth exclusive.<br>
-          <strong>Siege Bombard</strong> — 5 round reload. 4d10. Hull-cracker. Reward from Korreth quest.<br>
-          <strong>Void Sailing Ram</strong> — 4 round reload. 5d6. Bone-shattering impact. Varuun exclusive.<br>
-          <strong>Force Cannon</strong> — 3 round reload. 4d8. Heavy shot. Varuun market.<br>
-          <strong>Psionic Lance</strong> — Attacks enemy <em>crew</em> directly. Suppresses specials.<br>
-          <strong>Inferno Cannon</strong> — Applies burn DoT for 3 rounds.<br>
-          <strong>Null Bolt</strong> — Suppresses enemy specials for 2 turns plus hull damage.<br>
-          <strong>Void Rift weapons</strong> — Extreme damage. Endgame power at cost of hull stability.
-        </div>
-      </div>
-
-      <!-- CARGO -->
-      <div class="b-section">
-        <div class="b-head">📦 Cargo &amp; Usable Items</div>
-        <div class="b-body">
-          <strong>Hull Repair:</strong><br>
-          🔩 Emergency Repair Kit — +20 hull &nbsp;|&nbsp; 🧪 Leviathan Blood Vial — +30 hull &nbsp;|&nbsp; ⚗️ Astral Forge Elixir — +50 hull, clears burn<br><br>
-          <strong>Crew Restore:</strong><br>
-          🍺 Crew's Courage Mead — +3 crew &nbsp;|&nbsp; 💉 Void Sailer Stimpack — +6 crew &nbsp;|&nbsp; 🎖️ IEF Surge Rations — +10 crew<br><br>
-          <strong>Combat Utility:</strong><br>
-          🔮 Psionic Amplifier — Stuns enemy, skips their next action<br>
-          💥 Null Sphere Grenade — Stuns enemy + 15 direct damage<br>
-          ⬡ Phase Disruptor — Disable one enemy weapon for 2 turns<br>
-          ⬡ Phase Disruptor Mk.II — Same, 3 turns<br>
-          🔔 Emergency Beacon — 100% guaranteed flee<br>
-          🩹 Alchemist's Mend — +20 hull AND +1 crew simultaneously<br>
-          🫧 Void Salve — Clears burn, +15 hull<br><br>
-          <strong>Equippables</strong> (install from Cargo Manifest → permanent buffs):<br>
-          Hull Plating (+50 max hull), Speed Engine (+2 speed), Crew Quarters (double max crew), Air Recycler (double air supply), Resist Plating (−3 damage), Thrall Binding Ring (+3 max crew), Anti-Magic Shard (−3 incoming damage).
-        </div>
-      </div>
-
-      <!-- QUESTS -->
-      <div class="b-section">
-        <div class="b-head">📋 Quests — Local &amp; Cargo</div>
-        <div class="b-body">
-          <strong>Local Quests</strong> — Each sphere has NPC ships with side missions. Approach and hail them in local space. Quest types:<br>
-          &nbsp;&nbsp;• <strong>Delivery</strong> — Bring a specific item from your cargo to the NPC.<br>
-          &nbsp;&nbsp;• <strong>Combat</strong> — Defeat a number of specific enemy types in the lanes or local space.<br>
-          &nbsp;&nbsp;• <strong>Explore</strong> — Travel to another sphere and return to the NPC.<br><br>
-          Track all quests under <strong>📜 Quest Log</strong> in the sidebar. Active quests show progress; quests with a gold ★ are ready to turn in — return to the quest giver's sphere.<br><br>
-          <strong>Cargo Missions</strong> — Offered by roaming NPC ships during travel. Accept a mission to pick up a package at one sphere and deliver it to another. The dock at the destination shows a pulsing amber <strong>!</strong> when you arrive with the cargo — tap 📦 Deliver to complete it.
-        </div>
-      </div>
-
-      <!-- FACTION REP -->
-      <div class="b-section">
-        <div class="b-head">⚖ Faction Reputation</div>
-        <div class="b-body">
-          Reputation tracks separately with each major faction (−100 to +100). Completing quests, hailing ships, and your combat choices all affect it. View current standings via the <strong>Rep</strong> button in the Watch HUD.<br><br>
-          <strong>The factions:</strong><br>
-          &nbsp;&nbsp;• <strong>IEF (International Earth Federation)</strong> — Your employer. Strong presence in Fentheris System and Thyss. Start at +60.<br>
-          &nbsp;&nbsp;• <strong>Merchant Consortium</strong> — Commerce network spanning Korreth, Varuun, Vael, and Serath. Start at +20.<br>
-          &nbsp;&nbsp;• <strong>Trull Commander</strong> — Hostile Trull forces. Start at −20.<br>
-          &nbsp;&nbsp;• <strong>Trull Advance Empire</strong> — More organised Trull faction. Start at −10.<br>
-          &nbsp;&nbsp;• <strong>Void Rift Touched</strong> — Entities influenced by the Void Rift. Start at 0.<br><br>
-          <strong>Reputation effects on prices:</strong><br>
-          &nbsp;&nbsp;• Rep ≥ 50: <span style="color:#88ff66;">15% discount</span> at that faction's docks<br>
-          &nbsp;&nbsp;• Rep ≥ 25: <span style="color:#aabb66;">8% discount</span><br>
-          &nbsp;&nbsp;• Rep &lt; −25: <span style="color:#ffaa44;">10% surcharge</span><br>
-          &nbsp;&nbsp;• Rep &lt; −50: <span style="color:#ff6644;">20% surcharge</span> — and hostile faction ships will intercept you<br><br>
-          <em>Hailing roaming NPC ships always grants a small rep boost for free.</em>
-        </div>
-      </div>
-
-      <!-- ROAM NPCs -->
-      <div class="b-section">
-        <div class="b-head">📡 Roaming NPC Ships</div>
-        <div class="b-body">
-          During travel, <strong>friendly faction ships</strong> may appear approaching from various directions. They hail you in the travel sequence.<br><br>
-          <strong>Hailing</strong> triggers a diplomatic exchange — the faction ship stands down and may:<br>
-          &nbsp;&nbsp;• Offer a <strong>cargo mission</strong> if one is available for that faction<br>
-          &nbsp;&nbsp;• Share a piece of <strong>Fentheris world lore</strong> if no mission is available<br>
-          &nbsp;&nbsp;• Open a <strong>small trade stock</strong> of faction-specific items<br><br>
-          Each faction's roaming ships carry different lore. IEF ships discuss the Collapse and Fentheris history. Merchant ships discuss trade routes. Trull ships speak of the Overmind. Void Rift Touched discuss what presses through from the other side.<br><br>
-          <em>Hailing improves faction reputation. It costs nothing and often grants information you won't find anywhere else. If a faction is hostile (rep &lt; −50), their ships will attack instead of hailing.</em>
-        </div>
-      </div>
-
-      <!-- AIR SUPPLY -->
-      <div class="b-section">
-        <div class="b-head">💨 Air Supply &amp; Upgrades</div>
-        <div class="b-body">
-          Air supply drains <strong>once per rest</strong> (once per game day). Base capacity is <strong>10 days</strong>. Upgrades are available from quartermasters as you travel further out:<br><br>
-          &nbsp;&nbsp;• <strong>Air Recycler</strong> (Refuge / Fentheris QM) — Doubles air efficiency (×2 multiplier)<br>
-          &nbsp;&nbsp;• <strong>Air Tier 1</strong> (Refuge / Fentheris QM) — +6 days capacity (up to 16)<br>
-          &nbsp;&nbsp;• <strong>Air Tier 2</strong> (Korreth / Vael / Varuun QM) — +6 more days (up to 22)<br>
-          &nbsp;&nbsp;• <strong>Air Tier 3</strong> (Thyss / Serath QM) — +12 more days (up to 34)<br><br>
-          <em>Never leave port with less than 15 air. Long voyages kill captains who forget to refill.</em>
-        </div>
-      </div>
-
-      <!-- SAVING -->
-      <div class="b-section">
-        <div class="b-head">💾 Saving &amp; Loading</div>
-        <div class="b-body">
-          The game <strong>auto-saves</strong> every time you arrive at a new sphere or leave port. Manually save anytime via the 💾 Save button in the header. Three manual save slots available.<br><br>
-          Load a saved voyage from <em>Main Menu → Load Game</em>. Auto-save is always overwritten by the latest session.
-        </div>
-      </div>
-
-      <!-- TIPS -->
-      <div class="b-section">
-        <div class="b-head">💡 Captain's Tips</div>
-        <div class="b-body">
-          • <strong>Buy Crew Quarters at Refuge first.</strong> It doubles your crew capacity on every ship — the single most impactful early purchase.<br>
-          • <strong>Never leave port with less than 15 air.</strong> Long voyages kill captains who forget to refill.<br>
-          • <strong>Check the Armory.</strong> Looted weapons sit in cargo doing nothing until you equip them via the 🛠 Armory panel.<br>
-          • <strong>Sell cargo before buying supplies.</strong> You may already have enough TS.<br>
-          • <strong>Crew matters as much as hull.</strong> 0 crew = defeat even at full hull.<br>
-          • <strong>Disable the scariest weapon first.</strong> Disintegration Beam and Rage Cannon get exponentially worse the longer they fire.<br>
-          • <strong>Evasive Maneuver before a known big hit</strong> — wasted after the attack lands.<br>
-          • <strong>Hail every roaming NPC ship.</strong> Free rep, free lore, sometimes a mission.<br>
-          • <strong>The ! markers in local space tell you where to go.</strong> Amber ! on the dock = cargo delivery ready. Yellow ! on an NPC = quest available or ready to turn in.<br>
-          • <strong>Rest when you can.</strong> Pushing through fatigue deals less combat damage and risks hull damage from navigation errors.<br>
-          • <strong>Stock up before entering a dungeon.</strong> Guardians are significantly harder than lane enemies — bring hull repair items and crew restores.<br>
-          • <strong>Drain enemy crew with the Psionic Lance</strong> — 0 crew disables all enemy specials and reduces incoming damage.<br>
-          • <strong>Sovereign Broadside on a full reload cycle</strong> deals more burst damage than any other single action — save it for boss fights.
-        </div>
-      </div>
-
 
 <!-- ═══ SAVE MANAGER ═══ -->
 <div id="save-overlay" class="briefing-overlay hidden">
