@@ -2497,6 +2497,16 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
 .pdesc         { color: #d0c8e4 !important; }
 .etext         { color: #d8d0ec !important; }
 .loot-sub      { color: #d0c8f0 !important; }
+/* ── TS Coin icon ── */
+.ts-ico {
+  width: 15px;
+  height: 15px;
+  display: inline-block;
+  vertical-align: middle;
+  margin: -2px 1px 0 1px;
+  image-rendering: pixelated;
+  object-fit: contain;
+}
 
 </style>
 </head>
@@ -2565,7 +2575,7 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
     <div class="bw"><div class="bf bc" id="sd-b-crew" style="width:100%"></div></div>
     <div class="srow" style="margin-top:4px"><span class="slabel">Air</span><span class="sval"><span id="sd-air">30</span> days</span></div>
     <div class="bw"><div class="bf ba" id="sd-b-air" style="width:100%"></div></div>
-    <div class="srow" style="margin-top:4px"><span class="slabel">TS</span><span class="sval">🔷 <span id="sd-gold">120</span></span></div>
+    <div class="srow" style="margin-top:4px"><span class="slabel">TS</span><span class="sval"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> <span id="sd-gold">120</span></span></div>
     <div class="srow"><span class="slabel">Speed</span><span class="sval" id="sd-speed">4</span></div>
     <div class="srow"><span class="slabel">Resist</span><span class="sval" id="sd-resist">—</span></div>
   </div>
@@ -2576,7 +2586,7 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
   <div class="pbox">
     <div class="ptitle">📦 Cargo</div>
     <div class="srow"><span class="slabel">Items</span><span class="sval" id="sd-items">0</span></div>
-    <div class="srow"><span class="slabel">Est. Value</span><span class="sval">🔷 <span id="sd-invval">0</span></span></div>
+    <div class="srow"><span class="slabel">Est. Value</span><span class="sval"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> <span id="sd-invval">0</span></span></div>
   </div>
   <div class="pbox">
     <div class="ptitle">⊞ Overlays</div>
@@ -2602,7 +2612,7 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
     <div class="bw"><div class="bf bc" id="b-crew" style="width:100%"></div></div>
     <div class="srow" style="margin-top:4px"><span class="slabel">Air</span><span class="sval"><span id="s-air">30</span> days</span></div>
     <div class="bw"><div class="bf ba" id="b-air" style="width:100%"></div></div>
-    <div class="srow" style="margin-top:4px"><span class="slabel">TS</span><span class="sval">🔷 <span id="s-gold">100</span></span></div>
+    <div class="srow" style="margin-top:4px"><span class="slabel">TS</span><span class="sval"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> <span id="s-gold">100</span></span></div>
     <div class="srow"><span class="slabel">Speed</span><span class="sval" id="s-speed">4</span></div>
     <div class="srow"><span class="slabel">Resist</span><span class="sval" id="s-resist">—</span></div>
   </div>
@@ -2618,7 +2628,7 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
   <div class="pbox">
     <div class="ptitle">📦 Cargo Hold</div>
     <div class="srow"><span class="slabel">Items</span><span class="sval" id="s-items">0</span></div>
-    <div class="srow"><span class="slabel">Est. Value</span><span class="sval">🔷 <span id="s-invval">0</span></span></div>
+    <div class="srow"><span class="slabel">Est. Value</span><span class="sval"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> <span id="s-invval">0</span></span></div>
   </div>
   <div class="pbox ovl-btns">
     <div class="ptitle">⊞ Overlays</div>
@@ -2769,7 +2779,7 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
                 <div class="mstat"><span class="mstat-k">⚓ Hull</span><span class="mstat-v">Structural integrity. Reaches zero → ship destroyed.</span></div>
                 <div class="mstat"><span class="mstat-k">👥 Crew</span><span class="mstat-v">Your fighting force. Exhausted crew deals reduced damage. Reaches zero → cannot fight effectively.</span></div>
                 <div class="mstat"><span class="mstat-k">💨 Air</span><span class="mstat-v">Days of breathable air remaining. Drains by 1 every day of travel. Resupply at any dock.</span></div>
-                <div class="mstat"><span class="mstat-k">🔷 TS</span><span class="mstat-v">Toril Shards — the void's currency. Earned from combat, quests, and cargo. Spent at docks.</span></div>
+                <div class="mstat"><span class="mstat-k"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> TS</span><span class="mstat-v">Toril Shards — the void's currency. Earned from combat, quests, and cargo. Spent at docks.</span></div>
                 <div class="mstat"><span class="mstat-k">⚡ Speed</span><span class="mstat-v">Reduces travel days on long lanes. Upgrade at any port with a Speed Engine.</span></div>
               </div>
             </div>
@@ -3097,7 +3107,7 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
     <div class="loot-title">✦ Victory ✦</div>
     <div class="loot-sub" id="loot-subline">Shell Drifter Destroyed</div>
     <canvas id="loot-canvas" width="180" height="110" style="border:1px solid rgba(68,17,136,0.267);border-radius:5px;background:rgba(8,0,20,0.7);"></canvas>
-    <div class="loot-gold">🔷 <span id="loot-gold">0</span> TS recovered from the wreckage</div>
+    <div class="loot-gold"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> <span id="loot-gold">0</span> TS recovered from the wreckage</div>
     <div class="loot-manifest">— Cargo Hold Breached —</div>
     <div class="loot-grid" id="loot-grid"></div>
     <div class="loot-empty" id="loot-empty" style="display:none">The hold was empty.</div>
@@ -3128,11 +3138,11 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
         <div class="inv-detail-ico" id="inv-d-ico">📦</div>
         <div class="inv-detail-name" id="inv-d-name">Item Name</div>
         <div class="inv-detail-desc" id="inv-d-desc">Description.</div>
-        <div class="inv-detail-val">Sell Value: 🔷 <span id="inv-d-val">0</span></div>
+        <div class="inv-detail-val">Sell Value: <img src="images/ts_coin.png" class="ts-ico" alt="TS"> <span id="inv-d-val">0</span></div>
         <div class="inv-detail-actions" id="inv-d-actions"></div>
       </div>
     </div>
-    <div class="inv-footer" id="inv-footer">0 items — Est. sell value: 🔷 0</div>
+    <div class="inv-footer" id="inv-footer">0 items — Est. sell value: <img src="images/ts_coin.png" class="ts-ico" alt="TS"> 0</div>
     <button class="btn dmg sm" id="inv-sell-all-btn" style="display:none" onclick="sellAllTrade()">💰 Sell All Trade Goods</button>
   </div>
 
@@ -3256,7 +3266,7 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
     </div>
     <div class="pdesc" id="pt-desc">A bustling spaceport.</div>
     <div class="trade-gold-bar">
-      <span class="tgb-icon">🔷</span>
+      <span class="tgb-icon"><img src="images/ts_coin.png" class="ts-ico" alt="TS"></span>
       <span class="tgb-label">Treasury</span>
       <span class="tgb-amount" id="pt-gold">100</span>
       <span class="tgb-label">TS</span>
@@ -3285,7 +3295,7 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
   <div class="ovlay" id="ov-dockmaster" style="z-index:50;">
     <div id="dm-card" style="background:rgba(6,0,20,0.98);border:1px solid rgba(68,17,136,0.467);border-radius:7px;padding:22px 24px;max-width:500px;width:95%;box-shadow:0 0 50px rgba(34,0,102,0.2);display:flex;flex-direction:column;gap:14px;">
       <div class="trade-gold-bar">
-        <span class="tgb-icon">🔷</span>
+        <span class="tgb-icon"><img src="images/ts_coin.png" class="ts-ico" alt="TS"></span>
         <span class="tgb-label">Treasury</span>
         <span class="tgb-amount" id="dm-gold-bar">100</span>
         <span class="tgb-label">TS</span>
@@ -3451,7 +3461,7 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
         </div>
       </div>
       <div class="trade-gold-bar">
-        <span class="tgb-icon">🔷</span>
+        <span class="tgb-icon"><img src="images/ts_coin.png" class="ts-ico" alt="TS"></span>
         <span class="tgb-label">Treasury</span>
         <span class="tgb-amount" id="lq-qm-gold">0</span>
         <span class="tgb-label">TS</span>
@@ -3499,7 +3509,7 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
       <div id="ls-dock-title">⚓ FENTHERIS ORBITAL STATION</div>
 
       <div class="trade-gold-bar">
-        <span class="tgb-icon">🔷</span>
+        <span class="tgb-icon"><img src="images/ts_coin.png" class="ts-ico" alt="TS"></span>
         <span class="tgb-label">Treasury</span>
         <span class="tgb-amount" id="ls-dock-gold">—</span>
         <span class="tgb-label">TS</span>
@@ -3522,15 +3532,15 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
       <div class="ls-dock-section" style="margin-top:6px;">🔧 SERVICES</div>
       <div class="ls-dock-row">
         <span class="ls-dock-label">Hull Repair (full)</span>
-        <button class="btn ls-dock-btn" id="ls-svc-hull" onclick="lsDockService('hull')">🔷 —g</button>
+        <button class="btn ls-dock-btn" id="ls-svc-hull" onclick="lsDockService('hull')"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> —g</button>
       </div>
       <div class="ls-dock-row">
         <span class="ls-dock-label">Air Resupply (full)</span>
-        <button class="btn ls-dock-btn" id="ls-svc-air" onclick="lsDockService('air')">🔷 —g</button>
+        <button class="btn ls-dock-btn" id="ls-svc-air" onclick="lsDockService('air')"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> —g</button>
       </div>
       <div class="ls-dock-row">
         <span class="ls-dock-label">Crew Hire (full)</span>
-        <button class="btn ls-dock-btn" id="ls-svc-crew" onclick="lsDockService('crew')">🔷 —g</button>
+        <button class="btn ls-dock-btn" id="ls-svc-crew" onclick="lsDockService('crew')"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> —g</button>
       </div>
 
       <div class="ls-dock-section" style="margin-top:6px;">💰 SELL ITEMS</div>
@@ -3615,7 +3625,7 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
       <div id="fd-hud-stats">
         Hull: <span id="fd-hud-hull">—</span> &nbsp;
         Crew: <span id="fd-hud-crew">—</span> &nbsp;
-        🔷 <span id="fd-hud-gold">—</span>
+        <img src="images/ts_coin.png" class="ts-ico" alt="TS"> <span id="fd-hud-gold">—</span>
       </div>
     </div>
 
@@ -3651,7 +3661,7 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
     </div>
     <div style="font-size:0.625em;color:#c8b888;margin-bottom:10px;">Weapons in your cargo hold — install into any slot at no cost.</div>
     <div class="trade-gold-bar" style="margin-bottom:10px;">
-      <span class="tgb-icon">🔷</span>
+      <span class="tgb-icon"><img src="images/ts_coin.png" class="ts-ico" alt="TS"></span>
       <span class="tgb-label">Treasury</span>
       <span class="tgb-amount" id="armory-gold">0</span>
       <span class="tgb-label">TS</span>
@@ -4355,7 +4365,7 @@ const ITEMS = {
   nullgren:  { n:'Null Sphere Grenade',     ico:'💥', type:'usable',    val:110, desc:'Use in combat: Free action — stuns enemy next action AND deals 15 damage.', use:'stundmg' },
   voidjam:   { n:'Void Reality Jammer',     ico:'🔮', type:'usable',    val:160, desc:'Use in combat: Disable an enemy weapon for 4 rounds. Works on bosses.', use:'disable3' },
   beacon:    { n:'Emergency Beacon',        ico:'🔔', type:'usable',    val:70,  desc:'Use in combat: Guaranteed escape — IEF distress signal. No flee roll needed.', use:'beacon' },
-  runeshard: { n:'Rune-Carved Plate',      ico:'🔷', type:'equip',     val:60,  desc:'Install: Permanently adds +20 max hull points.', use:'hull20' },
+  runeshard: { n:'Rune-Carved Plate',      ico:'<img src="images/ts_coin.png" class="ts-ico" alt="TS">', type:'equip',     val:60,  desc:'Install: Permanently adds +20 max hull points.', use:'hull20' },
   antimag:   { n:'Anti-Magic Sphere Shard',ico:'🌀', type:'equip',     val:80,  desc:'Install: Reduces all incoming damage by 3.', use:'resist3' },
   thrallring:{ n:'Thrall Binding Ring',    ico:'💍', type:'equip',     val:85,  desc:'Install: Repurposed for crew morale — adds +3 max crew.', use:'crew3p' },
   voidchart: { n:'Void Navigation Chart',  ico:'📜', type:'equip',     val:100, desc:'Install: Integrates into the helm — adds +1 speed.', use:'speed1' },
@@ -4372,7 +4382,7 @@ const ITEMS = {
   trulltrophy: { n:'Trull War Trophy',          ico:'💀', type:'component', val:45,  desc:"A mounted trophy from the Trull's previous victories. Unpleasant but tradeable at any sufficiently amoral port." },
   voidxtal:  { n:'Void Crystal',             ico:'🫧', type:'component', val:60,  desc:'A crystallised fragment of Void Rift substance. Unstable but extraordinarily valuable to certain researchers.' },
   tkfang:    { n:'Swarm Hull Fang-Bolt',     ico:'🦷', type:'component', val:35,  desc:"A crystalline fang-bolt from a swarm hull launcher. Still holds residual chitin-toxin." },
-  phaseplat: { n:'Phase Plating Fragment',   ico:'🔷', type:'equip',     val:110, desc:'Install: Partially phase-shifts your hull — reduces all incoming damage by 4.', use:'resist4' },
+  phaseplat: { n:'Phase Plating Fragment',   ico:'<img src="images/ts_coin.png" class="ts-ico" alt="TS">', type:'equip',     val:110, desc:'Install: Partially phase-shifts your hull — reduces all incoming damage by 4.', use:'resist4' },
   clutchsig: { n:'Clutch-Mother Sigil',      ico:'🪲', type:'equip',     val:100, desc:'Install: The swarm hull clutch bond — adds +4 max crew as bonded soldiers.', use:'crew4p' },
   murecho:   { n:'Murmur Echo',              ico:'🌀', type:'artifact',  val:200, desc:"A resonance crystal that still vibrates with The Murmur's frequency. Scholars will ruin themselves acquiring this." },
   trullbanner: { n:'Trull Warlord Banner',      ico:'🚩', type:'artifact',  val:160, desc:"A Trull commander's battle-standard. Proof of the most dangerous kill in the outer expanse." },
@@ -4395,7 +4405,7 @@ const ITEMS = {
   corsscrap: { n:'Corsair Gear Fragment',    ico:'⚓', type:'component', val:18,  desc:'A piece of broken corsair equipment. Recognisable enough to sell to a fence at port.' },
   // ── Dwarven Vault dungeon salvage — vault rubble and broken dwarven gear ─
   vaultdust: { n:'Vault Stone Dust',         ico:'🪨', type:'trade',     val:7,   desc:'Pulverised stone from a shattered golem or vault wall. Dwarven artificers pay a small amount for it.' },
-  ruinstone: { n:'Ruin-Carved Stone Shard',  ico:'🔷', type:'trade',     val:9,   desc:'A fragment of carved vault stone. The rune markings are too damaged to be useful, but the stone itself has some resale value.' },
+  ruinstone: { n:'Ruin-Carved Stone Shard',  ico:'<img src="images/ts_coin.png" class="ts-ico" alt="TS">', type:'trade',     val:9,   desc:'A fragment of carved vault stone. The rune markings are too damaged to be useful, but the stone itself has some resale value.' },
   forgescrap:{ n:'Dwarven Forge Scrap',      ico:'⚒️', type:'component', val:16,  desc:'Broken fragments of dwarven-forged equipment. The alloy is recognisably high quality even in pieces.' },
   gobteeth:  { n:'Goblin Tooth Necklace',    ico:'🦷', type:'trade',     val:12,  desc:"A string of goblin teeth. Goblins consider it an insult. Their chieftains consider it a declaration of war." },
   gobsack:   { n:'Goblin Plunder Sack',      ico:'💼', type:'trade',     val:20,  desc:"A jumbled sack of stolen trinkets and tools. Mostly junk but there's always something worth keeping." },
@@ -9247,7 +9257,7 @@ function buildCargoSell(){
     const lbl = {all:'Everything',cargo:'All Cargo',usable:'All Usables',weapon:'All Weapons'}[_sellFilter];
     allRow.innerHTML = `<div class="siname" style="color:#44ee88">💰 Sell ${lbl}</div>
       <div class="sidesc">${filtered.length} items</div>
-      <div class="sicost" style="color:#44ee88">🔷 ${sellAllVal} TS</div>`;
+      <div class="sicost" style="color:#44ee88"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${sellAllVal} TS</div>`;
     allRow.onclick = () => {
       const uids = new Set(filtered.map(i => i.uid));
       G.ship.inv = G.ship.inv.filter(i => !uids.has(i.uid));
@@ -9272,7 +9282,7 @@ function buildCargoSell(){
                 : isUsable ? ' <span style="font-size:9px;color:#c090ee;">[usable — 60%]</span>' : '';
     d.innerHTML = `<div style="font-size:18px">${item.ico||'📦'}</div>
       <div class="siname"${isWpn?' style="color:#ffcc88"':isUsable?' style="color:#cc99ee"':''}>${item.n}${badge}</div>
-      <div class="sicost">🔷 ${sv}</div>`;
+      <div class="sicost"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${sv}</div>`;
     d.onclick = () => {
       G.ship.gold += sv;
       G.ship.inv = G.ship.inv.filter(i => i.uid !== item.uid);
@@ -9308,7 +9318,7 @@ function buildShop(){
     d.className='sitem'+(ok?'':' dis')+(item.exclusive?' exclusive-item':'');
     if(item.exclusive) d.style.borderColor='#aa6622';
     const discStr = adjCost<item.cost ? ` <span style="color:#44ff88;font-size:9px;">(${Math.round((1-adjCost/item.cost)*100)}% off)</span>` : adjCost>item.cost ? ` <span style="color:#ff8844;font-size:9px;">(+${Math.round((adjCost/item.cost-1)*100)}%)</span>` : '';
-    d.innerHTML=`<div class="siname">${item.ico} ${item.name}</div><div class="sidesc">${item.desc}</div><div class="sicost">🔷 ${adjCost}${discStr}</div>`;
+    d.innerHTML=`<div class="siname">${item.ico} ${item.name}</div><div class="sidesc">${item.desc}</div><div class="sicost"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${adjCost}${discStr}</div>`;
     if(ok) d.onclick=()=>buy(adjItem);
     grid.appendChild(d);
   });
@@ -9323,7 +9333,7 @@ function buildShop(){
     if(!st.availSpheres) return; // no sphere listed = not sold (shouldn't happen)
     const ok=G.ship.gold>=st.cost;
     const d=document.createElement('div'); d.className='sitem'+(ok?'':' dis');
-    d.innerHTML=`<div class="siname">🚀 ${st.n}</div><div class="sidesc">${st.desc}</div><div class="sicost">🔷 ${st.cost}</div>`;
+    d.innerHTML=`<div class="siname">🚀 ${st.n}</div><div class="sidesc">${st.desc}</div><div class="sicost"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${st.cost}</div>`;
     if(ok) d.onclick=()=>upgradeShip(k);
     grid.appendChild(d);
   });
@@ -9454,7 +9464,7 @@ function wpnPickerOpen(item, from) {
 
   // Update confirm button cost label
   const btn = document.getElementById('wpnpicker-confirm-btn');
-  btn.textContent = `⚔ Install — 🔷 ${item.cost}`;
+  btn.textContent = `⚔ Install — <img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${item.cost}`;
   btn.style.display = 'none';
 
   document.getElementById('wpnpicker-compare').classList.remove('on');
@@ -9533,7 +9543,7 @@ function wpnPickerConfirm() {
   }
 
   snd('ship_upgrade', 0.9);
-  const costStr = isFree ? '(free from cargo)' : `🔷 ${item.cost}`;
+  const costStr = isFree ? '(free from cargo)' : `<img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${item.cost}`;
   addLog(`⚔ ${newW.n} installed in slot ${slotIdx + 1} ${costStr}.`, 'gd');
 
   updateUI();
@@ -9578,9 +9588,9 @@ function _wpnPickerSelectSlot(idx) {
   const btn = document.getElementById('wpnpicker-confirm-btn');
   btn.style.display = 'block';
   if (oldKey) {
-    btn.textContent = `⚔ Replace ${WPN[oldKey].n} — 🔷 ${_wpnPickerItem.cost}`;
+    btn.textContent = `⚔ Replace ${WPN[oldKey].n} — <img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${_wpnPickerItem.cost}`;
   } else {
-    btn.textContent = `⚔ Install in Slot ${idx + 1} — 🔷 ${_wpnPickerItem.cost}`;
+    btn.textContent = `⚔ Install in Slot ${idx + 1} — <img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${_wpnPickerItem.cost}`;
   }
 
   // Redraw canvas with selection
@@ -11728,7 +11738,7 @@ function buildCbtInvOverlay() {
         <span class="cbt-c-ico">${item.ico}</span>
         <div class="cbt-c-info">
           <div class="cbt-c-name">${item.n}</div>
-          <div class="cbt-c-val">🔷 ${item.val || '—'}</div>
+          <div class="cbt-c-val"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${item.val || '—'}</div>
           <div class="cbt-c-type">${item.type || 'trade'}</div>
         </div>`;
       _cbtAddDrag(el, 'cargo');
@@ -12317,7 +12327,7 @@ function buildWaypointShop(){
   items.forEach(item=>{
     const ok=s.gold>=item.cost;
     const d=document.createElement('div'); d.className='sitem'+(ok?'':' dis');
-    d.innerHTML=`<div class="siname">${item.ico} ${item.name}</div><div class="sidesc">${item.desc}</div><div class="sicost">🔷 ${item.cost}</div>`;
+    d.innerHTML=`<div class="siname">${item.ico} ${item.name}</div><div class="sidesc">${item.desc}</div><div class="sicost"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${item.cost}</div>`;
     if(ok) d.onclick=()=>{
       if(s.gold<item.cost)return;
       s.gold-=item.cost;
@@ -12426,7 +12436,7 @@ function buildWaystationGrid(ws){
       `<div class="sh-ico">${item.ico}</div>` +
       `<div class="sh-name">${item.name}</div>` +
       `<div class="sh-desc">${item.desc}</div>` +
-      `<div class="sh-cost ${affordable?'':'cant'}">🔷 ${item.cost}</div>`;
+      `<div class="sh-cost ${affordable?'':'cant'}"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${item.cost}</div>`;
     if(affordable && !item._disabled) card.onclick = () => waystationPurchase(item, ws);
     grid.appendChild(card);
   });
@@ -16318,7 +16328,7 @@ function showLootOverlay(key, gold, items){
     empty.style.display='none';
     items.forEach(item=>{
       const d=document.createElement('div'); d.className='loot-card';
-      d.innerHTML=`<div class="loot-ico">${item.ico}</div><div class="loot-iname">${item.n}</div><div class="loot-itype ${item.type}">${item.type}</div><div class="loot-ival">🔷 ${item.val}</div>`;
+      d.innerHTML=`<div class="loot-ico">${item.ico}</div><div class="loot-iname">${item.n}</div><div class="loot-itype ${item.type}">${item.type}</div><div class="loot-ival"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${item.val}</div>`;
       grid.appendChild(d);
     });
   }
@@ -16459,7 +16469,7 @@ function buildInvGrid(){
     });
   }
   const total=G.ship.inv.reduce((a,i)=>a+i.val,0);
-  document.getElementById('inv-footer').textContent=`${G.ship.inv.length} items — Est. sell value: 🔷 ${total}`;
+  document.getElementById('inv-footer').textContent=`${G.ship.inv.length} items — Est. sell value: <img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${total}`;
   const hasTradeOrComp=G.ship.inv.some(i=>i.type==='trade'||i.type==='component');
   document.getElementById('inv-sell-all-btn').style.display=(hasTradeOrComp&&G.phase==='port')?'inline-block':'none';
 }
@@ -16481,7 +16491,7 @@ function selectInvItem(uid){
     acts.appendChild(ub);
   }
   if(item.type==='trade'||item.type==='component'||item.type==='artifact'||item.type==='usable'||item.type==='equip'){
-    const sb=document.createElement('button'); sb.className='btn sm'; sb.textContent=`💰 Sell 🔷${item.val}`;
+    const sb=document.createElement('button'); sb.className='btn sm'; sb.textContent=`💰 Sell <img src="images/ts_coin.png" class="ts-ico" alt="TS">${item.val}`;
     sb.disabled=G.phase!=='port';
     if(G.phase!=='port')sb.title='Must be docked at a port to sell';
     sb.onclick=()=>{ if(G.phase!=='port'){showMsg('Cannot Sell','Dock at a port to sell cargo.');return;} G.ship.gold+=item.val; G.ship.inv=G.ship.inv.filter(i=>i.uid!==uid); addLog(`Sold ${item.n} for ${item.val} TS.`,'gd'); updateUI(); buildInvGrid(); if(G.phase==='port'){document.getElementById('pt-gold').textContent=G.ship.gold;buildShop();} };
@@ -16496,7 +16506,7 @@ function selectInvItem(uid){
     acts.appendChild(eb);
     // Sell at half price — allowed at port or in local space dock
     const canSellWpn = G.phase==='port' || document.getElementById('ls-dock-panel')?.classList.contains('on');
-    const swb=document.createElement('button'); swb.className='btn sm'; swb.textContent=`💰 Sell 🔷${item.val}`;
+    const swb=document.createElement('button'); swb.className='btn sm'; swb.textContent=`💰 Sell <img src="images/ts_coin.png" class="ts-ico" alt="TS">${item.val}`;
     swb.disabled=!canSellWpn;
     if(!canSellWpn)swb.title='Dock at a port or station to sell';
     swb.onclick=()=>{
@@ -16607,10 +16617,10 @@ function useItem(uid, inCombat){
       addLog(`🔩⚡ Void Welder: hull structure restored +${restored} max hull. (Now ${s.maxHull}/${trueCap})`, 'gd');
       break; }
     // ── Equippables ──
-    case 'hull20':  s.maxHull+=20; s.hull+=20; addLog('🔷 Rune-Carved Plate installed: +20 max hull.','gd'); break;
-    case 'hull35':  s.maxHull+=35; s.hull+=35; addLog('🔷 Void-Forged Hull Plate installed: +35 max hull.','gd'); break;
+    case 'hull20':  s.maxHull+=20; s.hull+=20; addLog('<img src="images/ts_coin.png" class="ts-ico" alt="TS"> Rune-Carved Plate installed: +20 max hull.','gd'); break;
+    case 'hull35':  s.maxHull+=35; s.hull+=35; addLog('<img src="images/ts_coin.png" class="ts-ico" alt="TS"> Void-Forged Hull Plate installed: +35 max hull.','gd'); break;
     case 'resist3': s.resist=(s.resist||0)+3; addLog('🌀 Anti-Magic Shard installed: −3 incoming damage.','gd'); break;
-    case 'resist4': s.resist=(s.resist||0)+4; addLog('🔷 Phase Plating installed: −4 incoming damage.','gd'); break;
+    case 'resist4': s.resist=(s.resist||0)+4; addLog('<img src="images/ts_coin.png" class="ts-ico" alt="TS"> Phase Plating installed: −4 incoming damage.','gd'); break;
     case 'crew3p':  s.maxCrew+=3; s.crew+=3; addLog('💍 Thrall Ring repurposed: +3 max crew.','gd'); break;
     case 'crew4p':  s.maxCrew+=4; s.crew+=4; addLog('🪲 Clutch-Mother Sigil installed: +4 max crew.','gd'); break;
     case 'speed1':  s.speed+=1; addLog('📜 Void Chart integrated: +1 speed.','gd'); break;
@@ -16677,7 +16687,7 @@ function buildShipOverlay(){
     ['Speed Rating',s.speed],
     ['Damage Resist',s.resist>0?`-${s.resist} incoming`:'—'],
     ['Weapon Slots',`${s.wpns.length} / ${st.slots} filled`],
-    ['TS',`🔷 ${s.gold}`],
+    ['TS',`<img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${s.gold}`],
     ['Cargo Hold',`${s.inv.length} items`],
   ];
   stats.forEach(([k,v])=>{ const r=document.createElement('div'); r.className='shp-stat-line'; r.innerHTML=`<span class="k">${k}</span><span class="v">${v}</span>`; statsDiv.appendChild(r); });
@@ -16697,7 +16707,7 @@ function buildShipOverlay(){
     if(s.sigTier < 3){
       const next=sigDef.tiers[s.sigTier];
       const nx=document.createElement('div'); nx.className='upg-item'; nx.style.cssText='color:#c8b888;font-size:10px;';
-      nx.textContent=`Next: ${next.n} — ${next.upgradeDesc} (🔷${next.cost})`;
+      nx.textContent=`Next: ${next.n} — ${next.upgradeDesc} (<img src="images/ts_coin.png" class="ts-ico" alt="TS">${next.cost})`;
       statsDiv.appendChild(nx);
     } else {
       const mx=document.createElement('div'); mx.className='upg-item'; mx.style.color='#ffaa00';
@@ -16716,7 +16726,7 @@ function buildShipOverlay(){
       if(k===s.type)return;
       const st2=SHIP_TYPES[k]; const ok=s.gold>=st2.cost;
       const d=document.createElement('div'); d.className='ship-upgrade-card'+(ok?'':' dis');
-      d.innerHTML=`<div class="suc-name">🚀 ${st2.n}</div><div class="suc-desc">${st2.desc}</div><div class="suc-cost">🔷 ${st2.cost}</div>`;
+      d.innerHTML=`<div class="suc-name">🚀 ${st2.n}</div><div class="suc-desc">${st2.desc}</div><div class="suc-cost"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${st2.cost}</div>`;
       if(ok)d.onclick=()=>{ upgradeShip(k); buildShipOverlay(); };
       ugrid.appendChild(d);
     });
@@ -17576,14 +17586,14 @@ function _buildRoamShopHTML(fac, resEl){
     html += `<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid rgba(34,17,51,0.133);">
       <span style="font-size:13px;opacity:${soldOut?0.4:1}">${itm.ico}</span>
       <span style="flex:1;font-size:11px;color:${rowCol};">${nameStr}${stockLabel}</span>
-      <span style="font-size:10px;color:#d4be94;">🔷 ${price}</span>
+      <span style="font-size:10px;color:#d4be94;"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${price}</span>
       ${qtyHtml}
       <button onclick="roamBuyItem('${s.id}',${price},${i})" ${btnDis}
         style="font-size:9px;padding:3px 8px;background:${btnBg};border:1px solid ${btnBd};color:${btnCol};font-family:'Cinzel',serif;border-radius:3px;cursor:${btnCur};">${btnTxt}</button>
     </div>`;
   });
   html += `<div class="trade-gold-bar" style="margin-top:8px;">
-    <span class="tgb-icon">🔷</span>
+    <span class="tgb-icon"><img src="images/ts_coin.png" class="ts-ico" alt="TS"></span>
     <span class="tgb-label">Treasury</span>
     <span class="tgb-amount" id="roam-gold-display">${G.ship.gold}</span>
     <span class="tgb-label">TS</span>
@@ -17644,7 +17654,7 @@ function roamHail(){
         <div style="font-size:12px;color:#ecd8f8;margin-bottom:4px;"><b>${availQ.title}</b></div>
         <div style="font-size:11px;color:#ddd4e8;margin-bottom:8px;line-height:1.5;">${availQ.desc}</div>
         <div style="font-size:10px;color:#c8bcd8;">Pickup: ${pickupSphere?.n||availQ.pickup} → Deliver to: ${turninSphere?.n||availQ.turnin}</div>
-        <div style="font-size:10px;color:#d4be94;margin-top:2px;">Reward: 🔷 ${availQ.reward} TS</div>
+        <div style="font-size:10px;color:#d4be94;margin-top:2px;">Reward: <img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${availQ.reward} TS</div>
         <button onclick="roamAcceptQuest('${availQ.id}')"
           style="margin-top:10px;width:100%;padding:8px;background:rgba(5,20,50,0.9);border:1px solid rgba(34,85,170,0.333);
           color:#88aaff;font-family:'Cinzel',serif;font-size:11px;cursor:pointer;border-radius:4px;">
@@ -17665,7 +17675,7 @@ function roamAcceptQuest(questId){
     `<div style="color:#ffcc44;">📋 Mission accepted: <b>${q.title}</b><br>
     <span style="font-size:11px;color:#aa8833;line-height:1.6;">
       First, dock at <b>${pickupSphere?.n||q.pickup}</b> to collect the cargo.<br>
-      Then deliver it to <b>${turninSphere?.n||q.turnin}</b> for 🔷 ${q.reward} TS.
+      Then deliver it to <b>${turninSphere?.n||q.turnin}</b> for <img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${q.reward} TS.
     </span></div>`;
   addLog(`📋 MISSION: ${q.title} — collect cargo at ${pickupSphere?.n||q.pickup}, then deliver to ${turninSphere?.n||q.turnin}.`,'imp');
   updateUI();
@@ -17737,7 +17747,7 @@ function checkQuestPickup(sphereId){
     // Show a port notification with collect button
     setTimeout(()=>{
       showMsg(`📦 Cargo Ready: ${q.title}`,
-        `${FACTIONS[q.faction]?.n||'Your contact'} has left a cargo package at this dock for you.\n\n"${q.cargo.n}"\n\n${q.cargo.desc}\n\nCollect it now and deliver it to ${G.spheres.find(s=>s.id===q.turnin)?.n||q.turnin} for 🔷 ${q.reward} TS.`,
+        `${FACTIONS[q.faction]?.n||'Your contact'} has left a cargo package at this dock for you.\n\n"${q.cargo.n}"\n\n${q.cargo.desc}\n\nCollect it now and deliver it to ${G.spheres.find(s=>s.id===q.turnin)?.n||q.turnin} for <img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${q.reward} TS.`,
         '📦 Take Cargo',
         ()=>{
           q.state='active';
@@ -18611,7 +18621,7 @@ function _slotHTML(save, slotId, isAuto) {
       <div class="save-slot">
         <div class="save-info">
           <div class="save-name">${isAuto ? '🔄' : '💾'} ${name}</div>
-          <div class="save-detail">${save.shipName} · ${save.loc} · ${save.frags}/6 Fragments · 🔷 ${save.gold} · Hull ${pct}%</div>
+          <div class="save-detail">${save.shipName} · ${save.loc} · ${save.frags}/6 Fragments · <img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${save.gold} · Hull ${pct}%</div>
           <div class="save-detail" style="color:#b8b0d0;font-size:10px;">${date}</div>
         </div>
         <div class="save-actions" style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
@@ -18729,7 +18739,7 @@ const LOCAL_QUEST_DATA = {
             title: 'Signal Interference',
             desc: 'A harvester psychic field is corrupting IEF navigation crystals in the local lanes. The relay buoy in the outer arc needs purging before more ships go blind.',
             task: 'Defeat a harvester ship in the Fentheris System lanes or on the route to Korreth, then return.',
-            reward: '🔷 80 TS + 💨 Full Air Supply',
+            reward: '<img src="images/ts_coin.png" class="ts-ico" alt="TS"> 80 TS + 💨 Full Air Supply',
             type: 'combat',
             checkDesc: 'Defeat 1 harvester in the local lanes and return.',
             check: (G) => (G.localQuests?.realm_q1_kills || 0) >= 1,
@@ -18754,7 +18764,7 @@ const LOCAL_QUEST_DATA = {
             title: 'Clear the Lanes',
             desc: 'Corsair warbands and plunderer brigantines are systematically raiding merchant convoys on the Fentheris System inner lanes. Wrenfold needs them thinned before his next shipment departs.',
             task: 'Destroy 2 Corsair or Plunderer ships on the Fentheris System lanes.',
-            reward: '🔷 120 TS + 🔧 Emergency Repair Kit (restores 30 hull in combat)',
+            reward: '<img src="images/ts_coin.png" class="ts-ico" alt="TS"> 120 TS + 🔧 Emergency Repair Kit (restores 30 hull in combat)',
             type: 'combat',
             checkDesc: 'Defeat 2 Corsair or Plunderer ships and return.',
             check: (G) => (G.localQuests?.realm_q2_kills || 0) >= 2,
@@ -18779,7 +18789,7 @@ const LOCAL_QUEST_DATA = {
             title: 'Resonance Components',
             desc: "The Archivist needs Corsair navigational components — corsair gear fragments or goblin plunder that sometimes contains salvaged helm parts — to calibrate his Fragment resonance scanner. These drop from raiders on the local Fentheris System lanes.",
             task: "Bring Archivist Dusan a Corsair Gear Fragment or Goblin Plunder Sack from your cargo.",
-            reward: '🔷 60 TS + 🔮 Psionic Amplifier (stuns enemy next action)',
+            reward: '<img src="images/ts_coin.png" class="ts-ico" alt="TS"> 60 TS + 🔮 Psionic Amplifier (stuns enemy next action)',
             type: 'delivery',
             checkDesc: 'Have a Corsair Gear Fragment or Goblin Plunder Sack in cargo.',
             check: (G) => G.ship.inv.some(i => i.id === 'corsscrap' || i.id === 'gobsack'),
@@ -18806,7 +18816,7 @@ const LOCAL_QUEST_DATA = {
             title: 'Operation Mindbreak',
             desc: 'Goblin raider clans are staging from a debris field in the Fentheris System outer arc. Commander Thessan needs three of their vessels eliminated before they can coordinate a larger assault on the station approach.',
             task: 'Destroy 3 goblin raider ships or phlog creatures in the local lanes and return.',
-            reward: '🔷 150 TS + ⚙️ Rapid Reload Component (−1 weapon cooldown)',
+            reward: '<img src="images/ts_coin.png" class="ts-ico" alt="TS"> 150 TS + ⚙️ Rapid Reload Component (−1 weapon cooldown)',
             type: 'combat',
             checkDesc: 'Defeat 3 goblin raiders or phlog creatures in the Fentheris System lanes.',
             check: (G) => (G.localQuests?.realm_q4_kills || 0) >= 3,
@@ -18904,7 +18914,7 @@ const LOCAL_QUEST_DATA = {
             title: "The Prospector's Wreck",
             desc: "Old Bram found a pre-Sundering debris field but won't risk his cog to investigate. The wreck is guarded — likely harvesters or trull slavers, both common on the Korreth lanes. He wants proof you cleared them out.",
             task: 'Bring Bram a Neogi Venom Membrane or Trull Identification Disc from the Korreth lanes.',
-            reward: '🔷 90 TS + ⚙️ Arcane Core Fragment',
+            reward: '<img src="images/ts_coin.png" class="ts-ico" alt="TS"> 90 TS + ⚙️ Arcane Core Fragment',
             type: 'delivery',
             checkDesc: 'Have a Neogi Venom Membrane or Trull Identification Disc in cargo.',
             check: (G) => G.ship.inv.some(i => i.id === 'ngvnm' || i.id === 'trlldogtag'),
@@ -18931,7 +18941,7 @@ const LOCAL_QUEST_DATA = {
             title: 'The Lost Crew',
             desc: "Mira's merchant cog was taken by Shell Drifters. The survivors were either enslaved or left aboard the drifting hull. She wants someone to investigate — and deal with whatever is still aboard.",
             task: 'Defeat a Harvester or Trull Slaver in the Korreth lanes and return to Mira.',
-            reward: "🔷 50 TS + 🧵 Astral Silk + 🍺 Crew's Courage Mead",
+            reward: '<img src="images/ts_coin.png" class="ts-ico" alt="TS"> 50 TS + 🧵 Astral Silk + 🍺 Crew\'s Courage Mead',
             type: 'combat',
             checkDesc: 'Defeat a Harvester or Trull Slaver in the lanes and return to Mira.',
             check: (G) => (G.localQuests?.grey_q3_kills || 0) >= 1,
@@ -18980,7 +18990,7 @@ const LOCAL_QUEST_DATA = {
             title: 'The Serathis Exchange',
             desc: "Wing-Commander Serathis needs a Psionic Amplifier — Steel Dragon Pact intelligence operatives use them to extract void-navigation data from captured Drift Corsair prisoners. They drop from Drift Corsair and Shell Drifter ships on the outer lanes.",
             task: 'Bring Wing-Commander Serathis a Psionic Amplifier from your cargo.',
-            reward: '🔷 150 TS + ⚔️ Corsair Blade Shard (component)',
+            reward: '<img src="images/ts_coin.png" class="ts-ico" alt="TS"> 150 TS + ⚔️ Corsair Blade Shard (component)',
             type: 'delivery',
             checkDesc: 'Have a Psionic Amplifier in cargo.',
             check: (G) => G.ship.inv.some(i => i.id === 'psiamp'),
@@ -19007,7 +19017,7 @@ const LOCAL_QUEST_DATA = {
             title: "Avoss's Clear Channel",
             desc: "Scholar Tyen Avoss needs the void resonance zones along the Dragon Passage cleared of Drift Corsair activity. Destroy 2 Drift Corsair Warships in the outer lanes and return.",
             task: 'Destroy 2 Drift Corsair Warships in the lanes and return to Avoss.',
-            reward: '🔷 170 TS + 🔮 Psionic Amplifier',
+            reward: '<img src="images/ts_coin.png" class="ts-ico" alt="TS"> 170 TS + 🔮 Psionic Amplifier',
             type: 'combat',
             checkDesc: 'Destroy 2 Drift Corsair Warships and return.',
             check: (G) => (G.localQuests?.krynn_q2_kills || 0) >= 2,
@@ -19032,7 +19042,7 @@ const LOCAL_QUEST_DATA = {
             title: "Kael's Intelligence",
             desc: "Kael Voss, a former Drift Corsair pilot, has intelligence on Corsair patrol routes — but needs confirmation the lanes are still navigable. Travel to any other sphere and return with proof the routes are open.",
             task: 'Travel to any other sphere and return to Kael to confirm the lanes.',
-            reward: '🔷 140 TS + 🧵 Astral Silk (trade good)',
+            reward: '<img src="images/ts_coin.png" class="ts-ico" alt="TS"> 140 TS + 🧵 Astral Silk (trade good)',
             type: 'explore',
             checkDesc: 'Travel to any sphere and return to Kael.',
             check: (G) => (G.localQuests?.krynn_q3_visited || false),
@@ -19083,7 +19093,7 @@ const LOCAL_QUEST_DATA = {
             title: "Kezzix's Errand",
             desc: "Port-Boss Kezzix needs a delivery verified — a shipment that was supposed to arrive from the outer lanes never showed. She wants someone to make a run out and confirm whether the courier is dead, fled, or just slow.",
             task: 'Travel to any other sphere and return to Kezzix to confirm the lanes are clear.',
-            reward: '🔷 120 TS + 💰 Plundered Merchant Gold (trade good)',
+            reward: '<img src="images/ts_coin.png" class="ts-ico" alt="TS"> 120 TS + 💰 Plundered Merchant Gold (trade good)',
             type: 'explore',
             checkDesc: 'Travel to any sphere and return to Kezzix.',
             check: (G) => (G.localQuests?.cluster_q3_visited || false),
@@ -19108,7 +19118,7 @@ const LOCAL_QUEST_DATA = {
             title: "The Relic Hunter's Prize",
             desc: "Saja Vell has located a pre-Sundering wreck and needs a Star Elven Coin Hoard to authenticate its provenance to a buyer. The coins drop from Drift Corsair and Black Fleet ships on the outer lanes.",
             task: 'Bring Saja a Star Elven Coin Hoard from your cargo.',
-            reward: '🔷 140 TS + 💍 Thrall Binding Ring (equip: +3 max crew)',
+            reward: '<img src="images/ts_coin.png" class="ts-ico" alt="TS"> 140 TS + 💍 Thrall Binding Ring (equip: +3 max crew)',
             type: 'delivery',
             checkDesc: 'Have a Star Elven Coin Hoard in cargo.',
             check: (G) => G.ship.inv.some(i => i.n === 'Star Elven Coin Hoard'),
@@ -19135,7 +19145,7 @@ const LOCAL_QUEST_DATA = {
             title: "Scratch's Reckoning",
             desc: "A former pirate called Scratch is hunting a Harvester slaver that cost him his crew. He needs two Harvesters eliminated in the outer lanes — proof the hunting ground has been cleared.",
             task: 'Destroy 2 Harvester ships in the Drift lanes and return to Scratch.',
-            reward: '🔷 160 TS + 🌀 Anti-Magic Sphere Shard (equip: −3 incoming damage)',
+            reward: '<img src="images/ts_coin.png" class="ts-ico" alt="TS"> 160 TS + 🌀 Anti-Magic Sphere Shard (equip: −3 incoming damage)',
             type: 'combat',
             checkDesc: 'Destroy 2 Harvester ships and return.',
             check: (G) => (G.localQuests?.cluster_q2_kills || 0) >= 2,
@@ -19190,7 +19200,7 @@ const LOCAL_QUEST_DATA = {
             title: "Field Certification",
             desc: "Admiral Soreth wants to confirm you're ready for independent operations before clearing you for the Drift. Two Drift Corsair scouts have been spotted at the edge of Refuge's patrol zone — destroy them and report back.",
             task: 'Destroy 2 Corsair scouts at the patrol boundary and return to Admiral Soreth.',
-            reward: '🔷 200 TS + 🗡️ Silver Astral Blade Fragment (artifact)',
+            reward: '<img src="images/ts_coin.png" class="ts-ico" alt="TS"> 200 TS + 🗡️ Silver Astral Blade Fragment (artifact)',
             type: 'combat',
             checkDesc: 'Destroy 2 Corsair scouts at the patrol boundary.',
             check: (G) => (G.localQuests?.refuge_q1_kills || 0) >= 2,
@@ -19217,7 +19227,7 @@ const LOCAL_QUEST_DATA = {
             title: 'Engine Field Test',
             desc: 'Chief Engineer Velt needs field test data from his experimental engine configuration. Just make a full run through the Drift and return — the onboard sensors will record everything.',
             task: 'Travel to any sphere and back to Refuge to complete the field test.',
-            reward: '🔷 100 TS + ⚡ Speed Engine upgrade installed free',
+            reward: '<img src="images/ts_coin.png" class="ts-ico" alt="TS"> 100 TS + ⚡ Speed Engine upgrade installed free',
             type: 'explore',
             checkDesc: 'Travel to any sphere and return to Refuge.',
             check: (G) => (G.localQuests?.refuge_q2_visited || false),
@@ -19271,7 +19281,7 @@ const LOCAL_QUEST_DATA = {
             title: "The Archivist's Request",
             desc: "Keeper Thessaly Vorn needs a Sentinel Optical Array — a component that drops from Vault-Keeper Sentinel Drones in the outer lanes. She's tracing the guardian lineage that protects the Pre-Sundering Vault.",
             task: 'Bring Keeper Vorn a Sentinel Optical Array (bheye) from the outer lanes.',
-            reward: '🔷 180 TS + 🔧 Void Welder (restores 20 MAX hull)',
+            reward: '<img src="images/ts_coin.png" class="ts-ico" alt="TS"> 180 TS + 🔧 Void Welder (restores 20 MAX hull)',
             type: 'delivery',
             checkDesc: 'Have a Sentinel Optical Array in cargo.',
             check: (G) => G.ship.inv.some(i => i.id === 'bheye'),
@@ -19299,7 +19309,7 @@ const LOCAL_QUEST_DATA = {
             title: 'Sentinel Study',
             desc: "Archivist Dain is documenting the Sentinel Drone patrol patterns around Thyss. She needs combat data from at least 2 Sentinel Drones destroyed in the outer lanes.",
             task: 'Destroy 2 Sentinel Drone (beholder) ships in the lanes and return.',
-            reward: '🔷 200 TS + 🛡️ Ablative Phase Plating (equip: −3 incoming damage)',
+            reward: '<img src="images/ts_coin.png" class="ts-ico" alt="TS"> 200 TS + 🛡️ Ablative Phase Plating (equip: −3 incoming damage)',
             type: 'combat',
             checkDesc: 'Destroy 2 Sentinel Drone ships.',
             check: (G) => (G.localQuests?.hero_q2_kills || 0) >= 2,
@@ -19324,7 +19334,7 @@ const LOCAL_QUEST_DATA = {
             title: 'Proof of the Drift',
             desc: "A Far Dark survivor known only as Omen needs confirmation that the outer Drift lanes are still navigable.",
             task: 'Travel to any other sphere and return to Omen at Citadel Exalted.',
-            reward: '🔷 160 TS + 🗺️ Void Chart (navigation artifact)',
+            reward: '<img src="images/ts_coin.png" class="ts-ico" alt="TS"> 160 TS + 🗺️ Void Chart (navigation artifact)',
             type: 'explore',
             checkDesc: 'Travel to any sphere and return to Thyss.',
             check: (G) => (G.localQuests?.hero_q3_visited || false),
@@ -19375,7 +19385,7 @@ const LOCAL_QUEST_DATA = {
             title: "The Broker's Price",
             desc: "Void-Broker Sythari wants a Silver Astral Blade Fragment — a rare component that drops from Drift Corsair warships in the lanes near Serath.",
             task: 'Bring Sythari a Silver Astral Blade Fragment (silblade) from Drift Corsair ships.',
-            reward: '🔷 200 TS + 🗺️ Void Chart + ⚙️ Arcane Navigation Core Fragment',
+            reward: '<img src="images/ts_coin.png" class="ts-ico" alt="TS"> 200 TS + 🗺️ Void Chart + ⚙️ Arcane Navigation Core Fragment',
             type: 'delivery',
             checkDesc: 'Have a Silver Astral Blade Fragment in cargo.',
             check: (G) => G.ship.inv.some(i => i.id === 'silblade'),
@@ -19403,7 +19413,7 @@ const LOCAL_QUEST_DATA = {
             title: 'Beyond the Veil',
             desc: "Remnant needs combat data from 2 Leviathans or Void Rift Stalkers to confirm whether the void entities in Serath's lanes are connected to what exists beyond the Far Dark gate.",
             task: 'Destroy 2 Leviathan or Void Rift Stalker ships in the lanes and return.',
-            reward: '🔷 220 TS + 🌀 Anti-Magic Sphere Shard (equip: −3 incoming damage)',
+            reward: '<img src="images/ts_coin.png" class="ts-ico" alt="TS"> 220 TS + 🌀 Anti-Magic Sphere Shard (equip: −3 incoming damage)',
             type: 'combat',
             checkDesc: 'Destroy 2 Leviathan or Void Rift Stalker ships.',
             check: (G) => (G.localQuests?.dark_q2_kills || 0) >= 2,
@@ -19428,7 +19438,7 @@ const LOCAL_QUEST_DATA = {
             title: "The Defector's Proof",
             desc: "A Trull officer who broke from the Overmind needs confirmation that the breach lanes beyond Serath are still navigable.",
             task: 'Travel to any other sphere and return to the Trull Defector at Voidhaven.',
-            reward: '🔷 180 TS + 🧪 Leviathan Blood Vial (use in combat: +30 hull)',
+            reward: '<img src="images/ts_coin.png" class="ts-ico" alt="TS"> 180 TS + 🧪 Leviathan Blood Vial (use in combat: +30 hull)',
             type: 'explore',
             checkDesc: 'Travel to any sphere and return to Serath.',
             check: (G) => (G.localQuests?.dark_q3_visited || false),
@@ -20357,7 +20367,7 @@ function lsOpenLocalsPanel() {
   document.getElementById('ls-locals-response').innerHTML = '';
   const anyTightlipped = shuffled.some(l=>l.tightlipped);
   document.getElementById('ls-locals-cost-hint').textContent = anyTightlipped
-    ? 'Some locals may want a little something for their trouble. 🔷 5 TS'
+    ? 'Some locals may want a little something for their trouble. <img src="images/ts_coin.png" class="ts-ico" alt="TS"> 5 TS'
     : 'The locals seem willing to talk tonight.';
   const cardsEl = document.getElementById('ls-locals-cards');
   cardsEl.innerHTML = '';
@@ -20386,7 +20396,7 @@ function _lsLocalsClickCard(idx) {
     const canAfford = G.ship.gold >= 5;
     respEl.innerHTML = `<div style="font-size:0.625em;color:#d4c89c;margin-bottom:6px;">${local.portrait} ${local.name}</div>
       <div style="margin-bottom:10px;">"${local.name.split(' ').pop()} sizes you up slowly. There might be something worth your time — but information like that doesn't come free. Five TS for my trouble."</div>
-      <button class="btn" id="ls-locals-pay-btn" style="font-size:0.625em;padding:4px 14px;border-color:rgba(170,136,34,0.33);color:#ccaa55;" onclick="_lsLocalsPay(${idx})" ${canAfford?'':'disabled'}>🔷 Pay 5 TS</button>
+      <button class="btn" id="ls-locals-pay-btn" style="font-size:0.625em;padding:4px 14px;border-color:rgba(170,136,34,0.33);color:#ccaa55;" onclick="_lsLocalsPay(${idx})" ${canAfford?'':'disabled'}><img src="images/ts_coin.png" class="ts-ico" alt="TS"> Pay 5 TS</button>
       ${!canAfford?'<div style="color:#884444;font-size:0.563em;margin-top:6px;">Not enough TS.</div>':''}`;
   } else if(isKnowledgeable) {
     _lsLocalsRevealTip(idx, local);
@@ -20531,7 +20541,7 @@ function _lsBuildSellGrid() {
     allRow.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-radius:4px;background:rgba(10,30,10,0.6);border:1px solid rgba(51,102,68,0.2);';
     const lbl = {all:'Sell All',cargo:'All Cargo',usable:'All Usables',weapon:'All Weapons'}[_lsSellFilter];
     allRow.innerHTML = `<span style="font-size:0.625em;color:#44ee88;">💰 ${lbl} (${filtered.length})</span>
-      <button class="btn" style="font-size:0.563em;padding:3px 10px;border-color:rgba(51,102,68,0.33);color:#44ee88;">🔷 ${sellAllVal} TS</button>`;
+      <button class="btn" style="font-size:0.563em;padding:3px 10px;border-color:rgba(51,102,68,0.33);color:#44ee88;"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${sellAllVal} TS</button>`;
     allRow.querySelector('button').onclick = () => {
       const uids = new Set(filtered.map(i => i.uid));
       G.ship.inv = G.ship.inv.filter(i => !uids.has(i.uid));
@@ -20552,7 +20562,7 @@ function _lsBuildSellGrid() {
     const badge = isUsable ? ' <span style="font-size:8px;color:#c090ee;">[60%]</span>'
                 : isWpn    ? ' <span style="font-size:8px;color:#c8b888;">[wpn]</span>' : '';
     row.innerHTML = `<span style="font-size:0.625em;color:${isUsable?'#aa88cc':isWpn?'#ffcc88':'#8899bb'};">${item.ico||'📦'} ${item.n}${badge}</span>
-      <button class="btn" style="font-size:0.563em;padding:3px 8px;${isUsable?'border-color:rgba(102,51,102,0.333);color:#cc99ee;':''}">🔷 ${sv} TS</button>`;
+      <button class="btn" style="font-size:0.563em;padding:3px 8px;${isUsable?'border-color:rgba(102,51,102,0.333);color:#cc99ee;':''}"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${sv} TS</button>`;
     row.querySelector('button').onclick = () => {
       G.ship.gold += sv;
       G.ship.inv = G.ship.inv.filter(i => i.uid !== item.uid);
@@ -20597,9 +20607,9 @@ function _lsRefreshDock() {
   const hBtn = document.getElementById('ls-svc-hull');
   const aBtn = document.getElementById('ls-svc-air');
   const cBtn = document.getElementById('ls-svc-crew');
-  if(hBtn){ hBtn.textContent = `🔷 ${hullCost} TS`; hBtn.disabled = s.hull >= s.maxHull || s.gold < hullCost; }
-  if(aBtn){ aBtn.textContent = `🔷 ${airCost} TS`;  aBtn.disabled = s.air  >= (s.maxAir||12) || s.gold < airCost; }
-  if(cBtn){ cBtn.textContent = `🔷 ${crewCost} TS`; cBtn.disabled = s.crew >= s.maxCrew || s.gold < crewCost; }
+  if(hBtn){ hBtn.textContent = `<img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${hullCost} TS`; hBtn.disabled = s.hull >= s.maxHull || s.gold < hullCost; }
+  if(aBtn){ aBtn.textContent = `<img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${airCost} TS`;  aBtn.disabled = s.air  >= (s.maxAir||12) || s.gold < airCost; }
+  if(cBtn){ cBtn.textContent = `<img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${crewCost} TS`; cBtn.disabled = s.crew >= s.maxCrew || s.gold < crewCost; }
   // Ask Locals button — hide once fragment revealed, or if sphere has no fragment
   const _alBtn = document.getElementById('ls-dock-ask-locals-btn');
   if(_alBtn) {
@@ -20716,7 +20726,7 @@ function _lsBuildQmShop() {
     const buyBtn = document.createElement('button');
     buyBtn.className = 'btn';
     buyBtn.style.cssText = 'font-size:0.563em;padding:3px 8px;flex-shrink:0;white-space:nowrap;';
-    buyBtn.textContent = `🔷 ${item.cost} TS`;
+    buyBtn.textContent = `<img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${item.cost} TS`;
     buyBtn.disabled = !canAfford;
     if(canAfford) {
       buyBtn.onclick = () => {
@@ -22360,7 +22370,7 @@ function buildArmoryGrid() {
       <div style="font-size:0.563em;color:#c8b888;margin-top:2px;">${w.d[0]}d${w.d[1]} · avg ${avgDmg} · ${w.cd===0?'no reload':w.cd+'-rd reload'}</div>
       <div style="font-size:0.5em;color:#443322;margin-top:1px;">${w.info}</div>
       ${w.farRealm?'<div style="font-size:0.5em;color:#993333;margin-top:1px;">⚠ Void Rift weapon</div>':''}
-      <div style="font-size:0.5em;color:#554422;margin-top:2px;">Sell value: 🔷 ${item.val} TS</div>`;
+      <div style="font-size:0.5em;color:#554422;margin-top:2px;">Sell value: <img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${item.val} TS</div>`;
     row.appendChild(info);
 
     // Equip button
@@ -22378,7 +22388,7 @@ function buildArmoryGrid() {
     const sbtn = document.createElement('button');
     sbtn.className = 'btn';
     sbtn.style.cssText = 'font-size:0.563em;padding:5px 8px;flex-shrink:0;';
-    sbtn.textContent = `🔷 ${item.val} TS`;
+    sbtn.textContent = `<img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${item.val} TS`;
     sbtn.title = 'Sell (requires port or station dock)';
     const canSell = G.phase==='port' || document.getElementById('ls-dock-panel')?.classList.contains('on');
     sbtn.disabled = !canSell;
@@ -22810,7 +22820,7 @@ function showLqShop(npc) {
     d.className = 'lq-shop-item' + (canAfford ? '' : ' dis');
     d.innerHTML = `<div class="lq-si-name">${itemName}</div>
       <div class="lq-si-desc">${item.desc}</div>
-      <div class="lq-si-cost">🔷 ${item.cost}</div>`;
+      <div class="lq-si-cost"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${item.cost}</div>`;
 
     if(canAfford) {
       d.onclick = () => {
@@ -23042,7 +23052,7 @@ function _fdShowWarning(fs) {
   const s=G.ship, pct=Math.round((s.hull/s.maxHull)*100);
   const hIco = pct<40?'⚠':pct<70?'•':'✓';
   showMsg(`🔮 ${fs.n}`,
-    `You are about to enter ${fs.n}.\n\n${cfg.guardianWarning}\n\nShip status:\n  ${hIco} Hull: ${s.hull}/${s.maxHull} (${pct}%)\n  • Crew: ${s.crew}/${s.maxCrew}\n  🔷 ${s.gold} TS\n\nRepair at the dock before entering if needed.`,
+    `You are about to enter ${fs.n}.\n\n${cfg.guardianWarning}\n\nShip status:\n  ${hIco} Hull: ${s.hull}/${s.maxHull} (${pct}%)\n  • Crew: ${s.crew}/${s.maxCrew}\n  <img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${s.gold} TS\n\nRepair at the dock before entering if needed.`,
     '⚔ Enter the Site', ()=>openFragDungeon(fs),
     '↩ Not yet', null);
 }
@@ -27027,7 +27037,7 @@ document.addEventListener('visibilitychange', () => {
             <strong>⚓ Hull</strong> — Structural integrity. Reaches zero → ship destroyed. Repaired at docks and via items.<br><br>
             <strong>👥 Crew</strong> — Your fighting force. Zero crew → specials offline and effectiveness drops. Hire more at any dock.<br><br>
             <strong>💨 Air</strong> — Days of breathable air. Drains once per game day (each rest). Runs out → voyage ends. Never leave port with less than 15.<br><br>
-            <strong>🔷 TS (Topazine Shards)</strong> — The void's currency. Earned from combat, quests, and cargo sales. Spent at docks and quartermasters.
+            <strong><img src="images/ts_coin.png" class="ts-ico" alt="TS"> TS (Topazine Shards)</strong> — The void's currency. Earned from combat, quests, and cargo sales. Spent at docks and quartermasters.
           </div>
         </div>
         <div class="b-section">
@@ -27260,7 +27270,7 @@ document.addEventListener('visibilitychange', () => {
       <!-- ── TIPS ── -->
       <div class="bp-pane" id="bppane-tips">
         <div class="b-section">
-          <div class="b-head">🔷 Currency — Topazine Shards (TS)</div>
+          <div class="b-head"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> Currency — Topazine Shards (TS)</div>
           <div class="b-body">
             Named for the yellow gems the ancient dragons of Fentheris used as trade tokens. Earned from combat loot, cargo sales, and quests. Spent on hull, crew, weapons, upgrades, and supplies.
           </div>
@@ -27312,7 +27322,7 @@ document.addEventListener('visibilitychange', () => {
 
       <!-- CURRENCY -->
       <div class="b-section">
-        <div class="b-head">🔷 Currency — Topazine Shards (TS)</div>
+        <div class="b-head"><img src="images/ts_coin.png" class="ts-ico" alt="TS"> Currency — Topazine Shards (TS)</div>
         <div class="b-body">
           The currency of the Known Spheres is the <strong>Topazine Shard (TS)</strong> — named for the yellow gems the ancient dragons of Fentheris used as trade tokens during their reign.<br><br>
           TS is earned from <strong>combat loot</strong>, <strong>selling cargo</strong>, and <strong>completing quests</strong>. Spent on hull repairs, crew, weapons, ship upgrades, and supplies. Each sphere's dock and quartermaster sets its own prices.
@@ -27402,7 +27412,7 @@ document.addEventListener('visibilitychange', () => {
           <strong>⚔ Hull</strong> — Ship structure. Reaches 0 = broken apart. Repair at dock or use hull items mid-combat.<br>
           <strong>👥 Crew</strong> — Your sailors. Reaches 0 = helm goes dark, ship drifts. Lost to boarding attacks. Hire crew at dock.<br>
           <strong>💨 Air Supply</strong> — Drains 1 per game day (each anchor rest). Runs out mid-voyage = suffocation. Always refill before leaving. Base: 10 days. Upgradeable at quartermasters.<br>
-          <strong>🔷 TS (Topazine Shards)</strong> — Currency of the Drift. Earned from loot and cargo sales. Spent on everything.
+          <strong><img src="images/ts_coin.png" class="ts-ico" alt="TS"> TS (Topazine Shards)</strong> — Currency of the Drift. Earned from loot and cargo sales. Spent on everything.
         </div>
       </div>
 
