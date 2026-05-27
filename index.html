@@ -23649,12 +23649,26 @@ function lpoiRender(ts){
       const imgKey=TILE_IMGS[tile]; const img=imgKey&&LPOI._imgs[imgKey];
       ctx.save();
       ctx.globalAlpha=isVisible?1:0.28; // explored but not visible = dim
+
+      // For prop tiles: draw a floor tile underneath first so transparent
+      // areas in the prop PNG show floor instead of the black void background.
+      if(tile>=LT.PROP){
+        const floorImg=LPOI._imgs['lpoi_floor_main'];
+        if(floorImg){ctx.drawImage(floorImg,px2,py2,T,T);}
+        else{ctx.fillStyle='#1a0d2e';ctx.fillRect(px2,py2,T,T);}
+        // Keep the subtle grid line visible under the prop too
+        if(isVisible){
+          ctx.strokeStyle='rgba(80,40,120,0.12)';ctx.lineWidth=0.5;
+          ctx.strokeRect(px2,py2,T,T);
+        }
+      }
+
       if(img){ctx.drawImage(img,px2,py2,T,T);}
       else{ctx.fillStyle=TILE_COLS[tile]||'#111'; ctx.fillRect(px2,py2,T,T);
         if(tile===LT.WALL){ctx.fillStyle='rgba(0,0,0,0.35)';ctx.fillRect(px2,py2+T*0.85,T,T*0.15);}
         if(tile>=LT.PROP){ctx.fillStyle='#2a1040';ctx.fillRect(px2+8,py2+8,T-16,T-16);}
       }
-      // Grid lines on floor
+      // Grid lines on floor tiles (walls and props handled above / not needed)
       if(isVisible&&tile>=LT.FLOOR&&tile<=LT.FLOOR_DARK){
         ctx.strokeStyle='rgba(80,40,120,0.12)';ctx.lineWidth=0.5;
         ctx.strokeRect(px2,py2,T,T);
