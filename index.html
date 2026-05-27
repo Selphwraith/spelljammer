@@ -7833,10 +7833,6 @@ function startTravel(toId, _resumeWatchesLeft, _pausedPos, _pausedProg, _savedLa
       : null;
 
   G.ship.atWp = null; G.ship.atFragSite = null;
-  // Tutorial: first departure from Refuge — teach the Watch system
-  if (G.tutorial && !G.tutorial.done && G.tutorial.step === 7 && G.ship.loc === 'refuge') {
-    setTimeout(() => _tutStep(8), 800);
-  }
   // On resume: set midLanePos to paused position — cleared on first tick so no visual jump
   G.ship.midLanePos = _pausedPos || null;
   const t = G.spheres.find(s=>s.id===toId);
@@ -15221,7 +15217,7 @@ function claimLoot(){
 const SIDEBAR_OVERLAYS = ['inv','wpn','shp','qlog','journal','armory'];
 
 // Hide the watch HUD when any full-screen overlay is open — it's irrelevant and obstructive
-const OVERLAY_HUD_HIDE = ['inv','wpn','shp','qlog','journal','armory','port','dockmaster','localquest','localspace','loot','combat','wpnpicker','cbt-inv'];
+const OVERLAY_HUD_HIDE = ['inv','wpn','shp','qlog','journal','armory','port','dockmaster','localquest','localspace','loot','combat','wpnpicker','cbt-inv','fragsitee'];
 function _syncWatchHudVisibility() {
   const hud = document.getElementById('watch-hud');
   if(!hud) return;
@@ -18960,6 +18956,8 @@ function _lsBoundaryExit() {
     LS._boundaryExiting = false;
     closeLsOverlay();
     addLog(`Departed ${_dSphName} local space.`, '');
+    // Tutorial: teach watch system once they're on the map, before they travel
+    if (G.tutorial && !G.tutorial.done && G.tutorial.step === 7) setTimeout(() => _tutStep(8), 700);
   }, 550);
 }
 
@@ -19255,13 +19253,13 @@ function lsDockDepart() {
   LS._pickupChecked = false;
   closeLsDock();
   closeLsOverlay();
-  // Ensure player is at realm on the map
-  // loc was already set when entering — preserve it, just return to map
   G.phase = 'map';
   updateUI();
   const _dSph = G.ship.loc || 'realm';
   const _dSphName = _dSph === 'refuge' ? 'Refuge Station' : _dSph === 'grey' ? 'Korreth' : _dSph === 'cluster' ? 'Varuun' : _dSph === 'krynn' ? 'Vael' : _dSph === 'hero' ? 'Thyss' : _dSph === 'dark' ? 'Serath' : 'Fentheris System';
   addLog('Departed ' + _dSphName + ' local space.','');
+  // Tutorial: teach watch system once they're back on the map, before they travel
+  if (G.tutorial && !G.tutorial.done && G.tutorial.step === 7) setTimeout(() => _tutStep(8), 700);
 }
 
 // ── DOCK SERVICES ─────────────────────────────────────────────────────────
@@ -21794,6 +21792,8 @@ function openFragDungeon(fs) {
 
   const ov=document.getElementById('ov-fragsitee');
   ov.classList.add('on');
+  _closeSidebarOverlays(); // close inv/wpn/etc so they can't sit above the dungeon
+  _syncWatchHudVisibility();
   // Pause LS — dungeon sits on top visually but ov-localspace must also be hidden
   // or its keydown handler will keep firing and move the hidden LS player
   document.getElementById('ov-localspace').classList.remove('on');
@@ -21830,6 +21830,7 @@ function openFragDungeon(fs) {
 function _fdReopen() {
   document.getElementById('ov-fragsitee').classList.add('on');
   document.getElementById('fd-interact-panel').classList.remove('on');
+  _syncWatchHudVisibility(); // keep watch HUD hidden while inside dungeon
   FD.interactOpen=false; FD.nearPoi=null; FD.keys={};
   _fdLog('Back in the site. Proceed to the guardian chamber.'); _fdUpdateHud();
   FD.canvas   = document.getElementById('fd-canvas');
@@ -22509,19 +22510,54 @@ function _fdTriggerCombat(idx){
   const e=FD.enemies[idx];
   if(!e||FD.pendingReturn) return;
   FD.pendingReturn=true; FD.pendingEnemyIdx=idx;
+
+  // Bundle nearby enemies (same room awareness) into one fight
+  const FD_BUNDLE_RANGE = 180;
+  const fdExtras = [];
+  FD.enemies = FD.enemies.filter((other, i) => {
+    if(i === idx) return true; // primary stays — removed via pendingEnemyIdx after combat
+    if(!ENM[other.key]) return true;
+    if(Math.hypot(other.x - e.x, other.y - e.y) < FD_BUNDLE_RANGE) {
+      fdExtras.push(other);
+      return false; // pull into combat now
+    }
+    return true;
+  });
+
   FD.pTargetX=null; FD.pTargetY=null;
-  _fdLog('⚔ Enemy intercepted!','danger');
+  if(fdExtras.length > 0) {
+    _fdLog(`⚔ ${1 + fdExtras.length} enemies intercept!`, 'danger');
+  } else {
+    _fdLog('⚔ Enemy intercepted!','danger');
+  }
   if(FD.animId){cancelAnimationFrame(FD.animId);FD.animId=null;}
   FD.canvas?.removeEventListener('click',_fdHandleClick);
   document.removeEventListener('keydown',_fdKeyDown);
   document.removeEventListener('keyup',_fdKeyUp);
   document.getElementById('ov-fragsitee').classList.remove('on');
-  // Also ensure LS is fully stopped — it was hidden when entering the dungeon
-  // but belt-and-suspenders: kill the loop and clear keys so WASD can't bleed through
   document.getElementById('ov-localspace').classList.remove('on');
   if(LS.animId){cancelAnimationFrame(LS.animId);LS.animId=null;}
   LS.keys={};
-  setTimeout(()=>{_lsPendingReturn=true;startCombat(e.key);},400);
+  setTimeout(()=>{
+    _lsPendingReturn=true;
+    if(fdExtras.length > 0) {
+      startCombat(e.key);
+      G.cbt._lsExtraQueue = fdExtras.map(ex => {
+        const t = ENM[ex.key];
+        const eWpns = (t.wpns||[]).map(w=>({...w}));
+        return { key:ex.key,
+          data:{...t, hp:t.maxHp, crew:t.crew!==undefined?t.crew:undefined,
+            burnLeft:0, stunsNext:false, _key:ex.key, _healUsed:false,
+            _buffResist:0,_buffResistTurns:0,_buffAtk:0,_buffAtkTurns:0},
+          _eWpns:eWpns, _eCds:eWpns.map(()=>0) };
+      });
+      G.cbt._lsBatchGold = 0; G.cbt._lsBatchItems = [];
+      const names = fdExtras.map(ex => ENM[ex.key]?.name || ex.key).join(', ');
+      setTimeout(() => cLog(`⚔ ${names} close in!`, 'dmg'), 300);
+    } else {
+      startCombat(e.key);
+    }
+  },400);
 }
 
 // ── Interactions (loot / guardian chamber) ─────────────────────────────────
@@ -23381,6 +23417,11 @@ window.addEventListener('keydown', e=>{
     const escLayers = [
       { check: ()=> document.getElementById('debug-con')?.style.display!=='none',
         close: ()=> toggleDebugCon?.() },
+      // Tutorial overlays — highest z-index, dismiss first
+      { check: ()=> document.getElementById('tut-combat-panel')?.classList.contains('on'),
+        close: ()=> _tutHideCombatTips?.() },
+      { check: ()=> document.getElementById('tut-overlay')?.classList.contains('tut-visible'),
+        close: ()=> _tutDismiss?.() },
       { check: ()=> document.getElementById('cin-ovl')?.style.display==='flex',
         close: ()=> { try{ endCinematic?.(); }catch(_){ document.getElementById('cin-ovl').style.display='none'; } } },
       { check: ()=> document.getElementById('ov-roam')?.style.display==='flex',
@@ -23399,6 +23440,8 @@ window.addEventListener('keydown', e=>{
         close: ()=> hideFontPanel?.() },
       { check: ()=> document.getElementById('msgbox')?.classList.contains('on'),
         close: ()=> dismissMsg?.() },
+      { check: ()=> document.getElementById('ov-guardian')?.classList.contains('on'),
+        close: ()=> dismissGuardian?.() },
       { check: ()=> document.getElementById('lq-shop')?.classList.contains('on'),
         close: ()=> closeLqShop?.() },
       { check: ()=> document.getElementById('ov-dockmaster')?.classList.contains('on'),
@@ -23415,8 +23458,13 @@ window.addEventListener('keydown', e=>{
         close: ()=> closeOverlay('qlog') },
       { check: ()=> document.getElementById('ov-journal')?.classList.contains('on'),
         close: ()=> closeOverlay('journal') },
+      { check: ()=> document.getElementById('ov-armory')?.classList.contains('on'),
+        close: ()=> closeOverlay('armory') },
       { check: ()=> { const el=document.getElementById('ov-localquest'); return el&&(el.classList.contains('on')); },
         close: ()=> lqBack() },
+      // ── Fragment dungeon inner panel ─────────────────────────────────────────
+      { check: ()=> { const p=document.getElementById('fd-interact-panel'); return p&&p.classList.contains('on'); },
+        close: ()=> { document.getElementById('fd-interact-panel')?.classList.remove('on'); if(typeof FD!=='undefined'){FD.interactOpen=false;FD.nearPoi=null;} } },
       // ── Local Space inner panels — close these before exiting LS entirely ──
       { check: ()=> { const p=document.getElementById('ls-qm-panel'); return p&&p.style.display==='flex'; },
         close: ()=> lsCloseQmPanel?.() },
