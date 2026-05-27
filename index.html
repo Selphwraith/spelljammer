@@ -5341,7 +5341,7 @@ let _muted = false;
 // ── VOLUME STATE ─────────────────────────────────────────
 // All values 0.0–1.0. snd() and setAmbient() multiply their
 // base vol by the relevant category scalar before playing.
-const _VOL = { master:0.8, music:0.8, sfx:0.8, voice:0.8, particles:0.5 };
+const _VOL = { master:0.8, music:0.55, sfx:0.8, voice:0.95, particles:0.5 };
 
 // ── FONT SCALE PREFERENCE ────────────────────────────────────────────────────
 const FS_KEY = 'sj_font_scale';
@@ -5442,7 +5442,7 @@ document.addEventListener('visibilitychange', () => {
     } else {
       // Track exists but may have been paused by the browser — resume it
       try { _titleEl.play().catch(()=>{}); } catch(_) {}
-      _titleVolume(0.35);
+      _titleVolume(0.24);
     }
     _musicWatchdogLast = Date.now(); // reset watchdog so it doesn't double-fire immediately
   }, 400);
@@ -5912,7 +5912,7 @@ function startElderTheme() {
   try {
     const a = _SFX['elder_theme'].cloneNode();
     a.loop   = true;
-    a.volume = Math.min(1, 0.55 * (_VOL?.master||1) * (_VOL?.music||1));
+    a.volume = Math.min(1, 0.38 * (_VOL?.master||1) * (_VOL?.music||1));
     a.play().catch(()=>{});
     _elderThemeEl = a;
   } catch(_) {}
@@ -5924,7 +5924,7 @@ function stopElderTheme() {
     _elderThemeEl = null;
   }
   // Restore title to full volume now that boss music is done
-  _titleVolume(0.35);
+  _titleVolume(0.24);
 }
 
 function startCaiphonTheme() {
@@ -5933,7 +5933,7 @@ function startCaiphonTheme() {
   try {
     const a = _SFX['caiphon_theme'].cloneNode();
     a.loop   = true;
-    a.volume = Math.min(1, 0.60 * (_VOL?.master||1) * (_VOL?.music||1));
+    a.volume = Math.min(1, 0.42 * (_VOL?.master||1) * (_VOL?.music||1));
     a.play().catch(()=>{});
     _elderThemeEl = a; // reuse same ref so stopElderTheme() cleans it up on victory
   } catch(_) {}
@@ -5998,7 +5998,7 @@ function sndVoice(vol = 1.0) {
   if (!ctx) return;
   if (ctx.state === 'suspended') ctx.resume().catch(() => {});
   const available = _voiceBufs.filter(Boolean);
-  const VOICE_BOOST = 0.8; // normalized files — slight reduction to sit well in mix
+  const VOICE_BOOST = 1.25; // raised — VOs need to cut through music
   if (!available.length) {
     if (_SFX['voice_chatter']) {
       try {
@@ -6188,7 +6188,7 @@ function setAmbient(scene) {
       try {
         const a = _SFX['ambient_combat'].cloneNode();
         a.loop = true;
-        a.volume = Math.min(1, 0.45 * (_VOL?.master||1) * (_VOL?.music||1));
+        a.volume = Math.min(1, 0.32 * (_VOL?.master||1) * (_VOL?.music||1));
         a.play().catch(()=>{});
         _loopEl = a;
       } catch(_) {}
@@ -6199,12 +6199,12 @@ function setAmbient(scene) {
     if (_titleEl && _titleEl.paused) {
       // Resume track that was paused during combat
       try { _titleEl.play().catch(()=>{}); } catch(_) {}
-      _titleVolume(0.35);
+      _titleVolume(0.24);
     } else if (!_titleEl) {
       // No track at all — start the next one in the playlist
       if (!_muted) _titlePlayTrack(_titleNextTrack());
     } else {
-      _titleVolume(0.35);
+      _titleVolume(0.24);
     }
   }
 }
@@ -25395,7 +25395,7 @@ function showCinematic(){
   _cinCtx = _cinCanvas.getContext('2d');
   _cinSlide = 0;
   // Music is already playing from playTitle() called after the intro video
-  _titleVolume(0.35);
+  _titleVolume(0.24);
   renderCinSlide();
 }
 function skipCinematic(){
@@ -26213,8 +26213,8 @@ document.addEventListener('visibilitychange', () => {
         </div>
         <div class="mm-vol-row">
           <span class="mm-vol-lbl">🎵 Music</span>
-          <input type="range" id="vol-music" min="0" max="100" value="80" oninput="applyVolumes()">
-          <span class="mm-vol-val" id="vol-music-val">80%</span>
+          <input type="range" id="vol-music" min="0" max="100" value="55" oninput="applyVolumes()">
+          <span class="mm-vol-val" id="vol-music-val">55%</span>
         </div>
         <div class="mm-vol-row">
           <span class="mm-vol-lbl">💥 SFX</span>
@@ -26223,8 +26223,8 @@ document.addEventListener('visibilitychange', () => {
         </div>
         <div class="mm-vol-row">
           <span class="mm-vol-lbl">🗣 Voice</span>
-          <input type="range" id="vol-voice" min="0" max="100" value="80" oninput="applyVolumes()">
-          <span class="mm-vol-val" id="vol-voice-val">80%</span>
+          <input type="range" id="vol-voice" min="0" max="100" value="95" oninput="applyVolumes()">
+          <span class="mm-vol-val" id="vol-voice-val">95%</span>
         </div>
         <div class="mm-vol-actions">
           <button onclick="setAllVol(0)" style="background:rgba(30,0,0,0.8);border:1px solid rgba(102,34,51,0.533);color:#aa6688;">🔇 Mute All</button>
