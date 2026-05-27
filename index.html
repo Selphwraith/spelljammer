@@ -20992,21 +20992,30 @@ function _lsRenderMinimap() {
 // ── KEYBOARD INPUT ────────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
   if(!document.getElementById('ov-localspace')?.classList.contains('on')) return;
-  if(LS.dockOpen) return;
-  LS.keys[e.key] = true;
-  // Escape — close interaction panel or exit
+  if(LS.dockOpen && e.key !== 'Escape') { LS.keys[e.key] = true; e.stopPropagation(); return; }
+  if(!LS.dockOpen) LS.keys[e.key] = true;
+
+  // Escape — close LS sub-panels from topmost to bottommost.
+  // Each handled case stops propagation so the global handler doesn't double-fire.
+  // If no sub-panel is open, let the global handler deal with exiting LS or opening the menu.
   if(e.key === 'Escape') {
-    // Close NPC dialog first if open
+    const qmPanel = document.getElementById('ls-qm-panel');
+    if(qmPanel && qmPanel.style.display === 'flex') { lsCloseQmPanel?.(); e.stopPropagation(); return; }
+    const localsPanel = document.getElementById('ls-locals-panel');
+    if(localsPanel && localsPanel.classList.contains('on')) { lsCloseLocalsPanel?.(); e.stopPropagation(); return; }
     const dlg = document.getElementById('ls-npc-dialog');
-    if(dlg && dlg.classList.contains('on')) {
-      dlg.classList.remove('on'); LS.interactOpen = false; return;
-    }
+    if(dlg && dlg.classList.contains('on')) { dlg.classList.remove('on'); LS.interactOpen = false; e.stopPropagation(); return; }
+    const dockPanel = document.getElementById('ls-dock-panel');
+    if(dockPanel && dockPanel.classList.contains('on')) { closeLsDock?.(); e.stopPropagation(); return; }
     if(LS.interactOpen) {
       document.getElementById('ls-interact-panel').classList.remove('on');
-      LS.interactOpen=false; LS.nearPoi=null;
+      LS.interactOpen = false; LS.nearPoi = null;
+      e.stopPropagation(); return;
     }
+    // Nothing open — fall through to global ESC (will exit LS or open menu)
+    return;
   }
-  e.stopPropagation();
+  e.stopPropagation(); // non-Escape keys: block propagation so global shortcuts don't fire
 });
 document.addEventListener('keyup', e => {
   if(!document.getElementById('ov-localspace')?.classList.contains('on')) return;
