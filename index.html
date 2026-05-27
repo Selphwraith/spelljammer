@@ -21173,6 +21173,15 @@ document.addEventListener('keydown', e => {
   // Each handled case stops propagation so the global handler doesn't double-fire.
   // If no sub-panel is open, let the global handler deal with exiting LS or opening the menu.
   if(e.key === 'Escape') {
+    // Sidebar overlays opened from the LS toolbar take priority over LS sub-panels
+    const sidebarIds = ['ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-armory'];
+    for(const id of sidebarIds) {
+      const el = document.getElementById(id);
+      if(el && el.classList.contains('on')) {
+        closeOverlay(id.replace('ov-',''));
+        e.stopPropagation(); return;
+      }
+    }
     const qmPanel = document.getElementById('ls-qm-panel');
     if(qmPanel && qmPanel.style.display === 'flex') { lsCloseQmPanel?.(); e.stopPropagation(); return; }
     const localsPanel = document.getElementById('ls-locals-panel');
@@ -23958,7 +23967,7 @@ window.addEventListener('keydown', e=>{
     // All clear — toggle main menu
     const menu=document.getElementById('main-menu');
     if(menu&&!menu.classList.contains('hidden')){
-      if(_gameActive) hideMainMenu();
+      if(_gameActive) menuContinue();
     } else if(_gameActive){
       showMainMenu();
     }
