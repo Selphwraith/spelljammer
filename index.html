@@ -5800,6 +5800,73 @@ function sndVoice(vol = 1.0) {
   } catch(_) {}
 }
 
+// ── NPC VOICE LINE SYSTEM ────────────────────────────────────────────────
+// Plays character-specific voice lines from sounds/vo/npc_{id}_{type}.mp3
+// Line types: greet | q_progress | q_complete | all_done
+//
+// Files are loaded on first request and cached. Missing files are silently
+// skipped — the game works fine with any subset of lines recorded.
+// A HEAD fetch confirms existence before creating the Audio element, which
+// prevents spurious 404 console noise from the browser.
+
+const _npcVoiceCache = {};  // cacheKey → Audio element, or null if confirmed missing
+let   _npcVoiceEl    = null; // currently playing element (so we can stop it on new line)
+let   _npcVoiceSkip  = false; // set true to suppress ONE voice call (used after turn-in refresh)
+
+function playNpcVoice(npcId, lineType, vol = 1.0) {
+  if (_muted) return;
+  if ((_VOL?.master || 1) === 0 || (_VOL?.voice || 1) === 0) return;
+
+  // Stop any NPC voice currently playing
+  if (_npcVoiceEl) {
+    try { _npcVoiceEl.pause(); _npcVoiceEl.currentTime = 0; } catch(_) {}
+    _npcVoiceEl = null;
+  }
+
+  const path     = `sounds/vo/npc_${npcId}_${lineType}.mp3`;
+  const cacheKey = `${npcId}_${lineType}`;
+
+  if (_npcVoiceCache[cacheKey] === null) return; // confirmed missing — skip silently
+
+  const _play = (audioEl) => {
+    if (!audioEl) return;
+    try {
+      const c = audioEl.cloneNode();
+      c.volume = Math.min(1, Math.max(0, vol * (_VOL?.master || 1) * (_VOL?.voice || 1)));
+      c.play().catch(() => {});
+      _npcVoiceEl = c;
+    } catch(_) {}
+  };
+
+  if (_npcVoiceCache[cacheKey]) {
+    _play(_npcVoiceCache[cacheKey]); // already cached — play immediately
+    return;
+  }
+
+  // First request for this line — HEAD-check then cache and play
+  fetch(path, { method: 'HEAD' })
+    .then(r => {
+      if (!r.ok) { _npcVoiceCache[cacheKey] = null; return; } // not found — cache miss
+      const a = new Audio();
+      a.preload = 'auto';
+      a.src = path;
+      _npcVoiceCache[cacheKey] = a;
+      _play(a);
+    })
+    .catch(() => { _npcVoiceCache[cacheKey] = null; }); // network error — treat as missing
+}
+
+// Determine which voice line type to play when an NPC card opens.
+// Returns the lineType string to pass to playNpcVoice().
+function _npcOpenLineType(npc) {
+  if (!npc?.quests?.length) return 'greet'; // QM / shop-only NPC
+  const quest = npc.quests.find(q => (G.localQuests[q.id] || 'available') !== 'rewarded');
+  if (!quest) return 'all_done'; // every quest finished
+  const status = G.localQuests[quest.id] || 'available';
+  if (status === 'active' && !quest.check(G)) return 'q_progress'; // mid-quest, not ready
+  return 'greet'; // quest available, or ready to turn in (greeted warmly either way)
+}
+
 // ── Title music — 5-track shuffle cycling playlist ───────────────────────
 const _TITLE_TRACKS = ['title','title_2','title_3','title_4','title_5','title_6'];
 let _titleEl        = null;  // currently playing Audio element
@@ -19746,6 +19813,12 @@ function _lsOpenNpcCard(npc, hasShop=false) {
   ensureLqState();
   const dlg = document.getElementById('ls-npc-dialog');
 
+  // Play the appropriate NPC voice line (skip suppressed on post-turn-in refresh)
+  if (!_npcVoiceSkip) {
+    playNpcVoice(npc.id, _npcOpenLineType(npc));
+  }
+  _npcVoiceSkip = false;
+
   document.getElementById('ls-npc-dialog-portrait').textContent = npc.portrait || '🧑‍✈️';
   document.getElementById('ls-npc-dialog-portrait').style.borderColor = _h8(npc.color||'#4488ff','88');
   document.getElementById('ls-npc-dialog-name').textContent = npc.name;
@@ -19797,6 +19870,8 @@ function _lsOpenNpcCard(npc, hasShop=false) {
       turn.className='btn'; turn.textContent='⭐ Turn In Quest';
       turn.style.cssText='border-color:#664400;color:#ffaa33;';
       turn.onclick = () => {
+        playNpcVoice(npc.id, 'q_complete'); // play reward line before refresh suppresses voice
+        _npcVoiceSkip = true;               // suppress voice on the card refresh below
         G.localQuests[quest.id] = 'rewarded';
         quest.rewardFn(G);
         updateUI(); _lsUpdateHud();
@@ -20908,6 +20983,13 @@ document.getElementById('lq-canvas').addEventListener('click', e => {
 function showLqCard(npc) {
   ensureLqState();
   const card = document.getElementById('lq-card');
+
+  // Play the appropriate NPC voice line (skip suppressed on post-turn-in refresh)
+  if (!_npcVoiceSkip) {
+    playNpcVoice(npc.id, _npcOpenLineType(npc));
+  }
+  _npcVoiceSkip = false;
+
   document.getElementById('lq-portrait').textContent = npc.portrait;
   document.getElementById('lq-portrait').style.borderColor = _h8(npc.color,'88');
   document.getElementById('lq-npc-name').textContent = npc.name;
@@ -20984,6 +21066,8 @@ function lqAccept(quest, npc) {
 }
 
 function lqTurnIn(quest, npc) {
+  playNpcVoice(npc.id, 'q_complete'); // play reward line before refresh suppresses voice
+  _npcVoiceSkip = true;               // suppress voice on the showLqCard refresh below
   G.localQuests[quest.id] = 'rewarded';
   quest.rewardFn(G);
   updateUI();
