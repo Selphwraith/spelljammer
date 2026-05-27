@@ -5206,6 +5206,24 @@ function setAllVol(pct) {
 }
 
 // Keep toggleMute for backwards compatibility (keyboard shortcut M etc)
+// ── Resume music when tab comes back into focus ───────────────────────────
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  if (!_gameActive || _muted || G?.phase === 'combat') return;
+  if (_VOL.master === 0 || _VOL.music === 0) return;
+  // Small delay — let the browser settle the audio context before playing
+  setTimeout(() => {
+    const _dead = !_titleEl || _titleEl.paused || _titleEl.ended;
+    if (_dead) {
+      _titlePlayTrack(_titleNextTrack());
+    } else {
+      // Track exists but may have been paused by the browser — resume it
+      try { _titleEl.play().catch(()=>{}); } catch(_) {}
+      _titleVolume(0.35);
+    }
+    _musicWatchdogLast = Date.now(); // reset watchdog so it doesn't double-fire immediately
+  }, 400);
+});
 function toggleMute() {
   _VOL.master = _VOL.master > 0 ? 0 : 0.8;
   applyVolumes();
@@ -5788,6 +5806,7 @@ let _titleEl        = null;  // currently playing Audio element
 let _titleTrackIdx  = -1;    // index of current track in _titleShuffled
 let _titleShuffled  = [];    // shuffled copy of _TITLE_TRACKS
 let _titleFading    = false;
+let _musicWatchdogLast = 0;  // timestamp of last watchdog check
 
 function _titleShuffle() {
   // Fisher-Yates shuffle, ensuring the first track after a reshuffle
@@ -6711,6 +6730,23 @@ function renderLoop(ts=0) {
 
   // ── Zoom HUD (drawn in screen space) ─────────────────
   drawZoomHud(cx,W,H,t);
+
+  // ── Music watchdog — check every 5s; restart if silently stopped ─────────
+  // Covers: browser autoplay rejection mid-game, tab-background throttling,
+  // mobile audio session interruptions, and the 'ended' event not firing.
+  if (_gameActive && !_muted && G.phase !== 'combat') {
+    const _mwNow = Date.now();
+    if (!_musicWatchdogLast || _mwNow - _musicWatchdogLast >= 5000) {
+      _musicWatchdogLast = _mwNow;
+      const _mwDead = !_titleEl ||
+                      _titleEl.paused ||
+                      _titleEl.ended ||
+                      (_titleEl.currentTime === 0 && !_titleEl.paused === false);
+      if (_mwDead && _VOL.master > 0 && _VOL.music > 0) {
+        _titlePlayTrack(_titleNextTrack());
+      }
+    }
+  }
 }
 
 // ── Ship Drawing ──────────────────────────────────────
