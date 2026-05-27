@@ -1985,6 +1985,139 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
   background:#9966dd; border:2px solid #cc99ff; cursor:pointer;
 }
 
+/* ── TUTORIAL OVERLAY ──────────────────────────────────────────────────────── */
+#tut-overlay {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(460px, calc(100vw - 28px));
+  background: rgba(4, 0, 14, 0.97);
+  border: 1px solid rgba(255, 220, 80, 0.45);
+  border-radius: 8px;
+  box-shadow: 0 0 32px rgba(255, 180, 0, 0.18), 0 4px 24px rgba(0,0,0,0.7);
+  padding: 16px 18px 14px;
+  z-index: 1200;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  transform: translateX(-50%) translateY(12px);
+  font-family: 'Cinzel', serif;
+  user-select: none;
+}
+#tut-overlay.tut-visible {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateX(-50%) translateY(0);
+}
+#tut-overlay.tut-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(12px);
+}
+#tut-title {
+  font-size: 0.688em;
+  letter-spacing: 2.5px;
+  color: #ffdd44;
+  margin-bottom: 9px;
+  text-transform: uppercase;
+}
+#tut-body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 0.75em;
+  color: #ccbbdd;
+  line-height: 1.65;
+  margin-bottom: 12px;
+}
+#tut-body strong { color: #eeddff; }
+#tut-body em { color: #aa99cc; font-style: italic; }
+#tut-btn {
+  display: block;
+  margin-left: auto;
+  padding: 6px 18px;
+  background: transparent;
+  border: 1px solid rgba(255,220,80,0.5);
+  border-radius: 3px;
+  color: #ffdd88;
+  font-family: 'Cinzel', serif;
+  font-size: 0.688em;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+#tut-btn:hover {
+  background: rgba(255,220,80,0.12);
+  border-color: rgba(255,220,80,0.8);
+  color: #fff;
+}
+
+/* ── TUTORIAL COMBAT TIPS PANEL ─────────────────────────────────────────── */
+#tut-combat-panel {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  background: rgba(2, 0, 10, 0.88);
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cinzel', serif;
+}
+#tut-combat-panel.on { display: flex; }
+#tut-combat-inner {
+  background: rgba(6, 2, 20, 0.98);
+  border: 1px solid rgba(255, 100, 60, 0.5);
+  border-radius: 8px;
+  box-shadow: 0 0 40px rgba(200, 60, 0, 0.22);
+  padding: 22px 24px 18px;
+  max-width: 420px;
+  width: calc(100vw - 28px);
+}
+#tut-cbt-title {
+  font-size: 0.75em;
+  letter-spacing: 3px;
+  color: #ff8844;
+  text-align: center;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+#tut-cbt-body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 0.75em;
+  color: #ccbbdd;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+#tut-cbt-body strong { color: #ffccaa; }
+#tut-cbt-body .tut-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+#tut-cbt-body .tut-row-label {
+  color: #ff8844;
+  font-family: 'Cinzel', serif;
+  font-size: 0.85em;
+  letter-spacing: 1px;
+  min-width: 70px;
+  flex-shrink: 0;
+}
+#tut-cbt-dismiss {
+  display: block;
+  width: 100%;
+  padding: 9px 0;
+  background: rgba(255,80,20,0.08);
+  border: 1px solid rgba(255,100,50,0.5);
+  border-radius: 4px;
+  color: #ff9966;
+  font-family: 'Cinzel', serif;
+  font-size: 0.75em;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+#tut-cbt-dismiss:hover { background: rgba(255,80,20,0.18); color: #fff; }
+
 </style>
 </head>
 <body>
@@ -6000,6 +6133,150 @@ function wpnSound(wk) {
 // ║  GAME STATE                                          ║
 // ╚══════════════════════════════════════════════════════╝
 let G = {};
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║  TUTORIAL SYSTEM                                                         ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+
+const TUT_STEPS = {
+  1: {
+    title: '⚓ REFUGE STATION — LOCAL SPACE',
+    body: `You're now in <strong>Local Space</strong>. Pilot your ship with <strong>WASD</strong> keys, the virtual joystick, or <strong>tap/click</strong> anywhere to set a destination.<br><br>Head to the <strong>⚓ Dock</strong> at the centre of the station to check your supplies.`,
+    btn: 'Understood →',
+    highlight: 'dock',
+  },
+  2: {
+    title: '⚓ THE DOCK',
+    body: `The dock is your lifeline. From here you can:<br><br>🔧 <strong>Repair</strong> your hull<br>💨 <strong>Resupply</strong> air for the void<br>👥 <strong>Hire</strong> additional crew<br>🛒 Browse the <strong>Quartermaster's stock</strong> for upgrades and weapons<br><br>When you're done, find <strong>Admiral Soreth</strong> (🎖️) — he has your first mission orders.`,
+    btn: 'Got it →',
+    highlight: 'npc_admiral',
+  },
+  3: {
+    title: '🎖️ YOUR ORDERS',
+    body: `NPCs with a blinking <strong>!</strong> above them have something for you — a quest available or a turn-in waiting.<br><br>Approach <strong>Admiral Soreth</strong> and press <strong>📡 Hail</strong> to receive your orders.`,
+    btn: 'Aye aye →',
+    highlight: 'npc_admiral',
+  },
+  4: {
+    title: '⚔ CORSAIRS DETECTED',
+    body: `Two Drift Corsair scouts have been spotted at the edge of the patrol zone.<br><br>Fly toward the <strong>boundary of the sphere</strong> — follow the orange arrow on-screen. Combat triggers automatically when you enter their detection range.<br><br>Defeat both, then return to Admiral Soreth.`,
+    btn: 'Battle Stations →',
+    highlight: null,
+  },
+  6: {
+    title: '✦ CORSAIRS DESTROYED',
+    body: `Both hostiles eliminated. Well done, Captain.<br><br>Return to <strong>Admiral Soreth</strong> (🎖️) and hail him to report your kills and collect your reward.`,
+    btn: 'Return to Base →',
+    highlight: 'npc_admiral',
+  },
+  7: {
+    title: '🚀 THE DRIFT AWAITS',
+    body: `First mission logged. Six Navigation Cores still out there.<br><br>Use <strong>⛵ Depart System</strong> at the dock, or fly to the sphere edge to reach the <strong>map</strong>. Tap any connected sphere to plot a course.<br><br>⚠ Watch your <strong>💨 Air Supply</strong> — it drains every day of travel. Reach zero and the voyage ends.<br><br><em>The Captain's Journal (📖) has the full manual whenever you need it.</em>`,
+    btn: 'Set Sail →',
+    highlight: null,
+  },
+  8: {
+    title: '⏱ THE WATCH SYSTEM',
+    body: `Lane crossings are measured in <strong>watches</strong> — 8-hour shifts.<br><br>At the end of each watch you'll choose:<br><br>⚓ <strong>Anchor & Rest</strong> — Sleep until dawn. Crew returns to <em>Fresh</em> status. Hull repairs slightly.<br>➤ <strong>Push On</strong> — Keep moving through the night. Crew becomes <em>Fatigued</em>, then <em>Exhausted</em>. Exhausted crews deal less damage and suffer hull wear from navigation errors.<br><br>Longer journeys require multiple watches. Plan your rest carefully.`,
+    btn: 'Full Ahead →',
+    highlight: null,
+    onDismiss: '_tutComplete',
+  },
+};
+
+// ── Core step controller ──────────────────────────────────────────────────
+function _tutStep(n) {
+  if (!G.tutorial || G.tutorial.done) return;
+  // Never regress to an earlier step (except forced re-shows via _tutShow directly)
+  if (n <= G.tutorial.step && n !== 4 && n !== 6) return;
+  G.tutorial.step = n;
+  if (n >= 9) { _tutComplete(); return; }
+  _tutShow(n);
+}
+
+function _tutShow(n) {
+  const def = TUT_STEPS[n];
+  if (!def) return;
+  const ov = document.getElementById('tut-overlay');
+  if (!ov) return;
+  document.getElementById('tut-title').innerHTML = def.title;
+  document.getElementById('tut-body').innerHTML  = def.body;
+  const btn = document.getElementById('tut-btn');
+  btn.textContent = def.btn || 'Got it →';
+  btn.onclick = () => {
+    _tutHide();
+    if (def.onDismiss === '_tutComplete') _tutComplete();
+  };
+  ov.classList.remove('tut-hidden');
+  ov.classList.add('tut-visible');
+  if (typeof LS !== 'undefined') LS._tutHighlightPoi = def.highlight || null;
+}
+
+function _tutHide() {
+  const ov = document.getElementById('tut-overlay');
+  if (ov) { ov.classList.remove('tut-visible'); ov.classList.add('tut-hidden'); }
+  if (typeof LS !== 'undefined') LS._tutHighlightPoi = null;
+}
+
+function _tutComplete() {
+  if (!G?.tutorial) return;
+  G.tutorial.done = true;
+  G.tutorial.step = 9;
+  _tutHide();
+  document.getElementById('tut-combat-panel')?.classList.remove('on');
+  addLog("✦ Tutorial complete. The Drift is yours, Captain. The 📖 Captain's Journal holds the full manual when you need it.", 'imp');
+}
+
+// ── Triggered when the Admiral's Debt quest is accepted ──────────────────
+function _tutOnQuestAccept() {
+  if (!G.tutorial || G.tutorial.done || G.tutorial.step > 4) return;
+  _tutHide();
+  _tutSpawnCorsairs();
+  setTimeout(() => _tutStep(4), 400);
+}
+
+// ── Spawn tutorial corsairs near the Refuge sphere boundary ───────────────
+function _tutSpawnCorsairs() {
+  if (!LS || G.ship?.loc !== 'refuge') return;
+  const cx = LS.W / 2, cy = LS.H / 2;
+  const r  = Math.min(LS.W, LS.H) * 0.38;
+  _lsSpawnEnemy('corsair', cx + Math.cos(0.40) * r, cy + Math.sin(0.40) * r);
+  _lsSpawnEnemy('corsair', cx + Math.cos(0.90) * r, cy + Math.sin(0.90) * r);
+  addLog('⚔ Two Corsair scouts detected at the patrol boundary. Engage and eliminate.', 'dmg');
+}
+
+// ── Re-spawn tutorial corsairs if quest is active but enemies were cleared ─
+function _tutRespawnCorsairsIfNeeded() {
+  if (!G.tutorial || G.tutorial.done || G.tutorial.step !== 4) return;
+  if (G.ship?.loc !== 'refuge') return;
+  if (!G.localQuests || G.localQuests.refuge_q1 !== 'active') return;
+  const killsSoFar = G.localQuests.refuge_q1_kills || 0;
+  const stillNeeded = 2 - killsSoFar;
+  if (stillNeeded <= 0) return;
+  const existing = (LS.enemies || []).filter(e => e.key === 'corsair').length;
+  if (existing < stillNeeded) {
+    const toSpawn = stillNeeded - existing;
+    const cx = LS.W / 2, cy = LS.H / 2;
+    const r  = Math.min(LS.W, LS.H) * 0.38;
+    for (let i = 0; i < toSpawn; i++) {
+      _lsSpawnEnemy('corsair', cx + Math.cos(0.40 + i * 0.5) * r, cy + Math.sin(0.40 + i * 0.5) * r);
+    }
+    addLog('⚔ Corsair scouts still in the patrol zone. Engage to complete the mission.', 'dmg');
+  }
+}
+
+// ── Show the in-combat tutorial tips panel ────────────────────────────────
+function _tutShowCombatTips() {
+  const panel = document.getElementById('tut-combat-panel');
+  if (!panel) return;
+  panel.classList.add('on');
+}
+
+function _tutHideCombatTips() {
+  const panel = document.getElementById('tut-combat-panel');
+  if (panel) panel.classList.remove('on');
+  // step stays at 4 so kills still trigger step 6
+}
+
 function initGame() {
   if(G.tvl&&G.tvl.timer) _tvlStop(); if(G.tvl) G.tvl.timer = null;
   if(G.animId) cancelAnimationFrame(G.animId);
@@ -6085,6 +6362,7 @@ function initGame() {
     fragsCollected: new Set(),  // fragment site IDs whose guardians have been defeated
     _msgCb:null, _pendingLoot:[], _pendingGold:0, _pendingFragSite:null, atFragSite:null,
     _msgCb2:null, _resumeTravel:null, _restResumeBackup:null,
+    tutorial: { step: 0, done: false, combatTipShown: false },
     stars:[], phlo:[], animId:null,
     worldBossDefeated: new Set(),
     view:{zoom:1,panX:0,panY:0,follow:true,_pan:false,_lastMx:0,_lastMy:0,_didDrag:false},
@@ -6144,7 +6422,7 @@ function initGame() {
   loadShipImages();
   loadVoiceFiles();
   setTimeout(() => playTitle(), 300); // ensure title playing // slight delay lets audio context unlock on user gesture
-  addLog('Captain — IEF Scout Comet "IEF Vanguard" standing by at Refuge Station. Six Navigation Cores. One Trull Overmind. Orders received. Click a Planet to depart.','imp');
+  addLog("Captain — IEF Scout Comet 'IEF Vanguard' standing by at Refuge Station. Report to Admiral Soreth for your orders.", 'imp');
   addJournalEntry('Departed Refuge Station aboard the IEF Vanguard. Orders sealed, destination unknown to all but Command. Six Navigation Cores lie scattered across the Drift. The Trull Overmind must not be allowed to reassemble them. We sail at first light — if light means anything in the void between spheres.', 'imp');
 }
 
@@ -6491,17 +6769,16 @@ function renderLoop(ts=0) {
       const travelAngle = Math.atan2(dy, dx);
       const bob   = Math.sin(t*1.8)*2.2;
       const rock  = Math.sin(t*1.3)*0.055;
-      // Engine trail — scaled with _uiScale() so dots match ship size on PC
-      const _tsc = _uiScale();
-      const trailX = sx - Math.cos(travelAngle)*22*_tsc;
-      const trailY = sy - Math.sin(travelAngle)*22*_tsc;
+      // Engine trail
+      const trailX = sx - Math.cos(travelAngle)*22;
+      const trailY = sy - Math.sin(travelAngle)*22;
       for(let i=0;i<4;i++){
-        const tr = 0.6-i*0.13; const td = i*6*_tsc;
+        const tr = 0.6-i*0.13; const td = i*6;
         const tx2 = trailX - Math.cos(travelAngle)*td;
         const ty2 = trailY - Math.sin(travelAngle)*td;
         cx.globalAlpha = tr*0.55;
         cx.fillStyle = i<2 ? '#cc66ff' : '#7733aa';
-        cx.beginPath(); cx.arc(tx2,ty2,(3.5-i*0.6)*tr*_tsc,0,Math.PI*2); cx.fill();
+        cx.beginPath(); cx.arc(tx2,ty2,(3.5-i*0.6)*tr,0,Math.PI*2); cx.fill();
       }
       cx.globalAlpha=1;
       cx.save(); cx.translate(sx,sy); cx.rotate(travelAngle+rock);
@@ -7569,6 +7846,10 @@ function startTravel(toId, _resumeWatchesLeft, _pausedPos, _pausedProg, _savedLa
       : null;
 
   G.ship.atWp = null; G.ship.atFragSite = null;
+  // Tutorial: first departure from Refuge — teach the Watch system
+  if (G.tutorial && !G.tutorial.done && G.tutorial.step === 7 && G.ship.loc === 'refuge') {
+    setTimeout(() => _tutStep(8), 800);
+  }
   // On resume: set midLanePos to paused position — cleared on first tick so no visual jump
   G.ship.midLanePos = _pausedPos || null;
   const t = G.spheres.find(s=>s.id===toId);
@@ -11328,6 +11609,11 @@ function startCombat(key){
   setTimeout(()=>setAmbient('combat'), 600);
   cLog(`A ${t.name} drops out of the void! Battle stations!`,'dmg');
   cLog(`Choose your action.`,'');
+  // Tutorial: first-ever combat — show the combat tips panel
+  if (G.tutorial && !G.tutorial.done && G.tutorial.step === 4 && !G.tutorial.combatTipShown) {
+    G.tutorial.combatTipShown = true;
+    setTimeout(() => _tutShowCombatTips(), 500);
+  }
   // Idle mode — start AI combat loop after brief render delay
   if(G._idleMode) { _idleUpdateUI(); setTimeout(()=>_idleStartCombatLoop(), 1500); }
 
@@ -16944,6 +17230,7 @@ function _buildSaveEntry(slot, name) {
       watch: G.watch || {},
       journeyOrigWatches: G._journeyOrigWatches || 0,
       journeyWpHit: G._journeyWpHit || false,
+      tutorial: G.tutorial || null,
     })
   };
 }
@@ -17039,6 +17326,8 @@ function _applyLoad(save) {
     // restingPhase=true would make _anyOverlayOpen() block all map interaction forever.
     if (G.watch) { G.watch._pauseShown = false; G.watch.restingPhase = false; }
     G.localQuests = state.localQuests || {};
+    G.tutorial    = state.tutorial    || { step: 0, done: false, combatTipShown: false };
+    _tutHide(); // clear any in-progress tutorial overlay from before the load
     G._journeyOrigWatches = state.journeyOrigWatches || 0;
     G._journeyWpHit       = state.journeyWpHit       || false;
     G._lsQmStock   = state.lsQmStock   || null;
@@ -17711,23 +18000,25 @@ const LOCAL_QUEST_DATA = {
         name: 'Admiral Vayne Soreth',
         role: 'IEF — Commander, Fentheris System Sector',
         portrait: '🎖️', color: '#ffdd44',
-        greet: "Captain. Before you head back out — I have a standing tasking. We're tracking a Drift Corsair raider that's been hitting our supply runs between here and Fentheris System. Silver swords, stolen helm cores, our people. I want that ship found and destroyed. IEF doesn't leave debts unpaid.",
+        greet: "Captain — good, you're here. Before I clear you for independent operations, I need to know you're combat-ready. Two Corsair scouts have been spotted at the edge of our patrol zone — light ships, easy marks. Consider it a field certification. Destroy them and report back.",
         quests: [
           {
             id: 'refuge_q1',
-            title: "The Admiral's Debt",
-            desc: "A Drift Corsair raider has been systematically targeting IEF supply runs from Refuge. Three crews lost, two helm cores stolen. Admiral Soreth wants retribution — and the lanes cleared.",
-            task: 'Destroy 2 Corsair ships on any lane and return to Admiral Soreth.',
+            title: "Field Certification",
+            desc: "Admiral Soreth wants to confirm you're ready for independent operations before clearing you for the Drift. Two Drift Corsair scouts have been spotted at the edge of Refuge's patrol zone — destroy them and report back.",
+            task: 'Destroy 2 Corsair scouts at the patrol boundary and return to Admiral Soreth.',
             reward: '🔷 200 TS + 🗡️ Silver Astral Blade Fragment (artifact)',
             type: 'combat',
-            checkDesc: 'Destroy 2 Corsair ships.',
+            checkDesc: 'Destroy 2 Corsair scouts at the patrol boundary.',
             check: (G) => (G.localQuests?.refuge_q1_kills || 0) >= 2,
             rewardFn: (G) => {
               G.ship.gold += 200;
               G.ship.inv.push({...ITEMS['silblade'], uid: uid()});
               addLog("The Admiral sets down a silver astral blade shard on the nav table. 'Recovered from one of our lost ships. It belongs with someone who will use it. 200 TS from the discretionary fund — the Admiral's aide need not know.'", 'gd');
+              // Tutorial: quest turned in — point toward the Drift
+              if (G.tutorial && !G.tutorial.done && G.tutorial.step <= 7) setTimeout(() => _tutStep(7), 700);
             },
-            trigger: (G) => { G.localQuests.refuge_q1_kills = 0; }
+            trigger: (G) => { G.localQuests.refuge_q1_kills = 0; _tutOnQuestAccept(); }
           }
         ]
       },
@@ -18634,6 +18925,14 @@ function openLocalSpace() {
   document.getElementById('ls-dock-panel').classList.remove('on');
   _lsUpdateHud();
   _lsLog('Navigate to a point of interest. WASD or click to move.');
+  // Tutorial: first-ever entry at Refuge triggers step 1
+  if (G.tutorial && !G.tutorial.done && G.tutorial.step === 0 && (G.ship?.loc === 'refuge')) {
+    setTimeout(() => _tutStep(1), 600);
+  }
+  // Tutorial step 4: re-spawn corsairs if quest active but none exist (covers save+reload)
+  if (G.tutorial && !G.tutorial.done && G.tutorial.step === 4 && G.ship?.loc === 'refuge') {
+    setTimeout(() => _tutRespawnCorsairsIfNeeded(), 400);
+  }
   _syncWatchHudVisibility();
 
   // Check touch device for joystick
@@ -18940,6 +19239,8 @@ function closeLsDock() {
   document.getElementById('ls-dock-panel').classList.remove('on');
   LS.dockOpen = false;
   _lsLog('Departed station. Safe travels, Captain.');
+  // Tutorial: leaving the dock for the first time → point toward the Admiral
+  if (G.tutorial && !G.tutorial.done && G.tutorial.step === 2) setTimeout(() => _tutStep(3), 300);
 }
 
 function lsDockDeliverCargo() {
@@ -19500,16 +19801,15 @@ function _lsUpdatePlayer(dt) {
     }
   }
 
-  // Engine trail particles — scaled with _uiScale() so they match ship size on PC
-  const _sc = _uiScale();
-  if(spd > 8 * _sc) {
+  // Engine trail particles
+  if(spd > 8) {
     const trailAngle = LS.pAngle + Math.PI + (Math.random()-0.5)*0.3;
     LS.particles.push({
-      x: LS.px + Math.cos(trailAngle)*12*_sc,
-      y: LS.py + Math.sin(trailAngle)*12*_sc,
-      vx: Math.cos(trailAngle)*(20+Math.random()*15)*_sc,
-      vy: Math.sin(trailAngle)*(20+Math.random()*15)*_sc,
-      life:1, maxLife:0.55+Math.random()*0.25, r:(2.5+Math.random()*2)*_sc,
+      x: LS.px + Math.cos(trailAngle)*12,
+      y: LS.py + Math.sin(trailAngle)*12,
+      vx: Math.cos(trailAngle)*(20+Math.random()*15),
+      vy: Math.sin(trailAngle)*(20+Math.random()*15),
+      life:1, maxLife:0.55+Math.random()*0.25, r:2.5+Math.random()*2,
       col:`rgba(${120+Math.floor(Math.random()*80)},80,255,`
     });
   }
@@ -19717,6 +20017,8 @@ function _lsShowInteract(poi) {
       panel.classList.remove('on');
       _lsRefreshDock();
       document.getElementById('ls-dock-panel').classList.add('on');
+      // Tutorial: docking for first time
+      if (G.tutorial && !G.tutorial.done && G.tutorial.step === 1) setTimeout(() => _tutStep(2), 400);
     };
     btns.appendChild(dockBtn);
 
@@ -19955,6 +20257,11 @@ function _lsEnemySpawnTick(dt) {
   if(LS._enemySpawnTimer < LS._enemySpawnInterval) return;
   LS._enemySpawnTimer = 0;
 
+  // Never auto-spawn enemies in Refuge — it's a safe zone and tutorial corsairs are placed manually
+  if ((G.ship?.loc === 'refuge') || (G.tutorial && !G.tutorial.done && G.tutorial.step <= 8)) {
+    if (G.ship?.loc === 'refuge') return;
+  }
+
   // Only spawn new enemies during the active 10-day spawn window for this sphere.
   // Once the window expires, no new enemies appear until the player returns after day +10.
   const _spSphId  = G.ship?.loc || 'realm';
@@ -20051,6 +20358,26 @@ function _lsRender(cx, W, H, dt) {
     const grd = cx.createRadialGradient(p.x,p.y,0,p.x,p.y,38);
     grd.addColorStop(0,hexA(p.col,'33')); grd.addColorStop(1,'transparent');
     cx.fillStyle=grd; cx.beginPath(); cx.arc(p.x,p.y,38,0,Math.PI*2); cx.fill();
+
+    // Tutorial highlight ring — pulses bright gold on the target POI
+    if (LS._tutHighlightPoi && p.id === LS._tutHighlightPoi) {
+      const tPulse = 0.5 + 0.5 * Math.sin(LS.t * 3.5);
+      cx.save();
+      cx.globalAlpha = 0.45 + 0.45 * tPulse;
+      cx.strokeStyle = '#ffdd44';
+      cx.lineWidth = 2.5;
+      cx.setLineDash([5, 4]);
+      cx.beginPath(); cx.arc(p.x, p.y, p.r + 14 + tPulse * 8, 0, Math.PI * 2); cx.stroke();
+      cx.setLineDash([]);
+      // Second outer ring, slower
+      const tPulse2 = 0.5 + 0.5 * Math.sin(LS.t * 1.8 + 1.2);
+      cx.globalAlpha = 0.2 + 0.2 * tPulse2;
+      cx.lineWidth = 1.5;
+      cx.setLineDash([3, 7]);
+      cx.beginPath(); cx.arc(p.x, p.y, p.r + 28 + tPulse2 * 10, 0, Math.PI * 2); cx.stroke();
+      cx.setLineDash([]);
+      cx.restore();
+    }
 
     // Pulse ring for dock and fragment
     if(p.type==='dock'||p.type==='fragment') {
@@ -20254,6 +20581,51 @@ function _lsRender(cx, W, H, dt) {
   }
 
   cx.restore(); // end world transform
+
+  // ── Tutorial compass arrow — points toward nearest corsair during step 4 ──
+  if (G.tutorial && !G.tutorial.done && G.tutorial.step === 4 && LS.enemies?.length) {
+    const corsairs = LS.enemies.filter(e => e.key === 'corsair');
+    if (corsairs.length) {
+      // Find nearest corsair
+      let nearest = corsairs[0];
+      let nearestDist = Infinity;
+      corsairs.forEach(e => {
+        const d = Math.hypot(e.x - LS.px, e.y - LS.py);
+        if (d < nearestDist) { nearestDist = d; nearest = e; }
+      });
+      // Convert world pos → screen pos
+      const scx = W / 2 + (nearest.x - LS.px) * 1;
+      const scy = H / 2 + (nearest.y - LS.py) * 1;
+      const dx = scx - W / 2, dy = scy - H / 2;
+      const dist = Math.hypot(dx, dy);
+      // Only draw arrow if corsair is off-screen
+      if (dist > Math.min(W, H) * 0.38) {
+        const angle = Math.atan2(dy, dx);
+        const margin = 54;
+        const ax = W / 2 + Math.cos(angle) * (Math.min(W, H) / 2 - margin);
+        const ay = H / 2 + Math.sin(angle) * (Math.min(W, H) / 2 - margin);
+        const pulse = 0.6 + 0.4 * Math.sin(LS.t * 4);
+        cx.save();
+        cx.globalAlpha = pulse;
+        cx.translate(ax, ay);
+        cx.rotate(angle);
+        // Arrow body
+        cx.fillStyle = '#ff8833';
+        cx.strokeStyle = '#331100';
+        cx.lineWidth = 1.5;
+        cx.beginPath();
+        cx.moveTo(18, 0); cx.lineTo(4, -8); cx.lineTo(4, -3);
+        cx.lineTo(-14, -3); cx.lineTo(-14, 3); cx.lineTo(4, 3); cx.lineTo(4, 8);
+        cx.closePath(); cx.fill(); cx.stroke();
+        // ⚔ label
+        cx.globalAlpha = pulse * 0.9;
+        cx.font = 'bold 10px Arial'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+        cx.fillStyle = '#ffcc88';
+        cx.fillText('⚔', 0, -16);
+        cx.restore();
+      }
+    }
+  }
 }
 
 function _lsEnemyColor(key) {
@@ -22466,6 +22838,12 @@ function lqTrackKill(enemyKey) {
       G.localQuests[t.qid] = (G.localQuests[t.qid] || 0) + 1;
     }
   });
+  // Tutorial: check if the Admiral's Debt is now complete
+  if (G.tutorial && !G.tutorial.done && G.tutorial.step <= 5) {
+    if ((G.localQuests?.refuge_q1_kills || 0) >= 2) {
+      setTimeout(() => _tutStep(6), 900);
+    }
+  }
 }
 
 // ── Button visibility ─────────────────────────────────────────
@@ -23578,16 +23956,15 @@ function lpoiRender(ts){
   const nx=LPOI.px+LPOI.pvx*dt, ny=LPOI.py+LPOI.pvy*dt;
   if(_lpoiWalkable(nx,LPOI.py)) LPOI.px=nx; else { LPOI.pvx*=-0.15; LPOI.pTargetX=null; }
   if(_lpoiWalkable(LPOI.px,ny)) LPOI.py=ny; else { LPOI.pvy*=-0.15; LPOI.pTargetY=null; }
-  // Engine trail particles — scaled with _uiScale() so they match ship size on PC
-  const _lsc = _uiScale();
-  if(spd>8*_lsc){
+  // Engine trail particles
+  if(spd>8){
     const trailAngle=LPOI.pAngle+Math.PI+(Math.random()-0.5)*0.35;
     LPOI.particles.push({
-      x:LPOI.px+Math.cos(trailAngle)*10*_lsc, y:LPOI.py+Math.sin(trailAngle)*10*_lsc,
-      vx:Math.cos(trailAngle)*(18+Math.random()*14)*_lsc,
-      vy:Math.sin(trailAngle)*(18+Math.random()*14)*_lsc,
+      x:LPOI.px+Math.cos(trailAngle)*10, y:LPOI.py+Math.sin(trailAngle)*10,
+      vx:Math.cos(trailAngle)*(18+Math.random()*14),
+      vy:Math.sin(trailAngle)*(18+Math.random()*14),
       life:1, maxLife:0.45+Math.random()*0.2,
-      r:(2+Math.random()*1.8)*_lsc,
+      r:2+Math.random()*1.8,
       col:`rgba(${110+Math.floor(Math.random()*90)},70,255,`
     });
   }
@@ -23832,15 +24209,14 @@ function lpoiRender(ts){
 
     // — Engine trail particles — only generate when visible
     const espd=Math.hypot(e.vx,e.vy);
-    const _esc=_uiScale();
-    if(eVisible&&espd>6*_esc&&Math.random()<0.6){
+    if(eVisible&&espd>6&&Math.random()<0.6){
       const eTrail=e.angle+Math.PI+(Math.random()-0.5)*0.4;
       const ecol=e.isTough?`rgba(255,${80+Math.floor(Math.random()*50)},20,`
                           :`rgba(255,${20+Math.floor(Math.random()*40)},60,`;
       e.particles.push({
-        x:e.x+Math.cos(eTrail)*10*_esc, y:e.y+Math.sin(eTrail)*10*_esc,
-        vx:Math.cos(eTrail)*(15+Math.random()*12)*_esc, vy:Math.sin(eTrail)*(15+Math.random()*12)*_esc,
-        life:1, maxLife:0.35+Math.random()*0.2, r:(1.8+Math.random()*1.5)*_esc, col:ecol
+        x:e.x+Math.cos(eTrail)*10, y:e.y+Math.sin(eTrail)*10,
+        vx:Math.cos(eTrail)*(15+Math.random()*12), vy:Math.sin(eTrail)*(15+Math.random()*12),
+        life:1, maxLife:0.35+Math.random()*0.2, r:1.8+Math.random()*1.5, col:ecol
       });
     }
     e.particles=e.particles.filter(p=>{
@@ -25673,6 +26049,42 @@ document.addEventListener('visibilitychange', () => {
     font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;padding:6px 18px;
     cursor:pointer;border-radius:2px;">⏭ SKIP INTRO</div>
 </div>
-<!-- ═══ VOLUME PANEL (fixed position, always accessible) ═══ -->
+<!-- ═══ TUTORIAL TOOLTIP OVERLAY ═══ -->
+<div id="tut-overlay" class="tut-hidden" role="dialog" aria-label="Tutorial">
+  <div id="tut-title">TUTORIAL</div>
+  <div id="tut-body"></div>
+  <button id="tut-btn">Got it →</button>
+</div>
+
+<!-- ═══ TUTORIAL COMBAT TIPS PANEL ═══ -->
+<div id="tut-combat-panel">
+  <div id="tut-combat-inner">
+    <div id="tut-cbt-title">⚔ SHIP COMBAT — FIRST ENGAGEMENT</div>
+    <div id="tut-cbt-body">
+      <div class="tut-row">
+        <span class="tut-row-label">Initiative</span>
+        <span>Higher initiative fires <strong>first</strong> each round. Check yours vs. the enemy's under the ship portrait.</span>
+      </div>
+      <div class="tut-row">
+        <span class="tut-row-label">Weapons</span>
+        <span>Select a weapon and press <strong>Fire</strong>. Each weapon has a reload time — heavier guns hit harder but reload slower.</span>
+      </div>
+      <div class="tut-row">
+        <span class="tut-row-label">Hull / Crew</span>
+        <span>If <strong>Hull</strong> reaches zero, your ship is destroyed. If <strong>Crew</strong> reaches zero, you can no longer fight effectively.</span>
+      </div>
+      <div class="tut-row">
+        <span class="tut-row-label">Inventory</span>
+        <span>Press <strong>🎒 Items</strong> during your turn to use consumables — repair kits, crew mead, and special relics.</span>
+      </div>
+      <div class="tut-row">
+        <span class="tut-row-label">Retreat</span>
+        <span>You can always <strong>Retreat</strong> — you lose the fight but preserve your ship. Sometimes the better call.</span>
+      </div>
+    </div>
+    <button id="tut-cbt-dismiss" onclick="_tutHideCombatTips()">⚔ BATTLE STATIONS — BEGIN COMBAT</button>
+  </div>
+</div>
+
 </body>
 </html>
