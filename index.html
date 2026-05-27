@@ -9122,6 +9122,47 @@ const KBNav = (() => {
       isActive:  () => document.getElementById('cin-ovl')?.style.display === 'flex',
       confirm:   (el) => el.click(),
     },
+    // ── Sidebar overlays (openable from LPOI toolbar, map, port, etc.) ────────
+    {
+      id: 'shp',
+      container: () => document.getElementById('ov-shp'),
+      selector:  'button:not([disabled])',
+      allSelector: 'button',
+      isActive:  () => document.getElementById('ov-shp')?.classList.contains('on'),
+      confirm:   (el) => el.click(),
+    },
+    {
+      id: 'qlog',
+      container: () => document.getElementById('ov-qlog'),
+      selector:  '.qlog-entry, button:not([disabled])',
+      allSelector: '.qlog-entry, button',
+      isActive:  () => document.getElementById('ov-qlog')?.classList.contains('on'),
+      confirm:   (el) => el.click(),
+    },
+    {
+      id: 'journal',
+      container: () => document.getElementById('ov-journal'),
+      selector:  '.journal-entry, button:not([disabled])',
+      allSelector: '.journal-entry, button',
+      isActive:  () => document.getElementById('ov-journal')?.classList.contains('on'),
+      confirm:   (el) => el.click(),
+    },
+    {
+      id: 'armory',
+      container: () => document.getElementById('ov-armory'),
+      selector:  '.armory-card:not(.dis), button:not([disabled])',
+      allSelector: '.armory-card, button',
+      isActive:  () => document.getElementById('ov-armory')?.classList.contains('on'),
+      confirm:   (el) => el.click(),
+    },
+    {
+      id: 'lpoi-interact',
+      container: () => document.getElementById('lpoi-interact-btns'),
+      selector:  'button:not([disabled])',
+      allSelector: 'button',
+      isActive:  () => document.getElementById('lpoi-interact-panel')?.classList.contains('on'),
+      confirm:   (el) => el.click(),
+    },
   ];
 
   // ── Internals ────────────────────────────────────────────────────────────
@@ -9242,7 +9283,7 @@ function kbNavKey(e) {
 // ── Wire hover sync so mouse and keyboard stay in sync ──────────────────────
 document.addEventListener('mouseover', e => {
   const el = e.target.closest(
-    '.sitem, .shop-card, .wpnp-slot, .inv-item, .lq-shop-item, .wpn-card, .loot-card'
+    '.sitem, .shop-card, .wpnp-slot, .inv-item, .lq-shop-item, .wpn-card, .loot-card, .qlog-entry, .journal-entry, .armory-card'
   );
   if (el) KBNav.syncHover(el);
 }, { passive: true });
@@ -9250,7 +9291,7 @@ document.addEventListener('mouseover', e => {
 // ── Mouse wheel on overlays ──────────────────────────────────────────────────
 document.addEventListener('wheel', e => {
   const inOverlay = e.target.closest(
-    '#ov-port, #ov-waypoint, #ov-wpnpicker, #ov-inv, #lq-shop, #roam-result, #loot-grid, #cacts, #ov-wpn, #ov-dockmaster, #msgbox'
+    '#ov-port, #ov-waypoint, #ov-wpnpicker, #ov-inv, #lq-shop, #roam-result, #loot-grid, #cacts, #ov-wpn, #ov-dockmaster, #msgbox, #ov-shp, #ov-qlog, #ov-journal, #ov-armory, #lpoi-interact-btns'
   );
   if (inOverlay) {
     if (KBNav.onWheel(e.deltaY)) {
@@ -10801,10 +10842,13 @@ let _cbtDragSection = null; // 'usable' | 'cargo'
 function openCbtInv() {
   buildCbtInvOverlay();
   document.getElementById('ov-cbt-inv').classList.add('on');
+  requestAnimationFrame(_cbtKbRebuildInv);
 }
 
 function closeCbtInv() {
   document.getElementById('ov-cbt-inv').classList.remove('on');
+  // Return focus to main combat panel
+  requestAnimationFrame(_cbtKbRebuild);
 }
 
 function cbtInvSort(mode) {
@@ -13895,7 +13939,7 @@ function buildCbtPanels() {
   const abilityRow  = document.getElementById('cbt-abilities');
   if (!playerPanel || !enemyPanel || !abilityRow) return;
 
-  playerPanel.innerHTML = '<div class="cbt-panel-title">⚔ Your Weapons</div>';
+  playerPanel.innerHTML = '<div class="cbt-panel-title">⚔ Your Weapons <span style="font-size:8px;color:#3a2255;font-family:Arial,sans-serif;letter-spacing:0;font-weight:400;"> ↑↓ navigate · Enter confirm</span></div>';
   enemyPanel.innerHTML  = '<div class="cbt-panel-title enemy-title">☠ Enemy Systems</div>';
 
   // Enemy crew bar
@@ -14071,10 +14115,112 @@ function buildCbtPanels() {
   const fb = document.createElement('button'); fb.className = 'btn dmg';
   fb.textContent = '💨 Flee (50% chance)';
   fb.onclick = () => doAction('flee'); abilityRow.appendChild(fb);
+
+  // Rebuild keyboard nav focus list after every panel refresh
+  requestAnimationFrame(_cbtKbRebuild);
 }
 
 // Legacy alias
 function buildCbtBtns() { buildCbtPanels(); }
+
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║  COMBAT KEYBOARD NAVIGATION (CbtKb)                                      ║
+// ║  Arrow up/down to move focus, Enter to activate, Escape to back out.     ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+const CbtKb = {
+  // ── Two contexts: 'main' (weapons + ability row) and 'inv' (item overlay) ──
+  mode:   null,   // 'main' | 'inv' | null (inactive)
+  items:  [],     // flat ordered array of focusable elements for current context
+  idx:    -1,     // currently focused index (-1 = nothing)
+};
+
+// Called by buildCbtPanels() — rebuilds the focusable list after every turn
+function _cbtKbRebuild() {
+  _cbtKbClearFocus();
+  if (!G.cbt?.pTurn) { CbtKb.mode = null; CbtKb.items = []; CbtKb.idx = -1; return; }
+  CbtKb.mode = 'main';
+
+  const items = [];
+  // 1. Weapon cards (ready ones first so first focus hit is an action)
+  document.querySelectorAll('#cbt-player-wpns .cbt-wpn-card.ready').forEach(el => items.push(el));
+  document.querySelectorAll('#cbt-player-wpns .cbt-wpn-card.on-cooldown').forEach(el => items.push(el));
+  // 2. Enemy weapon cards when in targeting mode
+  document.querySelectorAll('#cbt-enemy-wpns .cbt-ewpn-card.e-targetable').forEach(el => items.push(el));
+  // 3. Ability row buttons (Evade, Sig, Repair, Items, Flee…)
+  document.querySelectorAll('#cbt-abilities button:not(:disabled)').forEach(el => items.push(el));
+  // 4. Cancel targeting button if present
+  document.querySelectorAll('#cbt-abilities .btn.dmg').forEach(el => {
+    if (el.textContent.includes('Cancel')) items.push(el);
+  });
+
+  CbtKb.items = items;
+  CbtKb.idx   = -1;
+}
+
+// Called by openCbtInv() — switch context to inventory overlay
+function _cbtKbRebuildInv() {
+  _cbtKbClearFocus();
+  CbtKb.mode = 'inv';
+  CbtKb.items = Array.from(document.querySelectorAll('#cbt-inv-usables .cbt-inv-usable'));
+  CbtKb.idx   = -1;
+}
+
+function _cbtKbClearFocus() {
+  CbtKb.items.forEach(el => el.classList.remove('kb-focus'));
+}
+
+function _cbtKbSetFocus(n) {
+  _cbtKbClearFocus();
+  if (!CbtKb.items.length) return;
+  CbtKb.idx = ((n % CbtKb.items.length) + CbtKb.items.length) % CbtKb.items.length;
+  const el = CbtKb.items[CbtKb.idx];
+  el.classList.add('kb-focus');
+  el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function _cbtKbActivate() {
+  if (CbtKb.idx < 0 || !CbtKb.items[CbtKb.idx]) return;
+  const el = CbtKb.items[CbtKb.idx];
+  el.classList.remove('kb-focus');
+  el.click();
+}
+
+// ── Global keydown handler for combat keyboard nav ────────────────────────
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('ov-combat')?.classList.contains('on')) return;
+  if (CbtKb.mode === null) return;
+
+  const key = e.key;
+  const isUp    = key === 'ArrowUp'   || key === 'w' || key === 'W';
+  const isDown  = key === 'ArrowDown' || key === 's' || key === 'S';
+  const isEnter = key === 'Enter';
+  const isEsc   = key === 'Escape';
+
+  if (!isUp && !isDown && !isEnter && !isEsc) return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  if (isEsc) {
+    _cbtKbClearFocus();
+    CbtKb.idx = -1;
+    if (CbtKb.mode === 'inv') {
+      closeCbtInv();         // ESC inside inventory → close it, return to main
+      _cbtKbRebuild();
+    }
+    return;
+  }
+
+  // If nothing focused yet, first arrow press focuses index 0
+  if (CbtKb.idx < 0) {
+    _cbtKbSetFocus(isUp ? CbtKb.items.length - 1 : 0);
+    return;
+  }
+
+  if (isUp)   { _cbtKbSetFocus(CbtKb.idx - 1); return; }
+  if (isDown) { _cbtKbSetFocus(CbtKb.idx + 1); return; }
+  if (isEnter){ _cbtKbActivate(); return; }
+});
+
 
 // ── RESOLVE TARGETING — called when player clicks an enemy weapon card ──
 async function resolveTargeting(idx) {
@@ -15201,6 +15347,8 @@ function endCbt(won){
   document.getElementById('ov-cbt-inv')?.classList.remove('on');
   const invPanel = document.getElementById('cbt-inv-panel');
   if (invPanel) invPanel.classList.remove('on');
+  // Reset keyboard nav state
+  CbtKb.mode = null; CbtKb.items = []; CbtKb.idx = -1;
   setAmbient('map');
   // Lane POI combat — return to POI overlay instead of resuming travel
   if(G._resumeLanePoi){
@@ -15466,6 +15614,7 @@ function _closeSidebarOverlays() {
 
 function openOverlay(which){
   _closeSidebarOverlays();
+  _kbNavResetOnClose();  // clear any stale focus from previous overlay
   if(which==='inv'){     buildInvGrid();       document.getElementById('ov-inv').classList.add('on'); }
   if(which==='wpn'){     buildWpnOverlay();    document.getElementById('ov-wpn').classList.add('on'); }
   if(which==='shp'){     buildShipOverlay();   document.getElementById('ov-shp').classList.add('on'); }
@@ -17257,6 +17406,22 @@ function showMainMenu() {
   setTag('Main Menu');
   if (_gameActive) _stopLoop();
   playTitle();
+  // ── Pause active travel sequence so no ticks or collisions fire ──────────
+  if (G?.phase === 'traveling') {
+    _tvlStop();
+    pauseLiveClock();
+    if (TS.animId) { cancelAnimationFrame(TS.animId); TS.animId = null; }
+    TS._menuPaused = true;
+    const lbl  = document.getElementById('btn-continue-label');
+    const desc = document.getElementById('btn-continue-desc');
+    if (lbl)  lbl.textContent  = 'Resume Voyage';
+    if (desc) desc.textContent = 'Return to the travel sequence — objects paused';
+  } else {
+    const lbl  = document.getElementById('btn-continue-label');
+    const desc = document.getElementById('btn-continue-desc');
+    if (lbl)  lbl.textContent  = 'Continue';
+    if (desc) desc.textContent = 'Return to your active voyage';
+  }
   // Sync Options sliders to current values every time the menu opens
   requestAnimationFrame(_updateVolSliders);
 }
@@ -17290,16 +17455,25 @@ function menuContinue() {
   if (!_gameActive) return;
   hideMainMenu();
   // Keep music seamless — only (re)start the playlist if nothing is currently playing.
-  // If a track is already mid-play, leave it alone; opening/closing the menu should
-  // never interrupt or restart the in-game music.
   if (!_titleEl || _titleEl.paused || _titleEl.ended) {
     _titleStartGamePlaylist();
   } else {
-    // Track is running — just ensure volume is correct for the current phase
     _titleVolume(G?.phase === 'combat' ? 0.00 : 0.35);
   }
   if (G.phase === 'combat') setTimeout(() => setAmbient('combat'), 100);
   setTag(G.phase === 'port' ? `Port — ${G.spheres.find(s=>s.id===G.ship.loc)?.n||''}` : 'Navigation');
+  // ── Resume travel sequence if it was paused by menu ──────────────────────
+  if (G?.phase === 'traveling' && TS._menuPaused) {
+    TS._menuPaused = false;
+    TS.keys = {};  // clear any held keys so ship doesn't lurch on resume
+    TS._lastTs = null;  // reset frame delta so first frame after resume isn't huge
+    resumeLiveClock();
+    // Restart the travel tick worker
+    const _tvlTickMs = Math.max(50, Math.round(getWatchRealMs() / Math.max(40, G.tvl?.steps || 60)));
+    _tvlStart(_tvlTickMs);
+    // Restart the TS render loop
+    if (!TS.animId) TS.animId = requestAnimationFrame(tsRender);
+  }
 }
 
 function menuShowBriefing() {
@@ -21025,12 +21199,44 @@ document.addEventListener('keyup', e => {
 // ── LPOI keyboard movement — mirrors LS pattern ───────────────────────────
 document.addEventListener('keydown', e => {
   if(!document.getElementById('ov-lane-poi')?.classList.contains('on')) return;
-  if(LPOI.interactOpen) return;
-  LPOI.keys[e.key] = true;
-  if(e.key==='Escape'){
-    const panel=document.getElementById('lpoi-interact-panel');
-    if(panel&&panel.classList.contains('on')){ panel.classList.remove('on'); LPOI.interactOpen=false; LPOI.nearPoi=null; }
+
+  // Escape: close sidebar overlays first (inv/wpn/shp/qlog/journal open from toolbar),
+  // then close lpoi-interact-panel, then fall through to global handler for exiting LPOI.
+  if(e.key === 'Escape') {
+    const sidebarIds = ['ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-armory'];
+    for(const id of sidebarIds) {
+      const el = document.getElementById(id);
+      if(el && el.classList.contains('on')) {
+        closeOverlay(id.replace('ov-',''));
+        e.stopPropagation(); return;
+      }
+    }
+    const panel = document.getElementById('lpoi-interact-panel');
+    if(panel && panel.classList.contains('on')) {
+      panel.classList.remove('on'); LPOI.interactOpen = false; LPOI.nearPoi = null;
+      e.stopPropagation(); return;
+    }
+    const survivor = document.getElementById('lpoi-survivor-dialog');
+    if(survivor && survivor.classList.contains('on')) {
+      // don't close survivor dialog with ESC — let global handler pass through
+      return;
+    }
+    // Nothing open — fall through to global ESC (exits LPOI or opens menu)
+    return;
   }
+
+  // Arrow keys: let KBNav handle sidebar overlays; otherwise move LPOI ship
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key) || e.key === 'Enter') {
+    // If any sidebar overlay is open, let the global kbNavKey handler run (don't eat the key)
+    const sidebarOpen = ['ov-inv','ov-wpn','ov-shp','ov-qlog','ov-journal','ov-armory']
+      .some(id => document.getElementById(id)?.classList.contains('on'));
+    if(sidebarOpen) return; // fall through to global keydown (kbNavKey)
+    const interactOpen = document.getElementById('lpoi-interact-panel')?.classList.contains('on');
+    if(interactOpen) return; // let KBNav handle interact buttons
+  }
+
+  if(LPOI.interactOpen) { e.stopPropagation(); return; }
+  LPOI.keys[e.key] = true;
   e.stopPropagation();
 });
 document.addEventListener('keyup', e => {
@@ -25853,7 +26059,7 @@ document.addEventListener('visibilitychange', () => {
     </button>
     <button class="mm-btn" id="btn-continue" onclick="menuContinue()" disabled>
       <span class="mm-ico">⛵</span>
-      <span><span>Continue</span><span class="mm-desc">Return to your active voyage</span></span>
+      <span><span id="btn-continue-label">Continue</span><span class="mm-desc" id="btn-continue-desc">Return to your active voyage</span></span>
     </button>
     <button class="mm-btn" id="btn-save" onclick="menuShowSave()" disabled>
       <span class="mm-ico">💾</span>
