@@ -9439,6 +9439,8 @@ const TS = {
   keys: {},              // WASD keydown state
   _hitFlash: 0,          // screen flash timer on hull impact
   _playerHitCd: 0,       // brief cooldown so multi-object hits don't stack
+  _hitShake: 0,          // screen shake timer
+  _hitShakeAmt: 0,       // shake amplitude in px
 };
 
 // ── Image preload registry ──────────────────────────────────────────────
@@ -9786,6 +9788,18 @@ function tsRender(timestamp) {
     // Countdown cooldown timers
     if (TS._hitFlash     > 0) TS._hitFlash     -= dt;
     if (TS._playerHitCd  > 0) TS._playerHitCd  -= dt;
+    if (TS._hitShake     > 0) TS._hitShake      -= dt;
+  }
+
+  // ── Screen shake — applied as a canvas translate before drawing anything ──
+  let _shakeX = 0, _shakeY = 0;
+  if (TS._hitShake > 0) {
+    const shakeDecay = TS._hitShake / 0.50;   // 1→0 over 0.5s
+    const amp = TS._hitShakeAmt * shakeDecay;
+    _shakeX = (Math.random() - 0.5) * amp * 2;
+    _shakeY = (Math.random() - 0.5) * amp * 2;
+    ctx.save();
+    ctx.translate(_shakeX, _shakeY);
   }
 
   // ── Background: deep void with radial depth ──────────────────────────
@@ -9963,9 +9977,11 @@ function tsRender(timestamp) {
         G.ship.hull    = Math.max(0, G.ship.hull - dmg);
         obj._hitCooldown  = 0.9;
         TS._playerHitCd   = 0.35;
-        TS._hitFlash      = 0.40;
+        TS._hitFlash      = 0.65;
+        TS._hitShake      = 0.50;   // screen shake duration
+        TS._hitShakeAmt   = 11;     // shake intensity px
         addLog(`⚠ Hull impact! −${dmg} HP (${G.ship.hull}/${G.ship.maxHull})`, 'dmg');
-        snd('cbt_hit_enemy', 0.6);
+        snd('player_hit', 0.95);
         updateUI();
         if (G.ship.hull <= 0) setTimeout(() => doDefeat('hull_travel'), 500);
       }
@@ -10358,15 +10374,36 @@ function tsRender(timestamp) {
   }
   ctx.restore();
 
-  // ── Hull-impact flash — red vignette when player collides ────────────────
+  // ── Restore shake transform ──────────────────────────────────────────────
+  if (TS._hitShake > 0) ctx.restore();
+
+  // ── Hull-impact flash — dramatic red vignette + white burst when player collides ──
   if (TS._hitFlash > 0) {
-    const flashA = (TS._hitFlash / 0.40) * 0.45;
-    const vg = ctx.createRadialGradient(W/2, H/2, H*0.22, W/2, H/2, H*0.72);
-    vg.addColorStop(0, 'rgba(0,0,0,0)');
-    vg.addColorStop(0.6, `rgba(200,20,0,${(flashA*0.6).toFixed(2)})`);
-    vg.addColorStop(1,   `rgba(255,0,0,${flashA.toFixed(2)})`);
+    const t = TS._hitFlash / 0.65;   // 1 → 0 over 0.65s
+
+    // Outer red vignette ring — fills edges hard
+    const vg = ctx.createRadialGradient(W/2, H/2, H*0.12, W/2, H/2, H*0.80);
+    vg.addColorStop(0,   'rgba(0,0,0,0)');
+    vg.addColorStop(0.5, `rgba(180,10,0,${(t * 0.55).toFixed(2)})`);
+    vg.addColorStop(1,   `rgba(255,0,0,${(t * 0.82).toFixed(2)})`);
     ctx.fillStyle = vg;
     ctx.fillRect(0, 0, W, H);
+
+    // White burst at peak (first 0.15s) — impact flash
+    if (t > 0.77) {
+      const burstA = (t - 0.77) / 0.23;
+      ctx.fillStyle = `rgba(255,255,255,${(burstA * 0.45).toFixed(2)})`;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    // Solid red border stripe on all four edges
+    const edgeA = t * 0.70;
+    ctx.fillStyle = `rgba(220,0,0,${edgeA.toFixed(2)})`;
+    const eb = Math.round(t * 18);
+    ctx.fillRect(0, 0, W, eb);        // top
+    ctx.fillRect(0, H-eb, W, eb);     // bottom
+    ctx.fillRect(0, 0, eb, H);        // left
+    ctx.fillRect(W-eb, 0, eb, H);     // right
   }
 
   // ── Update progress HUD ───────────────────────────────────────────────
