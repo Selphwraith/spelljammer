@@ -1132,24 +1132,6 @@ body {
 }
 
 /* ── Close/Exit button — bottom-right, just above the minimap ── */
-#ls-close {
-  position:absolute; bottom:170px; right:14px;
-  background:rgba(30,12,8,0.92);
-  border:1px solid rgba(170,102,51,0.333); border-radius:4px; color:#ddaa77;
-  font-size:0.688em; padding:6px 14px; cursor:pointer;
-  font-family:'Cinzel',serif; letter-spacing:1px; z-index:20;
-  white-space:nowrap;
-}
-#ls-close:hover { border-color:#ffaa55; color:#ffcc88; background:rgba(70,28,8,0.95); }
-@media (max-width:700px) {
-  #ls-close {
-    bottom: 158px;
-    right: 8px;
-    font-size: 0.563em;
-    padding: 4px 10px;
-    letter-spacing: 0.5px;
-  }
-}
 
 /* ── NPC interaction panel (floats over canvas when near NPC) ── */
 #ls-interact-panel {
@@ -2754,9 +2736,6 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
     <!-- Log strip bottom-center -->
     <div id="ls-log-strip">Entering local space — navigate to a point of interest.</div>
 
-    <!-- Exit button -->
-    <button id="ls-close" onclick="closeLsOverlay()">⛵ Return to Chart</button>
-
     <!-- NPC / POI interaction panel (slides up when in range) -->
     <div id="ls-interact-panel">
       <div id="ls-interact-name"></div>
@@ -3356,6 +3335,13 @@ const ENM = {
     wpns:[
       { n:'Battered Ballista',  ico:'🏹', d:[1,6], cd:0, threat:1, txt:'Worn but reliable — fires every round.' },
       { n:'Grappling Rig',      ico:'⚓', d:[1,4], cd:0, threat:2, txt:'Drags crew over the void. Hits crew on trigger.', crew:1 }
+    ]},
+  // Tutorial-only scout variant — same ship, reduced threat
+  corsair_scout: { name:'Corsair Scout',    sub:'Patrol Sloop (Light)',   hp:20,  maxHp:20,  crew:2,  maxCrew:2,  g:[3,8],
+    atk:[{n:'Ranging Shot',d:[1,4],txt:'A sloppy ranging shot — more noise than bite.'},{n:'Clumsy Hook',d:[1,3],txt:'A thrown hook that barely catches your rail.'}],
+    sp:{n:'Panic Break',c:0.10,txt:'The scout tries to break off — they fire wildly before disengaging!',fx:'crew'},col:'#886633',diff:0,
+    wpns:[
+      { n:'Ranging Ballista', ico:'🏹', d:[1,4], cd:0, threat:1, txt:'A light ballista — underpowered for deep void work.' }
     ]},
   // ── Tier 2 Bandits ────────────────────────────────────
   plunderer: { name:'Plunderer Fleet',      sub:'Raider Brigantine',      hp:88,  maxHp:88,  crew:6,  maxCrew:6,  g:[22,46],
@@ -5461,7 +5447,8 @@ const SHIP_IMAGE_DATA = {
   'squid':        'images/ship_squid.png?v=2',
   'hammer':       'images/ship_hammer.png?v=2',
   'manow':        'images/ship_manow.png?v=2',
-  'corsair':      'images/ship_corsair.png?v=2',
+  'corsair':        'images/ship_corsair.png?v=2',
+  'corsair_scout':  'images/ship_corsair.png?v=2',
   'plunderer':    'images/ship_plunderer.png?v=2',
   'blackfleet':   'images/ship_blackfleet.png?v=2',
   'nautiloid':    'images/ship_nautiloid.png?v=2',
@@ -6239,8 +6226,8 @@ function _tutSpawnCorsairs() {
   if (!LS || G.ship?.loc !== 'refuge') return;
   const cx = LS.W / 2, cy = LS.H / 2;
   const r  = Math.min(LS.W, LS.H) * 0.38;
-  _lsSpawnEnemy('corsair', cx + Math.cos(0.40) * r, cy + Math.sin(0.40) * r);
-  _lsSpawnEnemy('corsair', cx + Math.cos(0.90) * r, cy + Math.sin(0.90) * r);
+  _lsSpawnEnemy('corsair_scout', cx + Math.cos(0.40) * r, cy + Math.sin(0.40) * r);
+  _lsSpawnEnemy('corsair_scout', cx + Math.cos(0.90) * r, cy + Math.sin(0.90) * r);
   addLog('⚔ Two Corsair scouts detected at the patrol boundary. Engage and eliminate.', 'dmg');
 }
 
@@ -6252,13 +6239,13 @@ function _tutRespawnCorsairsIfNeeded() {
   const killsSoFar = G.localQuests.refuge_q1_kills || 0;
   const stillNeeded = 2 - killsSoFar;
   if (stillNeeded <= 0) return;
-  const existing = (LS.enemies || []).filter(e => e.key === 'corsair').length;
+  const existing = (LS.enemies || []).filter(e => e.key === 'corsair_scout').length;
   if (existing < stillNeeded) {
     const toSpawn = stillNeeded - existing;
     const cx = LS.W / 2, cy = LS.H / 2;
     const r  = Math.min(LS.W, LS.H) * 0.38;
     for (let i = 0; i < toSpawn; i++) {
-      _lsSpawnEnemy('corsair', cx + Math.cos(0.40 + i * 0.5) * r, cy + Math.sin(0.40 + i * 0.5) * r);
+      _lsSpawnEnemy('corsair_scout', cx + Math.cos(0.40 + i * 0.5) * r, cy + Math.sin(0.40 + i * 0.5) * r);
     }
     addLog('⚔ Corsair scouts still in the patrol zone. Engage to complete the mission.', 'dmg');
   }
@@ -11623,7 +11610,7 @@ function startCombat(key){
   (function _waitForCbtImg() {
     const imgKey = key;
     const shipKey = G.ship?.type;
-    const guardianMap = {fg_krynn:'githyanki', fg_hero:'beholder', fg_dark:'leviathan'};
+    const guardianMap = {fg_krynn:'githyanki', fg_hero:'beholder', fg_dark:'leviathan', corsair_scout:'corsair'};
     const resolvedEnemyImg = guardianMap[imgKey] || imgKey;
     if (_SHIP_IMG[resolvedEnemyImg] && _SHIP_IMG[shipKey]) return; // both already loaded
     let attempts = 0;
@@ -11918,7 +11905,7 @@ function drawCbtShips(key){
   else if(key==='fg_cluster')_eF('squid',false,    ()=>drawSquid(ec,100,65,46,true));
   else if(key==='fg_hero')   _eF('beholder',false, ()=>drawBeholder(ec,100,65,46));
   else if(key==='fg_dark')   _eF('leviathan',false,()=>drawLeviathan(ec,100,65,46));
-  else if(key==='corsair')   _eF('corsair',false,  ()=>drawCorsairSloop(ec,100,65,46,true));
+  else if(key==='corsair'||key==='corsair_scout') _eF('corsair',false,()=>drawCorsairSloop(ec,100,65,46,true));
   else if(key==='plunderer') _eF('plunderer',false,()=>drawPlundererBrig(ec,100,65,46,true));
   else if(key==='blackfleet')_eF('blackfleet',false,()=>drawBlackFleetReaver(ec,100,65,46,true));
   else if(key==='nautiloid') _eF('nautiloid',false,()=>drawNautiloid(ec,100,65,46));
@@ -13654,7 +13641,7 @@ function _fxTypeFromEnemyW(w, eKey) {
     case 'fd_grey_construct':return 'fx_ram';
     case 'trull_warship': case 'trull_dreadnought': return 'fx_cannon';
     case 'blackfleet': case 'fd_cluster_blackfleet': return 'fx_cannon';
-    case 'corsair': case 'plunderer': case 'fd_krynn_skirmisher': return 'fx_bolt';
+    case 'corsair': case 'corsair_scout': case 'plunderer': case 'fd_krynn_skirmisher': return 'fx_bolt';
     case 'elder':            return 'fx_nova';
     case 'frStalker':        return 'fx_drain';
     case 'frHorde':          return 'fx_void';
@@ -15116,7 +15103,7 @@ function showLootOverlay(key, gold, items){
   lc.clearRect(0,0,180,110);
   lc.fillStyle='rgba(5,0,15,0.5)'; lc.fillRect(0,0,180,110);
   const _lF=(k,flip,fn)=>drawShipImg(k,lc,90,55,140,85,flip,fn);
-  if(key==='corsair')       _lF('corsair',true,      ()=>drawCorsairSloop(lc,90,55,32,true));
+  if(key==='corsair'||key==='corsair_scout') _lF('corsair',true, ()=>drawCorsairSloop(lc,90,55,32,true));
   else if(key==='plunderer') _lF('plunderer',true,   ()=>drawPlundererBrig(lc,90,55,32,true));
   else if(key==='blackfleet')_lF('blackfleet',true,  ()=>drawBlackFleetReaver(lc,90,55,32,true));
   else if(key==='nautiloid') _lF('nautiloid',false,  ()=>drawNautiloid(lc,90,55,32));
@@ -18391,7 +18378,7 @@ function _lsDefinePois() {
       {
         id:'dock', label:'IEF Refuge Station', role:'IEF Forward Station · Air · Hull · Crew · QM',
         x: W*0.50, y: H*0.50, r: 70, col:'#88ddff', icon:'⚓', type:'dock',
-        safeRadius: 9999,  // entire sphere is safe — no enemy spawns
+        safeRadius: 180,  // keeps enemies clear of the dock area; spawn blocking handled in _lsEnemySpawnTick
       },
       // Admiral Vayne Soreth — orbiting close to station
       {
@@ -18924,7 +18911,7 @@ function openLocalSpace() {
   document.getElementById('ls-interact-panel').classList.remove('on');
   document.getElementById('ls-dock-panel').classList.remove('on');
   _lsUpdateHud();
-  _lsLog('Navigate to a point of interest. WASD or click to move.');
+  _lsLog('Navigate to a point of interest. Fly to the sphere boundary to depart.');
   // Tutorial: first-ever entry at Refuge triggers step 1
   if (G.tutorial && !G.tutorial.done && G.tutorial.step === 0 && (G.ship?.loc === 'refuge')) {
     setTimeout(() => _tutStep(1), 600);
@@ -18959,6 +18946,21 @@ function openLocalSpace() {
   // Hide sidebar Local Quest button for realm (LS replaces it)
   const sLqBtn = document.getElementById('sidebar-lq-btn');
   if(sLqBtn) sLqBtn.style.display = 'none';
+}
+
+// ── BOUNDARY EXIT — fly to the sphere edge to leave local space ──────────
+function _lsBoundaryExit() {
+  if (LS._boundaryExiting) return;
+  LS._boundaryExiting = true;
+  _lsLog('Crossing the sphere boundary — returning to navigation chart…');
+  const _dSph = G.ship?.loc || 'realm';
+  const _dSphName = { refuge:'Refuge Station', grey:'Korreth', cluster:'Varuun',
+                      krynn:'Vael', hero:'Thyss', dark:'Serath' }[_dSph] || 'Fentheris System';
+  setTimeout(() => {
+    LS._boundaryExiting = false;
+    closeLsOverlay();
+    addLog(`Departed ${_dSphName} local space.`, '');
+  }, 550);
 }
 
 function closeLsOverlay() {
@@ -19777,26 +19779,33 @@ function _lsUpdatePlayer(dt) {
   if(_lsSpd > 8 && !LS._humActive) { startTravelHum(); LS._humActive = true; }
   else if(_lsSpd < 3 && LS._humActive) { stopTravelHum(); LS._humActive = false; }
 
-  // Circular boundary clamp — matches the visual sphere border ring exactly
+  // Circular boundary — exit zone detection and clamping
   const _bR   = Math.min(LS.W, LS.H) * 0.498; // same radius as drawn border
   const _wallMargin = 55;                        // stop slightly inside the ring
   const _maxR  = _bR - _wallMargin;
   const _cx    = LS.W / 2, _cy = LS.H / 2;
   const _dx    = LS.px - _cx, _dy = LS.py - _cy;
   const _dist  = Math.sqrt(_dx*_dx + _dy*_dy);
+  // Store proximity ratio for render (0 = far from edge, 1 = at edge)
+  LS._boundaryProx = Math.max(0, (_dist - (_maxR - 120)) / 120);
   if(_dist > _maxR) {
-    // Push back inside — cancel velocity component pointing outward
     const _nx = _dx/_dist, _ny = _dy/_dist;
+    const _outV = LS.pvx*_nx + LS.pvy*_ny;
+    // Exit trigger: moving outward with intent speed, no blocking panels open
+    if (_outV > 20 && !LS.dockOpen && !LS.interactOpen &&
+        !_lsPendingReturn && !_lsPendingFragment && !LS._boundaryExiting) {
+      _lsBoundaryExit();
+    }
+    // Always clamp position (holds player at wall while exit delay plays out)
     LS.px = _cx + _nx * _maxR;
     LS.py = _cy + _ny * _maxR;
-    // Kill outward velocity so ship doesn't keep pushing against wall
-    const _outV = LS.pvx*_nx + LS.pvy*_ny;
     if(_outV > 0) { LS.pvx -= _outV*_nx; LS.pvy -= _outV*_ny; }
   }
-  // Cancel click-to-move targets outside the boundary
+  // Allow click-to-move targets anywhere toward boundary — let exit trigger naturally
+  // (only cancel targets that are truly outside the boundary ring)
   if(LS.pTargetX !== null) {
     const _tdx = LS.pTargetX - _cx, _tdy = LS.pTargetY - _cy;
-    if(Math.sqrt(_tdx*_tdx+_tdy*_tdy) > _maxR) {
+    if(Math.sqrt(_tdx*_tdx+_tdy*_tdy) > _bR) {
       LS.pTargetX = null; LS.pTargetY = null;
     }
   }
@@ -20332,6 +20341,20 @@ function _lsRender(cx, W, H, dt) {
   cx.strokeStyle=_wCols[2]; cx.lineWidth=2;
   cx.beginPath(); cx.arc(LS.W/2,LS.H/2,bR,0,Math.PI*2); cx.stroke();
 
+  // ── Boundary exit proximity glow — brightens as player approaches the edge ──
+  const _lsProx = LS._boundaryProx || 0;
+  if (_lsProx > 0 && !LS.dockOpen && !LS.interactOpen && !_lsPendingReturn) {
+    const _pulse = 0.55 + 0.45 * Math.sin(LS.t * 2.8);
+    cx.save();
+    cx.globalAlpha = Math.min(0.55, _lsProx * 0.55) * _pulse;
+    cx.strokeStyle = '#88ddff';
+    cx.lineWidth = 2.5 + _lsProx * 4;
+    cx.setLineDash([10, 7]);
+    cx.beginPath(); cx.arc(LS.W/2, LS.H/2, bR - 22, 0, Math.PI*2); cx.stroke();
+    cx.setLineDash([]);
+    cx.restore();
+  }
+
   // ── Stars ──
   LS.stars.forEach(s => {
     const tw = 0.5+0.5*Math.sin(LS.t*s.spd*6+s.twk);
@@ -20582,9 +20605,35 @@ function _lsRender(cx, W, H, dt) {
 
   cx.restore(); // end world transform
 
-  // ── Tutorial compass arrow — points toward nearest corsair during step 4 ──
+  // ── Boundary exit screen hint — shown when player is near the sphere edge ──
+  const _hintProx = LS._boundaryProx || 0;
+  if (_hintProx > 0.25 && !LS.dockOpen && !LS.interactOpen && !_lsPendingReturn && !LS._boundaryExiting) {
+    const _hAlpha = Math.min(1, (_hintProx - 0.25) / 0.5) * (0.6 + 0.4 * Math.sin(LS.t * 2.2));
+    cx.save();
+    cx.globalAlpha = _hAlpha;
+    cx.font = `bold 11px 'Cinzel', serif`;
+    cx.textAlign = 'center';
+    cx.fillStyle = '#aaddff';
+    cx.fillText('⛵  Keep flying to depart sphere', W / 2, 44);
+    cx.restore();
+  }
+
+  // ── "Departing…" overlay flash while exit delay plays ──────────────────────
+  if (LS._boundaryExiting) {
+    cx.save();
+    cx.globalAlpha = 0.45 + 0.3 * Math.sin(LS.t * 5);
+    cx.fillStyle = 'rgba(8, 20, 40, 0.6)';
+    cx.fillRect(0, 0, W, H);
+    cx.globalAlpha = 0.85;
+    cx.font = `bold 13px 'Cinzel', serif`;
+    cx.textAlign = 'center';
+    cx.fillStyle = '#88ddff';
+    cx.letterSpacing = '3px';
+    cx.fillText('DEPARTING SPHERE…', W / 2, H / 2);
+    cx.restore();
+  }
   if (G.tutorial && !G.tutorial.done && G.tutorial.step === 4 && LS.enemies?.length) {
-    const corsairs = LS.enemies.filter(e => e.key === 'corsair');
+    const corsairs = LS.enemies.filter(e => e.key === 'corsair_scout' || e.key === 'corsair');
     if (corsairs.length) {
       // Find nearest corsair
       let nearest = corsairs[0];
@@ -20630,7 +20679,7 @@ function _lsRender(cx, W, H, dt) {
 
 function _lsEnemyColor(key) {
   const map = {
-    harvester:'#ff4466', nautiloid:'#aa44ff', corsair:'#ff8833',
+    harvester:'#ff4466', nautiloid:'#aa44ff', corsair:'#ff8833', corsair_scout:'#ff8833',
     blackfleet:'#cc2200', goblin_cutter:'#88cc22', trull_patrol:'#cc6600',
     phlog_mote:'#ffcc00', phlog_flamewing:'#ff4400',
   };
@@ -22828,7 +22877,7 @@ function lqTrackKill(enemyKey) {
     { qid:'grey_q3_kills',   condition: (k) => k==='harvester' || k==='trull_slaver' },
     { qid:'cluster_q2_kills', condition: (k) => k==='harvester' },
     { qid:'krynn_q2_kills',   condition: (k) => k==='githyanki' },
-    { qid:'refuge_q1_kills', condition: (k) => k==='corsair' },
+    { qid:'refuge_q1_kills', condition: (k) => k==='corsair' || k==='corsair_scout' },
     { qid:'hero_q2_kills',   condition: (k) => k==='beholder' },
     { qid:'dark_q2_kills',   condition: (k) => k==='leviathan' || k==='frStalker' },
   ];
@@ -26062,12 +26111,12 @@ document.addEventListener('visibilitychange', () => {
     <div id="tut-cbt-title">⚔ SHIP COMBAT — FIRST ENGAGEMENT</div>
     <div id="tut-cbt-body">
       <div class="tut-row">
-        <span class="tut-row-label">Initiative</span>
-        <span>Higher initiative fires <strong>first</strong> each round. Check yours vs. the enemy's under the ship portrait.</span>
+        <span class="tut-row-label">Turns</span>
+        <span>Combat is turn-based. <strong>You act first</strong> — select a weapon and press Fire. The enemy fires back. Repeat until one ship is destroyed.</span>
       </div>
       <div class="tut-row">
         <span class="tut-row-label">Weapons</span>
-        <span>Select a weapon and press <strong>Fire</strong>. Each weapon has a reload time — heavier guns hit harder but reload slower.</span>
+        <span>Each weapon has a <strong>reload time</strong>. Heavier guns hit harder but sit idle for several rounds after firing. Light weapons fire every round.</span>
       </div>
       <div class="tut-row">
         <span class="tut-row-label">Hull / Crew</span>
