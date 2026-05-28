@@ -19830,44 +19830,45 @@ function _lsDefinePois() {
 
   // ── FENTHERIS SYSTEM (realm) — default full layout ────────────────────────
   return [
-    // Fentheris Orbital Station — center-safe zone, the dock
+    // Fentheris Orbital Station — starts at computed t=0 orbital position.
+    // _lsRenderSolarSystem() updates dockPoi.x/y every frame to track the orbit.
     {
       id:'dock', label:"Fentheris Orbital Station", role:'IEF Docking Ring · Air · Hull · Crew · QM',
-      x: W*0.50, y: H*0.50, r: 70, col:'#4488ff', icon:'⚓', type:'dock',
+      x: W*0.4823, y: H*0.4429, r: 70, col:'#4488ff', icon:'⚓', type:'dock',
       safeRadius: 960,   // no enemies spawn within this radius of the station
     },
     // Quartermaster Dael Morne — tight orbit near dock, sells realm-tier weapons and upgrades
     {
       id:'npc_qm', label:'QM Dael Morne', role:'IEF Supply Corps — Fentheris System',
-      x: W*0.62, y: H*0.44, r: 48, col:'#88bbff', icon:'⚓', type:'npc',
+      x: W*0.4546, y: H*0.4207, r: 48, col:'#88bbff', icon:'⚓', type:'npc',
       npcId: 'realm_qm',
       patrol: true, patrolR: 240, patrolSpeed: 0.25, patrolAngle: 1.0,
     },
     // Ensign Lirith Vaen — patrol route NPC, mid-ring
     {
       id:'npc_lirith', label:'Ensign Lirith Vaen', role:'IEF Scout Corvette — Quest',
-      x: W*0.38, y: H*0.35, r: 48, col:'#66aaff', icon:'🛸', type:'npc',
+      x: W*0.5129, y: H*0.4179, r: 48, col:'#66aaff', icon:'🛸', type:'npc',
       npcId: 'realm_scout',
       patrol: true, patrolR: 360, patrolSpeed: 0.28, patrolAngle: 0,
     },
     // Merchant Tomas Wrenfold — inner ring
     {
       id:'npc_merchant', label:'Tomas Wrenfold', role:'Licensed Merchant — Quest',
-      x: W*0.62, y: H*0.38, r: 48, col:'#ffcc66', icon:'🧑‍💼', type:'npc',
+      x: W*0.5073, y: H*0.4707, r: 48, col:'#ffcc66', icon:'🧑‍💼', type:'npc',
       npcId: 'realm_merchant',
       patrol: true, patrolR: 270, patrolSpeed: 0.22, patrolAngle: 1.4,
     },
     // Archivist Pell Dusan — inner ring
     {
       id:'npc_sage', label:'Archivist Pell Dusan', role:'Toril Academy — Quest',
-      x: W*0.60, y: H*0.62, r: 48, col:'#cc88ff', icon:'📚', type:'npc',
+      x: W*0.5073, y: H*0.4707, r: 48, col:'#cc88ff', icon:'📚', type:'npc',
       npcId: 'realm_sage',
       patrol: false,
     },
     // Commander Aeva Thessan — mid ring
     {
       id:'npc_commander', label:'Cmdr. Aeva Thessan', role:'IEF Strike Wing — Quest',
-      x: W*0.38, y: H*0.63, r: 48, col:'#44ffcc', icon:'🎖️', type:'npc',
+      x: W*0.4573, y: H*0.4707, r: 48, col:'#44ffcc', icon:'🎖️', type:'npc',
       npcId: 'realm_ien_officer',
       patrol: true, patrolR: 300, patrolSpeed: 0.18, patrolAngle: 3.2,
     },
@@ -19883,6 +19884,207 @@ function _lsDefinePois() {
       enemyKey: 'harvester', spawnRate: 0.6,
     },
   ];
+}
+
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║  FENTHERIS SOLAR SYSTEM — Realm LS Visual Layer                          ║
+// ║  Planets orbit The Hearthfire (star) at the world center.               ║
+// ║  The dock (Fentheris Orbital Station) orbits the planet Fentheris.      ║
+// ║  All movement is very slow — barely perceptible in a single session.    ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+
+// ── Image file reference guide ─────────────────────────────────────────────
+// Upload these files to your images/ folder to replace procedural placeholders:
+//
+//   images/ls_star_hearthfire.png      — The Hearthfire (yellow-white star) ~256×256 px
+//   images/ls_planet_char.png          — Char (Mercury-like, grey-brown, scorched) ~64×64
+//   images/ls_planet_velra.png         — Velra (Venus-like, thick yellow cloud cover) ~96×96
+//   images/ls_planet_fentheris.png     — Fentheris (Earth-like, blue-green oceans) ~128×128
+//   images/ls_planet_rust.png          — The Rust (Mars-like, red-orange, dry) ~80×80
+//   images/ls_planet_volgrath.png      — Volgrath (Jupiter-like, banded gas giant) ~192×192
+//   images/ls_planet_paleRing.png      — The Pale Ring (Saturn-like, visible rings) ~220×220
+//   images/ls_planet_drift.png         — Drift (Uranus-like, tilted aquamarine ice giant) ~128×128
+//   images/ls_planet_deepNameless.png  — Deep Nameless (Neptune-like, cold blue edge) ~110×110
+//   images/ls_station_fentheris.png    — Fentheris Orbital Station (space station art) ~96×96
+
+// ── Planet definitions ─────────────────────────────────────────────────────
+// orbitalR : world-unit radius from star
+// size     : draw diameter in world pixels
+// period   : seconds per full orbit (very long — slow drift)
+// angle    : initial angle offset so planets start spread out at t=0
+const LS_REALM_PLANETS = [
+  { id:'char',          name:'Char',           orbitalR:  150, size:12,  period: 36000,    angle:0.8,  col:'#aaa088', glowCol:'#887766', img:'images/ls_planet_char.png',          hasRing:false },
+  { id:'velra',         name:'Velra',           orbitalR:  280, size:22,  period: 92000,    angle:2.1,  col:'#ddc870', glowCol:'#aa9933', img:'images/ls_planet_velra.png',         hasRing:false },
+  { id:'fentheris',     name:'Fentheris',       orbitalR:  520, size:30,  period: 205000,   angle:4.4,  col:'#4488dd', glowCol:'#224499', img:'images/ls_planet_fentheris.png',     hasRing:false },
+  { id:'rust',          name:'The Rust',         orbitalR:  780, size:18,  period: 385000,   angle:1.5,  col:'#cc6633', glowCol:'#883311', img:'images/ls_planet_rust.png',          hasRing:false },
+  { id:'volgrath',      name:'Volgrath',         orbitalR: 1550, size:64,  period:1440000,   angle:0.3,  col:'#cc9944', glowCol:'#aa6622', img:'images/ls_planet_volgrath.png',      hasRing:false },
+  { id:'paleRing',      name:'The Pale Ring',    orbitalR: 2100, size:52,  period:3600000,   angle:3.7,  col:'#ddcc99', glowCol:'#aa9966', img:'images/ls_planet_paleRing.png',      hasRing:true  },
+  { id:'drift',         name:'Drift',            orbitalR: 2600, size:36,  period:10200000,  angle:5.5,  col:'#88ccbb', glowCol:'#449988', img:'images/ls_planet_drift.png',         hasRing:false },
+  { id:'deepNameless',  name:'Deep Nameless',    orbitalR: 3100, size:32,  period:20000000,  angle:2.8,  col:'#4455cc', glowCol:'#223388', img:'images/ls_planet_deepNameless.png',  hasRing:false },
+];
+
+const LS_HEARTHFIRE = {
+  name:'The Hearthfire', size:80, col:'#fff8cc', glowCol:'#ffcc44',
+  img:'images/ls_star_hearthfire.png',
+};
+
+// The Fentheris Orbital Station orbits the planet Fentheris at this radius
+const LS_STATION_ORBIT = { orbitalR:90, period:7200, angle:1.2, size:24 };
+
+// ── Image cache — loaded on first LS open ─────────────────────────────────
+const _lsSolImgs = {};
+function _lsPreloadSolarImgs() {
+  const srcs = [
+    LS_HEARTHFIRE.img,
+    'images/ls_station_fentheris.png',
+    ...LS_REALM_PLANETS.map(p => p.img),
+  ];
+  srcs.forEach(src => {
+    if(_lsSolImgs[src]) return;
+    const im = new Image(); im.src = src; _lsSolImgs[src] = im;
+  });
+}
+
+// ── Position helpers ──────────────────────────────────────────────────────
+function _lsGetPlanetPos(planet, t) {
+  const angle = planet.angle + (Math.PI * 2 / planet.period) * t;
+  return {
+    x: LS.W * 0.5 + Math.cos(angle) * planet.orbitalR,
+    y: LS.H * 0.5 + Math.sin(angle) * planet.orbitalR,
+    angle,
+  };
+}
+function _lsGetStationPos(t) {
+  const fen = LS_REALM_PLANETS.find(p => p.id === 'fentheris');
+  const fp  = _lsGetPlanetPos(fen, t);
+  const sa  = LS_STATION_ORBIT.angle + (Math.PI * 2 / LS_STATION_ORBIT.period) * t;
+  return { x: fp.x + Math.cos(sa) * LS_STATION_ORBIT.orbitalR,
+           y: fp.y + Math.sin(sa) * LS_STATION_ORBIT.orbitalR };
+}
+
+// ── Draw helper — image with procedural circle fallback ───────────────────
+function _lsDrawSolBody(cx, imgSrc, x, y, size, col) {
+  const im = _lsSolImgs[imgSrc];
+  if(im?.complete && im.naturalWidth > 0) {
+    cx.drawImage(im, x - size * 0.5, y - size * 0.5, size, size);
+  } else {
+    // Procedural: simple radial gradient circle
+    const g = cx.createRadialGradient(x - size*0.15, y - size*0.15, 0, x, y, size * 0.5);
+    g.addColorStop(0, '#ffffff44');
+    g.addColorStop(0.4, col);
+    g.addColorStop(1, col + '88');
+    cx.fillStyle = g;
+    cx.beginPath(); cx.arc(x, y, size * 0.5, 0, Math.PI * 2); cx.fill();
+  }
+}
+
+// ── Main solar system render — called from _lsRender() in world space ─────
+function _lsRenderSolarSystem(cx, t) {
+  if((G.ship?.loc || 'realm') !== 'realm') return;
+  const wx = LS.W * 0.5, wy = LS.H * 0.5;
+
+  // ── Orbit rings — very faint dashed circles ──
+  cx.save();
+  cx.setLineDash([4, 14]);
+  LS_REALM_PLANETS.forEach(p => {
+    cx.beginPath();
+    cx.strokeStyle = 'rgba(255,255,255,0.035)';
+    cx.lineWidth = 1;
+    cx.arc(wx, wy, p.orbitalR, 0, Math.PI * 2);
+    cx.stroke();
+  });
+  cx.setLineDash([]);
+  // Sorrow Belt — thicker fuzzy ring between Rust and Volgrath (~1100 units)
+  cx.globalAlpha = 0.06;
+  cx.strokeStyle = '#ccbb88';
+  cx.lineWidth = 22;
+  cx.beginPath(); cx.arc(wx, wy, 1100, 0, Math.PI * 2); cx.stroke();
+  cx.globalAlpha = 1;
+  cx.restore();
+
+  // ── The Hearthfire (star) ──
+  cx.save();
+  // Multi-layer corona glow
+  [[220, 0.04], [140, 0.07], [90, 0.12], [55, 0.20]].forEach(([r, a]) => {
+    const grd = cx.createRadialGradient(wx, wy, 0, wx, wy, r);
+    grd.addColorStop(0, `rgba(255,215,60,${a})`);
+    grd.addColorStop(1, 'rgba(255,150,0,0)');
+    cx.fillStyle = grd; cx.beginPath(); cx.arc(wx, wy, r, 0, Math.PI*2); cx.fill();
+  });
+  // Corona flicker
+  const _flicker = 0.92 + 0.08 * Math.sin(t * 0.7);
+  cx.globalAlpha = _flicker;
+  _lsDrawSolBody(cx, LS_HEARTHFIRE.img, wx, wy, LS_HEARTHFIRE.size, LS_HEARTHFIRE.col);
+  cx.globalAlpha = 1;
+  cx.restore();
+
+  // ── Planets ──
+  LS_REALM_PLANETS.forEach(planet => {
+    const pos = _lsGetPlanetPos(planet, t);
+
+    cx.save();
+
+    // Saturn-style rings — drawn before body so body overlaps the inner ring
+    if(planet.hasRing) {
+      cx.globalAlpha = 0.55;
+      cx.strokeStyle = planet.col + 'bb';
+      cx.lineWidth = 10;
+      cx.beginPath();
+      cx.ellipse(pos.x, pos.y, planet.size * 1.7, planet.size * 0.35, 0.35, 0, Math.PI*2);
+      cx.stroke();
+      cx.lineWidth = 5;
+      cx.strokeStyle = planet.col + '66';
+      cx.beginPath();
+      cx.ellipse(pos.x, pos.y, planet.size * 2.0, planet.size * 0.42, 0.35, 0, Math.PI*2);
+      cx.stroke();
+      cx.globalAlpha = 1;
+    }
+
+    // Atmosphere glow
+    const atmR = planet.size * 0.9;
+    const atm = cx.createRadialGradient(pos.x, pos.y, planet.size * 0.3, pos.x, pos.y, atmR);
+    atm.addColorStop(0, 'transparent');
+    atm.addColorStop(1, planet.glowCol + '55');
+    cx.fillStyle = atm;
+    cx.beginPath(); cx.arc(pos.x, pos.y, atmR, 0, Math.PI*2); cx.fill();
+
+    // Planet body
+    _lsDrawSolBody(cx, planet.img, pos.x, pos.y, planet.size, planet.col);
+
+    // Name label — very faint, only visible when close
+    cx.globalAlpha = 0.28;
+    cx.fillStyle = '#ccbbaa';
+    cx.font = '9px "Courier New", monospace';
+    cx.textAlign = 'center';
+    cx.textBaseline = 'top';
+    cx.fillText(planet.name, pos.x, pos.y + planet.size * 0.5 + 4);
+
+    cx.restore();
+  });
+
+  // ── Fentheris Orbital Station ──
+  const stPos = _lsGetStationPos(t);
+  const stImg = 'images/ls_station_fentheris.png';
+
+  cx.save();
+  // Station glow halo
+  const stGrd = cx.createRadialGradient(stPos.x, stPos.y, 0, stPos.x, stPos.y, 48);
+  stGrd.addColorStop(0, 'rgba(68,136,255,0.25)');
+  stGrd.addColorStop(1, 'transparent');
+  cx.fillStyle = stGrd;
+  cx.beginPath(); cx.arc(stPos.x, stPos.y, 48, 0, Math.PI*2); cx.fill();
+  // Slow rotation on the station body
+  cx.translate(stPos.x, stPos.y);
+  cx.rotate(t * 0.04); // very slow spin
+  cx.translate(-stPos.x, -stPos.y);
+  _lsDrawSolBody(cx, stImg, stPos.x, stPos.y, LS_STATION_ORBIT.size, '#88ddff');
+  cx.restore();
+
+  // ── Update dock POI position to match station — keeps proximity detection correct ──
+  if(LS.pois) {
+    const dockPoi = LS.pois.find(p => p.id === 'dock');
+    if(dockPoi) { dockPoi.x = stPos.x; dockPoi.y = stPos.y; }
+  }
 }
 
 // ── ENEMY AI SHIPS ────────────────────────────────────────────────────────
@@ -20076,8 +20278,10 @@ function openLocalSpace() {
     } else {
       // All other spheres expanded 3× for a proper solar-system scale
       LS.W = 7200; LS.H = 7200;
-      LS.px = LS.W * 0.50 + 280;
-      LS.py = LS.H * 0.50;
+      // For realm: spawn near Fentheris Orbital Station's t=0 position
+      // (station orbits Fentheris at angle 4.4, radius 520, then +90 station orbit)
+      LS.px = LS.W * 0.4823 + 110; // just outside dock interaction radius
+      LS.py = LS.H * 0.4429;
     }
     LS.pvx = 0; LS.pvy = 0;
     LS.pAngle = -Math.PI * 0.75;
@@ -20163,6 +20367,9 @@ function openLocalSpace() {
   LS.ctx      = LS.canvas.getContext('2d');
   LS.mmCanvas = document.getElementById('ls-minimap-canvas');
   LS.mmCtx    = LS.mmCanvas.getContext('2d');
+
+  // Kick off solar system image preload for realm
+  if((G.ship?.loc || 'realm') === 'realm') _lsPreloadSolarImgs();
 
   if(LS.animId) cancelAnimationFrame(LS.animId);
   LS.lastTs = 0;
@@ -21597,6 +21804,9 @@ function _lsRender(cx, W, H, dt) {
     cx.beginPath(); cx.arc(s.x,s.y,s.r*(0.7+0.3*tw),0,Math.PI*2); cx.fill();
   });
   cx.globalAlpha=1;
+
+  // ── Solar system (Realm only) — star, planets, orbital station ──
+  _lsRenderSolarSystem(cx, LS.t);
 
   // ── Hazard zone shading ──
   LS.pois.filter(p=>p.type==='hazard_zone'||p.type==='patrol_zone').forEach(p=>{
