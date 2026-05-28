@@ -2213,10 +2213,44 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
   padding:2px 8px; border-radius:2px; transition:all 0.4s;
 }
 .fatigue-fresh    { background:#001a0a; color:#44ee88; border:1px solid rgba(34,170,85,0.2); }
-.fatigue-tired    { background:#1a1400; color:#ffcc44; border:1px solid rgba(170,136,0,0.2); }
-.fatigue-fatigued { background:#1a0800; color:#ff8844; border:1px solid rgba(170,68,0,0.2); }
-.fatigue-exhausted{ background:#1a0000; color:#ff4444; border:1px solid rgba(170,0,0,0.2); animation:fatpulse 1.6s ease-in-out infinite; }
+.fatigue-fatigued { background:#1a0800; color:#ff8844; border:1px solid rgba(170,68,0,0.2); animation:fatpulse 2.2s ease-in-out infinite; }
+.fatigue-exhausted{ background:#1a0000; color:#ff5533; border:1px solid rgba(200,40,0,0.3); animation:fatpulse 1.3s ease-in-out infinite; }
 @keyframes fatpulse { 0%,100%{opacity:1} 50%{opacity:0.55} }
+
+/* ── Fatigue edge-vignette flash ───────────────────────────────────────── */
+#fatigue-vignette {
+  position:fixed; inset:0; pointer-events:none; z-index:8999;
+  border-radius:0;
+}
+@keyframes fv-warn {
+  0%   { box-shadow: inset 0 0   0px rgba(255,140,0,0.00); }
+  18%  { box-shadow: inset 0 0 120px rgba(255,140,0,0.55); }
+  38%  { box-shadow: inset 0 0  20px rgba(255,140,0,0.10); }
+  55%  { box-shadow: inset 0 0 100px rgba(255,140,0,0.45); }
+  75%  { box-shadow: inset 0 0  10px rgba(255,140,0,0.05); }
+  100% { box-shadow: inset 0 0   0px rgba(255,140,0,0.00); }
+}
+@keyframes fv-danger {
+  0%   { box-shadow: inset 0 0   0px rgba(220,60,0,0.00); }
+  15%  { box-shadow: inset 0 0 140px rgba(220,60,0,0.65); }
+  35%  { box-shadow: inset 0 0  30px rgba(220,60,0,0.15); }
+  52%  { box-shadow: inset 0 0 120px rgba(220,60,0,0.55); }
+  72%  { box-shadow: inset 0 0  20px rgba(220,60,0,0.08); }
+  88%  { box-shadow: inset 0 0  90px rgba(220,60,0,0.40); }
+  100% { box-shadow: inset 0 0   0px rgba(220,60,0,0.00); }
+}
+@keyframes fv-critical {
+  0%   { box-shadow: inset 0 0   0px rgba(200,30,0,0.00); }
+  12%  { box-shadow: inset 0 0 160px rgba(200,30,0,0.80); }
+  30%  { box-shadow: inset 0 0  40px rgba(200,30,0,0.20); }
+  48%  { box-shadow: inset 0 0 140px rgba(200,30,0,0.70); }
+  65%  { box-shadow: inset 0 0  30px rgba(200,30,0,0.12); }
+  82%  { box-shadow: inset 0 0 120px rgba(200,30,0,0.60); }
+  100% { box-shadow: inset 0 0   0px rgba(200,30,0,0.00); }
+}
+#fatigue-vignette.fatigue-warn     { animation: fv-warn     5s ease-in-out forwards; }
+#fatigue-vignette.fatigue-danger   { animation: fv-danger   5s ease-in-out forwards; }
+#fatigue-vignette.fatigue-critical { animation: fv-critical 5s ease-in-out forwards; }
 
 /* Rest / watch-advance overlay */
 #rest-overlay {
@@ -2244,17 +2278,18 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
 .rest-complete.on { opacity:1; }
 
 /* Rest button — appears in sidebar and travel bar */
+/* Rest button — always visible in watch HUD, pointer-events active */
 #rest-btn {
   font-family:'Cinzel',serif; font-size:0.625em; letter-spacing:1px;
-  padding:6px 10px; border-radius:3px; cursor:pointer; transition:all 0.2s;
-  text-transform:uppercase; display:none;
+  padding:5px 12px; border-radius:3px; cursor:pointer; transition:all 0.2s;
+  text-transform:uppercase; pointer-events:all;
 }
-#rest-btn.on { display:block; }
-#rest-btn.fresh    { border:1px solid rgba(102,51,170,0.4); background:rgba(20,5,45,0.88); color:#e8d8ff; }
+#rest-btn.fresh    { border:1px solid rgba(102,51,170,0.4); background:rgba(20,5,45,0.88); color:#cbb8ee; }
 #rest-btn.fresh:hover { border-color:#bb88ff; color:#ffffff; }
-#rest-btn.tired    { border:1px solid rgba(170,136,0,0.4); background:rgba(30,20,0,0.8); color:#ffcc44; }
-#rest-btn.fatigued { border:1px solid rgba(170,68,0,0.4); background:rgba(30,10,0,0.8); color:#ff8844; animation:fatpulse 1.6s ease-in-out infinite; }
-#rest-btn.exhausted{ border:1px solid rgba(170,0,0,0.4); background:rgba(30,0,0,0.8); color:#ff4444; animation:fatpulse 0.8s ease-in-out infinite; }
+#rest-btn.fatigued { border:1px solid rgba(200,100,0,0.5); background:rgba(30,12,0,0.88); color:#ffaa44; animation:fatpulse 2.2s ease-in-out infinite; }
+#rest-btn.fatigued:hover { border-color:#ffcc66; color:#ffdd88; }
+#rest-btn.exhausted{ border:1px solid rgba(200,40,0,0.6); background:rgba(30,4,0,0.88); color:#ff6644; animation:fatpulse 1.2s ease-in-out infinite; }
+#rest-btn.exhausted:hover { border-color:#ff8866; color:#ffaa88; }
 
 /* ── COMBAT INVENTORY PANEL ── */
 #cbt-inv-panel {
@@ -2666,7 +2701,9 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
     <button class="ovl-btn" onclick="openOverlay('qlog')">📜 Quest Log</button>
     <button class="ovl-btn" id="sidebar-lq-btn" onclick="openLocalQuest()" style="display:none;border-color:rgba(68,136,102,0.333);color:#44ffcc;">🌌 Local Quests</button>
     <button class="ovl-btn" id="sidebar-journal-btn" onclick="openOverlay('journal')" style="border-color:rgba(122,74,24,0.333);color:#d4a96a;">📖 Captain's Log</button>
-    <button id="rest-btn" class="fresh" onclick="doRest()">🌙 Rest (End Watch)</button>
+    <button id="rest-btn" class="fresh" onclick="doRest()">🌙 Rest</button>
+  <!-- Fatigue edge-vignette — animated via class, pointer-events:none -->
+  <div id="fatigue-vignette"></div>
   </div>
 </div>
 
@@ -2890,7 +2927,7 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
               <div class="mcard-head">The Watch System</div>
               <p>Each lane is measured in <strong>watches</strong> — 8-hour shifts starting at 06:00. The clock in the top bar counts up. At 14:00 the watch ends and you choose:</p>
               <div class="mstat-grid">
-                <div class="mstat"><span class="mstat-k">⚓ Anchor &amp; Rest</span><span class="mstat-v">Sleep until 06:00. Crew returns to <em>Fresh</em>. Hull repairs slightly.</span></div>
+                <div class="mstat"><span class="mstat-k">⚓ Anchor &amp; Rest</span><span class="mstat-v">Sleep 8 hours. Crew returns to <em>Fresh</em>. Hull repairs slightly. Wakes at current time +8h.</span></div>
                 <div class="mstat"><span class="mstat-k">➤ Push On</span><span class="mstat-v">Continue through the night. Crew becomes Fatigued then Exhausted.</span></div>
               </div>
             </div>
@@ -2898,7 +2935,7 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
               <div class="mcard-head">Fatigue Levels</div>
               <div class="mstat-grid">
                 <div class="mstat"><span class="mstat-k">✦ Fresh</span><span class="mstat-v">Full combat effectiveness — 100% damage.</span></div>
-                <div class="mstat"><span class="mstat-k">⚠ Fatigued</span><span class="mstat-v">One push past rest — combat damage 85%.</span></div>
+                <div class="mstat"><span class="mstat-k">⚠ Fatigued</span><span class="mstat-v">8h awake — combat damage 90%. Rest recommended.</span></div>
                 <div class="mstat"><span class="mstat-k">⚠ Exhausted</span><span class="mstat-v">Two pushes — combat damage 70%. Hull ticks damage from navigation errors.</span></div>
               </div>
             </div>
@@ -5403,7 +5440,7 @@ function _clockAccumulated() {
   // must run past 14:00, so they bypass the cap. Using legsPushed is more reliable
   // than checking _clockAccumH < LEG_HOURS because pauseLiveClock's clamp can set
   // _clockAccumH to exactly LEG_HOURS mid-leg, which would falsely disable the cap.
-  if (!G?.watch?.legsPushed) return Math.min(raw, LEG_HOURS);
+  if (!G?.watch?.hoursAwake) return Math.min(raw, LEG_HOURS);
   return raw;
 }
 
@@ -5479,57 +5516,37 @@ function resumeLiveClock() {
   }
 }
 
-// Called once per completed leg (8 hours) — rest OR push
-// Adds 8 hours; if we cross a 24-hr mark, a new day fires
+// Called once per completed travel leg (8 game-hours of warp travel)
+// Travel is compressed-time so it hits hoursAwake fast — rest between legs encouraged.
 function tickLeg() {
   if (!G.watch) return;
-  const prev = G.watch.totalHours || 0;
-  G.watch.totalHours = prev + LEG_HOURS;
   G.watch.moveUsed   = 0;
   G.watch.moveBudget = 1;
+  addGameHours(8); // this handles totalHours, hoursAwake, day crossings, and fatigue warnings
+  updateWatchHUD();
+}
 
-  // How many 24-hr marks did we cross?
+// restAdvance — rest adds exactly 8 game-hours from wherever the clock is.
+// No forced dawn snap. Waking time depends entirely on when you chose to rest.
+function restAdvanceToMorning() {
+  if (!G.watch) return;
+  const prev = G.watch.totalHours || 0;
+  // Add 8 hours — handle day crossings manually here (no addGameHours,
+  // since hoursAwake is being reset by the caller and we don't want warnings mid-rest)
+  G.watch.totalHours = prev + 8;
+  G.watch.moveUsed   = 0;
+  G.watch.moveBudget = 1;
+  _clockAccumH  = 0;
+  _clockStartMs = performance.now();
   const prevDays = Math.floor(prev / 24);
   const newDays  = Math.floor(G.watch.totalHours / 24);
   const crossed  = newDays - prevDays;
-
   for (let i = 0; i < crossed; i++) {
     G.watch.day++;
     G.travelDays = (G.travelDays || 0) + 1;
     G.ship.air   = Math.max(0, G.ship.air - 1);
     if (G.ship.air <= 0) { updateUI(); doDefeat('air'); return; }
-    addLog(`06:00 — Day ${G.watch.day}. Air: ${G.ship.air} days remaining.`, '');
   }
-  updateUI();
-  updateWatchHUD();
-}
-
-// restAdvanceToMorning — always snaps totalHours forward to the NEXT 06:00 boundary.
-// Rest always wakes at dawn regardless of current watch position.
-// 06:00 = totalHours that is an exact multiple of 24 (since day starts at 0h = 06:00).
-// At 14:00 (rem=8): adds 16h → crosses midnight → new day.
-// At 22:00 (rem=16): adds 8h → crosses midnight → new day.
-// At 06:00 (rem=0): adds 24h → full extra day (already at dawn, rest = skip to next dawn).
-function restAdvanceToMorning() {
-  if (!G.watch) return;
-  const cur = G.watch.totalHours || 0;
-  const rem = cur % 24;
-  // Always advance to next 06:00 — rest always costs exactly 1 day no matter when you anchor
-  const hoursToAdd = rem === 0 ? 24 : (24 - rem);
-  G.watch.totalHours = cur + hoursToAdd;
-  G.watch.moveUsed   = 0;
-  G.watch.moveBudget = 1;
-  // Reset display clock — totalHours is now at the new 06:00 baseline,
-  // accum must be zeroed or the render will add the old leg's hours on top.
-  _clockAccumH  = 0;
-  _clockStartMs = performance.now();
-  // Exactly 1 day passes on rest — always
-  G.watch.day++;
-  G.travelDays = (G.travelDays || 0) + 1;
-  G.ship.air = Math.max(0, G.ship.air - 1);
-  if (G.ship.air <= 0) { updateUI(); doDefeat('air'); return; }
-  updateUI();
-  updateWatchHUD();
 }
 
 // advanceWatch — called when anchoring (full rest)
@@ -5545,16 +5562,71 @@ function advanceWatch(silent) {
 function hasMovesRemaining() { return true; } // moves always available; fatigue is the limit
 
 // D&D fatigue: Fresh → Fatigued → Exhausted
-function fatigueLevel() {
-  const pushed = G.watch?.legsPushed || 0;
-  if (pushed === 0) return 0; // Fresh
-  if (pushed === 1) return 2; // Fatigued after 1 leg (8 hrs)
-  return 3;                   // Exhausted after 2 legs (16 hrs)
+// ── addGameHours — single entry point for ALL game-time advancement ────────
+// Adds h game-hours to totalHours (the absolute clock) AND hoursAwake (fatigue).
+// Handles day-crossing (air drain, log entry) and fires fatigue threshold warnings.
+function addGameHours(h) {
+  if (!G.watch || h <= 0) return;
+  const prevAwake = G.watch.hoursAwake || 0;
+  const prev      = G.watch.totalHours || 0;
+
+  G.watch.hoursAwake = prevAwake + h;
+  G.watch.totalHours = prev + h;
+
+  // Day crossings
+  const prevDays = Math.floor(prev / 24);
+  const newDays  = Math.floor(G.watch.totalHours / 24);
+  const crossed  = newDays - prevDays;
+  for (let i = 0; i < crossed; i++) {
+    G.watch.day++;
+    G.travelDays = (G.travelDays || 0) + 1;
+    G.ship.air   = Math.max(0, G.ship.air - 1);
+    if (G.ship.air <= 0) { updateUI(); doDefeat('air'); return; }
+    addLog(`⏱ Day ${G.watch.day}. Air: ${G.ship.air} days remaining.`, '');
+  }
+
+  // Fatigue threshold warnings
+  _checkFatigueThresholds(prevAwake, G.watch.hoursAwake);
+
+  updateWatchHUD(); updateUI();
 }
-function fatigueName()        { return ['Fresh','','Fatigued','Exhausted'][fatigueLevel()]; }
-function fatigueMoveClass()   { return ['fresh','fresh','fatigued','exhausted'][fatigueLevel()]; }
+
+// Check if hoursAwake crossed a fatigue threshold and fire the visual warning
+function _checkFatigueThresholds(prev, now) {
+  if (prev < 8  && now >= 8)  _triggerFatigueFlash(1); // fatigued
+  if (prev < 16 && now >= 16) _triggerFatigueFlash(2); // exhausted
+  if (prev < 24 && now >= 24) _triggerFatigueFlash(3); // critically exhausted
+}
+
+// Pulsing edge vignette — orange for fatigued, deep red-orange for exhausted
+let _fatigueFlashTimer = null;
+function _triggerFatigueFlash(level) {
+  const vig = document.getElementById('fatigue-vignette');
+  if (!vig) return;
+  clearTimeout(_fatigueFlashTimer);
+  vig.className = '';
+  // Force reflow so animation restarts even if same class
+  void vig.offsetWidth;
+  if      (level === 1) vig.className = 'fatigue-warn';
+  else if (level === 2) vig.className = 'fatigue-danger';
+  else                  vig.className = 'fatigue-critical';
+  _fatigueFlashTimer = setTimeout(() => { vig.className = ''; }, 5000);
+  // Also log a brief reminder
+  const msgs = ['','⚠ Fatigue setting in — rest when you can.','⚠ Exhausted — performance is suffering. Rest now.','⚠ Critically exhausted — combat effectiveness severely impaired.'];
+  addLog(msgs[Math.min(level, msgs.length-1)], 'dmg');
+}
+
+function fatigueLevel() {
+  const h = G.watch?.hoursAwake || 0;
+  if (h >= 24) return 3; // critically exhausted
+  if (h >= 16) return 2; // exhausted
+  if (h >= 8)  return 1; // fatigued
+  return 0;              // fresh
+}
+function fatigueName()        { return ['Fresh','Fatigued','Exhausted','Critically Exhausted'][fatigueLevel()]; }
+function fatigueMoveClass()   { return ['fresh','fatigued','exhausted','exhausted'][fatigueLevel()]; }
 function fatigueMovePenalty() { return 0; }
-function fatigueDamageMult()  { return [1.0, 1.0, 0.85, 0.70][fatigueLevel()]; }
+function fatigueDamageMult()  { return [1.0, 0.90, 0.75, 0.60][fatigueLevel()]; }
 
 function consumeMove() {
   if (!G.watch) return;
@@ -5602,7 +5674,7 @@ function watchExpiredMidJourney() {
   const pushNote = lvl === 0
     ? `
 
-Anchoring now means full rest and a fresh helmsman at dawn. Pushing on risks fatigue.`
+Anchoring now means 8 hours of rest and a fresh helmsman. Pushing on risks fatigue.`
     : lvl === 2
     ? `
 
@@ -5615,8 +5687,7 @@ Anchoring now means full rest and a fresh helmsman at dawn. Pushing on risks fat
 
   const anchorCb = () => {
     G.watch._pauseShown = false;
-    G.watch.legsPushed = 0;
-    // Store resume info — doRest() will find this and show the resume prompt after the animation
+    // doRest() will reset hoursAwake and advance the clock
     const toId = G.tvl?.to;
     const watchesRemaining = G.tvl?._watchesRemaining;
     const pausedPos  = G.ship.midLanePos;
@@ -5627,10 +5698,10 @@ Anchoring now means full rest and a fresh helmsman at dawn. Pushing on risks fat
   };
   const pushCb = () => {
     G.watch._pauseShown = false;
-    G.watch.legsPushed = (G.watch.legsPushed || 0) + 1;
+    // Pushing past a rest point adds 0 extra hours (tickLeg already ran), just updates display
     const newLvl = fatigueLevel();
-    if (newLvl === 2) addLog(`⚠ Constitution check failed — helmsman is now Fatigued!`, 'dmg');
-    if (newLvl === 3) addLog(`⚠ Constitution check failed again — helmsman is Exhausted!`, 'dmg');
+    if (newLvl === 1) addLog(`⚠ Fatigue setting in — helmsman is Fatigued.`, 'dmg');
+    if (newLvl >= 2) addLog(`⚠ Constitution check failed — helmsman is ${fatigueName()}!`, 'dmg');
     jlogPushOn(); // Captain's Log entry for pushing past rest
     updateWatchHUD();
     // Resume travel from where we paused
@@ -5776,13 +5847,13 @@ function doRest() {
 
   const fatigLvl = fatigueLevel();
   const hour     = currentHour();
-  const endHour  = 6; // always wake at 06:00
-  const titles = ['⚓ Anchoring for the Night','⚓ Making Fast — Watch Complete','⚓ Emergency Anchor','⚠ Critical Rest'];
+  const wakeHour = (hour + 8) % 24;
+  const titles = ['⚓ Anchoring for Rest','⚓ Anchoring — Crew Fatigued','⚓ Emergency Anchor','⚠ Critical Rest'];
   const descs  = [
-    `${timeStr(hour)} — Helm secured. Rest until 06:00. The Drift drifts past in silence.`,
-    `${timeStr(hour)} — Fatigued helmsman. Anchoring now. Rest until 06:00.`,
-    `${timeStr(hour)} — Emergency anchor. The helmsman is done. Rest until 06:00.`,
-    `${timeStr(hour)} — The helmsman collapses. Rest until 06:00. No arguments.`,
+    `${timeStr(hour)} — Helm secured. 8 hours of rest. Wake at ${timeStr(wakeHour)}.`,
+    `${timeStr(hour)} — Fatigued helmsman. Anchoring now. Wake at ${timeStr(wakeHour)}.`,
+    `${timeStr(hour)} — Emergency anchor. The helmsman is done. Wake at ${timeStr(wakeHour)}.`,
+    `${timeStr(hour)} — The helmsman collapses. Rest. Wake at ${timeStr(wakeHour)}.`,
   ];
   titleEl.textContent = titles[Math.min(fatigLvl, titles.length-1)];
   descEl.textContent  = descs[Math.min(fatigLvl, descs.length-1)];
@@ -5794,7 +5865,8 @@ function doRest() {
     setTimeout(() => {
       overlay.classList.remove('on');
       G.watch.restingPhase = false;
-      G.watch.legsPushed   = 0; // full rest = Fresh — fatigue cleared
+      G.watch.hoursAwake   = 0; // full rest — fatigue cleared
+      G.watch.legsPushed   = 0; // legacy compat
 
       // Always advance to next 06:00 on rest
       restAdvanceToMorning();
@@ -5805,8 +5877,9 @@ function doRest() {
       if (hullHeal > 0) { s.hull += hullHeal; addLog(`🔧 Crew repaired the hull overnight. +${hullHeal} hull.`, 'gd'); }
       const crewHeal = Math.min(2, s.maxCrew - s.crew);
       if (crewHeal > 0) { s.crew += crewHeal; addLog(`👥 ${crewHeal} crew rehabilitated and back on duty.`, 'gd'); }
-      addLog(`06:00 — Anchor lifted. Day ${G.watch.day}. Helmsman is ${fatigueName()}.`, '');
-      addJournalEntry(`Anchored ${timeStr(hour)}–06:00. Full rest. Helmsman fresh. Day ${G.watch.day} underway.`, '');
+      const wakeH = currentHour();
+      addLog(`${timeStr(wakeH)} — Anchor lifted. Day ${G.watch.day}. Helmsman is ${fatigueName()}.`, '');
+      addJournalEntry(`Rested ${timeStr(hour)}–${timeStr(wakeH)}. Helmsman fresh. Day ${G.watch.day} underway.`, '');
       updateWatchHUD(); updateUI(); _writeAutoSave();
 
       if (G._resumeTravel) {
@@ -5823,7 +5896,7 @@ function doRest() {
           startTravel(rt.toId, rt.watchesRemaining, rt.pausedPos, rt.pausedProg, rt.laneOrigin);
         };
         showMsg('⚓ Rested — Ready to Sail',
-          `Day ${G.watch.day}, 06:00. ${dn} — ${rt.watchesRemaining} day${rt.watchesRemaining>1?'s':''} remaining.`,
+          `Day ${G.watch.day}, ${timeStr(currentHour())}. ${dn} — ${rt.watchesRemaining} day${rt.watchesRemaining>1?'s':''} remaining.`,
           '⛵ Resume Course', resumeFn);
         // Auto-resume countdown for both idle and manual auto-rest
         if(G._idleMode || G._autoRest) _restAutoCountdown(resumeFn, G._idleMode ? 2 : 3);
@@ -5843,7 +5916,7 @@ function doRest() {
           G.phase = 'map';
           startTravel(toId, watchesRemaining, pausedPos, pausedProg, laneOrigin);
         };
-        showMsg('⚓ Rested — Ready to Sail', `${dn} awaits. Day ${G.watch.day}, 06:00.`,
+        showMsg('⚓ Rested — Ready to Sail', `${dn} awaits. Day ${G.watch.day}, ${timeStr(currentHour())}.`,
           '⛵ Resume Course', resumeFn2);
         if(G._idleMode || G._autoRest) _restAutoCountdown(resumeFn2, G._idleMode ? 2 : 3);
       }
@@ -5894,7 +5967,6 @@ function updateWatchHUD() {
   const hud = document.getElementById('watch-hud');
   if (!hud) return;
 
-  // Show HUD in map, traveling, port, and LS — hide only when explicitly closed
   const active = G.phase === 'map' || G.phase === 'traveling' || G.phase === 'port';
   if(active) hud.classList.remove('hidden-by-overlay');
   hud.classList.toggle('on', active);
@@ -5905,7 +5977,7 @@ function updateWatchHUD() {
     document.getElementById('wh-day').textContent = watchTimeStr();
   }
 
-  // Leg pips — show position within current 24-hr cycle (0-3 legs)
+  // Leg pips — show how many 8h blocks have elapsed in the current 24h cycle
   const pipsEl = document.getElementById('wh-pips');
   pipsEl.innerHTML = '';
   const legsInDay = Math.floor((G.watch.totalHours || 0) % 24 / LEG_HOURS);
@@ -5916,30 +5988,36 @@ function updateWatchHUD() {
   }
 
   // Fatigue/status display
+  const lvl = fatigueLevel();
   const wh_move = document.getElementById('wh-move');
   if (wh_move) {
-    const pushed = G.watch.legsPushed || 0;
-    const legsText = pushed === 0 ? '8hr leg' : pushed === 1 ? 'Fatigued' : 'Exhausted';
-    wh_move.textContent = legsText;
+    const h = G.watch.hoursAwake || 0;
+    const statusText = lvl === 0 ? `${Math.floor(8 - h)}h to fatigue`
+                     : lvl === 1 ? `Fatigued (${Math.floor(16 - h)}h to exhaustion)`
+                     : lvl === 2 ? `Exhausted`
+                     : `Critically Exhausted`;
+    wh_move.textContent = statusText;
   }
 
   // Fatigue badge
   const badge = document.getElementById('fatigue-badge');
   if (badge) {
-    const badgeLabels = ['✦ Fresh','✦ Fresh','⚠ Fatigued','⚠ Exhausted'];
-    badge.textContent = badgeLabels[fatigueLevel()];
+    const badgeLabels = ['✦ Fresh','⚠ Fatigued','⚠ Exhausted','⚠ Critical'];
+    badge.textContent = badgeLabels[lvl];
     badge.className = `fatigue-${fatigueMoveClass()}`;
   }
 
-  // Rest/anchor button
+  // Rest button — always visible and clickable; class drives colour + animation
   const restBtn = document.getElementById('rest-btn');
   if (restBtn) {
-    restBtn.style.display = active ? '' : 'none';
-    restBtn.className = '';
-    restBtn.id = 'rest-btn';
-    const lvl = fatigueLevel();
-    restBtn.classList.add('on', fatigueMoveClass());
-    restBtn.textContent = lvl >= 2 ? `⚠ Anchor Now! (${fatigueName()})` : '⚓ Anchor & Rest';
+    restBtn.className = fatigueMoveClass(); // fresh / fatigued / exhausted
+    if (lvl >= 2) {
+      restBtn.textContent = `⚠ Rest Now! (${fatigueName()})`;
+    } else if (lvl === 1) {
+      restBtn.textContent = `🌙 Rest (Fatigued)`;
+    } else {
+      restBtn.textContent = `🌙 Rest`;
+    }
   }
 }
 
@@ -6962,7 +7040,7 @@ const TUT_STEPS = {
   },
   8: {
     title: '⏱ THE WATCH SYSTEM',
-    body: `Lane crossings are measured in <strong>watches</strong> — 8-hour shifts.<br><br>At the end of each watch you'll choose:<br><br>⚓ <strong>Anchor & Rest</strong> — Sleep until dawn. Crew returns to <em>Fresh</em> status. Hull repairs slightly.<br>➤ <strong>Push On</strong> — Keep moving through the night. Crew becomes <em>Fatigued</em>, then <em>Exhausted</em>. Exhausted crews deal less damage and suffer hull wear from navigation errors.<br><br>Longer journeys require multiple watches. Plan your rest carefully.`,
+    body: `Lane crossings are measured in <strong>watches</strong> — 8-hour shifts.<br><br>At the end of each watch you can rest or push on.<br><br>🌙 <strong>Rest</strong> — Sleep 8 hours. Crew returns to <em>Fresh</em>. Hull repairs slightly. Available anytime via the Rest button.<br>➤ <strong>Push On</strong> — Keep moving. After 8h awake your crew becomes <em>Fatigued</em>, then <em>Exhausted</em> at 16h, then <em>Critically Exhausted</em> at 24h. Exhausted crews deal less damage.<br><br>Time also advances in local space and dungeons. Watch the fatigue warnings.`,
     btn: 'Full Ahead →',
     highlight: null,
     onDismiss: '_tutComplete',
@@ -7168,8 +7246,9 @@ function initGame() {
     // ── Watch & Fatigue system ───────────────────────────
     watch: {
       day:        1,
-      totalHours: 0,      // absolute hours elapsed (each leg = +8hrs)
-      legsPushed: 0,      // fatigue counter — reset only by full rest
+      totalHours: 0,      // absolute game-hours elapsed — drives clock, planet orbits, day count
+      hoursAwake: 0,      // hours since last rest — drives fatigue (resets on rest)
+      legsPushed: 0,      // DEPRECATED — kept for save compatibility, not used for fatigue logic
       moveBudget: 1,
       moveUsed:   0,
       watchesWithoutRest: 0, // legacy compat — unused
@@ -18545,7 +18624,7 @@ function _applyLoad(save) {
       _breachArrived: state._breachArrived || {},
       captainLog: state.captainLog || [],
       travelDays: state.travelDays || 0,
-      watch: state.watch || { day:1, totalHours:0, legsPushed:0, moveBudget:1, moveUsed:0, watchesWithoutRest:0, restingPhase:false },
+      watch: state.watch || { day:1, totalHours:0, hoursAwake:0, legsPushed:0, moveBudget:1, moveUsed:0, watchesWithoutRest:0, restingPhase:false },
       view:{zoom: window.innerWidth<=700 ? Math.max(0.55, Math.min(0.75, window.innerWidth/600)) : 1, panX:0,panY:0,follow:true,_pan:false,_lastMx:0,_lastMy:0,_didDrag:false},
     };
     for (let i = 0; i < 220; i++) G.stars.push({ x:Math.random(),y:Math.random(),r:Math.random()*1.8+0.3,twk:Math.random()*Math.PI*2,spd:Math.random()*0.014+0.003,br:Math.random() });
@@ -18556,7 +18635,13 @@ function _applyLoad(save) {
     // first tick, watchExpiredMidJourney() returning early, and ov-travel-seq staying
     // open with no dialog — the "frozen behind the chart overlay" bug.
     // restingPhase=true would make _anyOverlayOpen() block all map interaction forever.
-    if (G.watch) { G.watch._pauseShown = false; G.watch.restingPhase = false; }
+    if (G.watch) {
+      G.watch._pauseShown = false; G.watch.restingPhase = false;
+      // Migrate old saves: if hoursAwake is missing, derive it from legsPushed
+      if (G.watch.hoursAwake === undefined) {
+        G.watch.hoursAwake = (G.watch.legsPushed || 0) * 8;
+      }
+    }
     G.localQuests = state.localQuests || {};
     G.tutorial    = state.tutorial    || { step: 0, done: false, combatTipShown: false };
     _tutHide(); // clear any in-progress tutorial overlay from before the load
@@ -20502,6 +20587,10 @@ function _lsBoundaryExit() {
                       krynn:'Vael', hero:'Thyss', dark:'Serath' }[_dSph] || 'Fentheris System';
   setTimeout(() => {
     LS._boundaryExiting = false;
+    // Commit LS session time to the in-game clock
+    // Rate: 1 real second = 1 game minute (1/60 game hour). Cap at 8 game-hours.
+    const lsHours = Math.min(8, (LS.t || 0) / 3600);
+    if (lsHours >= 0.1) addGameHours(lsHours);
     closeLsOverlay();
     addLog(`Departed ${_dSphName} local space.`, '');
     // Tutorial: teach watch system once they're on the map, before they travel
@@ -22019,10 +22108,12 @@ function _lsRender(cx, W, H, dt) {
       cx.fillStyle=hexA(p.col,'44');
       cx.beginPath(); cx.arc(0,0,8,0,Math.PI*2); cx.fill();
       cx.restore();
-      // Anchor icon at center
-      cx.font='13px Arial'; cx.textAlign='center'; cx.textBaseline='middle';
-      cx.fillText('⚓', p.x, p.y);
-      cx.textBaseline='alphabetic';
+      // Anchor icon — suppressed for Realm since the station image is drawn by the solar system renderer
+      if((G.ship?.loc||'realm') !== 'realm') {
+        cx.font='13px Arial'; cx.textAlign='center'; cx.textBaseline='middle';
+        cx.fillText('⚓', p.x, p.y);
+        cx.textBaseline='alphabetic';
+      }
       // Cargo turnin ! marker on dock
       if(lsDockHasTurnin()) {
         const _qPulse = 0.75 + 0.25*Math.sin(LS.t*3.5);
@@ -23624,6 +23715,10 @@ function _fdReopen() {
 }
 
 function closeFragDungeon() {
+  // Commit dungeon session time to the in-game clock before closing
+  // Rate: 1 real second = 1 game minute (1/60 game hour). Cap at 6 game-hours.
+  const fdHours = Math.min(6, (FD.t || 0) / 3600);
+  if (fdHours >= 0.05) addGameHours(fdHours);
   document.getElementById('ov-fragsitee').classList.remove('on');
   document.getElementById('fd-interact-panel').classList.remove('on');
   if(FD.animId){ cancelAnimationFrame(FD.animId); FD.animId=null; }
@@ -27592,12 +27687,12 @@ document.addEventListener('visibilitychange', () => {
         <div class="b-section">
           <div class="b-head">⏱ The Watch System</div>
           <div class="b-body">
-            Each lane crossing is measured in <strong>watches</strong> — 8-hour shifts (06:00–14:00). At the end of every watch you are prompted:<br><br>
-            &nbsp;&nbsp;• <strong>⚓ Anchor &amp; Rest</strong> — Sleep until 06:00. Crew returns to <em>Fresh</em>. Hull repairs slightly.<br>
+            Time advances continuously: 8h per travel leg, plus time spent in local space and dungeons.<br><br>
+            &nbsp;&nbsp;• 🌙 <strong>Rest</strong> — Sleep 8 hours from wherever the clock is. Crew returns to Fresh. Hull repairs slightly.<br>
             &nbsp;&nbsp;• <strong>➤ Push On</strong> — Continue through the night. Crew becomes Fatigued then Exhausted.<br><br>
             <strong>Fatigue levels:</strong><br>
             &nbsp;&nbsp;• ✦ <strong>Fresh</strong> — Full effectiveness. Combat damage 100%.<br>
-            &nbsp;&nbsp;• ⚠ <strong>Fatigued</strong> — One push. Combat damage 85%.<br>
+            &nbsp;&nbsp;• ⚠ <strong>Fatigued</strong> — 8h awake. Combat damage 90%.<br>
             &nbsp;&nbsp;• ⚠ <strong>Exhausted</strong> — Two pushes. Damage 70%. Hull ticks from navigation errors.<br><br>
             <em>Air supply drains once per rest — once per game day.</em>
           </div>
