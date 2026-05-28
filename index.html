@@ -19959,6 +19959,10 @@ function _lsInitBelt() {
 const _lsSolImgs = {};
 function _lsPreloadSolarImgs() {
   _lsInitBelt();
+  // Belt rocks use the travel-sequence image cache (TS._imgs).
+  // tsPreloadImgs() is normally called when travel starts — kick it here too
+  // so asteroid images are available even if the player hasn't traveled yet.
+  if(typeof tsPreloadImgs === 'function') tsPreloadImgs();
   const srcs = [LS_HEARTHFIRE.img, 'images/ls_station_fentheris.png',
     ...LS_REALM_PLANETS.map(p => p.img)];
   srcs.forEach(src => {
