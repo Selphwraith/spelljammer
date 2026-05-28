@@ -9464,7 +9464,7 @@ function wpnPickerOpen(item, from) {
 
   // Update confirm button cost label
   const btn = document.getElementById('wpnpicker-confirm-btn');
-  btn.textContent = `⚔ Install — <img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${item.cost}`;
+  btn.innerHTML = `⚔ Install — <img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${item.cost}`;
   btn.style.display = 'none';
 
   document.getElementById('wpnpicker-compare').classList.remove('on');
@@ -9588,9 +9588,9 @@ function _wpnPickerSelectSlot(idx) {
   const btn = document.getElementById('wpnpicker-confirm-btn');
   btn.style.display = 'block';
   if (oldKey) {
-    btn.textContent = `⚔ Replace ${WPN[oldKey].n} — <img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${_wpnPickerItem.cost}`;
+    btn.innerHTML = `⚔ Replace ${WPN[oldKey].n} — <img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${_wpnPickerItem.cost}`;
   } else {
-    btn.textContent = `⚔ Install in Slot ${idx + 1} — <img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${_wpnPickerItem.cost}`;
+    btn.innerHTML = `⚔ Install in Slot ${idx + 1} — <img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${_wpnPickerItem.cost}`;
   }
 
   // Redraw canvas with selection
@@ -16469,7 +16469,7 @@ function buildInvGrid(){
     });
   }
   const total=G.ship.inv.reduce((a,i)=>a+i.val,0);
-  document.getElementById('inv-footer').textContent=`${G.ship.inv.length} items — Est. sell value: <img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${total}`;
+  document.getElementById('inv-footer').innerHTML=`${G.ship.inv.length} items — Est. sell value: <img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${total}`;
   const hasTradeOrComp=G.ship.inv.some(i=>i.type==='trade'||i.type==='component');
   document.getElementById('inv-sell-all-btn').style.display=(hasTradeOrComp&&G.phase==='port')?'inline-block':'none';
 }
@@ -16491,7 +16491,7 @@ function selectInvItem(uid){
     acts.appendChild(ub);
   }
   if(item.type==='trade'||item.type==='component'||item.type==='artifact'||item.type==='usable'||item.type==='equip'){
-    const sb=document.createElement('button'); sb.className='btn sm'; sb.textContent=`💰 Sell <img src="images/ts_coin.png" class="ts-ico" alt="TS">${item.val}`;
+    const sb=document.createElement('button'); sb.className='btn sm'; sb.innerHTML=`💰 Sell <img src="images/ts_coin.png" class="ts-ico" alt="TS">${item.val}`;
     sb.disabled=G.phase!=='port';
     if(G.phase!=='port')sb.title='Must be docked at a port to sell';
     sb.onclick=()=>{ if(G.phase!=='port'){showMsg('Cannot Sell','Dock at a port to sell cargo.');return;} G.ship.gold+=item.val; G.ship.inv=G.ship.inv.filter(i=>i.uid!==uid); addLog(`Sold ${item.n} for ${item.val} TS.`,'gd'); updateUI(); buildInvGrid(); if(G.phase==='port'){document.getElementById('pt-gold').textContent=G.ship.gold;buildShop();} };
@@ -16506,7 +16506,7 @@ function selectInvItem(uid){
     acts.appendChild(eb);
     // Sell at half price — allowed at port or in local space dock
     const canSellWpn = G.phase==='port' || document.getElementById('ls-dock-panel')?.classList.contains('on');
-    const swb=document.createElement('button'); swb.className='btn sm'; swb.textContent=`💰 Sell <img src="images/ts_coin.png" class="ts-ico" alt="TS">${item.val}`;
+    const swb=document.createElement('button'); swb.className='btn sm'; swb.innerHTML=`💰 Sell <img src="images/ts_coin.png" class="ts-ico" alt="TS">${item.val}`;
     swb.disabled=!canSellWpn;
     if(!canSellWpn)swb.title='Dock at a port or station to sell';
     swb.onclick=()=>{
@@ -16707,7 +16707,7 @@ function buildShipOverlay(){
     if(s.sigTier < 3){
       const next=sigDef.tiers[s.sigTier];
       const nx=document.createElement('div'); nx.className='upg-item'; nx.style.cssText='color:#c8b888;font-size:10px;';
-      nx.textContent=`Next: ${next.n} — ${next.upgradeDesc} (<img src="images/ts_coin.png" class="ts-ico" alt="TS">${next.cost})`;
+      nx.innerHTML=`Next: ${next.n} — ${next.upgradeDesc} (<img src="images/ts_coin.png" class="ts-ico" alt="TS">${next.cost})`;
       statsDiv.appendChild(nx);
     } else {
       const mx=document.createElement('div'); mx.className='upg-item'; mx.style.color='#ffaa00';
@@ -20616,9 +20616,9 @@ function _lsRefreshDock() {
   const hBtn = document.getElementById('ls-svc-hull');
   const aBtn = document.getElementById('ls-svc-air');
   const cBtn = document.getElementById('ls-svc-crew');
-  if(hBtn){ hBtn.textContent = `<img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${hullCost} TS`; hBtn.disabled = s.hull >= s.maxHull || s.gold < hullCost; }
-  if(aBtn){ aBtn.textContent = `<img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${airCost} TS`;  aBtn.disabled = s.air  >= (s.maxAir||12) || s.gold < airCost; }
-  if(cBtn){ cBtn.textContent = `<img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${crewCost} TS`; cBtn.disabled = s.crew >= s.maxCrew || s.gold < crewCost; }
+  if(hBtn){ hBtn.innerHTML = `<img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${hullCost} TS`; hBtn.disabled = s.hull >= s.maxHull || s.gold < hullCost; }
+  if(aBtn){ aBtn.innerHTML = `<img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${airCost} TS`;  aBtn.disabled = s.air  >= (s.maxAir||12) || s.gold < airCost; }
+  if(cBtn){ cBtn.innerHTML = `<img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${crewCost} TS`; cBtn.disabled = s.crew >= s.maxCrew || s.gold < crewCost; }
   // Ask Locals button — hide once fragment revealed, or if sphere has no fragment
   const _alBtn = document.getElementById('ls-dock-ask-locals-btn');
   if(_alBtn) {
@@ -20735,7 +20735,7 @@ function _lsBuildQmShop() {
     const buyBtn = document.createElement('button');
     buyBtn.className = 'btn';
     buyBtn.style.cssText = 'font-size:0.563em;padding:3px 8px;flex-shrink:0;white-space:nowrap;';
-    buyBtn.textContent = `<img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${item.cost} TS`;
+    buyBtn.innerHTML = `<img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${item.cost} TS`;
     buyBtn.disabled = !canAfford;
     if(canAfford) {
       buyBtn.onclick = () => {
@@ -22397,7 +22397,7 @@ function buildArmoryGrid() {
     const sbtn = document.createElement('button');
     sbtn.className = 'btn';
     sbtn.style.cssText = 'font-size:0.563em;padding:5px 8px;flex-shrink:0;';
-    sbtn.textContent = `<img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${item.val} TS`;
+    sbtn.innerHTML = `<img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${item.val} TS`;
     sbtn.title = 'Sell (requires port or station dock)';
     const canSell = G.phase==='port' || document.getElementById('ls-dock-panel')?.classList.contains('on');
     sbtn.disabled = !canSell;
