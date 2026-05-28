@@ -1164,11 +1164,33 @@ body {
 #ls-minimap {
   position:absolute; bottom:48px; right:14px;
   width:220px; height:220px; border-radius:50%;
-  border:1px solid rgba(68,136,255,0.2); background:rgba(2,0,16,0.75);
+  border:1px solid rgba(68,136,255,0.25); background:rgba(2,0,16,0.45);
   overflow:hidden; z-index:10; pointer-events:none;
-  box-shadow:0 0 20px rgba(68,136,255,0.133);
+  box-shadow:0 0 20px rgba(68,136,255,0.12);
+  transition: width 0.25s ease, height 0.25s ease, border-radius 0.25s ease,
+              background 0.25s ease, opacity 0.25s ease;
 }
-#ls-minimap canvas { width:100%; height:100%; }
+#ls-minimap canvas { width:100%; height:100%; opacity:0.88; }
+#ls-minimap.minimized {
+  width:28px; height:28px; border-radius:6px;
+  background:rgba(2,0,16,0.75); overflow:visible;
+}
+#ls-minimap.minimized canvas { display:none; }
+#ls-minimap-toggle {
+  position:absolute; bottom:2px; right:2px;
+  width:20px; height:20px; border-radius:4px;
+  background:rgba(10,5,30,0.70); border:1px solid rgba(68,136,255,0.30);
+  color:rgba(140,180,255,0.70); font-size:11px; line-height:1;
+  cursor:pointer; pointer-events:all; z-index:11;
+  display:flex; align-items:center; justify-content:center;
+  transition: color 0.15s, background 0.15s;
+  padding:0;
+}
+#ls-minimap-toggle:hover { color:#aaddff; background:rgba(30,20,60,0.90); }
+#ls-minimap.minimized #ls-minimap-toggle {
+  bottom:4px; right:4px; font-size:13px;
+  color:rgba(100,160,255,0.80);
+}
 
 /* ── Log strip ── */
 #ls-log-strip {
@@ -3491,7 +3513,10 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
     </div>
 
     <!-- Minimap bottom-right -->
-    <div id="ls-minimap"><canvas id="ls-minimap-canvas"></canvas></div>
+    <div id="ls-minimap">
+      <canvas id="ls-minimap-canvas"></canvas>
+      <button id="ls-minimap-toggle" onclick="_lsToggleMinimap()" title="Toggle minimap">⊠</button>
+    </div>
 
     <!-- Log strip bottom-center -->
     <div id="ls-log-strip">Entering local space — navigate to a point of interest.</div>
@@ -20444,6 +20469,7 @@ function openLocalSpace() {
 
   // Kick off solar system image preload for realm
   if((G.ship?.loc || 'realm') === 'realm') _lsPreloadSolarImgs();
+  _lsMinimapRestoreState();
 
   if(LS.animId) cancelAnimationFrame(LS.animId);
   LS.lastTs = 0;
@@ -22246,7 +22272,28 @@ function _lsDrawShipSilhouette(ctx, key) {
 }
 
 // ── MINIMAP RENDER ────────────────────────────────────────────────────────
+function _lsToggleMinimap() {
+  const mm = document.getElementById('ls-minimap');
+  const btn = document.getElementById('ls-minimap-toggle');
+  if(!mm) return;
+  const minimized = mm.classList.toggle('minimized');
+  btn.textContent = minimized ? '⊞' : '⊠';
+  btn.title = minimized ? 'Expand minimap' : 'Minimise minimap';
+  try { localStorage.setItem('ls_minimap_minimized', minimized ? '1' : '0'); } catch(e) {}
+}
+function _lsMinimapRestoreState() {
+  try {
+    if(localStorage.getItem('ls_minimap_minimized') === '1') {
+      const mm = document.getElementById('ls-minimap');
+      const btn = document.getElementById('ls-minimap-toggle');
+      if(mm)  mm.classList.add('minimized');
+      if(btn) { btn.textContent = '⊞'; btn.title = 'Expand minimap'; }
+    }
+  } catch(e) {}
+}
+
 function _lsRenderMinimap() {
+  if(document.getElementById('ls-minimap')?.classList.contains('minimized')) return;
   const mc = LS.mmCanvas;
   if(!mc) return;
   const MM = 220; // canvas resolution — matches doubled CSS size
