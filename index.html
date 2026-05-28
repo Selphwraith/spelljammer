@@ -1163,7 +1163,7 @@ body {
 /* ── Minimap ── */
 #ls-minimap {
   position:absolute; bottom:48px; right:14px;
-  width:110px; height:110px; border-radius:50%;
+  width:220px; height:220px; border-radius:50%;
   border:1px solid rgba(68,136,255,0.2); background:rgba(2,0,16,0.75);
   overflow:hidden; z-index:10; pointer-events:none;
   box-shadow:0 0 20px rgba(68,136,255,0.133);
@@ -19842,35 +19842,35 @@ function _lsDefinePois() {
       id:'npc_qm', label:'QM Dael Morne', role:'IEF Supply Corps — Fentheris System',
       x: W*0.4509, y: H*0.4102, r: 48, col:'#88bbff', icon:'⚓', type:'npc',
       npcId: 'realm_qm',
-      patrol: true, patrolR: 70, patrolSpeed: 0.25, patrolAngle: 1.0,
+      patrol: true, patrolR: 45, patrolSpeed: 0.25, patrolAngle: 1.0,
     },
-    // Ensign Lirith Vaen — patrol route NPC, mid-ring
+    // Ensign Lirith Vaen — patrol route NPC, close orbit
     {
       id:'npc_lirith', label:'Ensign Lirith Vaen', role:'IEF Scout Corvette — Quest',
       x: W*0.5092, y: H*0.4074, r: 48, col:'#66aaff', icon:'🛸', type:'npc',
       npcId: 'realm_scout',
-      patrol: true, patrolR: 100, patrolSpeed: 0.28, patrolAngle: 0,
+      patrol: true, patrolR: 60, patrolSpeed: 0.28, patrolAngle: 0,
     },
-    // Merchant Tomas Wrenfold — inner ring
+    // Merchant Tomas Wrenfold — close orbit
     {
       id:'npc_merchant', label:'Tomas Wrenfold', role:'Licensed Merchant — Quest',
       x: W*0.5037, y: H*0.4602, r: 48, col:'#ffcc66', icon:'🧑‍💼', type:'npc',
       npcId: 'realm_merchant',
-      patrol: true, patrolR: 80, patrolSpeed: 0.22, patrolAngle: 1.4,
+      patrol: true, patrolR: 50, patrolSpeed: 0.22, patrolAngle: 1.4,
     },
-    // Archivist Pell Dusan — inner ring
+    // Archivist Pell Dusan — stationary near dock
     {
       id:'npc_sage', label:'Archivist Pell Dusan', role:'Toril Academy — Quest',
       x: W*0.5037, y: H*0.4602, r: 48, col:'#cc88ff', icon:'📚', type:'npc',
       npcId: 'realm_sage',
       patrol: false,
     },
-    // Commander Aeva Thessan — mid ring
+    // Commander Aeva Thessan — close orbit
     {
       id:'npc_commander', label:'Cmdr. Aeva Thessan', role:'IEF Strike Wing — Quest',
       x: W*0.4537, y: H*0.4602, r: 48, col:'#44ffcc', icon:'🎖️', type:'npc',
       npcId: 'realm_ien_officer',
-      patrol: true, patrolR: 90, patrolSpeed: 0.18, patrolAngle: 3.2,
+      patrol: true, patrolR: 55, patrolSpeed: 0.18, patrolAngle: 3.2,
     },
     // Fragment Orbit Site — outer edge, guarded
     {
@@ -19915,14 +19915,14 @@ function _lsDefinePois() {
 // periodDays : real orbital period in in-game days (matches actual planets)
 // angle      : starting angle at t=0 so planets begin spread out
 const LS_REALM_PLANETS = [
-  { id:'char',         name:'Char',          orbitalR:  351, size: 18, periodDays:    88, angle:0.8,  col:'#a89e88', glowCol:'#776655', img:'images/ls_planet_char.png',          hasRing:false },
-  { id:'velra',        name:'Velra',          orbitalR:  480, size: 34, periodDays:   225, angle:2.1,  col:'#e8d060', glowCol:'#aa9922', img:'images/ls_planet_velra.png',         hasRing:false },
-  { id:'fentheris',    name:'Fentheris',      orbitalR:  565, size: 44, periodDays:   365, angle:4.4,  col:'#3a88e8', glowCol:'#1a4499', img:'images/ls_planet_fentheris.png',     hasRing:false },
-  { id:'rust',         name:'The Rust',        orbitalR:  697, size: 26, periodDays:   687, angle:1.5,  col:'#cc5522', glowCol:'#882211', img:'images/ls_planet_rust.png',          hasRing:false },
-  { id:'volgrath',     name:'Volgrath',        orbitalR: 1289, size: 92, periodDays:  4333, angle:0.3,  col:'#cc9944', glowCol:'#996622', img:'images/ls_planet_volgrath.png',      hasRing:false },
-  { id:'paleRing',     name:'The Pale Ring',   orbitalR: 1745, size: 78, periodDays: 10759, angle:3.7,  col:'#ddcc99', glowCol:'#aa9955', img:'images/ls_planet_paleRing.png',      hasRing:true  },
-  { id:'drift',        name:'Drift',           orbitalR: 2475, size: 54, periodDays: 30687, angle:5.5,  col:'#88ccbb', glowCol:'#449988', img:'images/ls_planet_drift.png',         hasRing:false },
-  { id:'deepNameless', name:'Deep Nameless',   orbitalR: 3098, size: 50, periodDays: 60190, angle:2.8,  col:'#3344cc', glowCol:'#112288', img:'images/ls_planet_deepNameless.png',  hasRing:false },
+  { id:'char',         name:'Char',          orbitalR:  351, size: 27, periodDays:    88, angle:0.8,  col:'#a89e88', glowCol:'#776655', img:'images/ls_planet_char.png',          hasRing:false },
+  { id:'velra',        name:'Velra',          orbitalR:  480, size: 51, periodDays:   225, angle:2.1,  col:'#e8d060', glowCol:'#aa9922', img:'images/ls_planet_velra.png',         hasRing:false },
+  { id:'fentheris',    name:'Fentheris',      orbitalR:  565, size: 66, periodDays:   365, angle:4.4,  col:'#3a88e8', glowCol:'#1a4499', img:'images/ls_planet_fentheris.png',     hasRing:false },
+  { id:'rust',         name:'The Rust',        orbitalR:  697, size: 39, periodDays:   687, angle:1.5,  col:'#cc5522', glowCol:'#882211', img:'images/ls_planet_rust.png',          hasRing:false },
+  { id:'volgrath',     name:'Volgrath',        orbitalR: 1289, size:138, periodDays:  4333, angle:0.3,  col:'#cc9944', glowCol:'#996622', img:'images/ls_planet_volgrath.png',      hasRing:false },
+  { id:'paleRing',     name:'The Pale Ring',   orbitalR: 1745, size:117, periodDays: 10759, angle:3.7,  col:'#ddcc99', glowCol:'#aa9955', img:'images/ls_planet_paleRing.png',      hasRing:true  },
+  { id:'drift',        name:'Drift',           orbitalR: 2475, size: 81, periodDays: 30687, angle:5.5,  col:'#88ccbb', glowCol:'#449988', img:'images/ls_planet_drift.png',         hasRing:false },
+  { id:'deepNameless', name:'Deep Nameless',   orbitalR: 3098, size: 75, periodDays: 60190, angle:2.8,  col:'#3344cc', glowCol:'#112288', img:'images/ls_planet_deepNameless.png',  hasRing:false },
 ];
 
 const LS_HEARTHFIRE = {
@@ -20258,25 +20258,38 @@ function _lsSpawnInitialEnemies(sphereId) {
   const W = LS.W, H = LS.H;
   const pool = LS_ENEMY_POOLS[sphereId] || LS_ENEMY_POOLS.realm;
 
-  // Expanded world — more enemies, spread across the whole sphere in two bands:
-  //   Inner band  (30–58% of sphere radius): mid-range roamers
-  //   Outer band  (65–92% of sphere radius): fringe predators and patrols
-  const count = 6 + Math.floor(Math.random() * 6); // 6–11 enemies
-  const center = { x: W/2, y: H/2 };
+  // Expanded world — enemies spread across sphere in bands.
+  // Realm gets an extra outer band beyond the asteroid belt.
   const sphereR = Math.min(W, H) * 0.47;
+  const isRealm = sphereId === 'realm';
 
-  const bands = [
-    { innerR: sphereR * 0.30, outerR: sphereR * 0.58, share: 0.40 }, // 40% inner
-    { innerR: sphereR * 0.65, outerR: sphereR * 0.92, share: 0.60 }, // 60% outer
+  const bands = isRealm ? [
+    { innerR: sphereR * 0.20, outerR: sphereR * 0.45, share: 0.20 }, // inner system
+    { innerR: sphereR * 0.50, outerR: sphereR * 0.70, share: 0.30 }, // mid (belt area)
+    { innerR: sphereR * 0.75, outerR: sphereR * 0.94, share: 0.50 }, // outer dark — most enemies
+  ] : [
+    { innerR: sphereR * 0.30, outerR: sphereR * 0.58, share: 0.40 },
+    { innerR: sphereR * 0.65, outerR: sphereR * 0.92, share: 0.60 },
   ];
 
-  const POI_CLEAR_DIST = 220; // keep clear of any POI
+  const count = isRealm ? 9 + Math.floor(Math.random() * 6) : // 9–14 for realm
+                           6 + Math.floor(Math.random() * 6);  // 6–11 for others
+
+  const center = { x: W/2, y: H/2 };
+  const POI_CLEAR_DIST = 220;
   const MAX_ATTEMPTS = 40;
+
+  // Build weighted band selector
+  const totalShare = bands.reduce((s, b) => s + b.share, 0);
+  function pickBand() {
+    let r = Math.random() * totalShare;
+    for(const b of bands) { r -= b.share; if(r <= 0) return b; }
+    return bands[bands.length - 1];
+  }
 
   let spawned = 0;
   for(let i = 0; i < count; i++) {
-    // Pick band by share weight
-    const band = (Math.random() < bands[0].share) ? bands[0] : bands[1];
+    const band = pickBand();
     let placed = false;
     for(let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
       const angle = Math.random() * Math.PI * 2;
@@ -20289,9 +20302,8 @@ function _lsSpawnInitialEnemies(sphereId) {
       }
     }
     if(!placed) {
-      // Fallback — outer ring
       const angle = Math.random() * Math.PI * 2;
-      _lsSpawnEnemy(_lsPickEnemy(pool), center.x + Math.cos(angle) * sphereR * 0.80, center.y + Math.sin(angle) * sphereR * 0.80);
+      _lsSpawnEnemy(_lsPickEnemy(pool), center.x + Math.cos(angle) * sphereR * 0.82, center.y + Math.sin(angle) * sphereR * 0.82);
       spawned++;
     }
   }
@@ -22237,56 +22249,98 @@ function _lsDrawShipSilhouette(ctx, key) {
 function _lsRenderMinimap() {
   const mc = LS.mmCanvas;
   if(!mc) return;
-  mc.width = 110; mc.height = 110;
+  const MM = 220; // canvas resolution — matches doubled CSS size
+  mc.width = MM; mc.height = MM;
   const mx = LS.mmCtx;
-  const scale = 110 / Math.max(LS.W, LS.H);
-  const ox = (110 - LS.W*scale)/2;
-  const oy = (110 - LS.H*scale)/2;
+  const scale = MM / Math.max(LS.W, LS.H);
+  const ox = (MM - LS.W*scale)/2;
+  const oy = (MM - LS.H*scale)/2;
+  const cx = MM/2, cy = MM/2; // minimap center
 
-  mx.clearRect(0,0,110,110);
-  mx.fillStyle='rgba(2,0,16,0.7)'; mx.fillRect(0,0,110,110);
+  mx.clearRect(0,0,MM,MM);
+  mx.fillStyle='rgba(2,0,16,0.75)'; mx.fillRect(0,0,MM,MM);
 
-  // Sphere boundary
-  mx.strokeStyle='rgba(68,102,204,0.2)'; mx.lineWidth=1;
-  mx.beginPath(); mx.arc(55,55,53,0,Math.PI*2); mx.stroke();
+  // Sphere boundary ring
+  mx.strokeStyle='rgba(68,102,204,0.22)'; mx.lineWidth=1;
+  mx.beginPath(); mx.arc(cx,cy,MM*0.48,0,Math.PI*2); mx.stroke();
+
+  // ── Solar system (Realm only) ──
+  if((G.ship?.loc||'realm')==='realm' && typeof _lsIngameDays === 'function') {
+    const tDays = _lsIngameDays();
+    const wc = LS.W*0.5, wh = LS.H*0.5;
+
+    // Orbit rings — very faint dashed
+    mx.save(); mx.setLineDash([2,6]);
+    LS_REALM_PLANETS?.forEach(p => {
+      mx.strokeStyle='rgba(255,255,255,0.06)'; mx.lineWidth=0.5;
+      mx.beginPath(); mx.arc(ox+wc*scale, oy+wh*scale, p.orbitalR*scale, 0, Math.PI*2); mx.stroke();
+    });
+    mx.setLineDash([]); mx.restore();
+
+    // Sorrow Belt — faint band
+    mx.save();
+    mx.globalAlpha=0.09; mx.strokeStyle='#ccbb88';
+    mx.lineWidth=(BELT_OUTER-BELT_INNER)*scale*0.85;
+    mx.beginPath(); mx.arc(ox+wc*scale, oy+wh*scale, ((BELT_INNER+BELT_OUTER)*0.5)*scale, 0, Math.PI*2); mx.stroke();
+    mx.globalAlpha=1; mx.restore();
+
+    // Star glow
+    mx.save();
+    const sg = mx.createRadialGradient(ox+wc*scale, oy+wh*scale, 0, ox+wc*scale, oy+wh*scale, 12);
+    sg.addColorStop(0,'rgba(255,230,80,0.9)'); sg.addColorStop(1,'rgba(255,140,0,0)');
+    mx.fillStyle=sg; mx.beginPath(); mx.arc(ox+wc*scale, oy+wh*scale, 12, 0, Math.PI*2); mx.fill();
+    mx.restore();
+
+    // Planets
+    LS_REALM_PLANETS?.forEach(p => {
+      const angle = p.angle + (Math.PI*2/p.periodDays)*tDays;
+      const px = ox + (wc + Math.cos(angle)*p.orbitalR)*scale;
+      const py = oy + (wh + Math.sin(angle)*p.orbitalR)*scale;
+      const dotR = Math.max(1.5, p.size * scale * 0.5);
+      // Glow
+      mx.save();
+      const pg = mx.createRadialGradient(px,py,0,px,py,dotR*2.5);
+      pg.addColorStop(0,p.col+'cc'); pg.addColorStop(1,p.col+'00');
+      mx.fillStyle=pg; mx.beginPath(); mx.arc(px,py,dotR*2.5,0,Math.PI*2); mx.fill();
+      // Body
+      mx.fillStyle=p.col; mx.beginPath(); mx.arc(px,py,dotR,0,Math.PI*2); mx.fill();
+      mx.restore();
+    });
+  }
 
   // Hazard zones
   LS.pois.filter(p=>p.type==='hazard_zone').forEach(p=>{
-    mx.fillStyle='rgba(255,51,51,0.133)';
+    mx.fillStyle='rgba(255,51,51,0.10)';
     mx.beginPath(); mx.arc(ox+p.x*scale,oy+p.y*scale,p.r*scale,0,Math.PI*2); mx.fill();
   });
 
-  // POIs
+  // POIs (dock, NPCs, fragment)
   LS.pois.filter(p=>p.type!=='hazard_zone'&&p.type!=='patrol_zone'&&!p.hidden).forEach(p=>{
     const mx2 = ox+p.x*scale;
     const my2 = oy+p.y*scale;
     mx.fillStyle=p.col;
-    mx.beginPath(); mx.arc(mx2,my2,3,0,Math.PI*2); mx.fill();
-    // Quest indicator on minimap
+    mx.beginPath(); mx.arc(mx2,my2,4,0,Math.PI*2); mx.fill();
     const qs = _lsNpcQuestState(p);
     if(qs) {
-      const qCol = qs==='turnin' ? '#ffaa22' : '#ffff44';
+      const qCol = qs==='turnin'?'#ffaa22':'#ffff44';
       const qPulse = 0.6+0.4*Math.sin(LS.t*(qs==='turnin'?3.5:2));
-      mx.save();
-      mx.globalAlpha = qPulse;
-      mx.fillStyle = qCol;
-      mx.font = 'bold 7px Arial'; mx.textAlign='center'; mx.textBaseline='middle';
-      mx.fillText('!', mx2+5, my2-5);
-      mx.restore();
+      mx.save(); mx.globalAlpha=qPulse; mx.fillStyle=qCol;
+      mx.font='bold 8px Arial'; mx.textAlign='center'; mx.textBaseline='middle';
+      mx.fillText('!',mx2+6,my2-6); mx.restore();
     }
   });
 
   // Enemies
   LS.enemies.forEach(e=>{
     mx.fillStyle=_lsEnemyColor(e.key);
-    mx.beginPath(); mx.arc(ox+e.x*scale,oy+e.y*scale,2,0,Math.PI*2); mx.fill();
+    mx.beginPath(); mx.arc(ox+e.x*scale,oy+e.y*scale,2.5,0,Math.PI*2); mx.fill();
   });
 
   // Player
   mx.fillStyle='#aaccff';
-  mx.beginPath(); mx.arc(ox+LS.px*scale,oy+LS.py*scale,3.5,0,Math.PI*2); mx.fill();
-  mx.strokeStyle='rgba(255,255,255,0.333)'; mx.lineWidth=1;
-  mx.beginPath(); mx.arc(ox+LS.px*scale,oy+LS.py*scale,3.5,0,Math.PI*2); mx.stroke();
+  mx.beginPath(); mx.arc(ox+LS.px*scale,oy+LS.py*scale,4,0,Math.PI*2); mx.fill();
+  mx.strokeStyle='rgba(255,255,255,0.4)'; mx.lineWidth=1;
+  mx.beginPath(); mx.arc(ox+LS.px*scale,oy+LS.py*scale,4,0,Math.PI*2); mx.stroke();
 }
 
 // ── KEYBOARD INPUT ────────────────────────────────────────────────────────
