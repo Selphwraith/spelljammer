@@ -1177,7 +1177,7 @@ body {
 }
 #ls-minimap.minimized canvas { display:none; }
 #ls-minimap-toggle {
-  position:absolute; bottom:2px; right:2px;
+  position:absolute; top:2px; right:2px;
   width:20px; height:20px; border-radius:4px;
   background:rgba(10,5,30,0.70); border:1px solid rgba(68,136,255,0.30);
   color:rgba(140,180,255,0.70); font-size:11px; line-height:1;
@@ -1188,7 +1188,7 @@ body {
 }
 #ls-minimap-toggle:hover { color:#aaddff; background:rgba(30,20,60,0.90); }
 #ls-minimap.minimized #ls-minimap-toggle {
-  bottom:4px; right:4px; font-size:13px;
+  top:4px; right:4px; font-size:13px;
   color:rgba(100,160,255,0.80);
 }
 
@@ -22296,99 +22296,167 @@ function _lsRenderMinimap() {
   if(document.getElementById('ls-minimap')?.classList.contains('minimized')) return;
   const mc = LS.mmCanvas;
   if(!mc) return;
-  const MM = 220; // canvas resolution — matches doubled CSS size
+  const MM = 220;
   mc.width = MM; mc.height = MM;
   const mx = LS.mmCtx;
   const scale = MM / Math.max(LS.W, LS.H);
   const ox = (MM - LS.W*scale)/2;
   const oy = (MM - LS.H*scale)/2;
-  const cx = MM/2, cy = MM/2; // minimap center
+  const ccx = MM/2, ccy = MM/2;
 
   mx.clearRect(0,0,MM,MM);
-  mx.fillStyle='rgba(2,0,16,0.75)'; mx.fillRect(0,0,MM,MM);
+  mx.fillStyle='rgba(2,0,16,0.0)'; mx.fillRect(0,0,MM,MM);
 
   // Sphere boundary ring
   mx.strokeStyle='rgba(68,102,204,0.22)'; mx.lineWidth=1;
-  mx.beginPath(); mx.arc(cx,cy,MM*0.48,0,Math.PI*2); mx.stroke();
+  mx.beginPath(); mx.arc(ccx,ccy,MM*0.48,0,Math.PI*2); mx.stroke();
 
-  // ── Solar system (Realm only) ──
-  if((G.ship?.loc||'realm')==='realm' && typeof _lsIngameDays === 'function') {
+  // ── Solar system layer (Realm only) ─────────────────────────────────────
+  if((G.ship?.loc||'realm')==='realm' && typeof _lsIngameDays==='function') {
     const tDays = _lsIngameDays();
     const wc = LS.W*0.5, wh = LS.H*0.5;
 
-    // Orbit rings — very faint dashed
+    // Orbit rings
     mx.save(); mx.setLineDash([2,6]);
-    LS_REALM_PLANETS?.forEach(p => {
-      mx.strokeStyle='rgba(255,255,255,0.06)'; mx.lineWidth=0.5;
-      mx.beginPath(); mx.arc(ox+wc*scale, oy+wh*scale, p.orbitalR*scale, 0, Math.PI*2); mx.stroke();
+    LS_REALM_PLANETS?.forEach(p=>{
+      mx.strokeStyle='rgba(255,255,255,0.055)'; mx.lineWidth=0.5;
+      mx.beginPath(); mx.arc(ox+wc*scale,oy+wh*scale,p.orbitalR*scale,0,Math.PI*2); mx.stroke();
     });
     mx.setLineDash([]); mx.restore();
 
-    // Sorrow Belt — faint band
+    // Sorrow Belt band
     mx.save();
     mx.globalAlpha=0.09; mx.strokeStyle='#ccbb88';
     mx.lineWidth=(BELT_OUTER-BELT_INNER)*scale*0.85;
-    mx.beginPath(); mx.arc(ox+wc*scale, oy+wh*scale, ((BELT_INNER+BELT_OUTER)*0.5)*scale, 0, Math.PI*2); mx.stroke();
+    mx.beginPath(); mx.arc(ox+wc*scale,oy+wh*scale,((BELT_INNER+BELT_OUTER)*0.5)*scale,0,Math.PI*2); mx.stroke();
     mx.globalAlpha=1; mx.restore();
 
     // Star glow
     mx.save();
-    const sg = mx.createRadialGradient(ox+wc*scale, oy+wh*scale, 0, ox+wc*scale, oy+wh*scale, 12);
+    const sg=mx.createRadialGradient(ox+wc*scale,oy+wh*scale,0,ox+wc*scale,oy+wh*scale,12);
     sg.addColorStop(0,'rgba(255,230,80,0.9)'); sg.addColorStop(1,'rgba(255,140,0,0)');
-    mx.fillStyle=sg; mx.beginPath(); mx.arc(ox+wc*scale, oy+wh*scale, 12, 0, Math.PI*2); mx.fill();
+    mx.fillStyle=sg; mx.beginPath(); mx.arc(ox+wc*scale,oy+wh*scale,12,0,Math.PI*2); mx.fill();
     mx.restore();
 
-    // Planets
-    LS_REALM_PLANETS?.forEach(p => {
-      const angle = p.angle + (Math.PI*2/p.periodDays)*tDays;
-      const px = ox + (wc + Math.cos(angle)*p.orbitalR)*scale;
-      const py = oy + (wh + Math.sin(angle)*p.orbitalR)*scale;
-      const dotR = Math.max(1.5, p.size * scale * 0.5);
-      // Glow
+    // Planets — filled circle in orbital colour + soft glow halo
+    LS_REALM_PLANETS?.forEach(p=>{
+      const ang = p.angle+(Math.PI*2/p.periodDays)*tDays;
+      const px  = ox+(wc+Math.cos(ang)*p.orbitalR)*scale;
+      const py  = oy+(wh+Math.sin(ang)*p.orbitalR)*scale;
+      const dotR = Math.max(1.8, p.size*scale*0.5);
       mx.save();
-      const pg = mx.createRadialGradient(px,py,0,px,py,dotR*2.5);
-      pg.addColorStop(0,p.col+'cc'); pg.addColorStop(1,p.col+'00');
-      mx.fillStyle=pg; mx.beginPath(); mx.arc(px,py,dotR*2.5,0,Math.PI*2); mx.fill();
-      // Body
+      const pg=mx.createRadialGradient(px,py,0,px,py,dotR*2.8);
+      pg.addColorStop(0,p.col+'bb'); pg.addColorStop(1,p.col+'00');
+      mx.fillStyle=pg; mx.beginPath(); mx.arc(px,py,dotR*2.8,0,Math.PI*2); mx.fill();
       mx.fillStyle=p.col; mx.beginPath(); mx.arc(px,py,dotR,0,Math.PI*2); mx.fill();
       mx.restore();
     });
   }
 
-  // Hazard zones
+  // Hazard zones — faint red wash
   LS.pois.filter(p=>p.type==='hazard_zone').forEach(p=>{
-    mx.fillStyle='rgba(255,51,51,0.10)';
+    mx.fillStyle='rgba(255,40,40,0.08)';
     mx.beginPath(); mx.arc(ox+p.x*scale,oy+p.y*scale,p.r*scale,0,Math.PI*2); mx.fill();
   });
 
-  // POIs (dock, NPCs, fragment)
-  LS.pois.filter(p=>p.type!=='hazard_zone'&&p.type!=='patrol_zone'&&!p.hidden).forEach(p=>{
-    const mx2 = ox+p.x*scale;
-    const my2 = oy+p.y*scale;
-    mx.fillStyle=p.col;
-    mx.beginPath(); mx.arc(mx2,my2,4,0,Math.PI*2); mx.fill();
-    const qs = _lsNpcQuestState(p);
-    if(qs) {
-      const qCol = qs==='turnin'?'#ffaa22':'#ffff44';
-      const qPulse = 0.6+0.4*Math.sin(LS.t*(qs==='turnin'?3.5:2));
-      mx.save(); mx.globalAlpha=qPulse; mx.fillStyle=qCol;
-      mx.font='bold 8px Arial'; mx.textAlign='center'; mx.textBaseline='middle';
-      mx.fillText('!',mx2+6,my2-6); mx.restore();
+  // ── Draw helpers ──────────────────────────────────────────────────────────
+
+  // Gold crosshair: dock / station
+  function _mmDrawDock(x,y) {
+    const s=6;
+    mx.strokeStyle='#ffdd44'; mx.lineWidth=1.5;
+    mx.beginPath(); mx.moveTo(x-s,y); mx.lineTo(x+s,y); mx.stroke();
+    mx.beginPath(); mx.moveTo(x,y-s); mx.lineTo(x,y+s); mx.stroke();
+    // Small centre dot
+    mx.fillStyle='#ffdd44'; mx.beginPath(); mx.arc(x,y,2,0,Math.PI*2); mx.fill();
+  }
+
+  // Cyan hollow diamond: NPC
+  function _mmDrawNpc(x,y,hasQuest,isTurnin) {
+    const s=4.5;
+    mx.save();
+    mx.translate(x,y); mx.rotate(Math.PI/4);
+    mx.strokeStyle='#44ddff'; mx.lineWidth=1.4;
+    mx.strokeRect(-s/2,-s/2,s,s);
+    mx.restore();
+    if(hasQuest) {
+      const qPulse=0.55+0.45*Math.sin(LS.t*(isTurnin?3.5:2));
+      mx.save(); mx.globalAlpha=qPulse;
+      mx.fillStyle=isTurnin?'#ffaa22':'#ffff44';
+      mx.font='bold 7px Arial'; mx.textAlign='center'; mx.textBaseline='middle';
+      mx.fillText('!',x+6,y-6);
+      mx.restore();
     }
+  }
+
+  // Yellow-green small square: fragment site
+  function _mmDrawFragment(x,y) {
+    const s=3.5;
+    mx.fillStyle='#aaff44';
+    mx.fillRect(x-s,y-s,s*2,s*2);
+    const pulse=0.4+0.6*Math.sin(LS.t*2.5);
+    mx.save(); mx.globalAlpha=pulse*0.6;
+    mx.strokeStyle='#ccff88'; mx.lineWidth=1;
+    mx.strokeRect(x-s-1.5,y-s-1.5,(s+1.5)*2,(s+1.5)*2);
+    mx.restore();
+  }
+
+  // Route all non-hazard, non-hidden POIs through the new drawers
+  LS.pois.filter(p=>p.type!=='hazard_zone'&&p.type!=='patrol_zone'&&!p.hidden).forEach(p=>{
+    const px=ox+p.x*scale, py=oy+p.y*scale;
+    const qs=_lsNpcQuestState(p);
+    if(p.type==='dock')     _mmDrawDock(px,py);
+    else if(p.type==='fragment') _mmDrawFragment(px,py);
+    else if(p.type==='npc') _mmDrawNpc(px,py,!!qs,qs==='turnin');
   });
 
-  // Enemies
+  // ── Enemies — red triangle pointing in movement direction ─────────────────
+  // Aggro enemies: bright red, larger, faster pulse ring
   LS.enemies.forEach(e=>{
-    mx.fillStyle=_lsEnemyColor(e.key);
-    mx.beginPath(); mx.arc(ox+e.x*scale,oy+e.y*scale,2.5,0,Math.PI*2); mx.fill();
+    const ex=ox+e.x*scale, ey=oy+e.y*scale;
+    const isAggro=e.state==='chase';
+    const triSize = isAggro ? 5 : 3.5;
+    const col = isAggro ? '#ff3333' : '#cc2222';
+
+    // Aggro pulse ring
+    if(isAggro) {
+      const pulse=0.3+0.7*Math.sin(LS.t*7+e._blinkT);
+      mx.save(); mx.globalAlpha=pulse*0.6;
+      mx.strokeStyle='#ff4444'; mx.lineWidth=1;
+      mx.beginPath(); mx.arc(ex,ey,triSize+4,0,Math.PI*2); mx.stroke();
+      mx.restore();
+    }
+
+    // Triangle pointing in e.angle direction
+    mx.save();
+    mx.translate(ex,ey); mx.rotate(e.angle);
+    mx.fillStyle=col;
+    mx.beginPath();
+    mx.moveTo(triSize+1, 0);
+    mx.lineTo(-triSize, -triSize*0.7);
+    mx.lineTo(-triSize,  triSize*0.7);
+    mx.closePath(); mx.fill();
+    mx.restore();
   });
 
-  // Player
-  mx.fillStyle='#aaccff';
-  mx.beginPath(); mx.arc(ox+LS.px*scale,oy+LS.py*scale,4,0,Math.PI*2); mx.fill();
-  mx.strokeStyle='rgba(255,255,255,0.4)'; mx.lineWidth=1;
-  mx.beginPath(); mx.arc(ox+LS.px*scale,oy+LS.py*scale,4,0,Math.PI*2); mx.stroke();
+  // ── Player — bright blue-white chevron pointing in movement direction ─────
+  const px2=ox+LS.px*scale, py2=oy+LS.py*scale;
+  mx.save();
+  mx.translate(px2,py2); mx.rotate(LS.pAngle);
+  // Glow
+  const pg2=mx.createRadialGradient(0,0,0,0,0,9);
+  pg2.addColorStop(0,'rgba(150,200,255,0.45)'); pg2.addColorStop(1,'rgba(150,200,255,0)');
+  mx.fillStyle=pg2; mx.beginPath(); mx.arc(0,0,9,0,Math.PI*2); mx.fill();
+  // Chevron / arrowhead
+  mx.fillStyle='#cce8ff';
+  mx.beginPath();
+  mx.moveTo(7,0); mx.lineTo(-4,-4); mx.lineTo(-2,0); mx.lineTo(-4,4);
+  mx.closePath(); mx.fill();
+  mx.strokeStyle='rgba(255,255,255,0.55)'; mx.lineWidth=0.8;
+  mx.stroke();
+  mx.restore();
 }
+
 
 // ── KEYBOARD INPUT ────────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
