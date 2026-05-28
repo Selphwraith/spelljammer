@@ -1161,35 +1161,40 @@ body {
 }
 
 /* ── Minimap ── */
-#ls-minimap {
+/* Minimap shell — positions the whole group, never clips */
+#ls-minimap-shell {
   position:absolute; bottom:48px; right:14px;
-  width:220px; height:220px; border-radius:50%;
+  width:220px; height:220px;
+  z-index:10; pointer-events:none;
+}
+#ls-minimap-shell.minimized { width:26px; height:26px; }
+
+/* The circular map itself — clips the canvas to a circle */
+#ls-minimap {
+  position:absolute; inset:0;
+  border-radius:50%;
   border:1px solid rgba(68,136,255,0.25); background:rgba(2,0,16,0.45);
-  overflow:hidden; z-index:10; pointer-events:none;
+  overflow:hidden;
   box-shadow:0 0 20px rgba(68,136,255,0.12);
-  transition: width 0.25s ease, height 0.25s ease, border-radius 0.25s ease,
-              background 0.25s ease, opacity 0.25s ease;
+  transition: opacity 0.2s ease;
 }
-#ls-minimap canvas { width:100%; height:100%; opacity:0.88; }
-#ls-minimap.minimized {
-  width:28px; height:28px; border-radius:6px;
-  background:rgba(2,0,16,0.75); overflow:visible;
-}
-#ls-minimap.minimized canvas { display:none; }
+#ls-minimap canvas { width:100%; height:100%; opacity:0.88; display:block; }
+#ls-minimap-shell.minimized #ls-minimap { display:none; }
+
+/* Toggle button — sits outside the clipped circle, top-right of shell */
 #ls-minimap-toggle {
-  position:absolute; top:2px; right:2px;
-  width:20px; height:20px; border-radius:4px;
-  background:rgba(10,5,30,0.70); border:1px solid rgba(68,136,255,0.30);
-  color:rgba(140,180,255,0.70); font-size:11px; line-height:1;
+  position:absolute; top:0; right:0;
+  width:22px; height:22px; border-radius:5px;
+  background:rgba(8,4,24,0.82); border:1px solid rgba(68,136,255,0.40);
+  color:rgba(150,190,255,0.85); font-size:12px; line-height:1;
   cursor:pointer; pointer-events:all; z-index:11;
   display:flex; align-items:center; justify-content:center;
-  transition: color 0.15s, background 0.15s;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
   padding:0;
 }
-#ls-minimap-toggle:hover { color:#aaddff; background:rgba(30,20,60,0.90); }
-#ls-minimap.minimized #ls-minimap-toggle {
-  top:4px; right:4px; font-size:13px;
-  color:rgba(100,160,255,0.80);
+#ls-minimap-toggle:hover {
+  color:#cceeff; background:rgba(30,15,60,0.95);
+  border-color:rgba(100,180,255,0.70);
 }
 
 /* ── Log strip ── */
@@ -3512,10 +3517,10 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
       Approach an icon to interact
     </div>
 
-    <!-- Minimap bottom-right -->
-    <div id="ls-minimap">
-      <canvas id="ls-minimap-canvas"></canvas>
-      <button id="ls-minimap-toggle" onclick="_lsToggleMinimap()" title="Toggle minimap">⊠</button>
+    <!-- Minimap bottom-right: shell holds button, inner circle clips canvas -->
+    <div id="ls-minimap-shell">
+      <div id="ls-minimap"><canvas id="ls-minimap-canvas"></canvas></div>
+      <button id="ls-minimap-toggle" onclick="_lsToggleMinimap()" title="Minimise minimap">⊠</button>
     </div>
 
     <!-- Log strip bottom-center -->
@@ -22273,10 +22278,10 @@ function _lsDrawShipSilhouette(ctx, key) {
 
 // ── MINIMAP RENDER ────────────────────────────────────────────────────────
 function _lsToggleMinimap() {
-  const mm = document.getElementById('ls-minimap');
-  const btn = document.getElementById('ls-minimap-toggle');
-  if(!mm) return;
-  const minimized = mm.classList.toggle('minimized');
+  const shell = document.getElementById('ls-minimap-shell');
+  const btn   = document.getElementById('ls-minimap-toggle');
+  if(!shell) return;
+  const minimized = shell.classList.toggle('minimized');
   btn.textContent = minimized ? '⊞' : '⊠';
   btn.title = minimized ? 'Expand minimap' : 'Minimise minimap';
   try { localStorage.setItem('ls_minimap_minimized', minimized ? '1' : '0'); } catch(e) {}
@@ -22284,16 +22289,16 @@ function _lsToggleMinimap() {
 function _lsMinimapRestoreState() {
   try {
     if(localStorage.getItem('ls_minimap_minimized') === '1') {
-      const mm = document.getElementById('ls-minimap');
-      const btn = document.getElementById('ls-minimap-toggle');
-      if(mm)  mm.classList.add('minimized');
-      if(btn) { btn.textContent = '⊞'; btn.title = 'Expand minimap'; }
+      const shell = document.getElementById('ls-minimap-shell');
+      const btn   = document.getElementById('ls-minimap-toggle');
+      if(shell) shell.classList.add('minimized');
+      if(btn)   { btn.textContent = '⊞'; btn.title = 'Expand minimap'; }
     }
   } catch(e) {}
 }
 
 function _lsRenderMinimap() {
-  if(document.getElementById('ls-minimap')?.classList.contains('minimized')) return;
+  if(document.getElementById('ls-minimap-shell')?.classList.contains('minimized')) return;
   const mc = LS.mmCanvas;
   if(!mc) return;
   const MM = 220;
