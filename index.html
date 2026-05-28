@@ -19889,37 +19889,40 @@ function _lsDefinePois() {
 
 // ╔══════════════════════════════════════════════════════════════════════════╗
 // ║  FENTHERIS SOLAR SYSTEM — Realm LS Visual Layer                          ║
-// ║  Exact Sol-system replica: orbital radii sqrt-scaled from real AU,       ║
-// ║  periods follow Kepler's third law (T ∝ r³).                            ║
-// ║  Image refs: upload to images/ to replace procedural placeholders.       ║
+// ║  Orbital motion tied to the in-game clock:                               ║
+// ║    1 in-game day = 180 real seconds (8h leg = 60s)                       ║
+// ║    Periods are real orbital periods in in-game days.                     ║
+// ║    Position = initialAngle + (2π / periodDays) × totalDaysElapsed        ║
 // ╚══════════════════════════════════════════════════════════════════════════╝
 
 // ── Image file reference guide ─────────────────────────────────────────────
-// Upload these files to your images/ folder:
-//   images/ls_star_hearthfire.png      — The Hearthfire (star) ~512×512 px
-//   images/ls_planet_char.png          — Char (Mercury-like, grey-brown)  ~128×128
-//   images/ls_planet_velra.png         — Velra (Venus-like, thick yellow clouds) ~160×160
-//   images/ls_planet_fentheris.png     — Fentheris (Earth-like, blue-green) ~192×192
-//   images/ls_planet_rust.png          — The Rust (Mars-like, red-orange)  ~128×128
-//   images/ls_planet_volgrath.png      — Volgrath (Jupiter-like, banded gas giant) ~320×320
-//   images/ls_planet_paleRing.png      — The Pale Ring (Saturn + rings visible) ~360×360
-//   images/ls_planet_drift.png         — Drift (Uranus ice giant, aquamarine) ~220×220
-//   images/ls_planet_deepNameless.png  — Deep Nameless (Neptune cold blue) ~200×200
-//   images/ls_station_fentheris.png    — Fentheris Orbital Station ~128×128
-// Asteroid belt uses existing travel-sequence images (images/env_asteroid*.png etc.)
+// Upload to images/ to replace procedural placeholders:
+//   images/ls_star_hearthfire.png       — The Hearthfire (star) ~512×512 px
+//   images/ls_planet_char.png           — Char (Mercury-like, grey-brown cratered)  ~128×128
+//   images/ls_planet_velra.png          — Velra (Venus-like, thick yellow clouds) ~160×160
+//   images/ls_planet_fentheris.png      — Fentheris (Earth-like, blue-green) ~192×192
+//   images/ls_planet_rust.png           — The Rust (Mars-like, red-orange) ~128×128
+//   images/ls_planet_volgrath.png       — Volgrath (Jupiter-like, banded gas giant) ~320×320
+//   images/ls_planet_paleRing.png       — The Pale Ring (Saturn + visible rings) ~360×360
+//   images/ls_planet_drift.png          — Drift (Uranus ice giant, aquamarine) ~220×220
+//   images/ls_planet_deepNameless.png   — Deep Nameless (Neptune cold blue) ~200×200
+//   images/ls_station_fentheris.png     — Fentheris Orbital Station ~128×128
+// Asteroid belt reuses existing: images/env_asteroid*.png, env_void_boulder.png etc.
 
-// ── Orbital radii: sqrt-scaled from real AU so spacing looks natural ──────
-// Scale: sqrt(AU) × 565 — Earth/Fentheris at 565 world units.
-// Periods: Kepler T = 28800 × (r/565)³  seconds  (Earth = 8 real-hours).
+// ── Planet data ────────────────────────────────────────────────────────────
+// orbitalR   : world-units from star (sqrt-scaled from real AU, Earth = 565)
+// size       : draw diameter in world pixels
+// periodDays : real orbital period in in-game days (matches actual planets)
+// angle      : starting angle at t=0 so planets begin spread out
 const LS_REALM_PLANETS = [
-  { id:'char',         name:'Char',          orbitalR:  351, size: 18, period:   6934, angle:0.8,  col:'#a89e88', glowCol:'#776655', img:'images/ls_planet_char.png',          hasRing:false },
-  { id:'velra',        name:'Velra',          orbitalR:  480, size: 34, period:  17705, angle:2.1,  col:'#e8d060', glowCol:'#aa9922', img:'images/ls_planet_velra.png',         hasRing:false },
-  { id:'fentheris',    name:'Fentheris',      orbitalR:  565, size: 44, period:  28800, angle:4.4,  col:'#3a88e8', glowCol:'#1a4499', img:'images/ls_planet_fentheris.png',     hasRing:false },
-  { id:'rust',         name:'The Rust',        orbitalR:  697, size: 26, period:  54184, angle:1.5,  col:'#cc5522', glowCol:'#882211', img:'images/ls_planet_rust.png',          hasRing:false },
-  { id:'volgrath',     name:'Volgrath',        orbitalR: 1289, size: 92, period: 341801, angle:0.3,  col:'#cc9944', glowCol:'#996622', img:'images/ls_planet_volgrath.png',      hasRing:false },
-  { id:'paleRing',     name:'The Pale Ring',   orbitalR: 1745, size: 78, period: 848223, angle:3.7,  col:'#ddcc99', glowCol:'#aa9955', img:'images/ls_planet_paleRing.png',      hasRing:true  },
-  { id:'drift',        name:'Drift',           orbitalR: 2475, size: 54, period:2421057, angle:5.5,  col:'#88ccbb', glowCol:'#449988', img:'images/ls_planet_drift.png',         hasRing:false },
-  { id:'deepNameless', name:'Deep Nameless',   orbitalR: 3098, size: 50, period:4748896, angle:2.8,  col:'#3344cc', glowCol:'#112288', img:'images/ls_planet_deepNameless.png',  hasRing:false },
+  { id:'char',         name:'Char',          orbitalR:  351, size: 18, periodDays:    88, angle:0.8,  col:'#a89e88', glowCol:'#776655', img:'images/ls_planet_char.png',          hasRing:false },
+  { id:'velra',        name:'Velra',          orbitalR:  480, size: 34, periodDays:   225, angle:2.1,  col:'#e8d060', glowCol:'#aa9922', img:'images/ls_planet_velra.png',         hasRing:false },
+  { id:'fentheris',    name:'Fentheris',      orbitalR:  565, size: 44, periodDays:   365, angle:4.4,  col:'#3a88e8', glowCol:'#1a4499', img:'images/ls_planet_fentheris.png',     hasRing:false },
+  { id:'rust',         name:'The Rust',        orbitalR:  697, size: 26, periodDays:   687, angle:1.5,  col:'#cc5522', glowCol:'#882211', img:'images/ls_planet_rust.png',          hasRing:false },
+  { id:'volgrath',     name:'Volgrath',        orbitalR: 1289, size: 92, periodDays:  4333, angle:0.3,  col:'#cc9944', glowCol:'#996622', img:'images/ls_planet_volgrath.png',      hasRing:false },
+  { id:'paleRing',     name:'The Pale Ring',   orbitalR: 1745, size: 78, periodDays: 10759, angle:3.7,  col:'#ddcc99', glowCol:'#aa9955', img:'images/ls_planet_paleRing.png',      hasRing:true  },
+  { id:'drift',        name:'Drift',           orbitalR: 2475, size: 54, periodDays: 30687, angle:5.5,  col:'#88ccbb', glowCol:'#449988', img:'images/ls_planet_drift.png',         hasRing:false },
+  { id:'deepNameless', name:'Deep Nameless',   orbitalR: 3098, size: 50, periodDays: 60190, angle:2.8,  col:'#3344cc', glowCol:'#112288', img:'images/ls_planet_deepNameless.png',  hasRing:false },
 ];
 
 const LS_HEARTHFIRE = {
@@ -19927,13 +19930,12 @@ const LS_HEARTHFIRE = {
   img:'images/ls_star_hearthfire.png',
 };
 
-// Station orbits Fentheris at a close radius — dock stays tight to the planet
-const LS_STATION_ORBIT = { orbitalR:55, period:7200, angle:1.2, size:28 };
+// Station orbits Fentheris — close radius, period in in-game days
+const LS_STATION_ORBIT = { orbitalR:55, periodDays:0.5, angle:1.2, size:28 };
 
-// ── Asteroid belt — pre-computed rocks between The Rust and Volgrath ──────
-// Real belt: 2.2–3.2 AU → sqrt-scaled: 838–1011 world units.
-// Each rock has its own orbital radius and follows Kepler speed (T ∝ r³).
-// Uses existing TS asteroid images; drawn small (8–18 px) to look like rocks not planets.
+// ── Asteroid belt (Sorrow Belt) ────────────────────────────────────────────
+// Real belt: 2.2–3.2 AU → sqrt-scaled: 838–1011 world units
+// Kepler periods: T(days) = 365 × (r/565)^3  [Earth=365d at r=565]
 let _lsBeltRocks = null;
 const _BELT_KEYS = ['env_asteroid_small','env_asteroid','env_asteroid_flat','env_void_boulder','env_rock_ring','env_asteroid_cluster'];
 const BELT_INNER = 838, BELT_OUTER = 1011, BELT_COUNT = 55;
@@ -19941,16 +19943,15 @@ const BELT_INNER = 838, BELT_OUTER = 1011, BELT_COUNT = 55;
 function _lsInitBelt() {
   if(_lsBeltRocks) return;
   _lsBeltRocks = [];
-  const rng = (n) => { const x = Math.sin(n*9301+49297)*233280; return x-Math.floor(x); };
+  const rng = n => { const x = Math.sin(n*9301+49297)*233280; return x-Math.floor(x); };
   for(let i = 0; i < BELT_COUNT; i++) {
-    const r    = BELT_INNER + rng(i*3.1)  * (BELT_OUTER - BELT_INNER);
-    const ang  = rng(i*7.3)  * Math.PI * 2;
-    const sz   = 8 + rng(i*11.7) * 10;          // 8–18 px
-    const key  = _BELT_KEYS[Math.floor(rng(i*13.1) * _BELT_KEYS.length)];
-    // Kepler: T = 28800 × (r/565)³
-    const period = 28800 * Math.pow(r / 565, 3);
-    const spin   = (rng(i*17.3) - 0.5) * 0.6;   // slow self-rotation
-    _lsBeltRocks.push({ r, ang, sz, key, period, spin, rot: rng(i*19.9)*Math.PI*2 });
+    const r          = BELT_INNER + rng(i*3.1)  * (BELT_OUTER - BELT_INNER);
+    const startAng   = rng(i*7.3)  * Math.PI * 2;
+    const sz         = 7 + rng(i*11.7) * 9;          // 7–16 px — asteroid-sized, not planet-sized
+    const key        = _BELT_KEYS[Math.floor(rng(i*13.1) * _BELT_KEYS.length)];
+    const periodDays = 365 * Math.pow(r / 565, 3);    // Kepler: T ∝ r³, Earth = 365 days
+    const spinSpd    = (rng(i*17.3) - 0.5) * 0.9;    // self-rotation speed (radians/real-sec)
+    _lsBeltRocks.push({ r, startAng, sz, key, periodDays, spinSpd, rot: rng(i*19.9)*Math.PI*2 });
   }
 }
 
@@ -19958,30 +19959,38 @@ function _lsInitBelt() {
 const _lsSolImgs = {};
 function _lsPreloadSolarImgs() {
   _lsInitBelt();
-  const srcs = [
-    LS_HEARTHFIRE.img,
-    'images/ls_station_fentheris.png',
-    ...LS_REALM_PLANETS.map(p => p.img),
-  ];
+  const srcs = [LS_HEARTHFIRE.img, 'images/ls_station_fentheris.png',
+    ...LS_REALM_PLANETS.map(p => p.img)];
   srcs.forEach(src => {
     if(_lsSolImgs[src]) return;
     const im = new Image(); im.src = src; _lsSolImgs[src] = im;
   });
 }
 
+// ── Time helper ────────────────────────────────────────────────────────────
+// Returns total elapsed in-game days: committed travel days + current LS session
+// drift at real game speed (8 in-game hours per 60 real seconds).
+function _lsIngameDays() {
+  const committedHours = G.watch?.totalHours || 0;
+  // LS.t is real seconds elapsed in current session
+  // 60 real seconds = 8 in-game hours → 1 real second = 8/60 in-game hours
+  const sessionHours = LS.t * (8 / 60);
+  return (committedHours + sessionHours) / 24;
+}
+
 // ── Position helpers ──────────────────────────────────────────────────────
-function _lsGetPlanetPos(planet, t) {
-  const angle = planet.angle + (Math.PI * 2 / planet.period) * t;
+function _lsGetPlanetPos(planet, tDays) {
+  const angle = planet.angle + (Math.PI * 2 / planet.periodDays) * tDays;
   return {
     x: LS.W * 0.5 + Math.cos(angle) * planet.orbitalR,
     y: LS.H * 0.5 + Math.sin(angle) * planet.orbitalR,
     angle,
   };
 }
-function _lsGetStationPos(t) {
+function _lsGetStationPos(tDays) {
   const fen = LS_REALM_PLANETS.find(p => p.id === 'fentheris');
-  const fp  = _lsGetPlanetPos(fen, t);
-  const sa  = LS_STATION_ORBIT.angle + (Math.PI * 2 / LS_STATION_ORBIT.period) * t;
+  const fp  = _lsGetPlanetPos(fen, tDays);
+  const sa  = LS_STATION_ORBIT.angle + (Math.PI * 2 / LS_STATION_ORBIT.periodDays) * tDays;
   return { x: fp.x + Math.cos(sa) * LS_STATION_ORBIT.orbitalR,
            y: fp.y + Math.sin(sa) * LS_STATION_ORBIT.orbitalR };
 }
@@ -20001,7 +20010,7 @@ function _lsDrawSolBody(cx, imgSrc, x, y, size, col) {
   }
 }
 
-// ── Draw a belt rock — tries TS image cache first, falls back to ellipse ──
+// ── Draw a belt rock — uses TS image cache, falls back to tiny ellipse ────
 function _lsDrawBeltRock(cx, rock, x, y) {
   const im = TS?._imgs?.[rock.key];
   const sz = rock.sz;
@@ -20011,17 +20020,17 @@ function _lsDrawBeltRock(cx, rock, x, y) {
   if(im?.complete && im.naturalWidth > 0) {
     cx.drawImage(im, -sz*0.5, -sz*0.5, sz, sz);
   } else {
-    // Simple grey ellipse fallback
-    cx.fillStyle = '#998877cc';
+    cx.fillStyle = '#887766cc';
     cx.beginPath(); cx.ellipse(0, 0, sz*0.5, sz*0.35, 0, 0, Math.PI*2); cx.fill();
   }
   cx.restore();
 }
 
 // ── Main solar system render — called from _lsRender() in world space ─────
-function _lsRenderSolarSystem(cx, t) {
+function _lsRenderSolarSystem(cx, tReal) {
   if((G.ship?.loc || 'realm') !== 'realm') return;
   const wx = LS.W * 0.5, wy = LS.H * 0.5;
+  const tDays = _lsIngameDays(); // in-game days — drives all orbital positions
 
   // ── Faint orbit rings ──
   cx.save();
@@ -20034,17 +20043,15 @@ function _lsRenderSolarSystem(cx, t) {
     cx.stroke();
   });
   cx.setLineDash([]);
-
-  // Sorrow Belt — wide fuzzy ring visual
+  // Sorrow Belt — wide fuzzy ring
   cx.globalAlpha = 0.08;
   cx.strokeStyle = '#ccbb88';
   cx.lineWidth = (BELT_OUTER - BELT_INNER) * 0.9;
   cx.beginPath(); cx.arc(wx, wy, (BELT_INNER + BELT_OUTER) * 0.5, 0, Math.PI*2); cx.stroke();
-  cx.lineWidth = 1;
-  cx.globalAlpha = 1;
+  cx.lineWidth = 1; cx.globalAlpha = 1;
   cx.restore();
 
-  // ── The Hearthfire (star) — triple-sized with layered corona ──
+  // ── The Hearthfire ──
   cx.save();
   [[500,0.03],[380,0.05],[280,0.07],[190,0.10],[130,0.14],[90,0.20]].forEach(([r,a]) => {
     const grd = cx.createRadialGradient(wx, wy, 0, wx, wy, r);
@@ -20052,7 +20059,7 @@ function _lsRenderSolarSystem(cx, t) {
     grd.addColorStop(1, 'rgba(255,140,0,0)');
     cx.fillStyle = grd; cx.beginPath(); cx.arc(wx, wy, r, 0, Math.PI*2); cx.fill();
   });
-  const _flicker = 0.94 + 0.06 * Math.sin(t * 0.7);
+  const _flicker = 0.94 + 0.06 * Math.sin(tReal * 0.7);
   cx.globalAlpha = _flicker;
   _lsDrawSolBody(cx, LS_HEARTHFIRE.img, wx, wy, LS_HEARTHFIRE.size, LS_HEARTHFIRE.col);
   cx.globalAlpha = 1;
@@ -20060,14 +20067,12 @@ function _lsRenderSolarSystem(cx, t) {
 
   // ── Asteroid belt rocks ──
   if(_lsBeltRocks) {
-    cx.save();
-    cx.globalAlpha = 0.72;
+    cx.save(); cx.globalAlpha = 0.72;
     _lsBeltRocks.forEach(rock => {
-      const ang = rock.ang + (Math.PI * 2 / rock.period) * t;
+      const ang = rock.startAng + (Math.PI * 2 / rock.periodDays) * tDays;
       const rx  = wx + Math.cos(ang) * rock.r;
       const ry  = wy + Math.sin(ang) * rock.r;
-      // Advance self-rotation
-      rock.rot += rock.spin * 0.016; // ~60fps delta estimate
+      rock.rot += rock.spinSpd * 0.016;  // ~60fps self-rotation advance
       _lsDrawBeltRock(cx, rock, rx, ry);
     });
     cx.restore();
@@ -20075,20 +20080,17 @@ function _lsRenderSolarSystem(cx, t) {
 
   // ── Planets ──
   LS_REALM_PLANETS.forEach(planet => {
-    const pos = _lsGetPlanetPos(planet, t);
-
+    const pos = _lsGetPlanetPos(planet, tDays);
     cx.save();
 
-    // Saturn-style rings — drawn before body so body overlaps inner ring
+    // Saturn rings — drawn before body
     if(planet.hasRing) {
       cx.globalAlpha = 0.55;
-      cx.strokeStyle = planet.col + 'bb';
-      cx.lineWidth = 12;
+      cx.strokeStyle = planet.col + 'bb'; cx.lineWidth = 12;
       cx.beginPath();
       cx.ellipse(pos.x, pos.y, planet.size * 1.75, planet.size * 0.36, 0.35, 0, Math.PI*2);
       cx.stroke();
-      cx.lineWidth = 6;
-      cx.strokeStyle = planet.col + '55';
+      cx.lineWidth = 6; cx.strokeStyle = planet.col + '55';
       cx.beginPath();
       cx.ellipse(pos.x, pos.y, planet.size * 2.1, planet.size * 0.43, 0.35, 0, Math.PI*2);
       cx.stroke();
@@ -20100,43 +20102,39 @@ function _lsRenderSolarSystem(cx, t) {
     const atm = cx.createRadialGradient(pos.x, pos.y, planet.size * 0.3, pos.x, pos.y, atmR);
     atm.addColorStop(0, 'transparent');
     atm.addColorStop(1, planet.glowCol + '66');
-    cx.fillStyle = atm;
-    cx.beginPath(); cx.arc(pos.x, pos.y, atmR, 0, Math.PI*2); cx.fill();
+    cx.fillStyle = atm; cx.beginPath(); cx.arc(pos.x, pos.y, atmR, 0, Math.PI*2); cx.fill();
 
     // Planet body
     _lsDrawSolBody(cx, planet.img, pos.x, pos.y, planet.size, planet.col);
 
-    // Planet name — bold, high contrast, clearly legible
-    cx.globalAlpha = 0.92;
-    cx.fillStyle   = '#ffffff';
-    cx.font        = 'bold 13px "Cinzel", serif';
-    cx.textAlign   = 'center';
-    cx.textBaseline = 'top';
-    // Subtle drop-shadow for legibility over bright backgrounds
-    cx.shadowColor  = 'rgba(0,0,0,0.9)';
-    cx.shadowBlur   = 4;
-    cx.shadowOffsetX = 1; cx.shadowOffsetY = 1;
+    // Planet name — bold Cinzel, white with black drop-shadow for contrast
+    cx.globalAlpha    = 0.92;
+    cx.fillStyle      = '#ffffff';
+    cx.font           = 'bold 13px "Cinzel", serif';
+    cx.textAlign      = 'center';
+    cx.textBaseline   = 'top';
+    cx.shadowColor    = 'rgba(0,0,0,0.95)';
+    cx.shadowBlur     = 5;
+    cx.shadowOffsetX  = 1; cx.shadowOffsetY = 1;
     cx.fillText(planet.name, pos.x, pos.y + planet.size * 0.5 + 5);
-    cx.shadowColor = 'transparent'; cx.shadowBlur = 0; cx.shadowOffsetX = 0; cx.shadowOffsetY = 0;
-
+    cx.shadowColor    = 'transparent'; cx.shadowBlur = 0;
+    cx.shadowOffsetX  = 0; cx.shadowOffsetY = 0;
     cx.restore();
   });
 
   // ── Fentheris Orbital Station ──
-  const stPos = _lsGetStationPos(t);
+  const stPos = _lsGetStationPos(tDays);
   cx.save();
   const stGrd = cx.createRadialGradient(stPos.x, stPos.y, 0, stPos.x, stPos.y, 52);
-  stGrd.addColorStop(0, 'rgba(68,136,255,0.28)');
-  stGrd.addColorStop(1, 'transparent');
-  cx.fillStyle = stGrd;
-  cx.beginPath(); cx.arc(stPos.x, stPos.y, 52, 0, Math.PI*2); cx.fill();
+  stGrd.addColorStop(0, 'rgba(68,136,255,0.28)'); stGrd.addColorStop(1, 'transparent');
+  cx.fillStyle = stGrd; cx.beginPath(); cx.arc(stPos.x, stPos.y, 52, 0, Math.PI*2); cx.fill();
   cx.translate(stPos.x, stPos.y);
-  cx.rotate(t * 0.04);
+  cx.rotate(tReal * 0.04);  // real-time spin so it visibly rotates within a session
   cx.translate(-stPos.x, -stPos.y);
   _lsDrawSolBody(cx, 'images/ls_station_fentheris.png', stPos.x, stPos.y, LS_STATION_ORBIT.size, '#88ddff');
   cx.restore();
 
-  // ── Update dock POI position each frame so proximity detection follows orbit ──
+  // ── Sync dock POI to station position so proximity/docking follows orbit ──
   if(LS.pois) {
     const dockPoi = LS.pois.find(p => p.id === 'dock');
     if(dockPoi) { dockPoi.x = stPos.x; dockPoi.y = stPos.y; }
@@ -22040,10 +22038,16 @@ function _lsRender(cx, W, H, dt) {
       cx.restore();
     }
 
-    cx.save(); cx.translate(e.x,e.y); cx.rotate(e.angle);
+    cx.save(); cx.translate(e.x,e.y);
+    // Soft identity glow disc — keeps ship readable at reduced draw size
+    const _lsEGlow = cx.createRadialGradient(0,0,0,0,0,17);
+    _lsEGlow.addColorStop(0, isChasing ? 'rgba(255,80,40,0.30)' : `${ec}44`);
+    _lsEGlow.addColorStop(1, 'rgba(0,0,0,0)');
+    cx.fillStyle=_lsEGlow; cx.beginPath(); cx.arc(0,0,17,0,Math.PI*2); cx.fill();
+    cx.rotate(e.angle);
     cx.globalAlpha=blinkAlpha;
-    cx.shadowColor=isChasing?'#ff4422':ec; cx.shadowBlur=isChasing?16:8;
-    const _lsEw = 32 * _uiScale(), _lsEh = 20 * _uiScale();
+    cx.shadowColor=isChasing?'#ff4422':ec; cx.shadowBlur=isChasing?12:6;
+    const _lsEw = 20 * _uiScale(), _lsEh = 12 * _uiScale();
     drawShipImg(e.key, cx, 0, 0, _lsEw, _lsEh, true, () => {
       cx.fillStyle=isChasing?'#ff6644':ec;
       _lsDrawShipSilhouette(cx, e.key);
@@ -22071,10 +22075,15 @@ function _lsRender(cx, W, H, dt) {
 
   // ── Player ship ──
   // PNGs are drawn nose-right. pAngle is the movement direction in standard coords.
-  // So rotate by pAngle directly — no offset needed.
-  cx.save(); cx.translate(LS.px, LS.py); cx.rotate(LS.pAngle);
-  cx.shadowColor='#88aaff'; cx.shadowBlur=18;
-  const [_lsPw, _lsPh] = shipSz(G.ship.type, 36 * _uiScale(), 22 * _uiScale());
+  cx.save(); cx.translate(LS.px, LS.py);
+  // Soft identity glow disc — keeps ship visible at reduced size
+  const _lsPGlow = cx.createRadialGradient(0, 0, 0, 0, 0, 20);
+  _lsPGlow.addColorStop(0, 'rgba(120,180,255,0.30)');
+  _lsPGlow.addColorStop(1, 'rgba(120,180,255,0)');
+  cx.fillStyle = _lsPGlow; cx.beginPath(); cx.arc(0, 0, 20, 0, Math.PI*2); cx.fill();
+  cx.rotate(LS.pAngle);
+  cx.shadowColor='#88aaff'; cx.shadowBlur=10;
+  const [_lsPw, _lsPh] = shipSz(G.ship.type, 22 * _uiScale(), 14 * _uiScale());
   drawShipImg(G.ship.type, cx, 0, 0, _lsPw, _lsPh, false, () => {
     // Procedural fallbacks — all drawn nose-right (pointing +X)
     cx.fillStyle='#aaccff';
