@@ -18538,10 +18538,24 @@ function _applyLoad(save) {
     // ── Restore local space position if saved inside it ────────
     const savedLs = state.lsState;
     if(savedLs?.inLocalSpace) {
-      // Pre-configure LS so openLocalSpace restores position rather than spawning fresh
+      // Always resize world to current config — handles sessions where world size changed
+      const _savedSphId = G.ship.loc || 'realm';
+      if(_savedSphId === 'refuge') { LS.W = 5600; LS.H = 5600; }
+      else                         { LS.W = 7200; LS.H = 7200; }
       LS._firstEntry = false;  // world already initialized — keep it
-      LS.px = savedLs.px ?? (LS.W * 0.5 + 280);
-      LS.py = savedLs.py ?? (LS.H * 0.5);
+      // Validate saved position against new world bounds — reset if outside sphere
+      const _bRload = Math.min(LS.W, LS.H) * 0.45;
+      const _cxLoad = LS.W / 2, _cyLoad = LS.H / 2;
+      const _rawPx = savedLs.px ?? (_cxLoad + 280);
+      const _rawPy = savedLs.py ?? _cyLoad;
+      const _ddx = _rawPx - _cxLoad, _ddy = _rawPy - _cyLoad;
+      if(Math.sqrt(_ddx*_ddx + _ddy*_ddy) > _bRload) {
+        // Old save coords out of range in expanded world — respawn near dock
+        LS.px = _savedSphId === 'refuge' ? _cxLoad + 75 : _cxLoad + 280;
+        LS.py = _cyLoad;
+      } else {
+        LS.px = _rawPx; LS.py = _rawPy;
+      }
       LS.pAngle = savedLs.pAngle ?? -Math.PI * 0.75;
       LS.pvx = 0; LS.pvy = 0;
       LS.pTargetX = null; LS.pTargetY = null;
@@ -18558,7 +18572,8 @@ function _applyLoad(save) {
       // Make sure stars and pois exist (in case LS was never opened before this save)
       if(!LS.stars?.length) {
         LS.stars = [];
-        for(let i=0;i<320;i++) LS.stars.push({x:Math.random()*LS.W,y:Math.random()*LS.H,r:Math.random()*1.4+0.3,b:Math.random(),twk:Math.random()*Math.PI*2,spd:Math.random()*0.005+0.001});
+        const _slStarCount = (G.ship?.loc || 'realm') === 'refuge' ? 600 : 900;
+        for(let i=0;i<_slStarCount;i++) LS.stars.push({x:Math.random()*LS.W,y:Math.random()*LS.H,r:Math.random()*1.4+0.3,b:Math.random(),twk:Math.random()*Math.PI*2,spd:Math.random()*0.005+0.001});
       }
       if(!LS.pois?.length) { LS.pois = _lsDefinePois(); _lsInitPatrolBases(); }
     } else {
@@ -19525,11 +19540,11 @@ const LS = {
   canvas: null, ctx: null, mmCanvas: null, mmCtx: null,
   animId: null, t: 0, lastTs: 0,
 
-  // world dimensions (virtual units)
-  W: 2400, H: 2400,
+  // world dimensions (virtual units) — set per-sphere on first entry
+  W: 7200, H: 7200,
 
   // player ship state
-  px: 1200, py: 1200,       // position in world coords
+  px: 3600, py: 3600,       // position in world coords (overwritten on entry)
   pvx: 0, pvy: 0,           // velocity
   pAngle: -Math.PI/2,       // facing angle (radians)
   pSpeed: 140,              // pixels/sec max speed
@@ -19593,28 +19608,28 @@ function _lsDefinePois() {
       {
         id:'dock', label:'IEF Refuge Station', role:'IEF Forward Station · Air · Hull · Crew · QM',
         x: W*0.50, y: H*0.50, r: 70, col:'#88ddff', icon:'⚓', type:'dock',
-        safeRadius: 180,  // keeps enemies clear of the dock area; spawn blocking handled in _lsEnemySpawnTick
+        safeRadius: 720,  // 4× expanded — keeps enemies clear of the dock area
       },
       // Admiral Vayne Soreth — orbiting close to station
       {
         id:'npc_admiral', label:'Admiral Vayne Soreth', role:'IEF — Commander, Fentheris Sector',
         x: W*0.38, y: H*0.40, r: 48, col:'#ffdd44', icon:'🎖️', type:'npc',
         npcId: 'refuge_admiral',
-        patrol: true, patrolR: 100, patrolSpeed: 0.20, patrolAngle: 0,
+        patrol: true, patrolR: 400, patrolSpeed: 0.20, patrolAngle: 0,
       },
       // QM Senna Lyrel — tight orbit near dock
       {
         id:'npc_qm', label:'QM Senna Lyrel', role:'IEF Supply Corps — Refuge',
         x: W*0.60, y: H*0.40, r: 48, col:'#88ddff', icon:'⚓', type:'npc',
         npcId: 'refuge_qm',
-        patrol: true, patrolR: 80, patrolSpeed: 0.25, patrolAngle: 2.1,
+        patrol: true, patrolR: 320, patrolSpeed: 0.25, patrolAngle: 2.1,
       },
       // Chief Engineer Darro Velt — slightly further out
       {
         id:'npc_engineer', label:'Chief Engineer Darro Velt', role:'IEF Engineering Corps — Refuge',
         x: W*0.50, y: H*0.64, r: 48, col:'#88aaff', icon:'🔧', type:'npc',
         npcId: 'refuge_engineer',
-        patrol: true, patrolR: 90, patrolSpeed: 0.18, patrolAngle: 4.2,
+        patrol: true, patrolR: 360, patrolSpeed: 0.18, patrolAngle: 4.2,
       },
     ];
   }
@@ -19625,25 +19640,25 @@ function _lsDefinePois() {
       {
         id:'dock', label:'Palanthas Spindle', role:'Steel Dragon Pact · Air · Hull · Crew · QM',
         x: W*0.50, y: H*0.50, r: 70, col:'#ff8844', icon:'⚓', type:'dock',
-        safeRadius: 300,
+        safeRadius: 900,
       },
       {
         id:'npc_serathis', label:'Wing-Cmdr. Serathis', role:'Steel Dragon Pact Defense Fleet',
         x: W*0.37, y: H*0.42, r: 48, col:'#ff8844', icon:'🐉', type:'npc',
         npcId: 'krynn_qm',
-        patrol: true, patrolR: 95, patrolSpeed: 0.22, patrolAngle: 0,
+        patrol: true, patrolR: 285, patrolSpeed: 0.22, patrolAngle: 0,
       },
       {
         id:'npc_scholar', label:'Scholar Tyen Avoss', role:'Vael Academy — Void Research',
         x: W*0.63, y: H*0.42, r: 48, col:'#aaddff', icon:'📡', type:'npc',
         npcId: 'krynn_scholar',
-        patrol: true, patrolR: 110, patrolSpeed: 0.17, patrolAngle: 1.8,
+        patrol: true, patrolR: 330, patrolSpeed: 0.17, patrolAngle: 1.8,
       },
       {
         id:'npc_defector', label:'Kael Voss', role:'Former Drift Corsair — Independent',
         x: W*0.50, y: H*0.65, r: 48, col:'#cc88ff', icon:'🗡️', type:'npc',
         npcId: 'krynn_defector',
-        patrol: true, patrolR: 100, patrolSpeed: 0.20, patrolAngle: 3.5,
+        patrol: true, patrolR: 300, patrolSpeed: 0.20, patrolAngle: 3.5,
       },
       {
         id:'fragment', label:"Fragment Orbit — The Star Nest", role:'Navigation Core Site',
@@ -19651,12 +19666,12 @@ function _lsDefinePois() {
       },
       {
         id:'hazard_corsair', label:'Drift Corsair Patrol Zone', role:'⚠ Corsair Warband Activity',
-        x: W*0.76, y: H*0.26, r: 170, col:'#ff4444', icon:'⚠', type:'hazard_zone',
+        x: W*0.76, y: H*0.26, r: 510, col:'#ff4444', icon:'⚠', type:'hazard_zone',
         enemyKey: 'githyanki', spawnRate: 0.5,
       },
       {
         id:'hazard_beholder', label:'Sentinel Drone Hunting Ground', role:'⚠ High Danger',
-        x: W*0.72, y: H*0.72, r: 155, col:'#aa44ff', icon:'⚠', type:'hazard_zone',
+        x: W*0.72, y: H*0.72, r: 465, col:'#aa44ff', icon:'⚠', type:'hazard_zone',
         enemyKey: 'beholder', spawnRate: 0.35,
       },
     ];
@@ -19668,28 +19683,28 @@ function _lsDefinePois() {
       {
         id:'dock', label:'Thousand Sails Freeport', role:'Varuun Freeport · Air · Hull · Crew · QM',
         x: W*0.50, y: H*0.50, r: 70, col:'#44ffcc', icon:'⚓', type:'dock',
-        safeRadius: 280,
+        safeRadius: 840,
       },
       // Port-Boss Kezzix — tight orbit near dock
       {
         id:'npc_kezzix', label:'Port-Boss Kezzix', role:'Thousand Sails Freeport Authority',
         x: W*0.38, y: H*0.42, r: 48, col:'#44ffcc', icon:'🏴‍☠️', type:'npc',
         npcId: 'cluster_qm',
-        patrol: true, patrolR: 85, patrolSpeed: 0.24, patrolAngle: 0,
+        patrol: true, patrolR: 255, patrolSpeed: 0.24, patrolAngle: 0,
       },
       // Saja Vell — mid ring, relic hunter
       {
         id:'npc_relic', label:'Saja Vell', role:'Independent Relic Hunter',
         x: W*0.63, y: H*0.40, r: 48, col:'#ffcc44', icon:'🔭', type:'npc',
         npcId: 'cluster_relic',
-        patrol: true, patrolR: 105, patrolSpeed: 0.19, patrolAngle: 2.0,
+        patrol: true, patrolR: 315, patrolSpeed: 0.19, patrolAngle: 2.0,
       },
       // Scratch — outer ring, defector
       {
         id:'npc_scratch', label:'"Scratch"', role:'Former Void Corsair',
         x: W*0.50, y: H*0.65, r: 48, col:'#ff8844', icon:'🗡️', type:'npc',
         npcId: 'cluster_defector',
-        patrol: true, patrolR: 95, patrolSpeed: 0.16, patrolAngle: 4.0,
+        patrol: true, patrolR: 285, patrolSpeed: 0.16, patrolAngle: 4.0,
       },
       // Fragment Site — The Broker's Cache
       {
@@ -19699,13 +19714,13 @@ function _lsDefinePois() {
       // Harvester salvage zone — outer ring
       {
         id:'hazard_harvester', label:'Harvester Salvage Zone', role:'⚠ Harvester Activity',
-        x: W*0.78, y: H*0.24, r: 165, col:'#ff4444', icon:'⚠', type:'hazard_zone',
+        x: W*0.78, y: H*0.24, r: 495, col:'#ff4444', icon:'⚠', type:'hazard_zone',
         enemyKey: 'harvester', spawnRate: 0.5,
       },
       // Blackfleet patrol zone — lower ring
       {
         id:'hazard_blackfleet', label:'Black Fleet Hunting Ground', role:'⚠ Pirate Activity',
-        x: W*0.74, y: H*0.74, r: 155, col:'#ff6600', icon:'⚠', type:'hazard_zone',
+        x: W*0.74, y: H*0.74, r: 465, col:'#ff6600', icon:'⚠', type:'hazard_zone',
         enemyKey: 'blackfleet', spawnRate: 0.4,
       },
     ];
@@ -19717,28 +19732,28 @@ function _lsDefinePois() {
       {
         id:'dock', label:'Ironhaven Station', role:'Dwarven Forge-Dock · Air · Hull · Crew · QM',
         x: W*0.50, y: H*0.50, r: 70, col:'#88ff44', icon:'⚓', type:'dock',
-        safeRadius: 300,
+        safeRadius: 900,
       },
       // Quartermaster Rugdim Brassbeard — tight orbit near dock
       {
         id:'npc_qm', label:'QM Rugdim Brassbeard', role:'IEF Supply Corps — Korreth',
         x: W*0.38, y: H*0.42, r: 48, col:'#88bbff', icon:'⚓', type:'npc',
         npcId: 'grey_qm',
-        patrol: true, patrolR: 90, patrolSpeed: 0.22, patrolAngle: 0,
+        patrol: true, patrolR: 270, patrolSpeed: 0.22, patrolAngle: 0,
       },
       // Forgemaster Gordin Ashveil — mid ring
       {
         id:'npc_forgemaster', label:'Forgemaster Ashveil', role:'Ironhaven Weapons Guild',
         x: W*0.62, y: H*0.40, r: 48, col:'#ffaa44', icon:'⚒️', type:'npc',
         npcId: 'grey_forgemaster',
-        patrol: true, patrolR: 110, patrolSpeed: 0.18, patrolAngle: 1.8,
+        patrol: true, patrolR: 330, patrolSpeed: 0.18, patrolAngle: 1.8,
       },
       // Bram Hollick — prospector, outer ring
       {
         id:'npc_prospector', label:'Bram Hollick', role:'Deep-Void Prospector',
         x: W*0.60, y: H*0.62, r: 48, col:'#aabb88', icon:'⛏️', type:'npc',
         npcId: 'grey_prospector',
-        patrol: true, patrolR: 95, patrolSpeed: 0.14, patrolAngle: 3.5,
+        patrol: true, patrolR: 285, patrolSpeed: 0.14, patrolAngle: 3.5,
       },
       // Mira Sullen — displaced merchant, inner ring
       {
@@ -19755,13 +19770,13 @@ function _lsDefinePois() {
       // Harvester Disruption Zone — outer ring
       {
         id:'hazard_harvester', label:'Harvester Salvage Zone', role:'⚠ Harvester Activity',
-        x: W*0.78, y: H*0.22, r: 170, col:'#ff4444', icon:'⚠', type:'hazard_zone',
+        x: W*0.78, y: H*0.22, r: 510, col:'#ff4444', icon:'⚠', type:'hazard_zone',
         enemyKey: 'harvester', spawnRate: 0.5,
       },
       // Plunderer patrol zone — lower ring
       {
         id:'hazard_plunderer', label:'Plunderer Lane', role:'⚠ Pirate Activity',
-        x: W*0.75, y: H*0.75, r: 150, col:'#ff8833', icon:'⚠', type:'hazard_zone',
+        x: W*0.75, y: H*0.75, r: 450, col:'#ff8833', icon:'⚠', type:'hazard_zone',
         enemyKey: 'plunderer', spawnRate: 0.4,
       },
     ];
@@ -19771,22 +19786,22 @@ function _lsDefinePois() {
   if (sphereId === 'hero') {
     return [
       { id:'dock', label:'Citadel Exalted', role:'Pre-Sundering Fortress-Dock · Air · Hull · Crew · QM',
-        x: W*0.50, y: H*0.50, r: 70, col:'#ffff44', icon:'⚓', type:'dock', safeRadius: 300 },
+        x: W*0.50, y: H*0.50, r: 70, col:'#ffff44', icon:'⚓', type:'dock', safeRadius: 900 },
       { id:'npc_thessaly', label:'Keeper Thessaly Vorn', role:'Citadel Exalted Archivist and Port-Warden',
         x: W*0.38, y: H*0.42, r: 48, col:'#ffff44', icon:'📜', type:'npc', npcId: 'hero_qm',
-        patrol: true, patrolR: 95, patrolSpeed: 0.20, patrolAngle: 0 },
+        patrol: true, patrolR: 285, patrolSpeed: 0.20, patrolAngle: 0 },
       { id:'npc_archivist', label:'Archivist Yssel Dain', role:'Pre-Sundering Scholar — Citadel',
         x: W*0.63, y: H*0.42, r: 48, col:'#ffcc66', icon:'🔭', type:'npc', npcId: 'hero_archivist',
-        patrol: true, patrolR: 110, patrolSpeed: 0.16, patrolAngle: 1.8 },
+        patrol: true, patrolR: 330, patrolSpeed: 0.16, patrolAngle: 1.8 },
       { id:'npc_omen', label:'"Omen"', role:'Void-Touched Wanderer — Far Dark Survivor',
         x: W*0.50, y: H*0.65, r: 48, col:'#cc88ff', icon:'👁️', type:'npc', npcId: 'hero_wanderer',
-        patrol: true, patrolR: 100, patrolSpeed: 0.14, patrolAngle: 3.5 },
+        patrol: true, patrolR: 300, patrolSpeed: 0.14, patrolAngle: 3.5 },
       { id:'fragment', label:'Fragment Orbit — Pre-Sundering Vault', role:'Navigation Core Site',
         x: W*0.18, y: H*0.20, r: 55, col:'#ffdd44', icon:'🔮', type:'fragment', hidden:true },
       { id:'hazard_beholder', label:'Sentinel Drone Perimeter', role:'⚠ Vault-Keeper Drone Activity',
-        x: W*0.78, y: H*0.24, r: 170, col:'#ff4444', icon:'⚠', type:'hazard_zone', enemyKey:'beholder', spawnRate:0.50 },
+        x: W*0.78, y: H*0.24, r: 510, col:'#ff4444', icon:'⚠', type:'hazard_zone', enemyKey:'beholder', spawnRate:0.50 },
       { id:'hazard_leviathan', label:'Deep-Void Hunting Ground', role:'⚠ Leviathan Territory',
-        x: W*0.75, y: H*0.75, r: 155, col:'#aa44ff', icon:'⚠', type:'hazard_zone', enemyKey:'leviathan', spawnRate:0.35 },
+        x: W*0.75, y: H*0.75, r: 465, col:'#aa44ff', icon:'⚠', type:'hazard_zone', enemyKey:'leviathan', spawnRate:0.35 },
     ];
   }
 
@@ -19794,22 +19809,22 @@ function _lsDefinePois() {
   if (sphereId === 'dark') {
     return [
       { id:'dock', label:'Voidhaven', role:'Serath Void Market · Air · Hull · Crew · QM',
-        x: W*0.50, y: H*0.50, r: 70, col:'#aa66ff', icon:'⚓', type:'dock', safeRadius: 280 },
+        x: W*0.50, y: H*0.50, r: 70, col:'#aa66ff', icon:'⚓', type:'dock', safeRadius: 840 },
       { id:'npc_sythari', label:'Void-Broker Sythari', role:'Voidhaven Exchange, Serath',
         x: W*0.38, y: H*0.42, r: 48, col:'#aa66ff', icon:'💜', type:'npc', npcId: 'dark_qm',
-        patrol: true, patrolR: 90, patrolSpeed: 0.22, patrolAngle: 0 },
+        patrol: true, patrolR: 270, patrolSpeed: 0.22, patrolAngle: 0 },
       { id:'npc_remnant', label:'"Remnant"', role:'Far Dark Scout — Survived the Gate',
         x: W*0.63, y: H*0.42, r: 48, col:'#8866cc', icon:'🌑', type:'npc', npcId: 'dark_scout',
-        patrol: true, patrolR: 105, patrolSpeed: 0.18, patrolAngle: 2.0 },
+        patrol: true, patrolR: 315, patrolSpeed: 0.18, patrolAngle: 2.0 },
       { id:'npc_trull_defector', label:'Trull Defector Commander', role:'Former Trull Advance — Breakaway',
         x: W*0.50, y: H*0.65, r: 48, col:'#ff4444', icon:'⚔️', type:'npc', npcId: 'dark_trull',
-        patrol: true, patrolR: 95, patrolSpeed: 0.16, patrolAngle: 4.0 },
+        patrol: true, patrolR: 285, patrolSpeed: 0.16, patrolAngle: 4.0 },
       { id:'fragment', label:'Fragment Orbit — The Dark Mote', role:'Navigation Core Site',
         x: W*0.20, y: H*0.22, r: 55, col:'#ffdd44', icon:'🔮', type:'fragment', hidden:true },
       { id:'hazard_leviathan', label:'Void Leviathan Zone', role:'⚠ Extreme Danger',
-        x: W*0.78, y: H*0.24, r: 165, col:'#ff2222', icon:'⚠', type:'hazard_zone', enemyKey:'leviathan', spawnRate:0.55 },
+        x: W*0.78, y: H*0.24, r: 495, col:'#ff2222', icon:'⚠', type:'hazard_zone', enemyKey:'leviathan', spawnRate:0.55 },
       { id:'hazard_stalker', label:'Void Rift Stalker Territory', role:'⚠ Far Dark Incursion',
-        x: W*0.74, y: H*0.74, r: 155, col:'#6600cc', icon:'⚠', type:'hazard_zone', enemyKey:'frStalker', spawnRate:0.40 },
+        x: W*0.74, y: H*0.74, r: 465, col:'#6600cc', icon:'⚠', type:'hazard_zone', enemyKey:'frStalker', spawnRate:0.40 },
     ];
   }
 
@@ -19819,28 +19834,28 @@ function _lsDefinePois() {
     {
       id:'dock', label:"Fentheris Orbital Station", role:'IEF Docking Ring · Air · Hull · Crew · QM',
       x: W*0.50, y: H*0.50, r: 70, col:'#4488ff', icon:'⚓', type:'dock',
-      safeRadius: 320,   // no enemies spawn within this radius of the station
+      safeRadius: 960,   // no enemies spawn within this radius of the station
     },
     // Quartermaster Dael Morne — tight orbit near dock, sells realm-tier weapons and upgrades
     {
       id:'npc_qm', label:'QM Dael Morne', role:'IEF Supply Corps — Fentheris System',
       x: W*0.62, y: H*0.44, r: 48, col:'#88bbff', icon:'⚓', type:'npc',
       npcId: 'realm_qm',
-      patrol: true, patrolR: 80, patrolSpeed: 0.25, patrolAngle: 1.0,
+      patrol: true, patrolR: 240, patrolSpeed: 0.25, patrolAngle: 1.0,
     },
     // Ensign Lirith Vaen — patrol route NPC, mid-ring
     {
       id:'npc_lirith', label:'Ensign Lirith Vaen', role:'IEF Scout Corvette — Quest',
       x: W*0.38, y: H*0.35, r: 48, col:'#66aaff', icon:'🛸', type:'npc',
       npcId: 'realm_scout',
-      patrol: true, patrolR: 120, patrolSpeed: 0.28, patrolAngle: 0,
+      patrol: true, patrolR: 360, patrolSpeed: 0.28, patrolAngle: 0,
     },
     // Merchant Tomas Wrenfold — inner ring
     {
       id:'npc_merchant', label:'Tomas Wrenfold', role:'Licensed Merchant — Quest',
       x: W*0.62, y: H*0.38, r: 48, col:'#ffcc66', icon:'🧑‍💼', type:'npc',
       npcId: 'realm_merchant',
-      patrol: true, patrolR: 90, patrolSpeed: 0.22, patrolAngle: 1.4,
+      patrol: true, patrolR: 270, patrolSpeed: 0.22, patrolAngle: 1.4,
     },
     // Archivist Pell Dusan — inner ring
     {
@@ -19854,7 +19869,7 @@ function _lsDefinePois() {
       id:'npc_commander', label:'Cmdr. Aeva Thessan', role:'IEF Strike Wing — Quest',
       x: W*0.38, y: H*0.63, r: 48, col:'#44ffcc', icon:'🎖️', type:'npc',
       npcId: 'realm_ien_officer',
-      patrol: true, patrolR: 100, patrolSpeed: 0.18, patrolAngle: 3.2,
+      patrol: true, patrolR: 300, patrolSpeed: 0.18, patrolAngle: 3.2,
     },
     // Fragment Orbit Site — outer edge, guarded
     {
@@ -19864,7 +19879,7 @@ function _lsDefinePois() {
     // Harvester Disruption Zone — outer ring, high danger
     {
       id:'hazard_harvester', label:'Harvester Disruption Zone', role:'⚠ High Enemy Activity',
-      x: W*0.80, y: H*0.20, r: 180, col:'#ff4444', icon:'⚠', type:'hazard_zone',
+      x: W*0.80, y: H*0.20, r: 540, col:'#ff4444', icon:'⚠', type:'hazard_zone',
       enemyKey: 'harvester', spawnRate: 0.6,
     },
   ];
@@ -20036,7 +20051,7 @@ function openLocalSpace() {
   // Force layout re-init if sphere changed — but NOT enemy respawn
   if(LS._lastSphereId && LS._lastSphereId !== sphereId) {
     LS._firstEntry = true;
-    LS.W = 2400; LS.H = 2400;
+    LS.W = 7200; LS.H = 7200; // default non-refuge size; corrected per-sphere below
   }
   LS._lastSphereId = sphereId;
   // ── Enemy respawn guard ───────────────────────────────────────────────────
@@ -20053,13 +20068,14 @@ function openLocalSpace() {
 
   if(LS._firstEntry) {
     LS._firstEntry = false;
-    // Refuge is a compact safe station — smaller world, player starts at dock
+    // Refuge is the starting safe station — 4× expansion for exploration room
     if (sphereId === 'refuge') {
-      LS.W = 1400; LS.H = 1400;
+      LS.W = 5600; LS.H = 5600;
       LS.px = LS.W * 0.50 + 75;  // just outside dock interaction radius
       LS.py = LS.H * 0.50;
     } else {
-      LS.W = 2400; LS.H = 2400;
+      // All other spheres expanded 3× for a proper solar-system scale
+      LS.W = 7200; LS.H = 7200;
       LS.px = LS.W * 0.50 + 280;
       LS.py = LS.H * 0.50;
     }
@@ -20067,7 +20083,8 @@ function openLocalSpace() {
     LS.pAngle = -Math.PI * 0.75;
     LS.pTargetX = null; LS.pTargetY = null;
     LS.stars = [];
-    for(let i=0; i<320; i++)
+    const _starCount = sphereId === 'refuge' ? 600 : 900;
+    for(let i=0; i<_starCount; i++)
       LS.stars.push({
         x: Math.random()*LS.W, y: Math.random()*LS.H,
         r: Math.random()*1.4+0.3, b: Math.random(),
