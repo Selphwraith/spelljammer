@@ -20032,29 +20032,38 @@ function _lsDefinePois() {
 
 
 // Live LS clock — updates every render frame using LS.t drift on top of committed hours
+// Tracks the last live fatigue level in the current LS session — fires flash only on threshold crossings
+let _lsLastFatigueLevel = 0;
+
 function _lsUpdateClock() {
   const timeEl = document.getElementById('ls-clock-time');
   const fatEl  = document.getElementById('ls-clock-fatigue');
   const restEl = document.getElementById('ls-rest-btn');
   if (!timeEl || !G.watch) return;
 
-  // Committed hours + current LS session drift (1 real-sec = 1 game-min = 1/60 game-hour)
-  const committedH = G.watch.totalHours || 0;
-  const sessionH   = (LS.t || 0) / 3600;
-  const totalH     = committedH + sessionH;
-  const hour       = Math.floor((6 + totalH) % 24);
-  const min        = Math.floor(((totalH % 1) * 60)) % 60;
-  const day        = (G.watch.day || 1) + Math.floor((totalH + 6) / 24) - Math.floor((committedH + 6) / 24);
+  const committedH   = G.watch.totalHours || 0;
+  const sessionH     = (LS.t || 0) * LS_GAME_HOURS_PER_SEC;
+  const totalH       = committedH + sessionH;
+  const hour         = Math.floor((6 + totalH) % 24);
+  const min          = Math.floor(((totalH % 1) * 60)) % 60;
+  const day          = (G.watch.day || 1) + Math.floor((totalH + 6) / 24) - Math.floor((committedH + 6) / 24);
 
   timeEl.textContent = `Day ${day} — ${String(hour).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
 
-  const lvl = fatigueLevel();
-  const cls = fatigueMoveClass();
+  // Live hoursAwake = committed fatigue hours + this session's drift
+  const liveAwake = (G.watch.hoursAwake || 0) + sessionH;
+  const liveLvl   = liveAwake >= 24 ? 3 : liveAwake >= 16 ? 2 : liveAwake >= 8 ? 1 : 0;
+
+  // Fire vignette flash when level crosses upward — same as travel/addGameHours
+  if (liveLvl > _lsLastFatigueLevel) _triggerFatigueFlash(liveLvl);
+  _lsLastFatigueLevel = liveLvl;
+
+  const cls    = ['fresh','fatigued','exhausted','exhausted'][liveLvl];
   const labels = ['✦ Fresh','⚠ Fatigued','⚠ Exhausted','⚠ Critical'];
-  if (fatEl) { fatEl.textContent = labels[lvl]; fatEl.className = `fatigue-${cls}`; }
+  if (fatEl) { fatEl.textContent = labels[liveLvl]; fatEl.className = `fatigue-${cls}`; }
   if (restEl) {
     restEl.className = cls;
-    restEl.textContent = lvl >= 2 ? `⚠ Rest Now!` : lvl === 1 ? `🌙 Rest (Fatigued)` : `🌙 Rest`;
+    restEl.textContent = liveLvl >= 2 ? `⚠ Rest Now!` : liveLvl === 1 ? `🌙 Rest (Fatigued)` : `🌙 Rest`;
   }
 }
 
@@ -20085,6 +20094,13 @@ function _lsUpdateClock() {
 // size       : draw diameter in world pixels
 // periodDays : real orbital period in in-game days (matches actual planets)
 // angle      : starting angle at t=0 so planets begin spread out
+// ── LS time rate ───────────────────────────────────────────────────────────
+// 1 real second in local space = LS_GAME_HOURS_PER_SEC game hours.
+// = 1 game-minute per 3 real seconds (visibly ticking clock).
+// Travel is 8 game-minutes per real second — LS is 24× slower, fitting for
+// sub-warp maneuvering. Shared by clock display, planet orbits, and exit commit.
+const LS_GAME_HOURS_PER_SEC = 1 / 180; // 1 game-min per 3 real-sec
+
 const LS_REALM_PLANETS = [
   { id:'char',         name:'Char',          orbitalR:  351, size: 27, periodDays:    88, angle:0.8,  col:'#a89e88', glowCol:'#776655', img:'images/ls_planet_char.png',          hasRing:false },
   { id:'velra',        name:'Velra',          orbitalR:  480, size: 51, periodDays:   225, angle:2.1,  col:'#e8d060', glowCol:'#aa9922', img:'images/ls_planet_velra.png',         hasRing:false },
@@ -20147,9 +20163,8 @@ function _lsPreloadSolarImgs() {
 // drift at real game speed (8 in-game hours per 60 real seconds).
 function _lsIngameDays() {
   const committedHours = G.watch?.totalHours || 0;
-  // LS.t is real seconds elapsed in current session
-  // 60 real seconds = 8 in-game hours → 1 real second = 8/60 in-game hours
-  const sessionHours = LS.t * (8 / 60);
+  // All LS time uses the shared LS_GAME_HOURS_PER_SEC rate (1 game-min per 3 real-sec)
+  const sessionHours = (LS.t || 0) * LS_GAME_HOURS_PER_SEC;
   return (committedHours + sessionHours) / 24;
 }
 
@@ -20616,6 +20631,7 @@ function openLocalSpace() {
   // Kick off solar system image preload for realm
   if((G.ship?.loc || 'realm') === 'realm') _lsPreloadSolarImgs();
   _lsMinimapRestoreState();
+  _lsLastFatigueLevel = Math.floor((G.watch?.hoursAwake || 0) >= 24 ? 3 : (G.watch?.hoursAwake || 0) >= 16 ? 2 : (G.watch?.hoursAwake || 0) >= 8 ? 1 : 0);
 
   if(LS.animId) cancelAnimationFrame(LS.animId);
   LS.lastTs = 0;
@@ -20643,9 +20659,9 @@ function _lsBoundaryExit() {
                       krynn:'Vael', hero:'Thyss', dark:'Serath' }[_dSph] || 'Fentheris System';
   setTimeout(() => {
     LS._boundaryExiting = false;
-    // Commit LS session time to the in-game clock
-    // Rate: 1 real second = 1 game minute (1/60 game hour). Cap at 8 game-hours.
-    const lsHours = Math.min(8, (LS.t || 0) / 3600);
+    // Commit LS session time to the in-game clock using the shared LS rate.
+    // Cap at 8 game-hours so a very long session doesn't burn air excessively.
+    const lsHours = Math.min(8, (LS.t || 0) * LS_GAME_HOURS_PER_SEC);
     if (lsHours >= 0.1) addGameHours(lsHours);
     closeLsOverlay();
     addLog(`Departed ${_dSphName} local space.`, '');
@@ -23774,9 +23790,8 @@ function _fdReopen() {
 }
 
 function closeFragDungeon() {
-  // Commit dungeon session time to the in-game clock before closing
-  // Rate: 1 real second = 1 game minute (1/60 game hour). Cap at 6 game-hours.
-  const fdHours = Math.min(6, (FD.t || 0) / 3600);
+  // Commit dungeon session time — same LS rate constant, capped at 6 game-hours.
+  const fdHours = Math.min(6, (FD.t || 0) * LS_GAME_HOURS_PER_SEC);
   if (fdHours >= 0.05) addGameHours(fdHours);
   document.getElementById('ov-fragsitee').classList.remove('on');
   document.getElementById('fd-interact-panel').classList.remove('on');
