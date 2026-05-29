@@ -18572,6 +18572,12 @@ function loadFromSlot(slot) {
   _applyLoad(save);
 }
 
+// Load directly from a save entry object — used by surface return fast-path
+function loadFromEntry(entry) {
+  if (!entry) return;
+  _applyLoad(entry);
+}
+
 function _applyLoad(save) {
   try {
     const state = JSON.parse(save.data);
@@ -20665,6 +20671,8 @@ function descendToSurface() {
   if (typeof LS_GAME_HOURS_PER_SEC !== 'undefined') {
     G._lsOrbitHours = (G._lsOrbitHours || 0) + (LS.t || 0) * LS_GAME_HOURS_PER_SEC * LS_ORBIT_SPEED_MULT;
   }
+  // Write autosave now so the surface return fast-path restores current state
+  _writeAutoSave();
   const entry = {
     day:        G.watch?.day        || 1,
     totalHours: G.watch?.totalHours || 0,
@@ -26997,6 +27005,23 @@ document.addEventListener('DOMContentLoaded', () => {
   loadShipImages();
   loadVoiceFiles(); // preload all audio including title.mp3 before game starts
   drawMenuShip();
+
+  // ── Surface return fast-path ─────────────────────────────────────────────
+  // If we're returning from surface.html, skip splash/cinematic entirely and
+  // load the autosave directly. The exit payload is applied after G is ready.
+  try {
+    const isSurfaceReturn = sessionStorage.getItem('fentheris_surface_return') === '1';
+    if (isSurfaceReturn) {
+      sessionStorage.removeItem('fentheris_surface_return');
+      // Load the autosave (which was written just before descending)
+      const _savedEntry = _loadAutoSave();
+      if (_savedEntry) {
+        loadFromEntry(_savedEntry);
+        return; // skip showMainMenu — game is now running
+      }
+    }
+  } catch(_) {}
+
   showMainMenu();
 
   // Hide watch HUD behind any LS sub-panel (dock, interact, npc dialog)

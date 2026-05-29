@@ -139,10 +139,10 @@
 
 <!-- Mobile D-pad -->
 <div id="dpad">
-  <div class="dpad-btn" id="dpad-up"    onpointerdown="dpadPress('up')"    onpointerup="dpadRelease('up')">▲</div>
-  <div class="dpad-btn" id="dpad-down"  onpointerdown="dpadPress('down')"  onpointerup="dpadRelease('down')">▼</div>
-  <div class="dpad-btn" id="dpad-left"  onpointerdown="dpadPress('left')"  onpointerup="dpadRelease('left')">◀</div>
-  <div class="dpad-btn" id="dpad-right" onpointerdown="dpadPress('right')" onpointerup="dpadRelease('right')">▶</div>
+  <div class="dpad-btn" id="dpad-up"    onpointerdown="dpadPress('up')"    onpointerup="dpadRelease('up')"    onpointercancel="dpadRelease('up')">▲</div>
+  <div class="dpad-btn" id="dpad-down"  onpointerdown="dpadPress('down')"  onpointerup="dpadRelease('down')"  onpointercancel="dpadRelease('down')">▼</div>
+  <div class="dpad-btn" id="dpad-left"  onpointerdown="dpadPress('left')"  onpointerup="dpadRelease('left')"  onpointercancel="dpadRelease('left')">◀</div>
+  <div class="dpad-btn" id="dpad-right" onpointerdown="dpadPress('right')" onpointerup="dpadRelease('right')" onpointercancel="dpadRelease('right')">▶</div>
   <div class="dpad-btn" id="dpad-act"   onpointerdown="tryInteract()">✦</div>
 </div>
 
@@ -428,6 +428,8 @@ function returnToShip() {
   setTimeout(() => {
     try {
       sessionStorage.setItem('fentheris_surface_exit', JSON.stringify(buildExitData()));
+      // Tell index.html to skip splash/cinematic and go straight to the game
+      sessionStorage.setItem('fentheris_surface_return', '1');
     } catch(e) {}
     window.location.href = 'index.html';
   }, 450);
@@ -749,6 +751,10 @@ document.getElementById('surface-canvas').addEventListener('click', () => {
 // D-pad
 function dpadPress(dir)   { S.keys[dir] = true; }
 function dpadRelease(dir) { S.keys[dir] = false; }
+
+// Safety net — if pointer is released anywhere outside the button, clear all keys
+document.addEventListener('pointerup',     () => { S.keys.up=false; S.keys.down=false; S.keys.left=false; S.keys.right=false; });
+document.addEventListener('pointercancel', () => { S.keys.up=false; S.keys.down=false; S.keys.left=false; S.keys.right=false; });
 
 // Show D-pad on touch devices
 if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
