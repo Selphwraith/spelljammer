@@ -88,39 +88,78 @@
   }
   #dialogue-box .dlg-close:hover { color: #ffd080; }
 
-  /* ── Mobile joystick ──────────────────────────────────────────────────── */
+  /* -- Mobile joystick --------------------------------------------------- */
   #surf-joy-zone {
-    position: absolute; bottom: 68px; left: 18px;
-    width: 104px; height: 104px; z-index: 25;
-    display: none; touch-action: none; pointer-events: all;
+    position:absolute; bottom:68px; left:18px;
+    width:104px; height:104px; z-index:25;
+    display:none; touch-action:none; pointer-events:all;
   }
-  #surf-joy-base {
-    width: 104px; height: 104px; border-radius: 50%;
-    background: rgba(80,50,10,0.18);
-    border: 1px solid rgba(180,140,60,0.28);
-    position: relative;
-  }
-  #surf-joy-knob {
-    position: absolute; top: 50%; left: 50%;
-    width: 40px; height: 40px; border-radius: 50%;
-    background: rgba(200,160,80,0.30);
-    border: 1px solid rgba(220,180,80,0.55);
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-  }
-  /* Action button — right thumb */
+  #surf-joy-base { width:104px; height:104px; border-radius:50%;
+    background:rgba(80,50,10,0.18); border:1px solid rgba(180,140,60,0.28); position:relative; }
+  #surf-joy-knob { position:absolute; top:50%; left:50%;
+    width:40px; height:40px; border-radius:50%;
+    background:rgba(200,160,80,0.30); border:1px solid rgba(220,180,80,0.55);
+    transform:translate(-50%,-50%); pointer-events:none; }
   #surf-act-btn {
-    position: absolute; bottom: 80px; right: 22px;
-    width: 52px; height: 52px; border-radius: 50%;
-    background: rgba(40,20,5,0.88);
-    border: 1px solid rgba(180,140,60,0.45);
-    color: #e8c87a; font-size: 18px;
-    display: none; align-items: center; justify-content: center;
-    cursor: pointer; z-index: 25;
-    touch-action: none; pointer-events: all;
-    user-select: none; -webkit-user-select: none;
+    position:absolute; bottom:80px; right:22px;
+    width:52px; height:52px; border-radius:50%;
+    background:rgba(40,20,5,0.88); border:1px solid rgba(180,140,60,0.45);
+    color:#e8c87a; font-size:18px;
+    display:none; align-items:center; justify-content:center;
+    cursor:pointer; z-index:25; touch-action:none; pointer-events:all;
+    user-select:none; -webkit-user-select:none;
   }
-  #surf-act-btn:active { background: rgba(100,70,10,0.95); }
+  #surf-act-btn:active { background:rgba(100,70,10,0.95); }
+
+  /* -- Captain HUD bar ---------------------------------------------------- */
+  #hud-captain { display:flex; align-items:center; gap:6px; margin-left:6px; }
+  #hud-cap-lv  { color:#e8c87a; font-size:10px; white-space:nowrap; }
+  #hud-cap-hp  { color:#cc7777; font-size:10px; white-space:nowrap; }
+  .hud-hp-mini { display:inline-block; width:44px; height:5px;
+    background:#330000; border-radius:2px; overflow:hidden; vertical-align:middle; }
+  .hud-hp-mini-fill { height:100%; background:#cc4444; transition:width 0.2s; }
+
+  /* -- Surface Combat Overlay --------------------------------------------- */
+  #surf-combat {
+    position:absolute; inset:0; z-index:45;
+    background:rgba(2,1,8,0.98);
+    display:none; flex-direction:column; align-items:stretch;
+    font-family:'Courier New',monospace; overflow:hidden;
+  }
+  #sc-scene { width:100%; height:180px; flex-shrink:0; display:block; background:#000; }
+  #sc-log {
+    flex:1 1 auto; min-height:52px; max-height:90px; overflow-y:auto;
+    padding:5px 10px; font-size:10px; color:#998877; line-height:1.65;
+    border-top:1px solid rgba(100,70,20,0.25);
+    border-bottom:1px solid rgba(100,70,20,0.25);
+  }
+  .sc-log-hit  { color:#dd8855; } .sc-log-good { color:#77cc77; }
+  .sc-log-warn { color:#ffaa44; } .sc-log-info { color:#554433; }
+  #sc-menu { flex-shrink:0; padding:8px 10px 10px; display:flex; flex-direction:column; gap:5px; }
+  #sc-menu-cats { display:flex; gap:6px; }
+  .sc-cat {
+    flex:1; padding:9px 4px; font-family:'Courier New',monospace;
+    font-size:10px; letter-spacing:1px; text-transform:uppercase;
+    border-radius:3px; cursor:pointer; border:1px solid rgba(180,140,60,0.3);
+    background:rgba(14,7,0,0.9); color:#887755; transition:all 0.1s;
+    user-select:none; -webkit-user-select:none;
+  }
+  .sc-cat.active { background:rgba(50,28,4,0.95); border-color:#c89040; color:#ffd080; }
+  .sc-cat:disabled { opacity:0.25; cursor:default; }
+  .sc-cat-flee { border-color:rgba(80,55,25,0.3); color:#665544; }
+  #sc-menu-sub { display:flex; flex-direction:column; gap:4px; min-height:40px; }
+  .sc-sub {
+    padding:9px 14px; font-family:'Courier New',monospace;
+    font-size:10px; letter-spacing:0.5px;
+    border-radius:2px; cursor:pointer; border:1px solid rgba(90,60,15,0.2);
+    background:rgba(6,3,0,0.8); color:#998866;
+    display:flex; justify-content:space-between; align-items:center;
+    transition:all 0.1s; user-select:none; -webkit-user-select:none;
+  }
+  .sc-sub.focused { background:rgba(42,22,4,0.95); border-color:#aa7733; color:#e8c87a; }
+  .sc-sub:disabled { opacity:0.25; cursor:default; }
+  .sc-sub-hint { font-size:9px; color:#554433; margin-left:8px; }
+
   /* ── Transition overlay ──────────────────────────────────────── */
   #transition-overlay {
     position: absolute; inset: 0; background: #000;
@@ -139,6 +178,11 @@
   <span id="hud-pos"></span>
   <span id="hud-clock">Day 1 — 06:00</span>
   <span id="hud-fatigue" class="fresh">✦ Fresh</span>
+  <div id="hud-captain">
+    <span id="hud-cap-lv">Lv 1</span>
+    <span class="hud-hp-mini"><span class="hud-hp-mini-fill" id="hud-cap-hpf" style="width:100%"></span></span>
+    <span id="hud-cap-hp">30/30</span>
+  </div>
 </div>
 
 <!-- Main canvas -->
@@ -154,13 +198,9 @@
 </div>
 
 <!-- Mobile joystick (left thumb) -->
-<div id="surf-joy-zone">
-  <div id="surf-joy-base">
-    <div id="surf-joy-knob"></div>
-  </div>
-</div>
+<div id="surf-joy-zone"><div id="surf-joy-base"><div id="surf-joy-knob"></div></div></div>
 <!-- Mobile action button (right thumb) -->
-<div id="surf-act-btn">✶</div>
+<div id="surf-act-btn">✦</div>
 
 <!-- Bottom bar -->
 <div id="bottom-bar">
@@ -170,6 +210,20 @@
 </div>
 
 <!-- Transition overlay -->
+
+<!-- Surface Combat Overlay -->
+<div id="surf-combat">
+  <canvas id="sc-scene"></canvas>
+  <div id="sc-log"></div>
+  <div id="sc-menu">
+    <div id="sc-menu-cats">
+      <button class="sc-cat active" id="sc-cat-attack" onclick="cbtMenuCat('attack')">&#9876; Attack</button>
+      <button class="sc-cat" id="sc-cat-item" onclick="cbtMenuCat('item')">&#9879; Items</button>
+      <button class="sc-cat sc-cat-flee" onclick="cbtFlee()">&#127939; Flee</button>
+    </div>
+    <div id="sc-menu-sub"></div>
+  </div>
+</div>
 <div id="transition-overlay"></div>
 
 <script>
@@ -353,6 +407,26 @@ const NPCS = [
   },
 ];
 
+
+// -- XP formula: 100 XP to reach Lv2, 200 for Lv3, etc.
+function xpToNext(lv) { return lv * 100; }
+
+// -- Enemy definitions
+const ENEMY_DEFS = {
+  crawler: { name:'Void Crawler', emoji:'X', hp:18, atk:[3,6],  def:0, xp:25, initiative:2, color:'rgba(100,20,40,0.75)', loot:[{id:'chitin',name:'Crawler Chitin',p:0.7}] },
+  lurker:  { name:'Stone Lurker', emoji:'O', hp:32, atk:[6,10], def:1, xp:40, initiative:-1, color:'rgba(50,70,90,0.75)',  loot:[{id:'shard', name:'Stone Shard',   p:0.6}] },
+  watcher: { name:'Feral Watcher',emoji:'*', hp:55, atk:[10,16],def:2, xp:70, initiative:3, color:'rgba(100,30,80,0.75)',loot:[{id:'eye',   name:"Watcher's Eye", p:0.35}]},
+};
+
+// -- Spawn positions (tile coords). Enemies respawn after rest.
+const ENEMY_SPAWNS = [
+  { type:'crawler', tx:20, ty:10 },
+  { type:'crawler', tx:8,  ty:18 },
+  { type:'lurker',  tx:25, ty:15 },
+  { type:'lurker',  tx:14, ty:20 },
+  { type:'watcher', tx:28, ty:8  },
+];
+
 // ── Map exit zone (return to ship) ────────────────────────────────────────
 // Walking to the top edge (row 0-1) triggers the return prompt.
 const EXIT_ZONE = { minTx: 0, maxTx: 31, minTy: 0, maxTy: 1 };
@@ -381,11 +455,6 @@ let S = {
   // Input
   keys: { up:false, down:false, left:false, right:false },
 
-  // Mobile joystick
-  joystickActive: false,
-  joystickX: 0,
-  joystickY: 0,
-
   // Dialogue
   dlgNpcId: null,
   dlgLine: 0,
@@ -393,6 +462,19 @@ let S = {
   // Misc
   cameraX: 0, cameraY: 0,
   interactCooldown: 0,
+
+  joystickActive:false, joystickX:0, joystickY:0,
+
+  captain:{
+    level:1, xp:0, xpToNext:100, hp:30, maxHp:30, defense:0, initiative:0,
+    melee: {name:'Combat Knife', dmgMin:3,  dmgMax:6,  type:'melee'},
+    ranged:{name:'Void Pistol',  dmgMin:6,  dmgMax:10, type:'ranged', shotsPerCombat:3},
+    armor: {name:'Leather Armor',hpBonus:8, def:1},
+    helmet:{name:'Void Helmet',  hpBonus:4, def:1},
+    inv:[], gearGiven:false,
+  },
+  enemies:[],
+  combat:{active:false,enemy:null,enemyIdx:-1,log:[],playerTurn:true,shotsLeft:0,ended:false},
 };
 
 // ── Image loading ─────────────────────────────────────────────────────────
@@ -413,6 +495,11 @@ function allImgsLoaded() { return imgsLoaded >= imgsTotal; }
 loadImg('tileset', 'surface/tileset.png');
 loadImg('player',  'surface/player.png');
 NPCS.forEach(n => loadImg(n.img, n.img));
+// Combat sprite sheets (fail silently — procedural fallback used when missing)
+loadImg('cbt_captain', 'surface/captain_combat.png');
+loadImg('cbt_crawler', 'surface/enemy_crawler.png');
+loadImg('cbt_lurker',  'surface/enemy_lurker.png');
+loadImg('cbt_watcher', 'surface/enemy_watcher.png');
 
 // ── sessionStorage handshake — receive from index.html ────────────────────
 function loadEntryData() {
@@ -423,8 +510,16 @@ function loadEntryData() {
     S.day          = d.day        || 1;
     S.totalHours   = d.totalHours || 0;
     S.hoursAwake   = d.hoursAwake || 0;
-    S.gold         = d.gold       || 0;
-    S.sessionStartHours = S.totalHours;
+    S.gold=d.gold||0;
+    S.sessionStartHours=S.totalHours;
+    if(d.captain){
+      const c=d.captain;S.captain={...S.captain,...c};
+      if(c.melee)S.captain.melee=c.melee;
+      if(c.ranged)S.captain.ranged=c.ranged;
+      if(c.armor)S.captain.armor=c.armor;
+      if(c.helmet)S.captain.helmet=c.helmet;
+      if(c.inv)S.captain.inv=c.inv;
+    }
     sessionStorage.removeItem('fentheris_surface_entry');
   } catch(e) {}
 }
@@ -437,8 +532,8 @@ function buildExitData() {
     hoursAwake:  S.hoursAwake + hoursSpent,
     totalHours:  S.totalHours + hoursSpent,
     day:         S.day,
-    gold:        S.gold,
-    // Extend this object as the surface gains inventory, quest state, etc.
+    gold:S.gold,
+    captain:S.captain,
   };
 }
 
@@ -465,7 +560,9 @@ function surfaceRest() {
   const newMidnights  = Math.floor((S.totalHours + 6) / 24);
   S.day += newMidnights - prevMidnights;
   updateHUD();
-  setStatus('Rested 8 hours. Feeling refreshed.');
+  S.captain.hp=S.captain.maxHp;
+  respawnEnemies();
+  setStatus('Rested 8 hours. Captain fully healed. Enemies respawned.');
 }
 
 // ── Tile helpers ──────────────────────────────────────────────────────────
@@ -495,7 +592,7 @@ function tryMove(dx, dy, dt) {
   if (dy !== 0 && canMoveY) S.py = Math.max(0, Math.min((MAP_H - 1) * TILE_SIZE, nextPy));
 
   if (dx !== 0 || dy !== 0) {
-    S.dir    = Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
+    S.dir=Math.abs(dx)>=Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');
     S.moving = true;
   }
 
@@ -505,34 +602,22 @@ function tryMove(dx, dy, dt) {
   if (ty <= EXIT_ZONE.maxTy) {
     setStatus('⛵ You feel the pull of the void above. Press Return to Ship to ascend.');
   }
+  if(!S.combat.active){
+    const hit=S.enemies.findIndex(e=>e.alive&&e.tx===tx&&e.ty===ty);
+    if(hit>=0)startCombat(hit);
+  }
 }
 
 // ── NPC interaction ───────────────────────────────────────────────────────
-function tryInteract() {
-  if (S.interactCooldown > 0) return;
-  const tx = Math.floor(S.px / TILE_SIZE);
-  const ty = Math.floor(S.py / TILE_SIZE);
-
-  // Preferred tile: the one the player is facing
-  const fdx = S.dir === 'left' ? -1 : S.dir === 'right' ? 1 : 0;
-  const fdy = S.dir === 'up'   ? -1 : S.dir === 'down'  ? 1 : 0;
-
-  // All four neighbours — faced tile first so it wins ties
-  const candidates = [
-    [tx + fdx, ty + fdy],
-    [tx,   ty - 1],
-    [tx,   ty + 1],
-    [tx - 1, ty  ],
-    [tx + 1, ty  ],
-  ];
-
-  for (const [cx, cy] of candidates) {
-    const npc = NPCS.find(n => n.tx === cx && n.ty === cy);
-    if (npc) {
-      openDlg(npc);
-      S.interactCooldown = 30;
-      return;
-    }
+function tryInteract(){
+  if(S.interactCooldown>0)return;
+  const tx=Math.floor(S.px/TILE_SIZE),ty=Math.floor(S.py/TILE_SIZE);
+  const fdx=S.dir==='left'?-1:S.dir==='right'?1:0;
+  const fdy=S.dir==='up'  ?-1:S.dir==='down' ?1:0;
+  const cands=[[tx+fdx,ty+fdy],[tx,ty-1],[tx,ty+1],[tx-1,ty],[tx+1,ty]];
+  for(const[cx,cy]of cands){
+    const npc=NPCS.find(n=>n.tx===cx&&n.ty===cy);
+    if(npc){openDlg(npc);S.interactCooldown=30;return;}
   }
 }
 
@@ -588,7 +673,13 @@ function updateHUD() {
   badge.className = cls[lvl];
 
   const tx = Math.floor(S.px / TILE_SIZE), ty = Math.floor(S.py / TILE_SIZE);
-  document.getElementById('hud-pos').textContent = `${tx},${ty}`;
+  document.getElementById('hud-pos').textContent=`${tx},${ty}`;
+  const _cap=S.captain;
+  const _cl=document.getElementById('hud-cap-lv');if(_cl)_cl.textContent='Lv '+_cap.level;
+  const _ch=document.getElementById('hud-cap-hp');if(_ch)_ch.textContent=_cap.hp+'/'+_cap.maxHp;
+  const _cf=document.getElementById('hud-cap-hpf');
+  if(_cf){_cf.style.width=Math.max(0,_cap.hp/_cap.maxHp*100).toFixed(1)+'%';
+  _cf.style.background=_cap.hp/_cap.maxHp>.5?'#cc4444':_cap.hp/_cap.maxHp>.25?'#cc8800':'#ff2222';}
 }
 
 function setStatus(text) {
@@ -672,6 +763,22 @@ function render(ctx, cW, cH) {
     }
   });
 
+  // -- Draw enemies
+  (S.enemies||[]).forEach(e=>{
+    if(!e.alive)return;
+    const edx=e.tx*TILE_SIZE+camOffX,edy=e.ty*TILE_SIZE+camOffY;
+    if(edx<-TILE_SIZE||edy<-TILE_SIZE||edx>cW+TILE_SIZE||edy>cH+TILE_SIZE)return;
+    ctx.fillStyle=e.color||'rgba(100,20,40,0.7)';ctx.globalAlpha=0.8;
+    ctx.fillRect(edx+3,edy+3,TILE_SIZE-6,TILE_SIZE-6);ctx.globalAlpha=1;
+    ctx.font='13px Courier New';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle='#fff';ctx.fillText(e.emoji||'?',edx+TILE_SIZE/2,edy+TILE_SIZE/2);
+    ctx.textBaseline='alphabetic';
+    const hpF=Math.max(0,e.currentHp/e.hp);
+    ctx.fillStyle='#220000';ctx.fillRect(edx+2,edy-5,TILE_SIZE-4,3);
+    ctx.fillStyle=hpF>.5?'#44cc44':hpF>.25?'#ccaa00':'#cc3333';
+    ctx.fillRect(edx+2,edy-5,(TILE_SIZE-4)*hpF,3);
+  });
+
   // ── Draw player ──
   const pdx = S.px + camOffX - TILE_SIZE * 0.5;
   const pdy = S.py + camOffY - TILE_SIZE * 0.5;
@@ -719,18 +826,15 @@ function loop(timestamp) {
 
   // ── Input ──
   S.moving = false;
-  const dlgOpen = document.getElementById('dialogue-box').style.display === 'block';
+  const dlgOpen=document.getElementById('dialogue-box').style.display==='block';
 
-  if (!dlgOpen) {
+  if(!dlgOpen&&!S.combat.active){
     let dx = 0, dy = 0;
-    if (S.keys.left)  dx -= 1;
-    if (S.keys.right) dx += 1;
-    if (S.keys.up)    dy -= 1;
-    if (S.keys.down)  dy += 1;
-    if (S.joystickActive) { dx += S.joystickX; dy += S.joystickY; }
-    const _mag = Math.sqrt(dx * dx + dy * dy);
-    if (_mag > 1) { dx /= _mag; dy /= _mag; }
-    if (dx !== 0 || dy !== 0) tryMove(dx, dy, dt);
+    if(S.keys.left)dx-=1;if(S.keys.right)dx+=1;
+    if(S.keys.up)dy-=1;if(S.keys.down)dy+=1;
+    if(S.joystickActive){dx+=S.joystickX;dy+=S.joystickY;}
+    const _mag=Math.sqrt(dx*dx+dy*dy);if(_mag>1){dx/=_mag;dy/=_mag;}
+    if(dx!==0||dy!==0)tryMove(dx,dy,dt);
   }
 
   // ── Sprite animation ──
@@ -760,6 +864,8 @@ function loop(timestamp) {
 
 // ── Input handling ────────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
+  _cbtKeyNav(e);
+  if (S.combat.active) return; // combat menu handles keys
   if (['ArrowLeft','a','A'].includes(e.key))  S.keys.left  = true;
   if (['ArrowRight','d','D'].includes(e.key)) S.keys.right = true;
   if (['ArrowUp','w','W'].includes(e.key))    S.keys.up    = true;
@@ -788,72 +894,757 @@ if (_clickZone) {
   });
 }
 
-// ── Mobile joystick ─────────────────────────────────────────────────────────────
-(function() {
-  const zone = document.getElementById('surf-joy-zone');
-  const knob = document.getElementById('surf-joy-knob');
-  if (!zone || !knob) return;
-
-  // Show only on touch-capable devices
-  if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-    zone.style.display = 'block';
-    const actBtn = document.getElementById('surf-act-btn');
-    if (actBtn) actBtn.style.display = 'flex';
+// -- Joystick
+(function(){
+  const zone=document.getElementById('surf-joy-zone');
+  const knob=document.getElementById('surf-joy-knob');
+  if(!zone||!knob)return;
+  if('ontouchstart'in window||navigator.maxTouchPoints>0){
+    zone.style.display='block';
+    const ab=document.getElementById('surf-act-btn');if(ab)ab.style.display='flex';
   }
-
-  const R = 34; // max knob travel (px)
-  let _active = false, originX = 0, originY = 0;
-
-  zone.addEventListener('touchstart', e => {
-    e.preventDefault();
-    _active = true; S.joystickActive = true;
-    const rect = zone.getBoundingClientRect();
-    originX = rect.left + rect.width  / 2;
-    originY = rect.top  + rect.height / 2;
-    _move(e.touches[0].clientX, e.touches[0].clientY);
-  }, { passive: false });
-
-  zone.addEventListener('touchmove', e => {
-    e.preventDefault();
-    if (!_active) return;
-    _move(e.touches[0].clientX, e.touches[0].clientY);
-  }, { passive: false });
-
-  zone.addEventListener('touchend',    _release);
-  zone.addEventListener('touchcancel', _release);
-
-  function _release() {
-    _active = false;
-    S.joystickActive = false; S.joystickX = 0; S.joystickY = 0;
-    knob.style.transform = 'translate(-50%, -50%)';
-  }
-
-  function _move(cx, cy) {
-    let dx = cx - originX, dy = cy - originY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist > R) { dx *= R / dist; dy *= R / dist; }
-    knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-    S.joystickX = dx / R;
-    S.joystickY = dy / R;
+  const R=34;let _a=false,ox=0,oy=0;
+  zone.addEventListener('touchstart',e=>{
+    e.preventDefault();_a=true;S.joystickActive=true;
+    const r=zone.getBoundingClientRect();ox=r.left+r.width/2;oy=r.top+r.height/2;
+    _mv(e.touches[0].clientX,e.touches[0].clientY);
+  },{passive:false});
+  zone.addEventListener('touchmove',e=>{e.preventDefault();if(_a)_mv(e.touches[0].clientX,e.touches[0].clientY);},{passive:false});
+  zone.addEventListener('touchend',_rel);zone.addEventListener('touchcancel',_rel);
+  function _rel(){_a=false;S.joystickActive=false;S.joystickX=0;S.joystickY=0;knob.style.transform='translate(-50%,-50%)';}
+  function _mv(cx,cy){
+    let dx=cx-ox,dy=cy-oy,d=Math.sqrt(dx*dx+dy*dy);
+    if(d>R){dx*=R/d;dy*=R/d;}
+    knob.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`;
+    S.joystickX=dx/R;S.joystickY=dy/R;
   }
 })();
-
-// ── Mobile action button ───────────────────────────────────────────────
-(function() {
-  const btn = document.getElementById('surf-act-btn');
-  if (!btn) return;
-  btn.addEventListener('touchstart', e => { e.preventDefault(); tryInteract(); }, { passive: false });
-  btn.addEventListener('mousedown',  e => { e.preventDefault(); tryInteract(); });
+(function(){
+  const btn=document.getElementById('surf-act-btn');if(!btn)return;
+  btn.addEventListener('touchstart',e=>{e.preventDefault();tryInteract();},{passive:false});
+  btn.addEventListener('mousedown',e=>{e.preventDefault();tryInteract();});
 })();
+document.addEventListener('touchend',()=>{S.keys.up=false;S.keys.down=false;S.keys.left=false;S.keys.right=false;});
+document.addEventListener('touchcancel',()=>{S.keys.up=false;S.keys.down=false;S.keys.left=false;S.keys.right=false;});
+document.addEventListener('mouseup',()=>{S.keys.up=false;S.keys.down=false;S.keys.left=false;S.keys.right=false;});
 
-// Global safety net
-document.addEventListener('touchend',    () => { S.keys.up=false; S.keys.down=false; S.keys.left=false; S.keys.right=false; });
-document.addEventListener('touchcancel', () => { S.keys.up=false; S.keys.down=false; S.keys.left=false; S.keys.right=false; });
-document.addEventListener('mouseup',     () => { S.keys.up=false; S.keys.down=false; S.keys.left=false; S.keys.right=false; });
+
+// ============================================================
+// COMBAT SCENE RENDERER  v2  (BoF3-style side view)
+// ============================================================
+
+// ── Combat sprite sheet helpers ────────────────────────────────────────────
+// Frame size for all combat sheets: 64×64 px.
+// Draws one frame anchored at bottom-centre (x,y = feet on ground).
+// Returns true if the image was available and drawn; false = use procedural.
+const CBT_FRAME_W = 64, CBT_FRAME_H = 64;
+const CBT_SCALE   = 1.5;  // render size: 96×96 screen pixels
+
+function _cbtFrame(ctx, key, row, col, x, y) {
+  const img = IMGS[key];
+  if (!img || !img.complete || img.naturalWidth === 0) return false;
+  const dw = CBT_FRAME_W * CBT_SCALE;
+  const dh = CBT_FRAME_H * CBT_SCALE;
+  ctx.drawImage(img,
+    col * CBT_FRAME_W, row * CBT_FRAME_H, CBT_FRAME_W, CBT_FRAME_H,
+    Math.floor(x - dw / 2), Math.floor(y - dh), dw, dh);
+  return true;
+}
+
+// Row/col selector for the captain sprite sheet
+// Row 0 = Idle, Row 1 = Melee, Row 2 = Ranged, Row 3 = Hurt/Victory
+function _capRowCol() {
+  const a = _cbtA;
+  // Hurt (hit flash)
+  if (a.capFlash > 0.05) return [3, a.capFlash > 0.2 ? 0 : 1];
+  // Victory
+  if (S.combat.ended && S.combat.enemy && !S.combat.enemy.alive)
+    return [3, Math.floor(a.t * 4) % 2 + 2];
+  // Ranged attack
+  if (a.atkPhase === 'rng' || a.atkPhase === 'rng-done') {
+    const col = a.atkPhase === 'rng'
+      ? (a.atkT < 0.05 ? 0 : a.atkT < 0.10 ? 1 : a.atkT < 0.14 ? 2 : 3) : 3;
+    return [2, col];
+  }
+  // Melee attack
+  if (a.atkPhase === 'ml-out') return [1, a.atkT < 0.11 ? 0 : 1];
+  if (a.atkPhase === 'ml-hold') return [1, 2];
+  if (a.atkPhase === 'ml-in')   return [1, 3];
+  // Idle cycle
+  return [0, Math.floor(a.t * 4) % 4];
+}
+
+// Row/col selector for enemy sprite sheets
+// Row 0 = Idle, Row 1 = Attack, Row 2 = Hit(0-1) / Death(2-3)
+function _enmRowCol(enemy) {
+  const a = _cbtA;
+  if (!enemy || !enemy.alive) {
+    // Death: hold frame 2 briefly, then 3
+    return [2, a.t > 0.4 ? 3 : 2];
+  }
+  // Hit flash
+  if (a.enmFlash > 0.05) return [2, a.enmFlash > 0.2 ? 0 : 1];
+  // Attack animation
+  if (a.atkPhase === 'enm-out') return [1, a.atkT < 0.07 ? 0 : 1];
+  if (a.atkPhase === 'enm-in')  return [1, a.atkT < 0.09 ? 2 : 3];
+  // Idle cycle
+  return [0, Math.floor(a.t * 4) % 4];
+}
+
+let _cbtAnimId = null;
+let _cbtLastTs = 0;
+let _cbtA = {          // animation state
+  t:0,
+  capOffX:0, enmOffX:0,
+  capFlash:0, enmFlash:0,
+  atkPhase:null, atkT:0,   // attack animation phase
+  dmgNums:[],              // [{x,y,val,t,col}]
+  initT:0,                 // initiative countdown (seconds)
+  initLines:[],
+  menuCat:'attack', menuFocus:0,
+  btnsOn:false,
+};
+
+function _cbtStartScene() {
+  if (_cbtAnimId) return;
+  const cv = document.getElementById('sc-scene');
+  if (!cv) return;
+  cv.width  = cv.clientWidth  || 360;
+  cv.height = Math.min(Math.floor(cv.clientWidth * 0.48), 220);
+  _cbtAnimId = requestAnimationFrame(_cbtSceneLoop);
+}
+function _cbtStopScene() {
+  if (_cbtAnimId) { cancelAnimationFrame(_cbtAnimId); _cbtAnimId = null; }
+}
+
+function _cbtSceneLoop(ts) {
+  _cbtAnimId = requestAnimationFrame(_cbtSceneLoop);
+  const dt = Math.min((ts - (_cbtLastTs || ts)) / 1000, 0.05);
+  _cbtLastTs = ts;
+  _cbtA.t += dt;
+  // ─ Attack animation phases ─
+  if (_cbtA.atkPhase) {
+    _cbtA.atkT += dt;
+    const T = _cbtA.atkT;
+    if (_cbtA.atkPhase === 'ml-out') {
+      _cbtA.capOffX = Math.min(T / 0.22, 1) * 52;
+      if (T >= 0.22) { _cbtA.enmFlash = 0.35; _cbtA.atkPhase = 'ml-hold'; }
+    } else if (_cbtA.atkPhase === 'ml-hold') {
+      if (T >= 0.12) { _cbtA.atkPhase = 'ml-in'; _cbtA.atkT = 0; }
+    } else if (_cbtA.atkPhase === 'ml-in') {
+      _cbtA.capOffX = 52 * (1 - Math.min(T / 0.18, 1));
+      if (T >= 0.18) { _cbtA.capOffX = 0; _cbtA.atkPhase = null; }
+    } else if (_cbtA.atkPhase === 'rng') {
+      if (T >= 0.16) { _cbtA.enmFlash = 0.32; _cbtA.atkPhase = 'rng-done'; }
+    } else if (_cbtA.atkPhase === 'rng-done') {
+      if (T >= 0.38) _cbtA.atkPhase = null;
+    } else if (_cbtA.atkPhase === 'enm-out') {
+      _cbtA.enmOffX = -Math.min(T / 0.14, 1) * 28;
+      if (T >= 0.14) { _cbtA.capFlash = 0.38; _cbtA.atkPhase = 'enm-in'; _cbtA.atkT = 0; }
+    } else if (_cbtA.atkPhase === 'enm-in') {
+      _cbtA.enmOffX = -28 * (1 - Math.min(T / 0.18, 1));
+      if (T >= 0.18) { _cbtA.enmOffX = 0; _cbtA.atkPhase = null; }
+    }
+  }
+  if (_cbtA.capFlash > 0) _cbtA.capFlash = Math.max(0, _cbtA.capFlash - dt * 2.8);
+  if (_cbtA.enmFlash > 0) _cbtA.enmFlash = Math.max(0, _cbtA.enmFlash - dt * 2.8);
+  _cbtA.dmgNums.forEach(n => { n.t -= dt; n.y -= 30 * dt; });
+  _cbtA.dmgNums = _cbtA.dmgNums.filter(n => n.t > 0);
+  if (_cbtA.initT > 0) _cbtA.initT -= dt;
+  _cbtDrawScene();
+}
+
+function _cbtDrawScene() {
+  const cv = document.getElementById('sc-scene'); if (!cv) return;
+  const W = cv.width, H = cv.height;
+  const ctx = cv.getContext('2d');
+
+  // ─ Background ─
+  const bg = ctx.createLinearGradient(0,0,W,0);
+  bg.addColorStop(0,'#08031a'); bg.addColorStop(0.5,'#050210'); bg.addColorStop(1,'#120308');
+  ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+  // Ground
+  const GY = Math.floor(H * 0.74);
+  const grd = ctx.createLinearGradient(0,GY,0,H);
+  grd.addColorStop(0,'rgba(55,25,8,0.65)'); grd.addColorStop(1,'rgba(18,8,3,0.92)');
+  ctx.fillStyle = grd; ctx.fillRect(0,GY,W,H-GY);
+  ctx.strokeStyle='rgba(110,60,18,0.35)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,GY); ctx.lineTo(W,GY); ctx.stroke();
+
+  // Subtle void particles
+  ctx.fillStyle='rgba(100,60,180,0.1)';
+  for (let i=0;i<5;i++) {
+    const px=((i*139+_cbtA.t*7)%W), py=(i*61+Math.sin(_cbtA.t*0.5+i)*12)%(GY-10)+5;
+    ctx.beginPath(); ctx.arc(px,py,1.2,0,Math.PI*2); ctx.fill();
+  }
+
+  // HP bars
+  const cap=S.captain, e=S.combat.enemy;
+  _hpBar(ctx,10,8,Math.floor(W*0.4),9,cap.hp/cap.maxHp,'#cc3333','Captain Lv'+cap.level,cap.hp+'/'+cap.maxHp);
+  if (e) _hpBar(ctx,W-10-Math.floor(W*0.4),8,Math.floor(W*0.4),9,Math.max(0,e.currentHp/e.hp),'#3355aa',e.name,e.currentHp+'/'+e.hp,'right');
+
+  // Character positions
+  const capX = Math.floor(W*0.20) + _cbtA.capOffX;
+  const enmX = Math.floor(W*0.78) + _cbtA.enmOffX;
+
+  // Ranged bullet
+  if (_cbtA.atkPhase==='rng' && e) {
+    const p=Math.min(_cbtA.atkT/0.16,1);
+    const bx=capX+(enmX-capX)*p, by=GY-Math.floor(H*0.22);
+    ctx.fillStyle='#ffee88';
+    ctx.beginPath(); ctx.arc(bx,by,2.5,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(255,230,80,0.25)';
+    ctx.beginPath(); ctx.arc(bx,by,5,0,Math.PI*2); ctx.fill();
+  }
+
+  // Draw captain and enemy
+  _drawCaptain(ctx,capX,GY,_cbtA.t,_cbtA.capFlash);
+  if (e) _drawEnemy(ctx,enmX,GY,_cbtA.t,_cbtA.enmFlash,e);
+
+  // Damage numbers
+  _cbtA.dmgNums.forEach(n=>{
+    ctx.globalAlpha=Math.min(n.t/0.25,1);
+    ctx.fillStyle=n.col; ctx.font='bold 13px Courier New'; ctx.textAlign='center';
+    ctx.fillText(n.val,n.x,n.y); ctx.globalAlpha=1;
+  });
+
+  // Initiative overlay
+  if (_cbtA.initT>0) {
+    const fi=Math.min((3-_cbtA.initT)/0.3,1);
+    const fo=_cbtA.initT<0.5?_cbtA.initT/0.5:1;
+    const al=Math.min(fi,fo)*0.9;
+    ctx.fillStyle='rgba(2,1,8,'+al+')'; ctx.fillRect(0,0,W,H);
+    ctx.globalAlpha=Math.min(fi,fo);
+    ctx.textAlign='center';
+    ctx.fillStyle='#e8c87a'; ctx.font='bold 12px Georgia';
+    ctx.fillText('INITIATIVE ROLL',W/2,H/2-38);
+    _cbtA.initLines.forEach((ln,i)=>{
+      ctx.fillStyle=i<2?'#c8a880':(ln.includes('YOU')?'#88ee88':'#ee7755');
+      ctx.font=(i===2?'bold ':'')+'10px Courier New';
+      ctx.fillText(ln,W/2,H/2-16+i*18);
+    });
+    ctx.globalAlpha=1;
+  }
+}
+
+function _hpBar(ctx,x,y,w,h,pct,col,label,val,align) {
+  ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(x,y,w,h);
+  ctx.fillStyle=pct>0.5?col:pct>0.25?'#cc8800':'#cc2222';
+  ctx.fillRect(x,y,w*Math.max(0,pct),h);
+  ctx.strokeStyle='rgba(160,120,40,0.2)'; ctx.lineWidth=0.5; ctx.strokeRect(x,y,w,h);
+  ctx.fillStyle='rgba(210,180,130,0.75)'; ctx.font='8px Courier New';
+  ctx.textAlign=align==='right'?'right':'left';
+  ctx.fillText(label,align==='right'?x+w:x,y-2);
+  ctx.textAlign=align==='right'?'left':'right';
+  ctx.fillText(val,align==='right'?x:x+w,y-2);
+}
+
+// ─ Captain sprite (side-view, facing right) ─
+function _drawCaptain(ctx,x,y,t,flash) {
+  // Sprite sheet (if loaded)
+  const [_cr,_cc]=_capRowCol();
+  if (_cbtFrame(ctx,'cbt_captain',_cr,_cc,x,y)) return;
+  // Procedural fallback
+  const bob=Math.sin(t*2.6)*1.4;
+  ctx.save(); ctx.translate(Math.floor(x),Math.floor(y+bob));
+  const fl=flash>0.05, F='#ffffff';
+  const skin=fl?F:'#dda870', suit=fl?F:'#2d3f5a', trim=fl?F:'#4466aa',
+        boot=fl?F:'#1e2f3f', wep=fl?F:'#7a8fa0', gun=fl?F:'#5a6e7a';
+
+  // Legs
+  ctx.fillStyle=boot;
+  ctx.fillRect(-6,-16,5,16); ctx.fillRect(2,-16,5,16);
+  // Boot toes
+  ctx.fillRect(-8,-4,7,4); ctx.fillRect(1,-4,7,4);
+  // Torso
+  ctx.fillStyle=suit; ctx.fillRect(-8,-34,16,18);
+  // Chest stripe
+  ctx.fillStyle=trim; ctx.fillRect(-2,-32,2,14);
+  // Left arm
+  ctx.fillStyle=suit; ctx.fillRect(-12,-32,4,14);
+  // Right arm + weapon
+  ctx.fillStyle=suit; ctx.fillRect(8,-32,4,12);
+  const useGun=S.captain.ranged&&S.combat.shotsLeft>0;
+  if (useGun) {
+    ctx.fillStyle=gun;
+    ctx.fillRect(11,-27,10,5); // barrel
+    ctx.fillRect(12,-23,5,6); // grip
+    // Muzzle flash if firing
+    if (S.combat&&_cbtA.atkPhase==='rng'&&_cbtA.atkT<0.08) {
+      ctx.fillStyle='#ffee55'; ctx.beginPath(); ctx.arc(22,-24,4,0,Math.PI*2); ctx.fill();
+    }
+  } else if (S.captain.melee) {
+    ctx.fillStyle=wep; ctx.fillRect(11,-30,10,2);
+    ctx.fillStyle='#aa7733'; ctx.fillRect(10,-28,4,3);
+  }
+  // Head
+  ctx.fillStyle=skin; ctx.beginPath(); ctx.arc(0,-40,8,0,Math.PI*2); ctx.fill();
+  // Helmet
+  ctx.fillStyle=fl?F:'#1e3050'; ctx.fillRect(-6,-44,12,6);
+  ctx.fillStyle=fl?'#aaaaff':'#2a4a88'; ctx.fillRect(-4,-44,8,4);
+  // Visor glow
+  if (!fl) { ctx.fillStyle='rgba(80,120,220,0.3)'; ctx.fillRect(-4,-44,8,4); }
+
+  ctx.restore();
+}
+
+// ─ Enemy dispatch ─
+function _drawEnemy(ctx,x,y,t,flash,e) {
+  const type=(e.type||'').toLowerCase();
+  if (type==='crawler'||e.name.includes('Crawler')) _drawCrawler(ctx,x,y,t,flash);
+  else if (type==='lurker'||e.name.includes('Lurker')) _drawLurker(ctx,x,y,t,flash);
+  else _drawWatcher(ctx,x,y,t,flash);
+}
+
+function _drawCrawler(ctx,x,y,t,fl) {
+  const [_er,_ec]=_enmRowCol(S.combat.enemy);
+  if (_cbtFrame(ctx,'cbt_crawler',_er,_ec,x,y)) return;
+  const bob=Math.sin(t*3.5)*2.2;
+  ctx.save(); ctx.translate(Math.floor(x),Math.floor(y+bob));
+  const hit=fl>0.05, c1=hit?'#fff':'#882244', c2=hit?'#ffaaaa':'#551133';
+
+  // 6 legs
+  ctx.strokeStyle=c2; ctx.lineWidth=2;
+  for (let i=0;i<3;i++) {
+    const a=(i/3)*Math.PI*0.85-0.4;
+    const wa=Math.sin(t*4+i)*0.18;
+    ctx.beginPath(); ctx.moveTo(-10,-10);
+    ctx.lineTo(-10-Math.cos(a+wa)*22,-10+Math.abs(Math.sin(a+wa))*14+4);
+    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(10,-10);
+    ctx.lineTo(10+Math.cos(a-wa)*22,-10+Math.abs(Math.sin(a-wa))*14+4);
+    ctx.stroke();
+  }
+  // Body
+  ctx.fillStyle=c1;
+  ctx.beginPath(); ctx.ellipse(0,-16,16,11,0,0,Math.PI*2); ctx.fill();
+  // Abdomen
+  ctx.fillStyle=c2;
+  ctx.beginPath(); ctx.ellipse(0,-6,10,7,0,0,Math.PI*2); ctx.fill();
+  // Eyes
+  if (!hit) {
+    ctx.fillStyle='#ff3333';
+    ctx.beginPath(); ctx.arc(-6,-18,3,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(6,-18,3,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#ffaaaa';
+    ctx.beginPath(); ctx.arc(-5.5,-18.5,1,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(6.5,-18.5,1,0,Math.PI*2); ctx.fill();
+  }
+  // Mandibles
+  ctx.strokeStyle=hit?'#fff':'#660022'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(-8,-8); ctx.lineTo(-14,-3); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(8,-8); ctx.lineTo(14,-3); ctx.stroke();
+  ctx.restore();
+}
+
+function _drawLurker(ctx,x,y,t,fl) {
+  const [_er,_ec]=_enmRowCol(S.combat.enemy);
+  if (_cbtFrame(ctx,'cbt_lurker',_er,_ec,x,y)) return;
+  const shk=fl>0.05?(Math.random()-0.5)*4:0;
+  ctx.save(); ctx.translate(Math.floor(x+shk),Math.floor(y));
+  const hit=fl>0.05, c1=hit?'#fff':'#6a7d8e', c2=hit?'#aac':'#3e5260', c3=hit?'#fff':'#2a3d4a';
+
+  // Body - craggy boulder shape
+  ctx.fillStyle=c1;
+  ctx.beginPath();
+  ctx.moveTo(-28,0);
+  ctx.bezierCurveTo(-30,-22,-22,-44,0,-46);
+  ctx.bezierCurveTo(22,-46,30,-24,28,0);
+  ctx.closePath(); ctx.fill();
+
+  // Texture cracks
+  ctx.strokeStyle=c3; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(-12,-12); ctx.lineTo(-5,-26); ctx.lineTo(2,-20); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(10,-10); ctx.lineTo(16,-22); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-6,-30); ctx.lineTo(4,-38); ctx.stroke();
+
+  // Shadow belly
+  ctx.fillStyle=c2;
+  ctx.beginPath(); ctx.ellipse(0,-5,18,8,0,0,Math.PI); ctx.fill();
+
+  // Eyes
+  if (!hit) {
+    const ep=0.8+Math.sin(t*2.2)*0.2;
+    const drawEye=(ex,ey)=>{
+      ctx.fillStyle='#ff8800'; ctx.beginPath(); ctx.arc(ex,ey,6,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#ffcc44'; ctx.beginPath(); ctx.arc(ex,ey,3.5*ep,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#331100'; ctx.beginPath(); ctx.arc(ex,ey,1.5,0,Math.PI*2); ctx.fill();
+      // Glow
+      const gl=ctx.createRadialGradient(ex,ey,2,ex,ey,11);
+      gl.addColorStop(0,'rgba(255,140,0,0.28)'); gl.addColorStop(1,'rgba(255,140,0,0)');
+      ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(ex,ey,11,0,Math.PI*2); ctx.fill();
+    };
+    drawEye(-10,-26); drawEye(10,-26);
+  }
+  ctx.restore();
+}
+
+function _drawWatcher(ctx,x,y,t,fl) {
+  const [_er,_ec]=_enmRowCol(S.combat.enemy);
+  if (_cbtFrame(ctx,'cbt_watcher',_er,_ec,x,y)) return;
+  const sway=Math.sin(t*1.9)*3;
+  ctx.save(); ctx.translate(Math.floor(x+sway),Math.floor(y));
+  const hit=fl>0.05, c1=hit?'#fff':'#6a3380', c2=hit?'#ddaaff':'#3d1a55';
+
+  // Spindly legs
+  ctx.strokeStyle=hit?'#fff':'#4a2060'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(-6,0); ctx.lineTo(-18,-14); ctx.lineTo(-20,0); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(6,0); ctx.lineTo(18,-14); ctx.lineTo(20,0); ctx.stroke();
+
+  // Body
+  ctx.fillStyle=c1;
+  ctx.beginPath();
+  ctx.moveTo(-9,0); ctx.lineTo(-7,-52); ctx.lineTo(7,-52); ctx.lineTo(9,0);
+  ctx.closePath(); ctx.fill();
+
+  // Ribbing detail
+  if (!hit) {
+    ctx.strokeStyle='rgba(80,30,100,0.6)'; ctx.lineWidth=1;
+    for (let i=1;i<4;i++) {
+      const ry=-12*i;
+      ctx.beginPath(); ctx.moveTo(-7,ry); ctx.lineTo(7,ry); ctx.stroke();
+    }
+  }
+
+  // Tentacle arms
+  ctx.strokeStyle=hit?'#fff':'#4a2060'; ctx.lineWidth=4;
+  const at=Math.sin(t*2.2)*9;
+  ctx.beginPath(); ctx.moveTo(-7,-36);
+  ctx.quadraticCurveTo(-28,-36+at,-24,-20+at*0.5); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(7,-36);
+  ctx.quadraticCurveTo(28,-36-at,24,-20-at*0.5); ctx.stroke();
+
+  // Head
+  ctx.fillStyle=c1;
+  ctx.beginPath(); ctx.ellipse(0,-60,13,11,0,0,Math.PI*2); ctx.fill();
+
+  // Central eye
+  const ep=0.75+Math.sin(t*3.1)*0.25;
+  if (!hit) {
+    ctx.fillStyle='#bb44ee';
+    ctx.beginPath(); ctx.ellipse(0,-60,9*ep,8*ep,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#ee99ff';
+    ctx.beginPath(); ctx.ellipse(0,-60,4*ep,4*ep,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#110011';
+    ctx.beginPath(); ctx.arc(0,-60,2,0,Math.PI*2); ctx.fill();
+    const eg=ctx.createRadialGradient(0,-60,3,0,-60,18);
+    eg.addColorStop(0,'rgba(180,60,240,0.38)'); eg.addColorStop(1,'rgba(180,60,240,0)');
+    ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(0,-60,18,0,Math.PI*2); ctx.fill();
+  } else {
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.ellipse(0,-60,10,9,0,0,Math.PI*2); ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+// ─ Damage number helper ─
+function _cbtDmg(x,y,val,col) {
+  _cbtA.dmgNums.push({x,y,val:String(val),t:0.9,col:col||'#dd8855'});
+}
+
+// ─ Initiative roll ─
+function _cbtRollInit(enemy) {
+  const capMod=Math.floor((S.captain.level-1)/4)+(S.captain.initiative||0);
+  const enmMod=enemy.initiative||0;
+  const cr=Math.floor(Math.random()*20)+1;
+  const er=Math.floor(Math.random()*20)+1;
+  const ct=cr+capMod, et=er+enmMod;
+  const first=ct>=et;
+  _cbtA.initT=3.2;
+  _cbtA.initLines=[
+    'Captain: d20('+cr+') + '+capMod+' = '+ct,
+    'Enemy:   d20('+er+') + '+enmMod+' = '+et,
+    first?'-- YOU GO FIRST --':'-- ENEMY STRIKES FIRST --',
+  ];
+  return {first,ct,et};
+}
+
+// ─ Menu ─
+function cbtMenuCat(cat) {
+  if (!_cbtA.btnsOn&&cat!=='dummy') return;
+  _cbtA.menuCat=cat; _cbtA.menuFocus=0;
+  document.querySelectorAll('.sc-cat').forEach(b=>b.classList.remove('active'));
+  const cb=document.getElementById('sc-cat-'+cat);
+  if (cb) cb.classList.add('active');
+  _cbtBuildSub();
+}
+
+function _cbtBuildSub() {
+  const sub=document.getElementById('sc-menu-sub'); if (!sub) return;
+  sub.innerHTML='';
+  if (_cbtA.menuCat==='attack') {
+    const items=[];
+    if (S.captain.melee)  items.push({label:'Combat Knife',hint:S.captain.melee.dmgMin+'-'+S.captain.melee.dmgMax+' dmg',fn:cbtMelee,dis:false});
+    if (S.captain.ranged) items.push({label:'Void Pistol',hint:S.captain.ranged.dmgMin+'-'+S.captain.ranged.dmgMax+' | '+S.combat.shotsLeft+' shots',fn:cbtRanged,dis:S.combat.shotsLeft<=0});
+    items.forEach((it,i)=>{
+      const b=document.createElement('button');
+      b.className='sc-sub'+(i===_cbtA.menuFocus?' focused':'');
+      b.innerHTML=it.label+'<span class="sc-sub-hint">'+it.hint+'</span>';
+      b.disabled=it.dis||!_cbtA.btnsOn;
+      b.onclick=it.fn; b.ontouchend=e=>{e.preventDefault();it.fn();};
+      sub.appendChild(b);
+    });
+  } else if (_cbtA.menuCat==='item') {
+    const potQty=S.captain.inv.filter(i=>i.id==='potion').reduce((s,i)=>s+(i.qty||1),0);
+    if (potQty>0) {
+      const b=document.createElement('button');
+      b.className='sc-sub'+(0===_cbtA.menuFocus?' focused':'');
+      b.innerHTML='Healing Tincture<span class="sc-sub-hint">+20 HP | '+potQty+' left</span>';
+      b.disabled=!_cbtA.btnsOn;
+      b.onclick=cbtPotion; b.ontouchend=e=>{e.preventDefault();cbtPotion();};
+      sub.appendChild(b);
+    } else {
+      sub.innerHTML='<div style="padding:8px 14px;font-size:10px;color:#443322;font-style:italic;">No items</div>';
+    }
+  }
+}
+
+function _cbtSetBtns(on) {
+  _cbtA.btnsOn=on;
+  document.querySelectorAll('.sc-cat:not(.sc-cat-flee)').forEach(b=>{b.disabled=!on;});
+  if (on) _cbtBuildSub();
+  else document.querySelectorAll('.sc-sub').forEach(b=>{b.disabled=true;});
+}
+
+// ─ Keyboard nav ─
+function _cbtKeyNav(e) {
+  if (!S.combat.active||!_cbtA.btnsOn) return;
+  const subs=[...document.querySelectorAll('.sc-sub:not(:disabled)')];
+  const n=subs.length;
+  if (e.key==='ArrowDown'||e.key==='s'||e.key==='S') {
+    e.preventDefault(); _cbtA.menuFocus=(_cbtA.menuFocus+1)%Math.max(1,n); _cbtBuildSub();
+  } else if (e.key==='ArrowUp'||e.key==='w'||e.key==='W') {
+    e.preventDefault(); _cbtA.menuFocus=(_cbtA.menuFocus-1+Math.max(1,n))%Math.max(1,n); _cbtBuildSub();
+  } else if (e.key==='Tab') {
+    e.preventDefault(); cbtMenuCat(_cbtA.menuCat==='attack'?'item':'attack');
+  } else if (e.key==='Enter'||e.key===' ') {
+    e.preventDefault(); if (n>0) subs[Math.min(_cbtA.menuFocus,n-1)]?.click();
+  }
+}
+
+// ╔═════════════════════════════════════════════════════════════════════╗
+// ║  SURFACE COMBAT SYSTEM                                                    ║
+// ╚═════════════════════════════════════════════════════════════════════╝
+
+function _rng(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+// ── Starter gear ───────────────────────────────────────────────────────────
+function initStarterGear() {
+  if (S.captain.gearGiven) return;
+  S.captain.maxHp   = 30 + (S.captain.armor.hpBonus||0) + (S.captain.helmet.hpBonus||0);
+  S.captain.hp      = S.captain.maxHp;
+  S.captain.defense = (S.captain.armor.def||0) + (S.captain.helmet.def||0);
+  S.captain.inv.push({ id:'potion', name:'Healing Tincture', type:'potion', qty:2, heal:20 });
+  S.captain.gearGiven = true;
+  setStatus('Gear equipped: Leather Armor, Void Helmet, Combat Knife, Void Pistol, 2x Healing Tincture.');
+}
+
+// ── Enemy spawning ────────────────────────────────────────────────────────
+function initEnemies() {
+  S.enemies = ENEMY_SPAWNS.map((sp, i) => ({
+    ...ENEMY_DEFS[sp.type],
+    tx: sp.tx, ty: sp.ty,
+    currentHp: ENEMY_DEFS[sp.type].hp,
+    alive: true, spawnIdx: i, type: sp.type,
+  }));
+}
+
+function respawnEnemies() {
+  ENEMY_SPAWNS.forEach((sp, i) => {
+    if (!S.enemies[i]?.alive) {
+      S.enemies[i] = {
+        ...ENEMY_DEFS[sp.type],
+        tx: sp.tx, ty: sp.ty,
+        currentHp: ENEMY_DEFS[sp.type].hp,
+        alive: true, spawnIdx: i, type: sp.type,
+      };
+    }
+  });
+}
+
+// ── Combat open/close ────────────────────────────────────────────────────
+function startCombat(idx) {
+  if (S.combat.active) return;
+  const e = S.enemies[idx]; if (!e?.alive) return;
+  S.combat.active=true; S.combat.enemy=e; S.combat.enemyIdx=idx;
+  S.combat.log=[]; S.combat.playerTurn=true;
+  S.combat.shotsLeft=S.captain.ranged.shotsPerCombat||3;
+  S.combat.ended=false;
+  // Reset animation
+  Object.assign(_cbtA,{t:0,capOffX:0,enmOffX:0,capFlash:0,enmFlash:0,
+    atkPhase:null,atkT:0,dmgNums:[],menuCat:'attack',menuFocus:0,btnsOn:false});
+  // Show overlay + size canvas
+  document.getElementById('surf-combat').style.display='flex';
+  const cv=document.getElementById('sc-scene');
+  if (cv){cv.width=cv.clientWidth||360;cv.height=Math.min(Math.floor(cv.clientWidth*0.48),220);}
+  // Build disabled menu
+  cbtMenuCat('dummy');
+  _cbtBuildSub();
+  // Start scene loop
+  _cbtStartScene();
+  // Initiative roll
+  const init=_cbtRollInit(e);
+  // After reveal delay, start combat proper
+  setTimeout(()=>{
+    _cbtA.initT=0;
+    cbtLog('A '+e.name+' blocks your path!','warn');
+    if (init.first) {
+      cbtLog('You have initiative! Choose your action.','info');
+      _cbtSetBtns(true);
+    } else {
+      cbtLog('The enemy moves first!','warn');
+      setTimeout(_cbtEnemyTurn,600);
+    }
+  },3400);
+}
+
+function closeCombat() {
+  S.combat.active=false;
+  _cbtStopScene();
+  document.getElementById('surf-combat').style.display='none';
+}
+
+// ── UI ───────────────────────────────────────────────────────────────────────
+function _renderCbt() {
+  // Scene rendered by canvas loop; just update log
+  const logEl=document.getElementById('sc-log'); if(!logEl) return;
+  logEl.innerHTML=S.combat.log.slice(-12).map(l=>'<div class="sc-log-'+l.t+'">'+l.m+'</div>').join('');
+  logEl.scrollTop=logEl.scrollHeight;
+  _cbtBuildSub(); // refresh counts
+}
+
+function cbtLog(msg, t) {
+  S.combat.log.push({ m: msg, t: t || 'info' });
+  _renderCbt();
+}
+
+function _setCbtBtns(on) { _cbtSetBtns(on); }
+
+
+// ── Player actions ─────────────────────────────────────────────────────────
+function _doPlayerAttack(wep) {
+  const e=S.combat.enemy;
+  const dmg=Math.max(1,_rng(wep.dmgMin,wep.dmgMax)-(e.def||0));
+  e.currentHp=Math.max(0,e.currentHp-dmg);
+  // Trigger animation
+  const cv=document.getElementById('sc-scene');
+  const W=cv?cv.width:360, H=cv?cv.height:180;
+  const enmX=Math.floor(W*0.78);
+  _cbtA.atkPhase=wep.type==='ranged'?'rng':'ml-out'; _cbtA.atkT=0;
+  const delay=wep.type==='ranged'?160:260;
+  setTimeout(()=>_cbtDmg(enmX,Math.floor(H*0.18),'-'+dmg,'#ee7744'),delay);
+  cbtLog('You strike with '+wep.name+' — '+dmg+' damage! (Enemy: '+e.currentHp+'/'+e.hp+')','hit');
+  if (e.currentHp<=0) { setTimeout(cbtWin,850); return; }
+  _cbtSetBtns(false);
+  setTimeout(_cbtEnemyTurn,900);
+}
+
+function cbtMelee() {
+  if (!S.combat.playerTurn || S.combat.ended) return;
+  _doPlayerAttack(S.captain.melee);
+}
+
+function cbtRanged() {
+  if (!S.combat.playerTurn || S.combat.ended) return;
+  if (S.combat.shotsLeft <= 0) { cbtLog('Out of shots!', 'warn'); return; }
+  S.combat.shotsLeft--;
+  _doPlayerAttack(S.captain.ranged);
+}
+
+function cbtPotion() {
+  if (!S.combat.playerTurn || S.combat.ended) return;
+  const slot = S.captain.inv.find(i => i.id === 'potion' && (i.qty||1) > 0);
+  if (!slot) { cbtLog('No potions left!', 'warn'); return; }
+  slot.qty = (slot.qty||1) - 1;
+  if (slot.qty <= 0) S.captain.inv = S.captain.inv.filter(i => i !== slot);
+  const heal = slot.heal || 20;
+  S.captain.hp = Math.min(S.captain.maxHp, S.captain.hp + heal);
+  cbtLog('Healing Tincture: +' + heal + ' HP. (' + S.captain.hp + '/' + S.captain.maxHp + ')', 'good');
+  _setCbtBtns(false);
+  setTimeout(_cbtEnemyTurn, 700);
+}
+
+function cbtFlee() {
+  if (S.combat.ended) return;
+  if (Math.random() < 0.5) {
+    cbtLog('You slip away into the shadows!', 'good');
+    S.combat.ended = true;
+    setTimeout(() => { closeCombat(); S.py = Math.min((MAP_H-2)*TILE_SIZE, S.py+2.5*TILE_SIZE); setStatus('You fled.'); }, 800);
+  } else {
+    cbtLog('Flee failed! The enemy strikes as you turn.', 'warn');
+    _setCbtBtns(false);
+    setTimeout(_cbtEnemyTurn, 500);
+  }
+}
+
+// ── Enemy turn ────────────────────────────────────────────────────────────
+function _cbtEnemyTurn() {
+  if (S.combat.ended) return;
+  const e=S.combat.enemy;
+  const dmg=Math.max(1,_rng(e.atk[0],e.atk[1])-S.captain.defense);
+  S.captain.hp=Math.max(0,S.captain.hp-dmg);
+  // Trigger animation
+  const cv=document.getElementById('sc-scene');
+  const W=cv?cv.width:360, H=cv?cv.height:180;
+  const capX=Math.floor(W*0.20);
+  _cbtA.atkPhase='enm-out'; _cbtA.atkT=0;
+  setTimeout(()=>_cbtDmg(capX,Math.floor(H*0.18),'-'+dmg,'#cc3333'),150);
+  cbtLog(e.name+' attacks for '+dmg+' damage! (Your HP: '+S.captain.hp+'/'+S.captain.maxHp+')','hit');
+  if (S.captain.hp<=0) { setTimeout(cbtDefeat,700); return; }
+  setTimeout(()=>_cbtSetBtns(true),560);
+}
+
+
+// ── Outcomes ──────────────────────────────────────────────────────────────
+function cbtWin() {
+  if (S.combat.ended) return;
+  S.combat.ended = true;
+  const e = S.combat.enemy;
+  e.alive = false;
+  const xpGain = e.xp;
+  S.captain.xp += xpGain;
+  cbtLog('Victory! +' + xpGain + ' XP (' + S.captain.xp + '/' + xpToNext(S.captain.level) + ')', 'good');
+  // Level-up loop
+  let leveled = false;
+  while (S.captain.xp >= xpToNext(S.captain.level)) {
+    S.captain.xp -= xpToNext(S.captain.level);
+    S.captain.level++;
+    S.captain.maxHp += 5;
+    S.captain.hp = S.captain.maxHp;
+    leveled = true;
+    cbtLog('LEVEL UP! Captain is now Level ' + S.captain.level + '! Max HP: ' + S.captain.maxHp, 'good');
+  }
+  // Loot rolls
+  (e.loot||[]).forEach(l => {
+    if (Math.random() < l.p) {
+      const ex = S.captain.inv.find(i => i.id === l.id);
+      if (ex) ex.qty = (ex.qty||1)+1;
+      else S.captain.inv.push({ id:l.id, name:l.name, type:'component', qty:1 });
+      cbtLog('Salvaged: ' + l.name, 'good');
+    }
+  });
+  _setCbtBtns(false);
+  setStatus('Defeated ' + e.name + '. +' + xpGain + ' XP');
+  if (leveled) cbtLog('*** LEVEL UP! Captain is now Level ' + S.captain.level + '! ***', 'good');
+  cbtLog(leveled ? 'Victory! Level up!' : 'Victory!', 'good');
+  setTimeout(closeCombat, 2000);
+}
+
+function cbtDefeat() {
+  if (S.combat.ended) return;
+  S.combat.ended = true;
+  S.captain.hp = 1;
+  cbtLog('You collapse from your wounds... but survive at 1 HP.', 'warn');
+  _setCbtBtns(false);
+  setTimeout(() => { closeCombat(); setStatus('You were knocked out. Rest to recover.'); }, 2000);
+}
 
 // ── Init ──────────────────────────────────────────────────────────────────
-function init() {
+function init(){
   loadEntryData();
+  initEnemies();
+  if (!S.captain.gearGiven) initStarterGear();
 
   // Fade in
   const ov = document.getElementById('transition-overlay');

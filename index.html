@@ -18413,7 +18413,8 @@ document.addEventListener('DOMContentLoaded', () => {
           G.ship.air = Math.max(0, G.ship.air - 1);
           if (G.ship.air <= 0) { doDefeat('air'); return; }
         }
-        if (d.gold != null) G.ship.gold = d.gold;
+        if (d.gold    != null) G.ship.gold = d.gold;
+        if (d.captain)         G.captain   = d.captain;
         addLog(`Returned from the surface of Fentheris. ${h.toFixed(1)} hours elapsed.`, '');
         updateWatchHUD(); updateUI();
         // Reopen LS if we were in the Realm sphere
@@ -18648,6 +18649,7 @@ function _applyLoad(save) {
       farPhlo: state.farPhlo || null,
       _breachArrived: state._breachArrived || {},
       captainLog: state.captainLog || [],
+      captain:    state.captain    || null,
       travelDays: state.travelDays || 0,
       watch: state.watch || { day:1, totalHours:0, hoursAwake:0, legsPushed:0, moveBudget:1, moveUsed:0, watchesWithoutRest:0, restingPhase:false },
       _lsOrbitHours: state.lsOrbitHours || 0, // restore planet orbital positions
@@ -20678,6 +20680,8 @@ function descendToSurface() {
     totalHours: G.watch?.totalHours || 0,
     hoursAwake: G.watch?.hoursAwake || 0,
     gold:       G.ship.gold,
+    captain:     G.captain || null,
+    captain:    G.captain || null,
   };
   try { sessionStorage.setItem('fentheris_surface_entry', JSON.stringify(entry)); } catch(e) {}
   const ov = document.createElement('div');
