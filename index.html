@@ -5696,104 +5696,69 @@ function consumeMove() {
 function watchExpiredMidJourney() {
   if (!G.watch || G.watch._pauseShown) return;
   G.watch._pauseShown = true;
-  _tvlStop(); if(G.tvl) G.tvl.timer = null;
-  tickLeg(); // advance totalHours by 8 — required before rest snaps to next dawn
+
+  tickLeg();       // advance totalHours by 8
   pauseLiveClock();
-  // CRITICAL: tickLeg() just absorbed the leg's 8 hours into totalHours.
-  // Zero _clockAccumH so it doesn't double-count on any subsequent push leg.
-  // (restAdvanceToMorning already zeroes it on the anchor path; this covers push + any
-  // combat/hail mid-leg that left accumulated hours banked before the leg completed.)
-  // The clock display still shows 14:00 correctly: totalHours already encodes hour 14.
   _clockAccumH = 0;
-  // Capture before zeroing — anchorCb and pushCb need these.
-  // _watchesRemaining is already set correctly by travelTick's segment-complete handler;
-  // fall back to _watchesLeft only if travelTick didn't set it (e.g. called from elsewhere).
+
   const _savedProg        = G.tvl?.prog ?? 0;
   const _savedWatchesLeft = G.tvl?._watchesRemaining ?? G.tvl?._watchesLeft ?? 0;
   if (G.tvl) {
     G.tvl._pausedProg       = _savedProg;
     G.tvl._watchesRemaining = _savedWatchesLeft;
-    G.tvl.cur = 0; G.tvl.steps = 0;
   }
-  G.phase = 'map';
-  stopTravelHum();
-  tsClose();
 
-  // Idle mode — always auto-anchor
-  if(G._idleMode) { _idleAutoAnchor(); }
-
-  const hour = currentHour();
-  const lvl  = fatigueLevel();
-  const destName = G.tvl?.to ? G.spheres?.find(s=>s.id===G.tvl.to)?.n
-                 : (G.tvl?.toWp?.n || G.tvl?.toFragSite?.n || 'destination');
-  const pct = Math.round(G.tvl?.prog || 0);
-  const icon = (hour >= 22 || hour < 6) ? '🌙' : hour >= 14 ? '☀️' : '🌅';
-
-  const pushNote = lvl === 0
-    ? `
-
-Anchoring now means 8 hours of rest and a fresh helmsman. Pushing on risks fatigue.`
-    : lvl === 2
-    ? `
-
-⚠ FATIGUED — helmsman is already compromised. Another push risks exhaustion and hull damage.`
-    : `
-
-⚠ EXHAUSTED — the helmsman is dangerously overextended. Hull damage likely if you push further.`;
+  const hour     = currentHour();
+  const lvl      = fatigueLevel();
+  const icon     = (hour >= 22 || hour < 6) ? '🌙' : hour >= 14 ? '☀️' : '🌅';
 
   updateWatchHUD();
 
+  // anchorCb: stop travel, rest, allow resume
   const anchorCb = () => {
     G.watch._pauseShown = false;
-    // doRest() will reset hoursAwake and advance the clock
-    const toId = G.tvl?.to;
+    const toId            = G.tvl?.to;
     const watchesRemaining = G.tvl?._watchesRemaining;
-    const pausedPos  = G.ship.midLanePos;
-    const pausedProg = G.tvl?._pausedProg;
-    const laneOrigin = G.tvl?._laneOrigin;
+    const pausedPos       = G.ship.midLanePos;
+    const pausedProg      = G.tvl?._pausedProg;
+    const laneOrigin      = G.tvl?._laneOrigin;
+    _tvlStop(); if(G.tvl) G.tvl.timer = null;
+    G.phase = 'map'; stopTravelHum(); tsClose();
     if (toId) G._resumeTravel = { toId, watchesRemaining, pausedPos, pausedProg, laneOrigin };
-    doRest(); // restAdvanceToMorning inside will snap to next 06:00
-  };
-  const pushCb = () => {
-    G.watch._pauseShown = false;
-    // Pushing past a rest point adds 0 extra hours (tickLeg already ran), just updates display
-    const newLvl = fatigueLevel();
-    if (newLvl === 1) addLog(`⚠ Fatigue setting in — helmsman is Fatigued.`, 'dmg');
-    if (newLvl >= 2) addLog(`⚠ Constitution check failed — helmsman is ${fatigueName()}!`, 'dmg');
-    jlogPushOn(); // Captain's Log entry for pushing past rest
-    updateWatchHUD();
-    // Resume travel from where we paused
-    const toId = G.tvl?.to;
-    const watchesRemaining = G.tvl?._watchesRemaining;
-    const pausedPos  = G.ship.midLanePos;
-    const pausedProg = G.tvl?._pausedProg;
-    G.ship.midLanePos = null;
-    if (toId) startTravel(toId, watchesRemaining, pausedPos, pausedProg, G.tvl?._laneOrigin);
-    else { G.phase = 'traveling'; if(G.tvl)G.tvl._eventLocked=false; G.tvl.timer = _tvlStart(G.tvl.tickMs || 100); }
+    doRest();
   };
 
-  // ── MIDPOINT WAYSTATION CHECK ─────────────────────────────────────────────
-  // If this watch is the exact midpoint of a lane that has a waystation, replace
-  // the normal anchor/push prompt with the waystation docking offer.
-  // Guard: ≥3-watch journeys only (no waystation on short 1–2 watch hops).
+  // pushCb: seamless — do NOT tear down the travel sequence canvas
+  const pushCb = () => {
+    G.watch._pauseShown = false;
+    const newLvl = fatigueLevel();
+    if (newLvl === 1) addLog(`⚠ Fatigue setting in — helmsman is Fatigued.`, 'dmg');
+    if (newLvl >= 2)  addLog(`⚠ Constitution check failed — helmsman is ${fatigueName()}!`, 'dmg');
+    jlogPushOn();
+    updateWatchHUD();
+    startLiveClock();
+    if (G.tvl) { G.tvl.cur = 0; G.tvl.steps = 0; G.tvl._eventLocked = false; }
+    if (G.tvl?.timer == null) G.tvl.timer = _tvlStart(G.tvl.tickMs || 100);
+  };
+
+  // ── MIDPOINT WAYSTATION ───────────────────────────────────────────────────
   if (G._journeyOrigWatches >= 3 && !G._journeyWpHit) {
     const _completedWatches = G._journeyOrigWatches - (G.tvl?._watchesLeft || 0);
     if (_completedWatches === Math.ceil(G._journeyOrigWatches / 2)) {
       const _laneKey = `${G.tvl?.from}->${G.tvl?.to}`;
-      const _midWs = WAYPOINTS.find(w => w.lanes?.includes(_laneKey));
+      const _midWs   = WAYPOINTS.find(w => w.lanes?.includes(_laneKey));
       if (_midWs) {
-        G._journeyWpHit      = true;
+        G._journeyWpHit = true;
         G._waystationAnchorCb = anchorCb;
         G._waystationPushCb   = pushCb;
         G._waystationMidpoint = true;
         G._waystationRested   = false;
 
-        // Idle mode — skip the waystation prompt, auto-anchor and keep going
-        if (G._idleMode) {
-          addLog(`⚙ Idle: passing ${_midWs.n} — no stop.`, '');
-          anchorCb();
-          return;
-        }
+        if (G._idleMode) { addLog(`⚙ Idle: passing ${_midWs.n} — no stop.`, ''); anchorCb(); return; }
+
+        // Must stop travel to show the shop
+        _tvlStop(); if(G.tvl) G.tvl.timer = null;
+        G.phase = 'map'; stopTravelHum(); tsClose();
 
         snd('sphere_arrive', 0.6);
         addLog(`⚓ ${_midWs.n} — waystation at your heading's midpoint.`, 'imp');
@@ -5801,10 +5766,7 @@ Anchoring now means 8 hours of rest and a fresh helmsman. Pushing on risks fatig
           `${_midWs.ico} ${_midWs.n} — Midpoint`,
           `${_midWs.desc}\n\nYou've reached the halfway point of your voyage. Dock here to trade and rest, or push on without stopping.\n\nField prices apply — 50% above port rates. Resting here clears fatigue.`,
           '⚓ Dock & Resupply',
-          () => {
-            G.watch._pauseShown = false;
-            openWaystationShop(_midWs);
-          },
+          () => { G.watch._pauseShown = false; openWaystationShop(_midWs); },
           '➤ Push On',
           () => {
             G.watch._pauseShown = false;
@@ -5814,30 +5776,18 @@ Anchoring now means 8 hours of rest and a fresh helmsman. Pushing on risks fatig
             pushCb();
           }
         );
-        return; // skip normal anchor/push prompt
+        return;
       }
     }
   }
 
-  // Auto-rest: silently anchor without showing the popup.
-  // MUST be here — after anchorCb is defined — so anchorCb() correctly sets
-  // G._resumeTravel with the right watchesRemaining and decrements the watch count.
-  // Calling doRest() directly (as was done before) bypassed anchorCb and caused
-  // doRest's fallback to recompute watchesRemaining = _watchesLeft+1, resetting
-  // the journey to full length on every rest and making the halfway point never arrive.
-  if (G._autoRest) {
-    G.watch._pauseShown = false;
-    addLog('⚓ Auto-rest: anchoring for the night.', '');
-    anchorCb();
-    return;
-  }
+  // Idle auto-anchor
+  if (G._idleMode) { G.watch._pauseShown = false; addLog('⚙ Auto-rest: anchoring.', ''); anchorCb(); return; }
 
-  // ── No popup — travel continues automatically ────────────────────────────
-  // Fatigue accumulates silently via hoursAwake. The player uses the always-
-  // visible Rest button whenever they choose to anchor. Log a brief note instead.
+  // ── No popup — seamless auto-continue ────────────────────────────────────
   G.watch._pauseShown = false;
   addLog(`${icon} ${timeStr(hour)} — Watch complete. ${fatigueName()}. Use 🌙 Rest to anchor.`, '');
-  pushCb(); // auto-continue to next leg
+  pushCb();
 }
 
 // Anchor — full rest — adds 8 game-hours, resets fatigue to Fresh
@@ -5896,6 +5846,11 @@ function doRest() {
       G.watch.restingPhase = false;
       G.watch.hoursAwake   = 0; // full rest — fatigue cleared
       G.watch.legsPushed   = 0; // legacy compat
+      // If resting inside LS, record LS.t so sessionH correctly resets to 0
+      if (typeof LS !== 'undefined' && LS.t != null) {
+        LS._tRestBaseline = LS.t;
+      }
+      _lsLastFatigueLevel = 0; // allow fatigue flash to fire again after next threshold cross
 
       // Always advance to next 06:00 on rest
       restAdvanceToMorning();
@@ -20042,7 +19997,9 @@ function _lsUpdateClock() {
   if (!timeEl || !G.watch) return;
 
   const committedH   = G.watch.totalHours || 0;
-  const sessionH     = (LS.t || 0) * LS_GAME_HOURS_PER_SEC;
+  // sessionH measures drift since the last rest (or LS entry), not total LS.t,
+  // so resting inside LS correctly resets the live fatigue counter to 0.
+  const sessionH     = Math.max(0, (LS.t || 0) - (LS._tRestBaseline || 0)) * LS_GAME_HOURS_PER_SEC;
   const totalH       = committedH + sessionH;
   const hour         = Math.floor((6 + totalH) % 24);
   const min          = Math.floor(((totalH % 1) * 60)) % 60;
@@ -20098,8 +20055,15 @@ function _lsUpdateClock() {
 // 1 real second in local space = LS_GAME_HOURS_PER_SEC game hours.
 // = 1 game-minute per 3 real seconds (visibly ticking clock).
 // Travel is 8 game-minutes per real second — LS is 24× slower, fitting for
-// sub-warp maneuvering. Shared by clock display, planet orbits, and exit commit.
+// sub-warp maneuvering. Shared by clock display, fatigue, and exit commit.
 const LS_GAME_HOURS_PER_SEC = 1 / 180; // 1 game-min per 3 real-sec
+
+// Planet orbital speed uses a separate multiplier so they visibly move in LS.
+// 62× clock rate: station orbits Fentheris every ~35 real seconds. Char takes
+// ~100 real minutes per full orbit. Planets shift position meaningfully between
+// visits without spinning visibly fast during a session.
+// This is purely visual — clock and fatigue use LS_GAME_HOURS_PER_SEC.
+const LS_ORBIT_SPEED_MULT = 62;
 
 const LS_REALM_PLANETS = [
   { id:'char',         name:'Char',          orbitalR:  351, size: 27, periodDays:    88, angle:0.8,  col:'#a89e88', glowCol:'#776655', img:'images/ls_planet_char.png',          hasRing:false },
@@ -20163,8 +20127,9 @@ function _lsPreloadSolarImgs() {
 // drift at real game speed (8 in-game hours per 60 real seconds).
 function _lsIngameDays() {
   const committedHours = G.watch?.totalHours || 0;
-  // All LS time uses the shared LS_GAME_HOURS_PER_SEC rate (1 game-min per 3 real-sec)
-  const sessionHours = (LS.t || 0) * LS_GAME_HOURS_PER_SEC;
+  // Orbital position uses the visual speed multiplier (50× clock rate) so
+  // planets visibly move during an LS session. Clock/fatigue use the base rate.
+  const sessionHours = (LS.t || 0) * LS_GAME_HOURS_PER_SEC * LS_ORBIT_SPEED_MULT;
   return (committedHours + sessionHours) / 24;
 }
 
@@ -20632,6 +20597,7 @@ function openLocalSpace() {
   if((G.ship?.loc || 'realm') === 'realm') _lsPreloadSolarImgs();
   _lsMinimapRestoreState();
   _lsLastFatigueLevel = Math.floor((G.watch?.hoursAwake || 0) >= 24 ? 3 : (G.watch?.hoursAwake || 0) >= 16 ? 2 : (G.watch?.hoursAwake || 0) >= 8 ? 1 : 0);
+  LS._tRestBaseline = 0; // session drift starts fresh on LS entry
 
   if(LS.animId) cancelAnimationFrame(LS.animId);
   LS.lastTs = 0;
@@ -20661,7 +20627,7 @@ function _lsBoundaryExit() {
     LS._boundaryExiting = false;
     // Commit LS session time to the in-game clock using the shared LS rate.
     // Cap at 8 game-hours so a very long session doesn't burn air excessively.
-    const lsHours = Math.min(8, (LS.t || 0) * LS_GAME_HOURS_PER_SEC);
+    const lsHours = Math.min(8, Math.max(0, (LS.t || 0) - (LS._tRestBaseline || 0)) * LS_GAME_HOURS_PER_SEC);
     if (lsHours >= 0.1) addGameHours(lsHours);
     closeLsOverlay();
     addLog(`Departed ${_dSphName} local space.`, '');
