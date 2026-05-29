@@ -5451,9 +5451,10 @@ function currentHour() {
 function timeStr(h) { return String(h).padStart(2,'0') + ':00'; }
 function watchTimeStr() {
   if (!G.watch) return '';
-  const h = G.watch.totalHours || 0;
+  const h   = G.watch.totalHours || 0;
   const hour = Math.floor((6 + h) % 24);
-  return `Day ${G.watch.day} — ${timeStr(hour)}`;
+  const min  = Math.floor((h % 1) * 60);
+  return `Day ${G.watch.day} — ${String(hour).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
 }
 
 // ── Live display clock ────────────────────────────────────────────────────
@@ -22136,26 +22137,28 @@ function _lsRender(cx, W, H, dt) {
         cx.restore();
       }
     } else if(p.type==='dock') {
-      // Station — draw as a distinct structure (cross/ring shape)
-      cx.save(); cx.translate(p.x, p.y); cx.rotate(LS.t * 0.08);
-      cx.strokeStyle=p.col; cx.lineWidth=2;
-      cx.beginPath(); cx.arc(0,0,16,0,Math.PI*2); cx.stroke();
-      cx.strokeStyle=hexA(p.col,'88'); cx.lineWidth=1.5;
-      for(let a=0;a<4;a++){
-        const ra=a*Math.PI/2;
-        cx.beginPath(); cx.moveTo(Math.cos(ra)*16,Math.sin(ra)*16);
-        cx.lineTo(Math.cos(ra)*26,Math.sin(ra)*26); cx.stroke();
-      }
-      cx.fillStyle=hexA(p.col,'44');
-      cx.beginPath(); cx.arc(0,0,8,0,Math.PI*2); cx.fill();
-      cx.restore();
-      // Anchor icon — suppressed for Realm since the station image is drawn by the solar system renderer
+      // For Realm the station image is rendered by _lsRenderSolarSystem —
+      // suppress the ring/crosshair decoration entirely; only the dashed
+      // proximity ring (drawn in the POI approach section) and turnin marker remain.
       if((G.ship?.loc||'realm') !== 'realm') {
+        // Non-realm: draw the spinning ring structure
+        cx.save(); cx.translate(p.x, p.y); cx.rotate(LS.t * 0.08);
+        cx.strokeStyle=p.col; cx.lineWidth=2;
+        cx.beginPath(); cx.arc(0,0,16,0,Math.PI*2); cx.stroke();
+        cx.strokeStyle=hexA(p.col,'88'); cx.lineWidth=1.5;
+        for(let a=0;a<4;a++){
+          const ra=a*Math.PI/2;
+          cx.beginPath(); cx.moveTo(Math.cos(ra)*16,Math.sin(ra)*16);
+          cx.lineTo(Math.cos(ra)*26,Math.sin(ra)*26); cx.stroke();
+        }
+        cx.fillStyle=hexA(p.col,'44');
+        cx.beginPath(); cx.arc(0,0,8,0,Math.PI*2); cx.fill();
+        cx.restore();
         cx.font='13px Arial'; cx.textAlign='center'; cx.textBaseline='middle';
         cx.fillText('⚓', p.x, p.y);
         cx.textBaseline='alphabetic';
       }
-      // Cargo turnin ! marker on dock
+      // Cargo turnin ! marker on dock (shown for all spheres)
       if(lsDockHasTurnin()) {
         const _qPulse = 0.75 + 0.25*Math.sin(LS.t*3.5);
         cx.save();
