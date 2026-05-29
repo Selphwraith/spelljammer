@@ -2746,7 +2746,6 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
     <button class="ovl-btn" onclick="openOverlay('qlog')">📜 Quest Log</button>
     <button class="ovl-btn" id="sidebar-lq-btn" onclick="openLocalQuest()" style="display:none;border-color:rgba(68,136,102,0.333);color:#44ffcc;">🌌 Local Quests</button>
     <button class="ovl-btn" id="sidebar-journal-btn" onclick="openOverlay('journal')" style="border-color:rgba(122,74,24,0.333);color:#d4a96a;">📖 Captain's Log</button>
-    <button class="ovl-btn" id="sidebar-pack-btn" onclick="openCaptainPack()" style="border-color:rgba(60,100,60,0.35);color:#88cc88;">🎒 Captain's Pack</button>
     <button id="rest-btn" class="fresh" onclick="doRest()">🌙 Rest</button>
   <!-- Fatigue edge-vignette — animated via class, pointer-events:none -->
   <div id="fatigue-vignette"></div>
@@ -18489,7 +18488,10 @@ document.addEventListener('DOMContentLoaded', () => {
           if (G.ship.air <= 0) { doDefeat('air'); return; }
         }
         if (d.gold    != null) G.ship.gold = d.gold;
-        if (d.captain)         G.captain   = d.captain;
+        if (d.captain) {
+          G.captain = d.captain;
+          if (d.captain.inv) G.ship.inv = d.captain.inv; // items are unified
+        }
         addLog(`Returned from the surface of Fentheris. ${h.toFixed(1)} hours elapsed.`, '');
         updateWatchHUD(); updateUI();
         // Reopen LS if we were in the Realm sphere
@@ -20756,7 +20758,7 @@ function descendToSurface() {
     hoursAwake: G.watch?.hoursAwake || 0,
     gold:       G.ship.gold,
     captain:     G.captain || null,
-    captain:    G.captain || null,
+    captain: { ...(G.captain||{}), inv: G.ship.inv || [] },
   };
   try { sessionStorage.setItem('fentheris_surface_entry', JSON.stringify(entry)); } catch(e) {}
   const ov = document.createElement('div');
