@@ -2598,6 +2598,23 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
   object-fit: contain;
 }
 
+
+  /* Captain's Pack item rows */
+  .cp-item-row {
+    display:flex; align-items:center; gap:10px; padding:7px 10px;
+    border:1px solid rgba(100,70,20,0.2); border-radius:2px;
+    background:rgba(8,4,0,0.6); font-size:0.563em;
+  }
+  .cp-item-name { flex:1; color:#d4b896; }
+  .cp-item-qty  { color:#998866; white-space:nowrap; }
+  .cp-sell-btn  {
+    padding:4px 10px; border-radius:2px; cursor:pointer;
+    border:1px solid rgba(100,180,60,0.35); background:rgba(10,20,5,0.8);
+    color:#88cc88; font-size:0.9em; white-space:nowrap;
+  }
+  .cp-sell-btn:hover { border-color:#88cc88; }
+  .cp-sell-btn.dis   { opacity:0.3; cursor:default; }
+
 </style>
 </head>
 <body>
@@ -2729,6 +2746,7 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
     <button class="ovl-btn" onclick="openOverlay('qlog')">📜 Quest Log</button>
     <button class="ovl-btn" id="sidebar-lq-btn" onclick="openLocalQuest()" style="display:none;border-color:rgba(68,136,102,0.333);color:#44ffcc;">🌌 Local Quests</button>
     <button class="ovl-btn" id="sidebar-journal-btn" onclick="openOverlay('journal')" style="border-color:rgba(122,74,24,0.333);color:#d4a96a;">📖 Captain's Log</button>
+    <button class="ovl-btn" id="sidebar-pack-btn" onclick="openCaptainPack()" style="border-color:rgba(60,100,60,0.35);color:#88cc88;">🎒 Captain's Pack</button>
     <button id="rest-btn" class="fresh" onclick="doRest()">🌙 Rest</button>
   <!-- Fatigue edge-vignette — animated via class, pointer-events:none -->
   <div id="fatigue-vignette"></div>
@@ -18389,6 +18407,63 @@ function menuShowBriefing() {
 }
 
 // Force briefing hidden on every page load — guards against stale cached state
+
+// ── Captain's Pack overlay ────────────────────────────────────────────────
+function openCaptainPack() {
+  _buildCaptainPack();
+  document.getElementById('ov-captain-pack').classList.add('on');
+}
+function closeCaptainPack() {
+  document.getElementById('ov-captain-pack').classList.remove('on');
+}
+
+function _buildCaptainPack() {
+  const cap = G.captain;
+  const goldEl = document.getElementById('cp-gold-bar');
+  if (goldEl) goldEl.textContent = String.fromCodePoint(0x1F537) + ' ' + (G.ship.gold||0) + ' TS | Captain Pack';
+  const itemsEl = document.getElementById('cp-items'); if (!itemsEl) return;
+  itemsEl.innerHTML = '';
+  const inv = cap?.inv || [];
+  if (inv.length === 0) {
+    itemsEl.innerHTML = '<div style="font-size:0.563em;color:#443322;font-style:italic;padding:8px;">No items in pack.</div>';
+    return;
+  }
+  const SELL_VALS = {chitin:8,crawl_hide:5,venom_gel:14,shard:8,bone_plate:11,
+    lurk_hide:16,eye:28,membrane:18,vital_fluid:22,potion:14,pistol_mag:10};
+  const atPort = G.phase === 'port';
+  inv.forEach(item => {
+    const price = SELL_VALS[item.id] || 0;
+    const qty   = item.qty || 1;
+    const canSell = atPort && price > 0;
+    const row = document.createElement('div'); row.className = 'cp-item-row';
+    const nameSpan = '<span class="cp-item-name">' + item.name + '</span>';
+    const qtySpan  = '<span class="cp-item-qty">x' + qty + '</span>';
+    const priceSpan = price > 0 ? '<span style="font-size:0.9em;color:#ffcc44;">' + price + ' TS ea</span>' : '';
+    const btn = document.createElement('button');
+    btn.className = 'cp-sell-btn' + (canSell ? '' : ' dis');
+    btn.textContent = canSell ? 'Sell' : (atPort ? 'N/A' : 'At port');
+    if (canSell) btn.onclick = () => _cpSell(item.id);
+    row.innerHTML = nameSpan + qtySpan + priceSpan;
+    row.appendChild(btn);
+    itemsEl.appendChild(row);
+  });
+}
+
+function _cpSell(id) {
+  const inv = G.captain?.inv; if (!inv) return;
+  const SELL_VALS = {chitin:8,crawl_hide:5,venom_gel:14,shard:8,bone_plate:11,
+    lurk_hide:16,eye:28,membrane:18,vital_fluid:22,potion:14,pistol_mag:10};
+  const slot = inv.find(i => i.id === id); if (!slot) return;
+  const price = SELL_VALS[id] || 0;
+  slot.qty = (slot.qty||1) - 1;
+  if (slot.qty <= 0) G.captain.inv = inv.filter(i => i !== slot);
+  G.ship.gold += price;
+  addLog('Sold ' + slot.name + ' from pack: +' + price + ' TS.', 'gd');
+  const msgEl = document.getElementById('cp-msg');
+  if (msgEl) msgEl.textContent = 'Sold for ' + price + ' TS.';
+  _buildCaptainPack(); updateUI();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const b = document.getElementById('briefing-overlay');
   if (b) { b.classList.add('hidden'); b.style.display = 'none'; }
@@ -28187,6 +28262,21 @@ document.addEventListener('visibilitychange', () => {
     <button id="tut-cbt-dismiss" onclick="_tutHideCombatTips()">⚔ BATTLE STATIONS — BEGIN COMBAT</button>
   </div>
 </div>
+
+
+  <!-- Captain's Pack Overlay -->
+  <div class="ovlay" id="ov-captain-pack">
+    <div class="ovl-title-row">
+      <div style="font-family:'Cinzel',serif;font-size:0.75em;color:#88cc88;letter-spacing:2px;">🎒 CAPTAIN'S PACK</div>
+      <button class="ovl-close-btn" onclick="closeCaptainPack()">✕</button>
+    </div>
+    <div style="font-size:0.563em;color:#4a3060;font-style:italic;padding:4px 0 8px;">
+      Surface equipment and salvage. Sell items at port or on the surface.
+    </div>
+    <div id="cp-gold-bar" style="font-size:0.625em;color:#ffcc44;margin-bottom:8px;"></div>
+    <div id="cp-items" style="display:flex;flex-direction:column;gap:5px;overflow-y:auto;max-height:60vh;"></div>
+    <div id="cp-msg" style="font-size:0.5em;color:#554433;font-style:italic;margin-top:8px;min-height:16px;"></div>
+  </div>
 
 </body>
 </html>
