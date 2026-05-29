@@ -20071,8 +20071,8 @@ const LS_REALM_PLANETS = [
   { id:'velra',        name:'Velra',          orbitalR:  480, size: 51, periodDays:   225, angle:2.1,  col:'#e8d060', glowCol:'#aa9922', img:'images/ls_planet_velra.png',         hasRing:false },
   { id:'fentheris',    name:'Fentheris',      orbitalR:  565, size: 66, periodDays:   365, angle:4.4,  col:'#3a88e8', glowCol:'#1a4499', img:'images/ls_planet_fentheris.png',     hasRing:false },
   { id:'rust',         name:'The Rust',        orbitalR:  697, size: 39, periodDays:   687, angle:1.5,  col:'#cc5522', glowCol:'#882211', img:'images/ls_planet_rust.png',          hasRing:false },
-  { id:'volgrath',     name:'Volgrath',        orbitalR: 1289, size:138, periodDays:  4333, angle:0.3,  col:'#cc9944', glowCol:'#996622', img:'images/ls_planet_volgrath.png',      hasRing:false },
-  { id:'paleRing',     name:'The Pale Ring',   orbitalR: 1745, size:117, periodDays: 10759, angle:3.7,  col:'#ddcc99', glowCol:'#aa9955', img:'images/ls_planet_paleRing.png',      hasRing:true  },
+  { id:'volgrath',     name:'Volgrath',        orbitalR: 1289, size:138, imgSize:160, periodDays:  4333, angle:0.3,  col:'#cc9944', glowCol:'#996622', img:'images/ls_planet_volgrath.png',      hasRing:false },
+  { id:'paleRing',     name:'The Pale Ring',   orbitalR: 1745, size:117, imgSize:180, periodDays: 10759, angle:3.7,  col:'#ddcc99', glowCol:'#aa9955', img:'images/ls_planet_paleRing.png',      hasRing:false },
   { id:'drift',        name:'Drift',           orbitalR: 2475, size: 81, periodDays: 30687, angle:5.5,  col:'#88ccbb', glowCol:'#449988', img:'images/ls_planet_drift.png',         hasRing:false },
   { id:'deepNameless', name:'Deep Nameless',   orbitalR: 3098, size: 75, periodDays: 60190, angle:2.8,  col:'#3344cc', glowCol:'#112288', img:'images/ls_planet_deepNameless.png',  hasRing:false },
 ];
@@ -20237,31 +20237,37 @@ function _lsRenderSolarSystem(cx, tReal) {
   // ── Planets ──
   LS_REALM_PLANETS.forEach(planet => {
     const pos = _lsGetPlanetPos(planet, tDays);
+    const imgLoaded = _lsSolImgs[planet.img]?.complete && (_lsSolImgs[planet.img]?.naturalWidth > 0);
+    const drawSize  = (imgLoaded && planet.imgSize) ? planet.imgSize : planet.size;
     cx.save();
 
-    // Saturn rings — drawn before body
+    // Saturn rings — drawn before body; scale to imgSize when image is loaded
     if(planet.hasRing) {
+      const ringBase = drawSize;
       cx.globalAlpha = 0.55;
       cx.strokeStyle = planet.col + 'bb'; cx.lineWidth = 12;
       cx.beginPath();
-      cx.ellipse(pos.x, pos.y, planet.size * 1.75, planet.size * 0.36, 0.35, 0, Math.PI*2);
+      cx.ellipse(pos.x, pos.y, ringBase * 1.75, ringBase * 0.36, 0.35, 0, Math.PI*2);
       cx.stroke();
       cx.lineWidth = 6; cx.strokeStyle = planet.col + '55';
       cx.beginPath();
-      cx.ellipse(pos.x, pos.y, planet.size * 2.1, planet.size * 0.43, 0.35, 0, Math.PI*2);
+      cx.ellipse(pos.x, pos.y, ringBase * 2.1, ringBase * 0.43, 0.35, 0, Math.PI*2);
       cx.stroke();
       cx.globalAlpha = 1;
     }
 
-    // Atmosphere glow
-    const atmR = planet.size * 0.85;
-    const atm = cx.createRadialGradient(pos.x, pos.y, planet.size * 0.3, pos.x, pos.y, atmR);
-    atm.addColorStop(0, 'transparent');
-    atm.addColorStop(1, planet.glowCol + '66');
-    cx.fillStyle = atm; cx.beginPath(); cx.arc(pos.x, pos.y, atmR, 0, Math.PI*2); cx.fill();
+    // Atmosphere glow — only when image isn't loaded (fallback mode)
+    // When image IS loaded, the artwork provides its own atmosphere
+    if(!imgLoaded) {
+      const atmR = planet.size * 0.85;
+      const atm = cx.createRadialGradient(pos.x, pos.y, planet.size * 0.3, pos.x, pos.y, atmR);
+      atm.addColorStop(0, 'transparent');
+      atm.addColorStop(1, planet.glowCol + '66');
+      cx.fillStyle = atm; cx.beginPath(); cx.arc(pos.x, pos.y, atmR, 0, Math.PI*2); cx.fill();
+    }
 
-    // Planet body
-    _lsDrawSolBody(cx, planet.img, pos.x, pos.y, planet.size, planet.col);
+    // Planet body — draw at imgSize when defined and image loaded, else planet.size
+    _lsDrawSolBody(cx, planet.img, pos.x, pos.y, drawSize, planet.col);
 
     // Planet name — bold Cinzel, white with black drop-shadow for contrast
     cx.globalAlpha    = 0.92;
@@ -20272,7 +20278,7 @@ function _lsRenderSolarSystem(cx, tReal) {
     cx.shadowColor    = 'rgba(0,0,0,0.95)';
     cx.shadowBlur     = 5;
     cx.shadowOffsetX  = 1; cx.shadowOffsetY = 1;
-    cx.fillText(planet.name, pos.x, pos.y + planet.size * 0.5 + 5);
+    cx.fillText(planet.name, pos.x, pos.y + drawSize * 0.5 + 5);
     cx.shadowColor    = 'transparent'; cx.shadowBlur = 0;
     cx.shadowOffsetX  = 0; cx.shadowOffsetY = 0;
     cx.restore();
