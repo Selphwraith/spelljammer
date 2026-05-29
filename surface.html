@@ -707,7 +707,7 @@ function loop(timestamp) {
 
   // ── Input ──
   S.moving = false;
-  const dlgOpen = document.getElementById('dialogue-box').style.display !== 'none';
+  const dlgOpen = document.getElementById('dialogue-box').style.display === 'block';
 
   if (!dlgOpen) {
     let dx = 0, dy = 0;
