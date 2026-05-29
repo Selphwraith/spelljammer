@@ -893,7 +893,7 @@ function loop(timestamp) {
 
   // ── Input ──
   S.moving = false;
-  const shopOpen=document.getElementById('surf-shop')?.style.display!=='none';
+  const shopOpen=document.getElementById('surf-shop')?.style.display==='flex';
   const dlgOpen=document.getElementById('dialogue-box').style.display==='block';
 
   if(!dlgOpen&&!S.combat.active&&!shopOpen){
