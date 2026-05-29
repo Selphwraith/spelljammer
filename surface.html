@@ -91,22 +91,22 @@
   /* ── Mobile D-pad ────────────────────────────────────────────── */
   #dpad {
     position: absolute; bottom: 60px; right: 14px;
-    width: 108px; height: 108px; z-index: 25;
-    display: none; pointer-events: all;
+    width: 120px; height: 120px; z-index: 25;
+    display: block; pointer-events: all; touch-action: none;
   }
   .dpad-btn {
-    position: absolute; width: 32px; height: 32px;
+    position: absolute; width: 36px; height: 36px;
     background: rgba(30,20,10,0.85); border: 1px solid rgba(180,140,60,0.4);
     border-radius: 4px; display: flex; align-items: center; justify-content: center;
     color: #c8a060; font-size: 14px; cursor: pointer; user-select: none;
     -webkit-user-select: none; touch-action: none;
   }
   .dpad-btn:active { background: rgba(80,60,20,0.9); }
-  #dpad-up    { top:0;    left:38px; }
-  #dpad-down  { bottom:0; left:38px; }
-  #dpad-left  { top:38px; left:0;    }
-  #dpad-right { top:38px; right:0;   }
-  #dpad-act   { top:38px; left:38px; background:rgba(40,20,10,0.85); font-size:10px; color:#e8c87a; }
+  #dpad-up    { top:0;    left:42px; }
+  #dpad-down  { bottom:0; left:42px; }
+  #dpad-left  { top:42px; left:0;    }
+  #dpad-right { top:42px; right:0;   }
+  #dpad-act   { top:42px; left:42px; background:rgba(40,20,10,0.85); font-size:10px; color:#e8c87a; }
 
   /* ── Transition overlay ──────────────────────────────────────── */
   #transition-overlay {
@@ -758,35 +758,36 @@ if (_clickZone) {
 function dpadPress(dir)   { S.keys[dir] = true; }
 function dpadRelease(dir) { S.keys[dir] = false; }
 
-// Safety net — if pointer is released anywhere outside the button, clear all keys
-document.addEventListener('pointerup',     () => { S.keys.up=false; S.keys.down=false; S.keys.left=false; S.keys.right=false; });
-document.addEventListener('pointercancel', () => { S.keys.up=false; S.keys.down=false; S.keys.left=false; S.keys.right=false; });
-
-// Wire d-pad buttons via addEventListener (more reliable on mobile than inline handlers)
+// Wire d-pad — touchstart/touchend primary (most reliable mobile), mousedown/up for desktop
 function _initDpad() {
-  const dirs = ['up','down','left','right'];
-  dirs.forEach(dir => {
-    const btn = document.getElementById('dpad-' + dir);
+  function bind(id, dir) {
+    const btn = document.getElementById(id);
     if (!btn) return;
-    btn.addEventListener('pointerdown',   e => { e.preventDefault(); dpadPress(dir); },   { passive:false });
-    btn.addEventListener('pointerup',     e => { e.preventDefault(); dpadRelease(dir); }, { passive:false });
-    btn.addEventListener('pointercancel', e => { dpadRelease(dir); });
-    btn.addEventListener('pointerleave',  e => { dpadRelease(dir); }); // finger slid off
-  });
+    btn.addEventListener('touchstart',  e => { e.preventDefault(); e.stopPropagation(); dpadPress(dir); },   { passive:false });
+    btn.addEventListener('touchend',    e => { e.preventDefault(); dpadRelease(dir); }, { passive:false });
+    btn.addEventListener('touchcancel', e => { dpadRelease(dir); });
+    btn.addEventListener('mousedown',   e => { e.preventDefault(); dpadPress(dir); });
+    btn.addEventListener('mouseup',     e => { dpadRelease(dir); });
+    btn.addEventListener('mouseleave',  e => { dpadRelease(dir); });
+  }
+  bind('dpad-up',    'up');
+  bind('dpad-down',  'down');
+  bind('dpad-left',  'left');
+  bind('dpad-right', 'right');
   const actBtn = document.getElementById('dpad-act');
   if (actBtn) {
-    actBtn.addEventListener('pointerdown', e => { e.preventDefault(); tryInteract(); }, { passive:false });
+    actBtn.addEventListener('touchstart', e => { e.preventDefault(); tryInteract(); }, { passive:false });
+    actBtn.addEventListener('mousedown',  e => { e.preventDefault(); tryInteract(); });
   }
 }
 
-// Show D-pad on touch devices
-if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-  document.getElementById('dpad').style.display = 'block';
-  _initDpad();
-} else {
-  // Still init for pointer events on desktop trackpads
-  _initDpad();
-}
+// Global safety net
+document.addEventListener('touchend',    () => { S.keys.up=false; S.keys.down=false; S.keys.left=false; S.keys.right=false; });
+document.addEventListener('touchcancel', () => { S.keys.up=false; S.keys.down=false; S.keys.left=false; S.keys.right=false; });
+document.addEventListener('mouseup',     () => { S.keys.up=false; S.keys.down=false; S.keys.left=false; S.keys.right=false; });
+
+// Always init d-pad (dpad is always visible now)
+_initDpad();
 
 // ── Init ──────────────────────────────────────────────────────────────────
 function init() {
