@@ -18527,6 +18527,10 @@ function _buildSaveEntry(slot, name) {
       journeyOrigWatches: G._journeyOrigWatches || 0,
       journeyWpHit: G._journeyWpHit || false,
       tutorial: G.tutorial || null,
+      // Snapshot current orbit position so planets restore to correct location on load.
+      // Includes committed hours from past sessions + current session drift.
+      lsOrbitHours: (G._lsOrbitHours || 0) +
+        (typeof LS !== 'undefined' ? (LS.t || 0) * LS_GAME_HOURS_PER_SEC * LS_ORBIT_SPEED_MULT : 0),
     })
   };
 }
@@ -18610,6 +18614,7 @@ function _applyLoad(save) {
       captainLog: state.captainLog || [],
       travelDays: state.travelDays || 0,
       watch: state.watch || { day:1, totalHours:0, hoursAwake:0, legsPushed:0, moveBudget:1, moveUsed:0, watchesWithoutRest:0, restingPhase:false },
+      _lsOrbitHours: state.lsOrbitHours || 0, // restore planet orbital positions
       view:{zoom: window.innerWidth<=700 ? Math.max(0.55, Math.min(0.75, window.innerWidth/600)) : 1, panX:0,panY:0,follow:true,_pan:false,_lastMx:0,_lastMy:0,_didDrag:false},
     };
     for (let i = 0; i < 220; i++) G.stars.push({ x:Math.random(),y:Math.random(),r:Math.random()*1.8+0.3,twk:Math.random()*Math.PI*2,spd:Math.random()*0.014+0.003,br:Math.random() });
@@ -20128,10 +20133,11 @@ function _lsPreloadSolarImgs() {
 // drift at real game speed (8 in-game hours per 60 real seconds).
 function _lsIngameDays() {
   const committedHours = G.watch?.totalHours || 0;
-  // Orbital position uses the visual speed multiplier (50× clock rate) so
-  // planets visibly move during an LS session. Clock/fatigue use the base rate.
-  const sessionHours = (LS.t || 0) * LS_GAME_HOURS_PER_SEC * LS_ORBIT_SPEED_MULT;
-  return (committedHours + sessionHours) / 24;
+  // G._lsOrbitHours is the saved/restored orbit base — persists across sessions.
+  // sessionH adds current session drift on top (LS.t resets to 0 on each entry).
+  const orbitBase  = G._lsOrbitHours || 0;
+  const sessionH   = (LS.t || 0) * LS_GAME_HOURS_PER_SEC * LS_ORBIT_SPEED_MULT;
+  return (committedHours + orbitBase + sessionH) / 24;
 }
 
 // ── Position helpers ──────────────────────────────────────────────────────
@@ -20632,6 +20638,11 @@ function _lsBoundaryExit() {
                       krynn:'Vael', hero:'Thyss', dark:'Serath' }[_dSph] || 'Fentheris System';
   setTimeout(() => {
     LS._boundaryExiting = false;
+    // Commit visual orbit drift from this session to G so next entry starts correctly.
+    // (Save snapshots this too, so reload also restores the right position.)
+    if (typeof LS_GAME_HOURS_PER_SEC !== 'undefined') {
+      G._lsOrbitHours = (G._lsOrbitHours || 0) + (LS.t || 0) * LS_GAME_HOURS_PER_SEC * LS_ORBIT_SPEED_MULT;
+    }
     // Commit LS session time to the in-game clock using the shared LS rate.
     // Cap at 8 game-hours so a very long session doesn't burn air excessively.
     const lsHours = Math.min(8, Math.max(0, (LS.t || 0) - (LS._tRestBaseline || 0)) * LS_GAME_HOURS_PER_SEC);
