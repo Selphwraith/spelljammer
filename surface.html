@@ -510,17 +510,29 @@ function tryMove(dx, dy, dt) {
 // ── NPC interaction ───────────────────────────────────────────────────────
 function tryInteract() {
   if (S.interactCooldown > 0) return;
-  // Check adjacent tile in facing direction
   const tx = Math.floor(S.px / TILE_SIZE);
   const ty = Math.floor(S.py / TILE_SIZE);
-  const dx = S.dir === 'left' ? -1 : S.dir === 'right' ? 1 : 0;
-  const dy = S.dir === 'up'   ? -1 : S.dir === 'down'  ? 1 : 0;
-  const faceTx = tx + dx, faceTy = ty + dy;
 
-  const npc = NPCS.find(n => n.tx === faceTx && n.ty === faceTy);
-  if (npc) {
-    openDlg(npc);
-    S.interactCooldown = 30;
+  // Preferred tile: the one the player is facing
+  const fdx = S.dir === 'left' ? -1 : S.dir === 'right' ? 1 : 0;
+  const fdy = S.dir === 'up'   ? -1 : S.dir === 'down'  ? 1 : 0;
+
+  // All four neighbours — faced tile first so it wins ties
+  const candidates = [
+    [tx + fdx, ty + fdy],
+    [tx,   ty - 1],
+    [tx,   ty + 1],
+    [tx - 1, ty  ],
+    [tx + 1, ty  ],
+  ];
+
+  for (const [cx, cy] of candidates) {
+    const npc = NPCS.find(n => n.tx === cx && n.ty === cy);
+    if (npc) {
+      openDlg(npc);
+      S.interactCooldown = 30;
+      return;
+    }
   }
 }
 
