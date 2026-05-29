@@ -27013,9 +27013,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const isSurfaceReturn = sessionStorage.getItem('fentheris_surface_return') === '1';
     if (isSurfaceReturn) {
       sessionStorage.removeItem('fentheris_surface_return');
-      // Load the autosave (which was written just before descending)
       const _savedEntry = getAutoSave();
       if (_savedEntry) {
+        // Hide splash and any intro video immediately — game is already loaded
+        const _sp = document.getElementById('sp');
+        if (_sp) _sp.style.display = 'none';
+        const _introOvl = document.getElementById('intro-video-ovl');
+        if (_introOvl) _introOvl.style.display = 'none';
+        const _vid = document.getElementById('cin-intro-video');
+        if (_vid) { try { _vid.pause(); } catch(_) {} }
+        // Skip external intro trigger if it fires later
+        window._skipIntroVideoExternal = function() {};
         loadFromEntry(_savedEntry);
         return; // skip showMainMenu — game is now running
       }

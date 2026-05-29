@@ -31,13 +31,14 @@
   #hud-fatigue.fatigued { background:#1a0800; color:#ff8844; border:1px solid rgba(170,68,0,0.3); }
   #hud-fatigue.exhausted{ background:#1a0000; color:#ff4444; border:1px solid rgba(170,0,0,0.3); }
 
-  /* ── Main canvas ─────────────────────────────────────────────── */
+  /* Main canvas — pointer-events:none so d-pad buttons behind it receive touch events */
   #surface-canvas {
     position: absolute; top: 36px; left: 0;
     width: 100%; height: calc(100% - 36px - 48px);
     image-rendering: pixelated;
     image-rendering: crisp-edges;
     cursor: default;
+    pointer-events: none;
   }
 
   /* ── Bottom bar ──────────────────────────────────────────────── */
@@ -129,6 +130,8 @@
 
 <!-- Main canvas -->
 <canvas id="surface-canvas"></canvas>
+<!-- Click catcher — receives taps on the game world for dialogue advance -->
+<div id="canvas-click-zone" style="position:absolute;top:36px;left:0;width:100%;height:calc(100% - 36px - 48px);z-index:5;"></div>
 
 <!-- Dialogue box -->
 <div id="dialogue-box">
@@ -743,10 +746,13 @@ document.addEventListener('keyup', e => {
   if (['ArrowDown','s','S'].includes(e.key))  S.keys.down  = false;
 });
 
-// Dialogue advance on canvas tap
-document.getElementById('surface-canvas').addEventListener('click', () => {
-  if (document.getElementById('dialogue-box').style.display !== 'none') advanceDlg();
-});
+// Dialogue advance on canvas tap — use the click-catcher div
+const _clickZone = document.getElementById('canvas-click-zone');
+if (_clickZone) {
+  _clickZone.addEventListener('click', () => {
+    if (document.getElementById('dialogue-box').style.display !== 'none') advanceDlg();
+  });
+}
 
 // D-pad
 function dpadPress(dir)   { S.keys[dir] = true; }
