@@ -88,26 +88,39 @@
   }
   #dialogue-box .dlg-close:hover { color: #ffd080; }
 
-  /* ── Mobile D-pad ────────────────────────────────────────────── */
-  #dpad {
-    position: absolute; bottom: 60px; right: 14px;
-    width: 120px; height: 120px; z-index: 25;
-    display: block; pointer-events: all; touch-action: none;
+  /* ── Mobile joystick ──────────────────────────────────────────────────── */
+  #surf-joy-zone {
+    position: absolute; bottom: 68px; left: 18px;
+    width: 104px; height: 104px; z-index: 25;
+    display: none; touch-action: none; pointer-events: all;
   }
-  .dpad-btn {
-    position: absolute; width: 36px; height: 36px;
-    background: rgba(30,20,10,0.85); border: 1px solid rgba(180,140,60,0.4);
-    border-radius: 4px; display: flex; align-items: center; justify-content: center;
-    color: #c8a060; font-size: 14px; cursor: pointer; user-select: none;
-    -webkit-user-select: none; touch-action: none;
+  #surf-joy-base {
+    width: 104px; height: 104px; border-radius: 50%;
+    background: rgba(80,50,10,0.18);
+    border: 1px solid rgba(180,140,60,0.28);
+    position: relative;
   }
-  .dpad-btn:active { background: rgba(80,60,20,0.9); }
-  #dpad-up    { top:0;    left:42px; }
-  #dpad-down  { bottom:0; left:42px; }
-  #dpad-left  { top:42px; left:0;    }
-  #dpad-right { top:42px; right:0;   }
-  #dpad-act   { top:42px; left:42px; background:rgba(40,20,10,0.85); font-size:10px; color:#e8c87a; }
-
+  #surf-joy-knob {
+    position: absolute; top: 50%; left: 50%;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(200,160,80,0.30);
+    border: 1px solid rgba(220,180,80,0.55);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  /* Action button — right thumb */
+  #surf-act-btn {
+    position: absolute; bottom: 80px; right: 22px;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(40,20,5,0.88);
+    border: 1px solid rgba(180,140,60,0.45);
+    color: #e8c87a; font-size: 18px;
+    display: none; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 25;
+    touch-action: none; pointer-events: all;
+    user-select: none; -webkit-user-select: none;
+  }
+  #surf-act-btn:active { background: rgba(100,70,10,0.95); }
   /* ── Transition overlay ──────────────────────────────────────── */
   #transition-overlay {
     position: absolute; inset: 0; background: #000;
@@ -140,14 +153,14 @@
   <button class="dlg-close" onclick="closeDlg()">✕</button>
 </div>
 
-<!-- Mobile D-pad -->
-<div id="dpad">
-  <div class="dpad-btn" id="dpad-up">▲</div>
-  <div class="dpad-btn" id="dpad-down">▼</div>
-  <div class="dpad-btn" id="dpad-left">◀</div>
-  <div class="dpad-btn" id="dpad-right">▶</div>
-  <div class="dpad-btn" id="dpad-act">✦</div>
+<!-- Mobile joystick (left thumb) -->
+<div id="surf-joy-zone">
+  <div id="surf-joy-base">
+    <div id="surf-joy-knob"></div>
+  </div>
 </div>
+<!-- Mobile action button (right thumb) -->
+<div id="surf-act-btn">✶</div>
 
 <!-- Bottom bar -->
 <div id="bottom-bar">
@@ -368,6 +381,11 @@ let S = {
   // Input
   keys: { up:false, down:false, left:false, right:false },
 
+  // Mobile joystick
+  joystickActive: false,
+  joystickX: 0,
+  joystickY: 0,
+
   // Dialogue
   dlgNpcId: null,
   dlgLine: 0,
@@ -477,7 +495,7 @@ function tryMove(dx, dy, dt) {
   if (dy !== 0 && canMoveY) S.py = Math.max(0, Math.min((MAP_H - 1) * TILE_SIZE, nextPy));
 
   if (dx !== 0 || dy !== 0) {
-    S.dir    = dx < 0 ? 'left' : dx > 0 ? 'right' : dy < 0 ? 'up' : 'down';
+    S.dir    = Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
     S.moving = true;
   }
 
@@ -697,6 +715,9 @@ function loop(timestamp) {
     if (S.keys.right) dx += 1;
     if (S.keys.up)    dy -= 1;
     if (S.keys.down)  dy += 1;
+    if (S.joystickActive) { dx += S.joystickX; dy += S.joystickY; }
+    const _mag = Math.sqrt(dx * dx + dy * dy);
+    if (_mag > 1) { dx /= _mag; dy /= _mag; }
     if (dx !== 0 || dy !== 0) tryMove(dx, dy, dt);
   }
 
@@ -755,46 +776,68 @@ if (_clickZone) {
   });
 }
 
-// D-pad
-function dpadPress(dir) {
-  S.keys[dir] = true;
-  // Immediately move half a tile so a brief tap always produces visible movement
-  const dx = dir==='left' ? -1 : dir==='right' ? 1 : 0;
-  const dy = dir==='up'   ? -1 : dir==='down'  ? 1 : 0;
-  tryMove(dx, dy, 0.1); // 0.1s worth of movement = half a tile at speed 5
-}
-function dpadRelease(dir) { S.keys[dir] = false; }
+// ── Mobile joystick ─────────────────────────────────────────────────────────────
+(function() {
+  const zone = document.getElementById('surf-joy-zone');
+  const knob = document.getElementById('surf-joy-knob');
+  if (!zone || !knob) return;
 
-// Wire d-pad — touchstart/touchend primary (most reliable mobile), mousedown/up for desktop
-function _initDpad() {
-  function bind(id, dir) {
-    const btn = document.getElementById(id);
-    if (!btn) return;
-    btn.addEventListener('touchstart',  e => { e.preventDefault(); e.stopPropagation(); dpadPress(dir); },   { passive:false });
-    btn.addEventListener('touchend',    e => { e.preventDefault(); dpadRelease(dir); }, { passive:false });
-    btn.addEventListener('touchcancel', e => { dpadRelease(dir); });
-    btn.addEventListener('mousedown',   e => { e.preventDefault(); dpadPress(dir); });
-    btn.addEventListener('mouseup',     e => { dpadRelease(dir); });
-    btn.addEventListener('mouseleave',  e => { dpadRelease(dir); });
+  // Show only on touch-capable devices
+  if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+    zone.style.display = 'block';
+    const actBtn = document.getElementById('surf-act-btn');
+    if (actBtn) actBtn.style.display = 'flex';
   }
-  bind('dpad-up',    'up');
-  bind('dpad-down',  'down');
-  bind('dpad-left',  'left');
-  bind('dpad-right', 'right');
-  const actBtn = document.getElementById('dpad-act');
-  if (actBtn) {
-    actBtn.addEventListener('touchstart', e => { e.preventDefault(); tryInteract(); }, { passive:false });
-    actBtn.addEventListener('mousedown',  e => { e.preventDefault(); tryInteract(); });
+
+  const R = 34; // max knob travel (px)
+  let _active = false, originX = 0, originY = 0;
+
+  zone.addEventListener('touchstart', e => {
+    e.preventDefault();
+    _active = true; S.joystickActive = true;
+    const rect = zone.getBoundingClientRect();
+    originX = rect.left + rect.width  / 2;
+    originY = rect.top  + rect.height / 2;
+    _move(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: false });
+
+  zone.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (!_active) return;
+    _move(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: false });
+
+  zone.addEventListener('touchend',    _release);
+  zone.addEventListener('touchcancel', _release);
+
+  function _release() {
+    _active = false;
+    S.joystickActive = false; S.joystickX = 0; S.joystickY = 0;
+    knob.style.transform = 'translate(-50%, -50%)';
   }
-}
+
+  function _move(cx, cy) {
+    let dx = cx - originX, dy = cy - originY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > R) { dx *= R / dist; dy *= R / dist; }
+    knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+    S.joystickX = dx / R;
+    S.joystickY = dy / R;
+  }
+})();
+
+// ── Mobile action button ───────────────────────────────────────────────
+(function() {
+  const btn = document.getElementById('surf-act-btn');
+  if (!btn) return;
+  btn.addEventListener('touchstart', e => { e.preventDefault(); tryInteract(); }, { passive: false });
+  btn.addEventListener('mousedown',  e => { e.preventDefault(); tryInteract(); });
+})();
 
 // Global safety net
 document.addEventListener('touchend',    () => { S.keys.up=false; S.keys.down=false; S.keys.left=false; S.keys.right=false; });
 document.addEventListener('touchcancel', () => { S.keys.up=false; S.keys.down=false; S.keys.left=false; S.keys.right=false; });
 document.addEventListener('mouseup',     () => { S.keys.up=false; S.keys.down=false; S.keys.left=false; S.keys.right=false; });
-
-// Always init d-pad (dpad is always visible now)
-_initDpad();
 
 // ── Init ──────────────────────────────────────────────────────────────────
 function init() {
