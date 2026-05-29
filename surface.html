@@ -229,7 +229,7 @@ const TILE_SIZE     = 32;   // px per tile (canvas pixels)
 const FRAME_W       = 32;   // sprite frame width
 const FRAME_H       = 32;   // sprite frame height
 const FRAME_COLS    = 4;    // frames per animation row
-const WALK_SPEED    = 2;    // tiles per second
+const WALK_SPEED    = 5;    // tiles per second
 const ANIM_FPS      = 8;    // sprite animation frames per second
 const SURFACE_HOURS_PER_SEC = 1 / 720; // 1 game-min per 12 real-sec (slow tick)
 
@@ -461,9 +461,10 @@ function isWalkable(tx, ty) {
 }
 
 // ── Player movement ───────────────────────────────────────────────────────
-function tryMove(dx, dy) {
-  const nextPx = S.px + dx * TILE_SIZE * WALK_SPEED * (1/60);
-  const nextPy = S.py + dy * TILE_SIZE * WALK_SPEED * (1/60);
+function tryMove(dx, dy, dt) {
+  dt = dt || (1/60);
+  const nextPx = S.px + dx * TILE_SIZE * WALK_SPEED * dt;
+  const nextPy = S.py + dy * TILE_SIZE * WALK_SPEED * dt;
 
   // Tile the player centre will land in (with small margin so player fits between tiles)
   const margin = TILE_SIZE * 0.4;
@@ -696,7 +697,7 @@ function loop(timestamp) {
     if (S.keys.right) dx += 1;
     if (S.keys.up)    dy -= 1;
     if (S.keys.down)  dy += 1;
-    if (dx !== 0 || dy !== 0) tryMove(dx, dy);
+    if (dx !== 0 || dy !== 0) tryMove(dx, dy, dt);
   }
 
   // ── Sprite animation ──
@@ -755,7 +756,13 @@ if (_clickZone) {
 }
 
 // D-pad
-function dpadPress(dir)   { S.keys[dir] = true; }
+function dpadPress(dir) {
+  S.keys[dir] = true;
+  // Immediately move half a tile so a brief tap always produces visible movement
+  const dx = dir==='left' ? -1 : dir==='right' ? 1 : 0;
+  const dy = dir==='up'   ? -1 : dir==='down'  ? 1 : 0;
+  tryMove(dx, dy, 0.1); // 0.1s worth of movement = half a tile at speed 5
+}
 function dpadRelease(dir) { S.keys[dir] = false; }
 
 // Wire d-pad — touchstart/touchend primary (most reliable mobile), mousedown/up for desktop
