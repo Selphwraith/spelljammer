@@ -1638,6 +1638,29 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
 #ts-speed-btn:hover { border-color: #7755aa; color: #c8b0f0; }
 #ts-speed-btn.fast { border-color: #44ff88; color: #44ff88;
   background: rgba(0,20,8,0.9); }
+
+/* Travel sequence clock + rest panel */
+#ts-clock-panel {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+  margin-top: 6px; padding: 7px 10px;
+  background: rgba(4,0,14,0.82); border: 1px solid rgba(68,17,136,0.35);
+  border-radius: 5px;
+}
+#ts-clock-time {
+  font-family: 'Cinzel', serif; font-size: 10px; color: #ccaaff; letter-spacing: 1px;
+}
+#ts-clock-fatigue {
+  font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 1.5px;
+  text-transform: uppercase; padding: 1px 6px; border-radius: 2px;
+}
+#ts-rest-btn {
+  font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 1px;
+  padding: 3px 9px; border-radius: 3px; cursor: pointer;
+  text-transform: uppercase; margin-top: 2px; transition: all 0.2s;
+}
+#ts-rest-btn.fresh    { border: 1px solid rgba(102,51,170,0.4); background: rgba(20,5,45,0.88); color: #cbb8ee; }
+#ts-rest-btn.fatigued { border: 1px solid rgba(200,100,0,0.5); background: rgba(30,12,0,0.88); color: #ffaa44; animation: fatpulse 2.2s ease-in-out infinite; }
+#ts-rest-btn.exhausted{ border: 1px solid rgba(200,40,0,0.6); background: rgba(30,4,0,0.88); color: #ff6644; animation: fatpulse 1.2s ease-in-out infinite; }
 #idle-toggle-btn {
   background: rgba(20,8,50,0.85); border: 1px solid rgba(85,34,170,0.533);
   color: #c8b0f0; font-family: 'Cinzel', serif; font-size: 10px;
@@ -2177,30 +2200,8 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
 }
 #watch-hud.on { display:flex; }
 #watch-hud.hidden-by-overlay { display:none !important; }
-/* In local space — compact pill anchored top-right, same row as the LS top bar */
-#watch-hud.ls-mode {
-  top: 4px !important;
-  right: 6px !important;
-  left: auto !important;
-  padding: 3px 8px !important;
-  min-width: 0 !important;
-  max-width: 180px !important;
-  gap: 3px !important;
-  background: rgba(4,0,14,0.82) !important;
-  border-color: rgba(68,17,136,0.25) !important;
-}
-#watch-hud.ls-mode .wh-row:last-child { display:none; }
-#watch-hud.ls-mode .wh-label { display:none; }
-#watch-hud.ls-mode .wh-pips { display:none; }
-#watch-hud.ls-mode .wh-val {
-  font-size:0.563em !important;
-  color:#6677aa !important;
-  letter-spacing:0 !important;
-}
-#watch-hud.ls-mode #fatigue-badge {
-  font-size:0.5em !important;
-  padding:1px 5px !important;
-}
+/* In local space — clock panel replaces watch HUD; hide it entirely */
+#watch-hud.ls-mode { display:none !important; }
 .wh-row { display:flex; align-items:center; gap:8px; }
 .wh-label { font-family:'Cinzel',serif; font-size:0.688em; color:#7755aa; letter-spacing:2px; text-transform:uppercase; }
 .wh-val   { font-family:'Cinzel',serif; font-size:0.813em; color:#ccaaff; letter-spacing:1px; }
@@ -2217,7 +2218,34 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
 .fatigue-exhausted{ background:#1a0000; color:#ff5533; border:1px solid rgba(200,40,0,0.3); animation:fatpulse 1.3s ease-in-out infinite; }
 @keyframes fatpulse { 0%,100%{opacity:1} 50%{opacity:0.55} }
 
-/* ── Fatigue edge-vignette flash ───────────────────────────────────────── */
+/* ── LS live clock panel ─────────────────────────────────────────────────── */
+#ls-clock-panel {
+  position:absolute; top:48px; right:14px;
+  background:rgba(4,0,14,0.82); border:1px solid rgba(68,17,136,0.35);
+  border-radius:6px; padding:8px 14px;
+  display:flex; flex-direction:column; align-items:flex-end; gap:4px;
+  z-index:12; pointer-events:none; min-width:150px;
+}
+#ls-clock-time {
+  font-family:'Cinzel',serif; font-size:0.813em; color:#ccaaff; letter-spacing:1px;
+}
+#ls-clock-fatigue {
+  font-family:'Cinzel',serif; font-size:0.563em; letter-spacing:1.5px;
+  text-transform:uppercase; padding:2px 8px; border-radius:2px; transition:all 0.4s;
+}
+#ls-rest-btn {
+  font-family:'Cinzel',serif; font-size:0.563em; letter-spacing:1px;
+  padding:4px 10px; border-radius:3px; cursor:pointer;
+  text-transform:uppercase; pointer-events:all; margin-top:2px;
+  transition:all 0.2s;
+}
+#ls-rest-btn.fresh    { border:1px solid rgba(102,51,170,0.4); background:rgba(20,5,45,0.88); color:#cbb8ee; }
+#ls-rest-btn.fatigued { border:1px solid rgba(200,100,0,0.5); background:rgba(30,12,0,0.88); color:#ffaa44; animation:fatpulse 2.2s ease-in-out infinite; }
+#ls-rest-btn.exhausted{ border:1px solid rgba(200,40,0,0.6); background:rgba(30,4,0,0.88); color:#ff6644; animation:fatpulse 1.2s ease-in-out infinite; }
+@media (max-width:700px) {
+  #ls-clock-panel { top:40px; right:10px; padding:5px 10px; min-width:120px; }
+  #ls-clock-time  { font-size:0.688em; }
+}
 #fatigue-vignette {
   position:fixed; inset:0; pointer-events:none; z-index:8999;
   border-radius:0;
@@ -3421,6 +3449,11 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
 
     <div id="ts-controls">
       <button id="idle-toggle-btn" onclick="toggleIdleMode()" title="Idle: ON during travel = auto-combat, auto-rest, auto-bounce. Turn on while traveling to start immediately.">⚙ Idle: OFF</button>
+      <div id="ts-clock-panel">
+        <div id="ts-clock-time">Day 1 — 06:00</div>
+        <div id="ts-clock-fatigue" class="fatigue-fresh">✦ Fresh</div>
+        <button id="ts-rest-btn" onclick="doRest()">🌙 Rest</button>
+      </div>
     </div>
 
     <!-- Bounce config panel — shown when idle is active at map phase -->
@@ -3542,9 +3575,16 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
   <div id="ov-localspace">
     <canvas id="ls-canvas"></canvas>
 
-    <!-- HUD top bar — sphere title only; stats are in the main header bar -->
+    <!-- HUD top bar — sphere title only; stats are in the main header bar -->>
     <div id="ls-hud">
       <div id="ls-hud-title">🔭 LOCAL SPACE</div>
+    </div>
+
+    <!-- Live clock — top-right, below the sidebar overlay buttons -->
+    <div id="ls-clock-panel">
+      <div id="ls-clock-time">Day 1 — 06:00</div>
+      <div id="ls-clock-fatigue" class="fatigue-fresh">✦ Fresh</div>
+      <button id="ls-rest-btn" onclick="doRest()">🌙 Rest</button>
     </div>
 
     <!-- Controls hint bottom-left -->
@@ -5447,13 +5487,29 @@ function _clockAccumulated() {
 function _clockRender() {
   const el = document.getElementById('wh-day');
   if (!el || !G?.watch) return;
-  const accum = _clockAccumulated();
-  // totalHours = authoritative base; accum = smooth display progress within current leg
-  const totalH = (G.watch.totalHours || 0) + accum;
-  const hour   = Math.floor((DAY_START_HOUR + totalH) % 24);
-  // Extra days come only from accum so we don't double-count G.watch.day
-  const day    = (G.watch.day || 1) + Math.floor(accum / 24);
-  el.textContent = `Day ${day} — ${timeStr(hour)}`;
+  const accum  = _clockAccumulated();
+  const totalH    = (G.watch.totalHours || 0) + accum;
+  const hour      = Math.floor((DAY_START_HOUR + totalH) % 24);
+  const min       = Math.floor((totalH % 1) * 60);
+  // Count midnight crossings introduced by accum on top of committed totalHours
+  const committed = G.watch.totalHours || 0;
+  const day       = (G.watch.day || 1) + Math.floor((totalH + 6) / 24) - Math.floor((committed + 6) / 24);
+  const str    = `Day ${day} — ${String(hour).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+  el.textContent = str;
+  // Mirror to travel-sequence clock panel
+  const tsEl = document.getElementById('ts-clock-time');
+  if (tsEl) tsEl.textContent = str;
+  // Sync fatigue badge + rest button in travel panel
+  const lvl = fatigueLevel();
+  const cls  = fatigueMoveClass();
+  const labels = ['✦ Fresh','⚠ Fatigued','⚠ Exhausted','⚠ Critical'];
+  const tsFat = document.getElementById('ts-clock-fatigue');
+  if (tsFat) { tsFat.textContent = labels[lvl]; tsFat.className = `fatigue-${cls}`; }
+  const tsRest = document.getElementById('ts-rest-btn');
+  if (tsRest) {
+    tsRest.className = cls;
+    tsRest.textContent = lvl >= 2 ? `⚠ Rest Now!` : lvl === 1 ? `🌙 Rest (Fatigued)` : `🌙 Rest`;
+  }
 }
 
 function startLiveClock() {
@@ -5538,9 +5594,9 @@ function restAdvanceToMorning() {
   G.watch.moveBudget = 1;
   _clockAccumH  = 0;
   _clockStartMs = performance.now();
-  const prevDays = Math.floor(prev / 24);
-  const newDays  = Math.floor(G.watch.totalHours / 24);
-  const crossed  = newDays - prevDays;
+  const prevMidnights = Math.floor((prev + 6) / 24);
+  const newMidnights  = Math.floor((G.watch.totalHours + 6) / 24);
+  const crossed       = newMidnights - prevMidnights;
   for (let i = 0; i < crossed; i++) {
     G.watch.day++;
     G.travelDays = (G.travelDays || 0) + 1;
@@ -5573,10 +5629,12 @@ function addGameHours(h) {
   G.watch.hoursAwake = prevAwake + h;
   G.watch.totalHours = prev + h;
 
-  // Day crossings
-  const prevDays = Math.floor(prev / 24);
-  const newDays  = Math.floor(G.watch.totalHours / 24);
-  const crossed  = newDays - prevDays;
+  // Day crossings — increment at midnight (displayed 00:00), not at dawn.
+  // Midnight = (6 + totalHours) % 24 === 0, i.e. totalHours % 24 === 18.
+  // Shifting by 6 converts the floor boundary from 06:00 to 00:00.
+  const prevMidnights = Math.floor((prev + 6) / 24);
+  const newMidnights  = Math.floor((G.watch.totalHours + 6) / 24);
+  const crossed       = newMidnights - prevMidnights;
   for (let i = 0; i < crossed; i++) {
     G.watch.day++;
     G.travelDays = (G.travelDays || 0) + 1;
@@ -5774,47 +5832,18 @@ Anchoring now means 8 hours of rest and a fresh helmsman. Pushing on risks fatig
     return;
   }
 
-  showMsg(
-    `${icon} ${timeStr(hour)} — Watch Complete`,
-    `${destName} is ${pct}% of the way across.
-
-The helmsman has completed an 8-hour watch. Anchor here for the night, or push on?${pushNote}`,
-    lvl >= 2 ? '⚓ Anchor Now!' : '⚓ Anchor & Rest',
-    anchorCb,
-    lvl >= 2 ? '➤ Push On (Risky)' : '➤ Push On Through the Night',
-    pushCb
-  );
-  setTimeout(() => {
-    const b = document.getElementById('msgbtn2');
-    if (b) b.classList.toggle('muted', lvl >= 2);
-    const box = document.getElementById('msgbox');
-    if (box && !box.querySelector('#auto-rest-row')) {
-      const row = document.createElement('div');
-      row.id = 'auto-rest-row';
-      row.style.cssText = 'margin-top:8px;font-size:10px;display:flex;align-items:center;gap:6px;justify-content:center;';
-      const isOn = !!G._autoRest;
-      row.innerHTML = `<label style="display:flex;align-items:center;gap:5px;cursor:pointer;color:${isOn?'#aa88cc':'#554477'};">
-        <input type="checkbox" id="auto-rest-chk" ${isOn?'checked':''} style="cursor:pointer;accent-color:#8855cc;">
-        <span>Auto-rest at every anchor point</span>
-      </label>`;
-      const chk = row.querySelector('#auto-rest-chk');
-      chk.addEventListener('change', e => {
-        G._autoRest = e.target.checked;
-        row.querySelector('label').style.color = e.target.checked ? '#aa88cc' : '#554477';
-        if (G._autoRest) anchorCb();
-      });
-      box.appendChild(row);
-    }
-  }, 0);
+  // ── No popup — travel continues automatically ────────────────────────────
+  // Fatigue accumulates silently via hoursAwake. The player uses the always-
+  // visible Rest button whenever they choose to anchor. Log a brief note instead.
+  G.watch._pauseShown = false;
+  addLog(`${icon} ${timeStr(hour)} — Watch complete. ${fatigueName()}. Use 🌙 Rest to anchor.`, '');
+  pushCb(); // auto-continue to next leg
 }
 
-// Anchor — full rest — always returns to Fresh
+// Anchor — full rest — adds 8 game-hours, resets fatigue to Fresh
 function doRest() {
   if (G.watch?.restingPhase) return;
   if (G.phase === 'traveling') { _tvlStop(); if(G.tvl) G.tvl.timer = null; G.phase = 'map'; }
-
-  // restAdvanceToMorning always snaps to next 06:00 correctly —
-  // no need to track whether tickLeg already ran; the snap handles any prior leg tick.
 
   // Always snapshot mid-lane resume state when called during a journey
   // This covers the sidebar button, port button, and anchor popup paths
@@ -20002,6 +20031,33 @@ function _lsDefinePois() {
 }
 
 
+// Live LS clock — updates every render frame using LS.t drift on top of committed hours
+function _lsUpdateClock() {
+  const timeEl = document.getElementById('ls-clock-time');
+  const fatEl  = document.getElementById('ls-clock-fatigue');
+  const restEl = document.getElementById('ls-rest-btn');
+  if (!timeEl || !G.watch) return;
+
+  // Committed hours + current LS session drift (1 real-sec = 1 game-min = 1/60 game-hour)
+  const committedH = G.watch.totalHours || 0;
+  const sessionH   = (LS.t || 0) / 3600;
+  const totalH     = committedH + sessionH;
+  const hour       = Math.floor((6 + totalH) % 24);
+  const min        = Math.floor(((totalH % 1) * 60)) % 60;
+  const day        = (G.watch.day || 1) + Math.floor((totalH + 6) / 24) - Math.floor((committedH + 6) / 24);
+
+  timeEl.textContent = `Day ${day} — ${String(hour).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+
+  const lvl = fatigueLevel();
+  const cls = fatigueMoveClass();
+  const labels = ['✦ Fresh','⚠ Fatigued','⚠ Exhausted','⚠ Critical'];
+  if (fatEl) { fatEl.textContent = labels[lvl]; fatEl.className = `fatigue-${cls}`; }
+  if (restEl) {
+    restEl.className = cls;
+    restEl.textContent = lvl >= 2 ? `⚠ Rest Now!` : lvl === 1 ? `🌙 Rest (Fatigued)` : `🌙 Rest`;
+  }
+}
+
 // ╔══════════════════════════════════════════════════════════════════════════╗
 // ║  FENTHERIS SOLAR SYSTEM — Realm LS Visual Layer                          ║
 // ║  Orbital motion tied to the in-game clock:                               ║
@@ -21998,6 +22054,9 @@ function _lsRender(cx, W, H, dt) {
     cx.beginPath(); cx.arc(s.x,s.y,s.r*(0.7+0.3*tw),0,Math.PI*2); cx.fill();
   });
   cx.globalAlpha=1;
+
+  // Update the LS clock display every frame using live LS.t drift
+  _lsUpdateClock();
 
   // ── Solar system (Realm only) — star, planets, orbital station ──
   _lsRenderSolarSystem(cx, LS.t);
