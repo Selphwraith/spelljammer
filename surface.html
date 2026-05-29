@@ -126,7 +126,7 @@
     display:none; flex-direction:column; align-items:stretch;
     font-family:'Courier New',monospace; overflow:hidden;
   }
-  #sc-scene { width:100%; height:180px; flex-shrink:0; display:block; background:#000; }
+  #sc-scene { width:100%; height:210px; flex-shrink:0; display:block; background:#000; }
   #sc-log {
     flex:1 1 auto; min-height:52px; max-height:90px; overflow-y:auto;
     padding:5px 10px; font-size:10px; color:#998877; line-height:1.65;
@@ -943,10 +943,14 @@ const CBT_SCALE   = 1.5;  // render size: 96×96 screen pixels
 function _cbtFrame(ctx, key, row, col, x, y) {
   const img = IMGS[key];
   if (!img || !img.complete || img.naturalWidth === 0) return false;
-  const dw = CBT_FRAME_W * CBT_SCALE;
-  const dh = CBT_FRAME_H * CBT_SCALE;
+  // Derive actual frame size from sheet — always 4 columns wide.
+  // This handles any upload resolution (256, 512, etc.) automatically.
+  const srcW = Math.floor(img.naturalWidth  / 4);
+  const srcH = Math.floor(img.naturalHeight / 4);
+  const dw = CBT_FRAME_W * CBT_SCALE;  // always render at 96px wide
+  const dh = CBT_FRAME_H * CBT_SCALE;  // always render at 96px tall
   ctx.drawImage(img,
-    col * CBT_FRAME_W, row * CBT_FRAME_H, CBT_FRAME_W, CBT_FRAME_H,
+    col * srcW, row * srcH, srcW, srcH,
     Math.floor(x - dw / 2), Math.floor(y - dh), dw, dh);
   return true;
 }
