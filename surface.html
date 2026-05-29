@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Fentheris — Surface</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:#000;
+    font-family: 'Courier New', monospace;
+    overflow: hidden;
+    width: 100vw; height: 100vh;
+    display: flex; flex-direction: column;
+  }
+
+  /* ── HUD bar ─────────────────────────────────────────────────── */
+  #hud {
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 36px; z-index: 20;
+    background: rgba(8,4,16,0.92);
+    border-bottom: 1px solid rgba(120,80,40,0.5);
+    display: flex; align-items: center; gap: 16px;
+    padding: 0 12px;
+    font-size: 11px; color: #d4b896; letter-spacing: 1px;
+  }
+  #hud-title { font-family: 'Georgia', serif; font-size: 13px; color: #e8c87a; letter-spacing: 2px; }
+  #hud-clock { color: #aaa; margin-left: auto; }
+  #hud-fatigue { padding: 2px 8px; border-radius: 2px; font-size: 10px; }
+  #hud-fatigue.fresh    { background:#001a0a; color:#44ee88; border:1px solid rgba(34,170,85,0.3); }
+  #hud-fatigue.fatigued { background:#1a0800; color:#ff8844; border:1px solid rgba(170,68,0,0.3); }
+  #hud-fatigue.exhausted{ background:#1a0000; color:#ff4444; border:1px solid rgba(170,0,0,0.3); }
+
+  /* ── Main canvas ─────────────────────────────────────────────── */
+  #surface-canvas {
+    position: absolute; top: 36px; left: 0;
+    width: 100%; height: calc(100% - 36px - 48px);
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    cursor: default;
+  }
+
+  /* ── Bottom bar ──────────────────────────────────────────────── */
+  #bottom-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 48px; z-index: 20;
+    background: rgba(8,4,16,0.92);
+    border-top: 1px solid rgba(120,80,40,0.5);
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 12px;
+  }
+  .hud-btn {
+    font-family: 'Georgia', serif; font-size: 10px; letter-spacing: 1px;
+    padding: 6px 14px; border-radius: 3px; cursor: pointer;
+    text-transform: uppercase; border: 1px solid; transition: all 0.15s;
+  }
+  #btn-return {
+    border-color: rgba(100,60,20,0.7); background: rgba(20,10,0,0.88); color: #c8a060;
+  }
+  #btn-return:hover { border-color: #d4a060; color: #ffd080; }
+  #btn-rest {
+    border-color: rgba(60,40,100,0.7); background: rgba(10,5,20,0.88); color: #9988cc;
+  }
+  #btn-rest:hover { border-color: #9988ff; color: #ccbbff; }
+  #status-text {
+    margin-left: auto; font-size: 10px; color: #887766;
+    font-style: italic; letter-spacing: 0.5px;
+  }
+
+  /* ── Dialogue box ────────────────────────────────────────────── */
+  #dialogue-box {
+    position: absolute; bottom: 60px; left: 10px; right: 10px;
+    background: rgba(8,4,16,0.96); border: 1px solid rgba(180,140,60,0.5);
+    border-radius: 4px; padding: 14px 16px;
+    z-index: 30; display: none;
+    font-size: 12px; color: #d4c09a; line-height: 1.7;
+    max-height: 140px; overflow-y: auto;
+  }
+  #dialogue-box .dlg-name {
+    font-family: 'Georgia', serif; font-size: 13px;
+    color: #e8c87a; margin-bottom: 6px; letter-spacing: 1px;
+  }
+  #dialogue-box .dlg-close {
+    position: absolute; top: 8px; right: 10px;
+    background: none; border: none; color: #887744;
+    font-size: 14px; cursor: pointer;
+  }
+  #dialogue-box .dlg-close:hover { color: #ffd080; }
+
+  /* ── Mobile D-pad ────────────────────────────────────────────── */
+  #dpad {
+    position: absolute; bottom: 60px; right: 14px;
+    width: 108px; height: 108px; z-index: 25;
+    display: none;
+  }
+  .dpad-btn {
+    position: absolute; width: 32px; height: 32px;
+    background: rgba(30,20,10,0.85); border: 1px solid rgba(180,140,60,0.4);
+    border-radius: 4px; display: flex; align-items: center; justify-content: center;
+    color: #c8a060; font-size: 14px; cursor: pointer; user-select: none;
+    -webkit-user-select: none; touch-action: none;
+  }
+  .dpad-btn:active { background: rgba(80,60,20,0.9); }
+  #dpad-up    { top:0;    left:38px; }
+  #dpad-down  { bottom:0; left:38px; }
+  #dpad-left  { top:38px; left:0;    }
+  #dpad-right { top:38px; right:0;   }
+  #dpad-act   { top:38px; left:38px; background:rgba(40,20,10,0.85); font-size:10px; color:#e8c87a; }
+
+  /* ── Transition overlay ──────────────────────────────────────── */
+  #transition-overlay {
+    position: absolute; inset: 0; background: #000;
+    z-index: 50; opacity: 0; pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+  #transition-overlay.fade-in  { opacity: 1; pointer-events: all; }
+  #transition-overlay.fade-out { opacity: 0; }
+</style>
+</head>
+<body>
+
+<!-- HUD -->
+<div id="hud">
+  <span id="hud-title">⚔ FENTHERIS — SURFACE</span>
+  <span id="hud-pos"></span>
+  <span id="hud-clock">Day 1 — 06:00</span>
+  <span id="hud-fatigue" class="fresh">✦ Fresh</span>
+</div>
+
+<!-- Main canvas -->
+<canvas id="surface-canvas"></canvas>
+
+<!-- Dialogue box -->
+<div id="dialogue-box">
+  <div class="dlg-name" id="dlg-name">—</div>
+  <div id="dlg-text"></div>
+  <button class="dlg-close" onclick="closeDlg()">✕</button>
+</div>
+
+<!-- Mobile D-pad -->
+<div id="dpad">
+  <div class="dpad-btn" id="dpad-up"    onpointerdown="dpadPress('up')"    onpointerup="dpadRelease('up')">▲</div>
+  <div class="dpad-btn" id="dpad-down"  onpointerdown="dpadPress('down')"  onpointerup="dpadRelease('down')">▼</div>
+  <div class="dpad-btn" id="dpad-left"  onpointerdown="dpadPress('left')"  onpointerup="dpadRelease('left')">◀</div>
+  <div class="dpad-btn" id="dpad-right" onpointerdown="dpadPress('right')" onpointerup="dpadRelease('right')">▶</div>
+  <div class="dpad-btn" id="dpad-act"   onpointerdown="tryInteract()">✦</div>
+</div>
+
+<!-- Bottom bar -->
+<div id="bottom-bar">
+  <button class="hud-btn" id="btn-return" onclick="returnToShip()">⛵ Return to Ship</button>
+  <button class="hud-btn" id="btn-rest"   onclick="surfaceRest()">🌙 Rest</button>
+  <span id="status-text">Exploring the surface of Fentheris.</span>
+</div>
+
+<!-- Transition overlay -->
+<div id="transition-overlay"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// FENTHERIS SURFACE — surface.html
+// Orthographic RPG view. Sprite-sheet animation, tilemap, NPC dialogue,
+// sessionStorage handshake with index.html.
+//
+// ── Image file reference guide ──────────────────────────────────────────
+// All images go in surface/ folder (sibling to index.html):
+//
+//   surface/tileset.png
+//     A single PNG containing all terrain tiles in a 16×16 grid layout.
+//     Each tile is 32×32 pixels. Minimum sheet: 128×128 px (4×4 tiles).
+//     Required tiles (by grid position, column,row starting 0,0):
+//       0,0  — Grass (default walkable ground)
+//       1,0  — Dirt path
+//       2,0  — Stone cobblestone
+//       3,0  — Tall grass (slower, walkable)
+//       0,1  — Tree top (impassable)
+//       1,1  — Tree trunk (impassable)
+//       2,1  — Water (impassable, animated optional)
+//       3,1  — Sand
+//       0,2  — Stone wall (impassable)
+//       1,2  — Stone floor (inside buildings)
+//       2,2  — Door (open — walkable, triggers transition)
+//       3,2  — Wooden floor
+//       0,3  — Mountain/rock (impassable)
+//       1,3  — Cave entrance (impassable placeholder)
+//       2,3  — Flower patch (walkable, decorative)
+//       3,3  — Cliff edge (impassable)
+//     Style: medieval pixel art, top-down orthographic, 32×32 px per tile.
+//     Palette: earthy greens, browns, greys. Consistent pixel art light source (top-left).
+//
+//   surface/player.png
+//     Sprite sheet for the player character.
+//     Frame size: 32×32 px. Sheet layout (row × column):
+//       Row 0: Walk DOWN  — 4 frames  (idle at col 0, step col 1-3)
+//       Row 1: Walk LEFT  — 4 frames
+//       Row 2: Walk RIGHT — 4 frames
+//       Row 3: Walk UP    — 4 frames
+//     Total sheet: 128×128 px.
+//     Style: medieval spacefarer — flight suit with leather over-armour, small satchel.
+//     Consistent with the Fentheris setting: functional, worn, slightly alien tech trim.
+//
+//   surface/npc_villager.png
+//     Sprite sheet, same format as player.png (128×128, 4 rows × 4 cols, 32×32 frames).
+//     Style: medieval peasant, simple tunic and hood.
+//
+//   surface/npc_guard.png
+//     Same format. Style: Fentheris city guard — leather armour, short spear.
+//
+//   surface/npc_scholar.png
+//     Same format. Style: academic robes, carries a scroll.
+//
+// ── Folder structure ────────────────────────────────────────────────────
+//   selphwraith.github.io/sp/
+//     index.html
+//     surface.html        ← this file
+//     surface/
+//       tileset.png
+//       player.png
+//       npc_villager.png
+//       npc_guard.png
+//       npc_scholar.png
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── Constants ─────────────────────────────────────────────────────────────
+const TILE_SIZE     = 32;   // px per tile (canvas pixels)
+const FRAME_W       = 32;   // sprite frame width
+const FRAME_H       = 32;   // sprite frame height
+const FRAME_COLS    = 4;    // frames per animation row
+const WALK_SPEED    = 2;    // tiles per second
+const ANIM_FPS      = 8;    // sprite animation frames per second
+const SURFACE_HOURS_PER_SEC = 1 / 720; // 1 game-min per 12 real-sec (slow tick)
+
+// Tile IDs
+const T = {
+  GRASS:  0,  // 0,0
+  DIRT:   1,  // 1,0
+  STONE:  2,  // 2,0
+  TGRASS: 3,  // 3,0  tall grass
+  TREE_T: 4,  // 0,1  tree top (impassable)
+  TREE_B: 5,  // 1,1  tree trunk (impassable)
+  WATER:  6,  // 2,1  water (impassable)
+  SAND:   7,  // 3,1
+  WALL:   8,  // 0,2  stone wall (impassable)
+  FLOOR:  9,  // 1,2  stone floor
+  DOOR:  10,  // 2,2  door
+  WOOD:  11,  // 3,2  wooden floor
+  ROCK:  12,  // 0,3  mountain (impassable)
+  CAVE:  13,  // 1,3  cave entrance
+  FLOWER:14,  // 2,3  flowers
+  CLIFF: 15,  // 3,3  cliff (impassable)
+};
+
+const IMPASSABLE = new Set([T.TREE_T, T.TREE_B, T.WATER, T.WALL, T.ROCK, T.CLIFF]);
+
+// Tile positions in the tileset sheet (column, row)
+const TILE_UV = [
+  [0,0],[1,0],[2,0],[3,0],
+  [0,1],[1,1],[2,1],[3,1],
+  [0,2],[1,2],[2,2],[3,2],
+  [0,3],[1,3],[2,3],[3,3],
+];
+
+// Sprite row indices per direction
+const DIR_ROW = { down:0, left:1, right:2, up:3 };
+
+// ── Map definition ────────────────────────────────────────────────────────
+// 32×24 tile map — a small village outskirts area on Fentheris.
+// 0=grass, 2=stone cobble, 8=wall, 9=floor, 10=door, 4/5=trees, 6=water, 1=dirt path
+const MAP_W = 32, MAP_H = 24;
+
+// prettier-ignore
+const MAP_TILES = [
+//  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31
+    0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 0, // 0
+    0, 0, 0, 0, 5, 5, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 5, 5, 0, 0, 0, // 1
+    0, 0,14, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 2
+    0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 3
+    0, 0, 0, 0, 0, 0, 0, 1, 0, 8, 8,10, 8, 0, 0, 0, 0, 3, 0, 3, 0, 0, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, // 4
+    0, 0, 0, 0, 0, 0, 0, 1, 0, 8, 9, 9, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, // 5
+    0, 0, 0, 0, 0, 0, 0, 1, 0, 8, 9, 9, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, // 6
+    4, 4, 0, 0, 0, 0, 0, 1, 0, 8, 8, 8, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 7
+    5, 5, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 8, 8,10, 8, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 8
+    0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 8, 9, 9, 9, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 9
+    0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 8, 9, 9, 9, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 10
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 9, 9, 9, 8, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, // 11
+    0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 8, 8, 8, 8, 8, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, // 12
+    0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 13
+    0, 0, 0, 0, 0, 2, 0,14, 0, 0,14, 0, 0,14, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 14
+    0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 15
+    0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 16
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 17
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 18
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 19
+    0, 0, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 0, // 20
+    0, 0, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 0, // 21
+   15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15, // 22
+   15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15, // 23
+];
+
+// ── NPC definitions ───────────────────────────────────────────────────────
+const NPCS = [
+  {
+    id: 'villager_1',
+    img: 'surface/npc_villager.png',
+    tx: 10, ty: 14,     // tile position
+    dir: 'down',
+    name: 'Harvel, Farmer',
+    lines: [
+      "Eh? A sky-ship captain, down here on the cobbles?",
+      "Don't see many of your sort walking about on foot. Most fly right over us like we don't exist.",
+      "If you're after supplies, the market square is east, past the well. Don't let Marta cheat you on grain prices.",
+    ],
+  },
+  {
+    id: 'guard_1',
+    img: 'surface/npc_guard.png',
+    tx: 12, ty: 5,
+    dir: 'down',
+    name: 'Warden Tessick',
+    lines: [
+      "Halt. State your purpose in the settlement.",
+      "...A ship captain. Right. Well, you're not under arrest. Yet.",
+      "Keep your void-craft business away from the commons. Last captain who started trading here caused a riot over a crate of 'exotic cargo'.",
+    ],
+  },
+  {
+    id: 'scholar_1',
+    img: 'surface/npc_scholar.png',
+    tx: 17, ty: 9,
+    dir: 'right',
+    name: 'Archivist Celn',
+    lines: [
+      "Fascinating! You've come down from orbit? I've been cataloguing void-drift debris recovered from the eastern quarry.",
+      "The machines we found... they predate the Collapse by millennia. Whatever civilisation built them was extraordinary.",
+      "If you discover any Navigation Core fragments in your travels, I'll pay handsomely. They contain star charts we've never seen.",
+    ],
+  },
+];
+
+// ── Map exit zone (return to ship) ────────────────────────────────────────
+// Walking to the top edge (row 0-1) triggers the return prompt.
+const EXIT_ZONE = { minTx: 0, maxTx: 31, minTy: 0, maxTy: 1 };
+
+// ── State ─────────────────────────────────────────────────────────────────
+let S = {
+  // Player pixel position (center of sprite)
+  px: 7.5 * TILE_SIZE,
+  py: 12.5 * TILE_SIZE,
+  dir: 'down',
+  moving: false,
+  animFrame: 0,
+  animTimer: 0,
+
+  // Game state from index.html
+  day: 1,
+  totalHours: 0,
+  hoursAwake: 0,
+  gold: 0,
+  sessionStartHours: 0,
+
+  // Session time tracking
+  sessionT: 0,       // real seconds in session
+  lastTimestamp: null,
+
+  // Input
+  keys: { up:false, down:false, left:false, right:false },
+
+  // Dialogue
+  dlgNpcId: null,
+  dlgLine: 0,
+
+  // Misc
+  cameraX: 0, cameraY: 0,
+  interactCooldown: 0,
+};
+
+// ── Image loading ─────────────────────────────────────────────────────────
+const IMGS = {};
+let imgsLoaded = 0, imgsTotal = 0;
+
+function loadImg(key, src) {
+  imgsTotal++;
+  const im = new Image();
+  im.onload  = () => { IMGS[key] = im; imgsLoaded++; };
+  im.onerror = () => { imgsLoaded++; }; // silent fail — procedural fallback
+  im.src = src;
+}
+
+function allImgsLoaded() { return imgsLoaded >= imgsTotal; }
+
+// Load all assets
+loadImg('tileset', 'surface/tileset.png');
+loadImg('player',  'surface/player.png');
+NPCS.forEach(n => loadImg(n.img, n.img));
+
+// ── sessionStorage handshake — receive from index.html ────────────────────
+function loadEntryData() {
+  try {
+    const raw = sessionStorage.getItem('fentheris_surface_entry');
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    S.day          = d.day        || 1;
+    S.totalHours   = d.totalHours || 0;
+    S.hoursAwake   = d.hoursAwake || 0;
+    S.gold         = d.gold       || 0;
+    S.sessionStartHours = S.totalHours;
+    sessionStorage.removeItem('fentheris_surface_entry');
+  } catch(e) {}
+}
+
+// ── sessionStorage handshake — send back to index.html ───────────────────
+function buildExitData() {
+  const hoursSpent = S.sessionT * SURFACE_HOURS_PER_SEC;
+  return {
+    hoursSpent:  Math.round(hoursSpent * 100) / 100,
+    hoursAwake:  S.hoursAwake + hoursSpent,
+    totalHours:  S.totalHours + hoursSpent,
+    day:         S.day,
+    gold:        S.gold,
+    // Extend this object as the surface gains inventory, quest state, etc.
+  };
+}
+
+function returnToShip() {
+  closeDlg();
+  const ov = document.getElementById('transition-overlay');
+  ov.classList.add('fade-in');
+  setTimeout(() => {
+    try {
+      sessionStorage.setItem('fentheris_surface_exit', JSON.stringify(buildExitData()));
+    } catch(e) {}
+    window.location.href = 'index.html';
+  }, 450);
+}
+
+// ── Surface rest ──────────────────────────────────────────────────────────
+function surfaceRest() {
+  S.hoursAwake = 0;
+  S.totalHours += 8;
+  // Advance day if midnight crossed
+  const prevMidnights = Math.floor((S.totalHours - 8 + 6) / 24);
+  const newMidnights  = Math.floor((S.totalHours + 6) / 24);
+  S.day += newMidnights - prevMidnights;
+  updateHUD();
+  setStatus('Rested 8 hours. Feeling refreshed.');
+}
+
+// ── Tile helpers ──────────────────────────────────────────────────────────
+function getTile(tx, ty) {
+  if (tx < 0 || ty < 0 || tx >= MAP_W || ty >= MAP_H) return T.CLIFF;
+  return MAP_TILES[ty * MAP_W + tx];
+}
+
+function isWalkable(tx, ty) {
+  return !IMPASSABLE.has(getTile(tx, ty));
+}
+
+// ── Player movement ───────────────────────────────────────────────────────
+function tryMove(dx, dy) {
+  const nextPx = S.px + dx * TILE_SIZE * WALK_SPEED * (1/60);
+  const nextPy = S.py + dy * TILE_SIZE * WALK_SPEED * (1/60);
+
+  // Tile the player centre will land in (with small margin so player fits between tiles)
+  const margin = TILE_SIZE * 0.4;
+  const canMoveX = isWalkable(Math.floor((nextPx + margin * dx) / TILE_SIZE), Math.floor(S.py / TILE_SIZE))
+                && isWalkable(Math.floor((nextPx + margin * dx) / TILE_SIZE), Math.floor((S.py + TILE_SIZE * 0.5) / TILE_SIZE));
+  const canMoveY = isWalkable(Math.floor(S.px / TILE_SIZE), Math.floor((nextPy + margin * dy) / TILE_SIZE))
+                && isWalkable(Math.floor((S.px + TILE_SIZE * 0.5) / TILE_SIZE), Math.floor((nextPy + margin * dy) / TILE_SIZE));
+
+  if (dx !== 0 && canMoveX) S.px = Math.max(0, Math.min((MAP_W - 1) * TILE_SIZE, nextPx));
+  if (dy !== 0 && canMoveY) S.py = Math.max(0, Math.min((MAP_H - 1) * TILE_SIZE, nextPy));
+
+  if (dx !== 0 || dy !== 0) {
+    S.dir    = dx < 0 ? 'left' : dx > 0 ? 'right' : dy < 0 ? 'up' : 'down';
+    S.moving = true;
+  }
+
+  // Check exit zone
+  const tx = Math.floor(S.px / TILE_SIZE);
+  const ty = Math.floor(S.py / TILE_SIZE);
+  if (ty <= EXIT_ZONE.maxTy) {
+    setStatus('⛵ You feel the pull of the void above. Press Return to Ship to ascend.');
+  }
+}
+
+// ── NPC interaction ───────────────────────────────────────────────────────
+function tryInteract() {
+  if (S.interactCooldown > 0) return;
+  // Check adjacent tile in facing direction
+  const tx = Math.floor(S.px / TILE_SIZE);
+  const ty = Math.floor(S.py / TILE_SIZE);
+  const dx = S.dir === 'left' ? -1 : S.dir === 'right' ? 1 : 0;
+  const dy = S.dir === 'up'   ? -1 : S.dir === 'down'  ? 1 : 0;
+  const faceTx = tx + dx, faceTy = ty + dy;
+
+  const npc = NPCS.find(n => n.tx === faceTx && n.ty === faceTy);
+  if (npc) {
+    openDlg(npc);
+    S.interactCooldown = 30;
+  }
+}
+
+function openDlg(npc) {
+  S.dlgNpcId = npc.id;
+  S.dlgLine  = 0;
+  document.getElementById('dlg-name').textContent = npc.name;
+  document.getElementById('dlg-text').textContent = npc.lines[0];
+  document.getElementById('dialogue-box').style.display = 'block';
+}
+
+function advanceDlg() {
+  if (!S.dlgNpcId) return;
+  const npc = NPCS.find(n => n.id === S.dlgNpcId);
+  if (!npc) return;
+  S.dlgLine++;
+  if (S.dlgLine >= npc.lines.length) {
+    closeDlg();
+  } else {
+    document.getElementById('dlg-text').textContent = npc.lines[S.dlgLine];
+  }
+}
+
+function closeDlg() {
+  S.dlgNpcId = null;
+  document.getElementById('dialogue-box').style.display = 'none';
+}
+
+// ── Camera ────────────────────────────────────────────────────────────────
+function updateCamera(cW, cH) {
+  const targetX = S.px - cW / 2;
+  const targetY = S.py - cH / 2;
+  const maxX = MAP_W * TILE_SIZE - cW;
+  const maxY = MAP_H * TILE_SIZE - cH;
+  S.cameraX = Math.max(0, Math.min(maxX, targetX));
+  S.cameraY = Math.max(0, Math.min(maxY, targetY));
+}
+
+// ── HUD update ────────────────────────────────────────────────────────────
+function updateHUD() {
+  const h   = S.totalHours + S.sessionT * SURFACE_HOURS_PER_SEC;
+  const hour = Math.floor((6 + h) % 24);
+  const min  = Math.floor((h % 1) * 60);
+  document.getElementById('hud-clock').textContent =
+    `Day ${S.day} — ${String(hour).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+
+  const aw = S.hoursAwake + S.sessionT * SURFACE_HOURS_PER_SEC;
+  const lvl = aw >= 24 ? 3 : aw >= 16 ? 2 : aw >= 8 ? 1 : 0;
+  const badge = document.getElementById('hud-fatigue');
+  const labels = ['✦ Fresh','⚠ Fatigued','⚠ Exhausted','⚠ Critical'];
+  const cls    = ['fresh','fresh','fatigued','exhausted'];
+  badge.textContent = labels[lvl];
+  badge.className = cls[lvl];
+
+  const tx = Math.floor(S.px / TILE_SIZE), ty = Math.floor(S.py / TILE_SIZE);
+  document.getElementById('hud-pos').textContent = `${tx},${ty}`;
+}
+
+function setStatus(text) {
+  document.getElementById('status-text').textContent = text;
+}
+
+// ── Procedural tile fallback (when tileset.png not loaded) ────────────────
+const TILE_COLORS = [
+  '#3a5a2a','#7a5a3a','#888899','#2a4a1a', // grass,dirt,stone,tgrass
+  '#1a3a0a','#2a4a1a','#1a2a6a','#c8b060', // tree_t,tree_b,water,sand
+  '#666677','#bbaa99','#886644','#aa8860', // wall,floor,door,wood
+  '#555566','#444455','#4a7a3a','#444455', // rock,cave,flower,cliff
+];
+
+function drawTileFallback(ctx, tileId, dx, dy) {
+  ctx.fillStyle = TILE_COLORS[tileId] || '#222';
+  ctx.fillRect(dx, dy, TILE_SIZE, TILE_SIZE);
+  // Grid lines
+  ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+  ctx.lineWidth = 0.5;
+  ctx.strokeRect(dx, dy, TILE_SIZE, TILE_SIZE);
+}
+
+// ── Render ────────────────────────────────────────────────────────────────
+function render(ctx, cW, cH) {
+  ctx.clearRect(0, 0, cW, cH);
+
+  // Background
+  ctx.fillStyle = '#0a0806';
+  ctx.fillRect(0, 0, cW, cH);
+
+  const tileSet  = IMGS['tileset'];
+  const camOffX  = -S.cameraX;
+  const camOffY  = -S.cameraY;
+
+  // ── Draw tiles ──
+  const startTx = Math.floor(S.cameraX / TILE_SIZE);
+  const startTy = Math.floor(S.cameraY / TILE_SIZE);
+  const endTx   = Math.min(MAP_W, startTx + Math.ceil(cW / TILE_SIZE) + 2);
+  const endTy   = Math.min(MAP_H, startTy + Math.ceil(cH / TILE_SIZE) + 2);
+
+  for (let ty = startTy; ty < endTy; ty++) {
+    for (let tx = startTx; tx < endTx; tx++) {
+      const tileId = getTile(tx, ty);
+      const dx = tx * TILE_SIZE + camOffX;
+      const dy = ty * TILE_SIZE + camOffY;
+      if (tileSet?.complete && tileSet.naturalWidth > 0) {
+        const [uc, ur] = TILE_UV[tileId] || [0,0];
+        ctx.drawImage(tileSet,
+          uc * TILE_SIZE, ur * TILE_SIZE, TILE_SIZE, TILE_SIZE,
+          dx, dy, TILE_SIZE, TILE_SIZE);
+      } else {
+        drawTileFallback(ctx, tileId, dx, dy);
+      }
+    }
+  }
+
+  // ── Draw NPCs ──
+  NPCS.forEach(npc => {
+    const dx = npc.tx * TILE_SIZE + camOffX;
+    const dy = npc.ty * TILE_SIZE + camOffY;
+    if (dx < -TILE_SIZE || dy < -TILE_SIZE || dx > cW + TILE_SIZE || dy > cH + TILE_SIZE) return;
+    const npcImg = IMGS[npc.img];
+    const row = DIR_ROW[npc.dir] || 0;
+    if (npcImg?.complete && npcImg.naturalWidth > 0) {
+      ctx.drawImage(npcImg,
+        0, row * FRAME_H, FRAME_W, FRAME_H,
+        dx, dy, TILE_SIZE, TILE_SIZE);
+    } else {
+      ctx.fillStyle = '#4488ff';
+      ctx.fillRect(dx + 8, dy + 8, 16, 16);
+    }
+    // Interaction prompt when adjacent
+    const ptx = Math.floor(S.px / TILE_SIZE), pty = Math.floor(S.py / TILE_SIZE);
+    const dist = Math.abs(ptx - npc.tx) + Math.abs(pty - npc.ty);
+    if (dist <= 1) {
+      ctx.fillStyle = '#e8c87a';
+      ctx.font = 'bold 12px Courier New';
+      ctx.textAlign = 'center';
+      ctx.fillText('✦', dx + TILE_SIZE/2, dy - 4);
+    }
+  });
+
+  // ── Draw player ──
+  const pdx = S.px + camOffX - TILE_SIZE * 0.5;
+  const pdy = S.py + camOffY - TILE_SIZE * 0.5;
+  const playerImg = IMGS['player'];
+  const pRow = DIR_ROW[S.dir] || 0;
+  const pCol = S.moving ? S.animFrame : 0;
+
+  if (playerImg?.complete && playerImg.naturalWidth > 0) {
+    ctx.drawImage(playerImg,
+      pCol * FRAME_W, pRow * FRAME_H, FRAME_W, FRAME_H,
+      pdx, pdy, TILE_SIZE, TILE_SIZE);
+  } else {
+    // Procedural player fallback — simple coloured rectangle
+    ctx.fillStyle = '#44aaff';
+    ctx.fillRect(pdx + 8, pdy + 4, 16, 22);
+    ctx.fillStyle = '#ffcc88';
+    ctx.fillRect(pdx + 10, pdy, 12, 12); // head
+    // Direction indicator
+    ctx.fillStyle = '#ffffff';
+    const arrowDx = S.dir === 'left' ? -4 : S.dir === 'right' ? 4 : 0;
+    const arrowDy = S.dir === 'up' ? -4 : S.dir === 'down' ? 4 : 0;
+    ctx.fillRect(pdx + 16 + arrowDx, pdy + 12 + arrowDy, 3, 3);
+  }
+
+  // ── Exit zone hint ──
+  const playerTy = Math.floor(S.py / TILE_SIZE);
+  if (playerTy <= 2) {
+    ctx.fillStyle = 'rgba(180,140,60,0.75)';
+    ctx.font = 'bold 11px Courier New';
+    ctx.textAlign = 'center';
+    ctx.fillText('[ Return to Ship ]', cW / 2, cH - 24);
+  }
+}
+
+// ── Main loop ─────────────────────────────────────────────────────────────
+let animId = null;
+
+function loop(timestamp) {
+  animId = requestAnimationFrame(loop);
+
+  const dt = S.lastTimestamp ? Math.min((timestamp - S.lastTimestamp) / 1000, 0.1) : 0.016;
+  S.lastTimestamp = timestamp;
+  S.sessionT += dt;
+  if (S.interactCooldown > 0) S.interactCooldown--;
+
+  // ── Input ──
+  S.moving = false;
+  const dlgOpen = document.getElementById('dialogue-box').style.display !== 'none';
+
+  if (!dlgOpen) {
+    let dx = 0, dy = 0;
+    if (S.keys.left)  dx -= 1;
+    if (S.keys.right) dx += 1;
+    if (S.keys.up)    dy -= 1;
+    if (S.keys.down)  dy += 1;
+    if (dx !== 0 || dy !== 0) tryMove(dx, dy);
+  }
+
+  // ── Sprite animation ──
+  if (S.moving) {
+    S.animTimer += dt;
+    if (S.animTimer >= 1 / ANIM_FPS) {
+      S.animTimer = 0;
+      S.animFrame = (S.animFrame + 1) % FRAME_COLS;
+    }
+  } else {
+    S.animFrame  = 0;
+    S.animTimer  = 0;
+  }
+
+  // ── Canvas sizing ──
+  const cv = document.getElementById('surface-canvas');
+  const cW = cv.clientWidth, cH = cv.clientHeight;
+  if (cv.width !== cW || cv.height !== cH) { cv.width = cW; cv.height = cH; }
+
+  updateCamera(cW, cH);
+  updateHUD();
+
+  const ctx = cv.getContext('2d');
+  ctx.imageSmoothingEnabled = false; // keep pixels sharp
+  render(ctx, cW, cH);
+}
+
+// ── Input handling ────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (['ArrowLeft','a','A'].includes(e.key))  S.keys.left  = true;
+  if (['ArrowRight','d','D'].includes(e.key)) S.keys.right = true;
+  if (['ArrowUp','w','W'].includes(e.key))    S.keys.up    = true;
+  if (['ArrowDown','s','S'].includes(e.key))  S.keys.down  = true;
+  if (['Enter','z','Z',' '].includes(e.key))  { e.preventDefault(); tryInteract(); }
+  if (e.key === 'Escape') closeDlg();
+  // Dialogue advance
+  if (['Enter','z','Z',' '].includes(e.key) &&
+      document.getElementById('dialogue-box').style.display !== 'none') {
+    e.preventDefault(); advanceDlg();
+  }
+});
+
+document.addEventListener('keyup', e => {
+  if (['ArrowLeft','a','A'].includes(e.key))  S.keys.left  = false;
+  if (['ArrowRight','d','D'].includes(e.key)) S.keys.right = false;
+  if (['ArrowUp','w','W'].includes(e.key))    S.keys.up    = false;
+  if (['ArrowDown','s','S'].includes(e.key))  S.keys.down  = false;
+});
+
+// Dialogue advance on canvas tap
+document.getElementById('surface-canvas').addEventListener('click', () => {
+  if (document.getElementById('dialogue-box').style.display !== 'none') advanceDlg();
+});
+
+// D-pad
+function dpadPress(dir)   { S.keys[dir] = true; }
+function dpadRelease(dir) { S.keys[dir] = false; }
+
+// Show D-pad on touch devices
+if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+  document.getElementById('dpad').style.display = 'block';
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+function init() {
+  loadEntryData();
+
+  // Fade in
+  const ov = document.getElementById('transition-overlay');
+  ov.classList.add('fade-in');
+  setTimeout(() => {
+    ov.style.transition = 'opacity 0.5s ease';
+    ov.classList.remove('fade-in');
+    ov.classList.add('fade-out');
+    setTimeout(() => { ov.style.transition = ''; }, 600);
+  }, 100);
+
+  // Start loop once images have had a moment to load
+  setTimeout(() => { loop(performance.now()); }, 200);
+}
+
+init();
+</script>
+</body>
+</html>

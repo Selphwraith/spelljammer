@@ -3665,6 +3665,7 @@ body.in-lpoi #ov-journal.on { z-index: 7100; }
         <button id="ls-dock-deliver-btn" class="btn" onclick="lsDockDeliverCargo()" style="display:none;font-size:0.688em;border-color:#446600;color:#88ff44;margin-bottom:4px;">📦 Deliver Cargo Mission</button>
         <button id="ls-dock-ask-locals-btn" class="btn" onclick="lsOpenLocalsPanel()" style="font-size:0.688em;border-color:rgba(170,136,34,0.267);color:#ccaa55;">🍺 Ask Locals</button>
         <button class="btn exit" style="font-size:0.688em;border-color:#661100;color:#ff8866;" onclick="lsDockDepart()" id="ls-dock-depart-btn">⛵ Depart System</button>
+        <button class="ls-dock-btn" style="font-size:0.688em;border-color:rgba(80,160,80,0.5);color:#88cc88;display:none;" onclick="descendToSurface()" id="ls-dock-surface-btn">🌍 Descend to Surface</button>
       </div>
     </div>
 
@@ -18391,6 +18392,35 @@ function menuShowBriefing() {
 document.addEventListener('DOMContentLoaded', () => {
   const b = document.getElementById('briefing-overlay');
   if (b) { b.classList.add('hidden'); b.style.display = 'none'; }
+
+  // ── Surface exit handshake ───────────────────────────────────────────────
+  // When the player returns from surface.html, apply the time/gold delta.
+  try {
+    const raw = sessionStorage.getItem('fentheris_surface_exit');
+    if (raw) {
+      sessionStorage.removeItem('fentheris_surface_exit');
+      const d = JSON.parse(raw);
+      if (G && G.watch) {
+        const h = d.hoursSpent || 0;
+        G.watch.totalHours = (G.watch.totalHours || 0) + h;
+        G.watch.hoursAwake = (G.watch.hoursAwake || 0) + h;
+        // Day crossings
+        const prevM = Math.floor(((G.watch.totalHours - h) + 6) / 24);
+        const newM  = Math.floor((G.watch.totalHours + 6) / 24);
+        for (let i = 0; i < newM - prevM; i++) {
+          G.watch.day++;
+          G.travelDays = (G.travelDays || 0) + 1;
+          G.ship.air = Math.max(0, G.ship.air - 1);
+          if (G.ship.air <= 0) { doDefeat('air'); return; }
+        }
+        if (d.gold != null) G.ship.gold = d.gold;
+        addLog(`Returned from the surface of Fentheris. ${h.toFixed(1)} hours elapsed.`, '');
+        updateWatchHUD(); updateUI();
+        // Reopen LS if we were in the Realm sphere
+        if (G.ship?.loc === 'realm') setTimeout(() => openLocalSpace(), 400);
+      }
+    }
+  } catch(e) {}
 });
 
 function bpTab(tabId) {
@@ -20628,6 +20658,27 @@ function openLocalSpace() {
   if(sLqBtn) sLqBtn.style.display = 'none';
 }
 
+// ── Descend to Fentheris surface ──────────────────────────────────────────
+// Only available when docked at Fentheris Orbital Station (Realm sphere).
+function descendToSurface() {
+  if (G.ship?.loc !== 'realm') return;
+  if (typeof LS_GAME_HOURS_PER_SEC !== 'undefined') {
+    G._lsOrbitHours = (G._lsOrbitHours || 0) + (LS.t || 0) * LS_GAME_HOURS_PER_SEC * LS_ORBIT_SPEED_MULT;
+  }
+  const entry = {
+    day:        G.watch?.day        || 1,
+    totalHours: G.watch?.totalHours || 0,
+    hoursAwake: G.watch?.hoursAwake || 0,
+    gold:       G.ship.gold,
+  };
+  try { sessionStorage.setItem('fentheris_surface_entry', JSON.stringify(entry)); } catch(e) {}
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:#000;z-index:99999;opacity:0;transition:opacity 0.5s ease;';
+  document.body.appendChild(ov);
+  requestAnimationFrame(() => { ov.style.opacity = '1'; });
+  setTimeout(() => { window.location.href = 'surface.html'; }, 550);
+}
+
 // ── BOUNDARY EXIT — fly to the sphere edge to leave local space ──────────
 function _lsBoundaryExit() {
   if (LS._boundaryExiting) return;
@@ -21717,6 +21768,10 @@ function _lsShowInteract(poi) {
       panel.classList.remove('on');
       _lsRefreshDock();
       document.getElementById('ls-dock-panel').classList.add('on');
+      // Add Descend to Surface button for Realm sphere
+      const _dSphId2 = G.ship?.loc || 'realm';
+      const _surfaceBtn = document.getElementById('ls-dock-surface-btn');
+      if (_surfaceBtn) _surfaceBtn.style.display = _dSphId2 === 'realm' ? '' : 'none';
       // Tutorial: docking for first time
       if (G.tutorial && !G.tutorial.done && G.tutorial.step === 1) setTimeout(() => _tutStep(2), 400);
     };
