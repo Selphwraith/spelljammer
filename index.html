@@ -27014,7 +27014,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isSurfaceReturn) {
       sessionStorage.removeItem('fentheris_surface_return');
       // Load the autosave (which was written just before descending)
-      const _savedEntry = _loadAutoSave();
+      const _savedEntry = getAutoSave();
       if (_savedEntry) {
         loadFromEntry(_savedEntry);
         return; // skip showMainMenu — game is now running

@@ -91,7 +91,7 @@
   #dpad {
     position: absolute; bottom: 60px; right: 14px;
     width: 108px; height: 108px; z-index: 25;
-    display: none;
+    display: none; pointer-events: all;
   }
   .dpad-btn {
     position: absolute; width: 32px; height: 32px;
@@ -139,11 +139,11 @@
 
 <!-- Mobile D-pad -->
 <div id="dpad">
-  <div class="dpad-btn" id="dpad-up"    onpointerdown="dpadPress('up')"    onpointerup="dpadRelease('up')"    onpointercancel="dpadRelease('up')">▲</div>
-  <div class="dpad-btn" id="dpad-down"  onpointerdown="dpadPress('down')"  onpointerup="dpadRelease('down')"  onpointercancel="dpadRelease('down')">▼</div>
-  <div class="dpad-btn" id="dpad-left"  onpointerdown="dpadPress('left')"  onpointerup="dpadRelease('left')"  onpointercancel="dpadRelease('left')">◀</div>
-  <div class="dpad-btn" id="dpad-right" onpointerdown="dpadPress('right')" onpointerup="dpadRelease('right')" onpointercancel="dpadRelease('right')">▶</div>
-  <div class="dpad-btn" id="dpad-act"   onpointerdown="tryInteract()">✦</div>
+  <div class="dpad-btn" id="dpad-up">▲</div>
+  <div class="dpad-btn" id="dpad-down">▼</div>
+  <div class="dpad-btn" id="dpad-left">◀</div>
+  <div class="dpad-btn" id="dpad-right">▶</div>
+  <div class="dpad-btn" id="dpad-act">✦</div>
 </div>
 
 <!-- Bottom bar -->
@@ -756,9 +756,30 @@ function dpadRelease(dir) { S.keys[dir] = false; }
 document.addEventListener('pointerup',     () => { S.keys.up=false; S.keys.down=false; S.keys.left=false; S.keys.right=false; });
 document.addEventListener('pointercancel', () => { S.keys.up=false; S.keys.down=false; S.keys.left=false; S.keys.right=false; });
 
+// Wire d-pad buttons via addEventListener (more reliable on mobile than inline handlers)
+function _initDpad() {
+  const dirs = ['up','down','left','right'];
+  dirs.forEach(dir => {
+    const btn = document.getElementById('dpad-' + dir);
+    if (!btn) return;
+    btn.addEventListener('pointerdown',   e => { e.preventDefault(); dpadPress(dir); },   { passive:false });
+    btn.addEventListener('pointerup',     e => { e.preventDefault(); dpadRelease(dir); }, { passive:false });
+    btn.addEventListener('pointercancel', e => { dpadRelease(dir); });
+    btn.addEventListener('pointerleave',  e => { dpadRelease(dir); }); // finger slid off
+  });
+  const actBtn = document.getElementById('dpad-act');
+  if (actBtn) {
+    actBtn.addEventListener('pointerdown', e => { e.preventDefault(); tryInteract(); }, { passive:false });
+  }
+}
+
 // Show D-pad on touch devices
 if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
   document.getElementById('dpad').style.display = 'block';
+  _initDpad();
+} else {
+  // Still init for pointer events on desktop trackpads
+  _initDpad();
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────
