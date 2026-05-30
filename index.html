@@ -18850,22 +18850,24 @@ function _applyLoad(save) {
     if(savedLs?.inLocalSpace) {
       setTimeout(() => openLocalSpace(), 150);
     }
-    // Surface save — descend to surface after G is fully restored
+    // Surface save — redirect to surface.html immediately (before any render loop runs)
     if (save.context === 'surface' && state.surfaceState) {
       const ss = state.surfaceState;
-      setTimeout(() => {
-        // Pack surface entry via sessionStorage then open surface.html
-        const entry = {
-          day: G.watch?.day || 1,
-          totalHours: G.watch?.totalHours || 0,
-          hoursAwake: G.watch?.hoursAwake || 0,
-          gold: G.ship.gold,
-          captain: { ...(G.captain||{}), inv: G.ship.inv||[] },
-          _savedSurface: ss,  // surface position/enemy state to restore
-        };
-        sessionStorage.setItem('fentheris_surface_entry', JSON.stringify(entry));
-        window.location.href = 'surface.html';
-      }, 400);
+      // Write the entry so surface.html can restore full state on load
+      const _surfEntry = {
+        day:        G.watch?.day        || 1,
+        totalHours: G.watch?.totalHours || 0,
+        hoursAwake: G.watch?.hoursAwake || 0,
+        gold:       G.ship.gold,
+        captain:    { ...(G.captain||{}), inv: G.ship.inv||[] },
+        _savedSurface: ss,
+      };
+      try { sessionStorage.setItem('fentheris_surface_entry', JSON.stringify(_surfEntry)); } catch(_) {}
+      // Stop any render loops started by _applyLoad before redirect
+      if (G.animId) { cancelAnimationFrame(G.animId); G.animId = null; }
+      if (typeof TS !== 'undefined' && TS.animId) { cancelAnimationFrame(TS.animId); TS.animId = null; }
+      window.location.href = 'surface.html';
+      return; // never show chart
     }
   } catch(e) {
     addLog('Load failed — save data may be corrupted.', '');

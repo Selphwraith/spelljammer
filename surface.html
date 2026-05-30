@@ -3,69 +3,76 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <title>Fentheris — Surface</title>
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body {
-    background:#000;
-    font-family: 'Courier New', monospace;
-    overflow: hidden;
-    width: 100vw; height: 100vh;
-    display: flex; flex-direction: column;
-  }
+:root { --fs:1; }
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  width:100%; height:100%; overflow:hidden;
+  background:#000; color:#ccc4e0;
+  font-family:'Courier New',monospace;
+}
+/* ── Cinzel headings ─────────────────────────────────────────── */
+.cinzel { font-family:'Cinzel',serif; }
 
-  /* ── HUD bar ─────────────────────────────────────────────────── */
+/* ── Main canvas layout ──────────────────────────────────────── */
+
+  /* ── HUD bar (matches index.html header style) ─────────────── */
   #hud {
-    position: absolute; top: 0; left: 0; right: 0;
-    height: 36px; z-index: 20;
-    background: rgba(8,4,16,0.92);
-    border-bottom: 1px solid rgba(120,80,40,0.5);
-    display: flex; align-items: center; gap: 16px;
-    padding: 0 12px;
-    font-size: 11px; color: #d4b896; letter-spacing: 1px;
+    position:absolute; top:0; left:0; right:0; height:44px; z-index:20;
+    background:rgba(4,0,13,0.96); border-bottom:1px solid rgba(68,17,136,0.4);
+    display:flex; align-items:center; gap:10px; padding:0 14px;
+    font-family:'Cinzel',serif; font-size:11px; color:#ccc4e0; letter-spacing:1px;
   }
-  #hud-title { font-family: 'Georgia', serif; font-size: 13px; color: #e8c87a; letter-spacing: 2px; }
-  #hud-clock { color: #aaa; margin-left: auto; }
-  #hud-fatigue { padding: 2px 8px; border-radius: 2px; font-size: 10px; }
+  #hud-title {
+    font-family:'Cinzel',serif; font-weight:700; font-size:14px;
+    color:#e8d5ff; letter-spacing:3px; margin-right:4px;
+  }
+  #hud-sep { color:rgba(102,51,170,0.5); font-size:18px; }
+  #hud-location { font-size:10px; color:#9966cc; letter-spacing:2px; }
+  #hud-clock { color:#b8b0d0; font-size:10px; margin-left:auto; letter-spacing:1px; }
+  #hud-fatigue { padding:2px 8px; border-radius:2px; font-size:10px; font-family:'Courier New',monospace; }
   #hud-fatigue.fresh    { background:#001a0a; color:#44ee88; border:1px solid rgba(34,170,85,0.3); }
   #hud-fatigue.fatigued { background:#1a0800; color:#ff8844; border:1px solid rgba(170,68,0,0.3); }
   #hud-fatigue.exhausted{ background:#1a0000; color:#ff4444; border:1px solid rgba(170,0,0,0.3); }
 
-  /* Main canvas — pointer-events:none so d-pad buttons behind it receive touch events */
   #surface-canvas {
-    position: absolute; top: 36px; left: 0;
-    width: 100%; height: calc(100% - 36px - 48px);
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-    cursor: default;
-    pointer-events: none;
+    position:absolute; top:44px; left:0;
+    width:100%; height:calc(100% - 44px - 52px);
+    image-rendering:pixelated; image-rendering:crisp-edges;
+    cursor:default; pointer-events:none;
+  }
+  #canvas-click-zone {
+    position:absolute; top:44px; left:0;
+    width:100%; height:calc(100% - 44px - 52px); z-index:5;
   }
 
-  /* ── Bottom bar ──────────────────────────────────────────────── */
+  /* ── Bottom action bar (matches index.html) ──────────────────── */
   #bottom-bar {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    height: 48px; z-index: 20;
-    background: rgba(8,4,16,0.92);
-    border-top: 1px solid rgba(120,80,40,0.5);
-    display: flex; align-items: center; gap: 10px;
-    padding: 0 12px;
+    position:absolute; bottom:0; left:0; right:0; height:52px; z-index:20;
+    background:rgba(4,0,13,0.96); border-top:1px solid rgba(68,17,136,0.4);
+    display:flex; align-items:center; gap:8px; padding:0 12px;
   }
   .hud-btn {
-    font-family: 'Georgia', serif; font-size: 10px; letter-spacing: 1px;
-    padding: 6px 14px; border-radius: 3px; cursor: pointer;
-    text-transform: uppercase; border: 1px solid; transition: all 0.15s;
+    font-family:'Cinzel',serif; font-size:10px; letter-spacing:1px;
+    padding:7px 14px; border-radius:3px; cursor:pointer;
+    text-transform:uppercase; border:1px solid; transition:all 0.15s;
+    background:rgba(20,5,45,0.88); color:#ccc4e0;
   }
-  #btn-return {
-    border-color: rgba(100,60,20,0.7); background: rgba(20,10,0,0.88); color: #c8a060;
+  #btn-return { border-color:rgba(102,51,170,0.53); }
+  #btn-return:hover { border-color:#9966dd; color:#e8d5ff; }
+  #btn-rest   { border-color:rgba(60,40,100,0.5); color:#9988cc; }
+  #btn-rest:hover { border-color:#9988ff; color:#ccbbff; }
+  .ovl-btn {
+    font-family:'Cinzel',serif; font-size:10px; letter-spacing:1px;
+    padding:6px 12px; border:1px solid rgba(102,51,170,0.533); border-radius:3px;
+    background:rgba(20,5,45,0.88); color:#ccc4e0; cursor:pointer; transition:all 0.15s;
   }
-  #btn-return:hover { border-color: #d4a060; color: #ffd080; }
-  #btn-rest {
-    border-color: rgba(60,40,100,0.7); background: rgba(10,5,20,0.88); color: #9988cc;
-  }
-  #btn-rest:hover { border-color: #9988ff; color: #ccbbff; }
+  .ovl-btn:hover { border-color:#9966dd; color:#e8d5ff; }
   #status-text {
-    margin-left: auto; font-size: 10px; color: #887766;
-    font-style: italic; letter-spacing: 0.5px;
+    flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    font-size:10px; color:#7766aa; font-style:italic; letter-spacing:0.5px;
   }
 
   /* ── Dialogue box ────────────────────────────────────────────── */
@@ -111,192 +118,230 @@
   }
   #surf-act-btn:active { background:rgba(100,70,10,0.95); }
 
-  /* -- Captain HUD bar ---------------------------------------------------- */
-  #hud-captain { display:flex; align-items:center; gap:6px; margin-left:6px; }
-  #hud-cap-lv  { color:#e8c87a; font-size:10px; white-space:nowrap; }
+  /* ── Captain HUD strip ───────────────────────────────────────── */
+  #hud-captain { display:flex; align-items:center; gap:8px; margin-left:8px; }
+  #hud-cap-lv  { font-family:'Cinzel',serif; color:#cc99ff; font-size:10px; white-space:nowrap; }
   #hud-cap-hp  { color:#cc7777; font-size:10px; white-space:nowrap; }
-  .hud-hp-mini { display:inline-block; width:44px; height:5px;
-    background:#330000; border-radius:2px; overflow:hidden; vertical-align:middle; }
+  .hud-hp-mini { display:inline-block; width:44px; height:4px;
+    background:rgba(30,10,60,0.8); border-radius:2px; overflow:hidden; vertical-align:middle; }
   .hud-hp-mini-fill { height:100%; background:#cc4444; transition:width 0.2s; }
 
-  /* -- Surface Combat Overlay --------------------------------------------- */
+  /* ── Overlay system (mirrors index.html exactly) ─────────────── */
+  .ovlay {
+    position:absolute; top:0; left:0; right:0; bottom:0;
+    display:none; flex-direction:column; align-items:center; justify-content:flex-start;
+    background:rgba(3,0,12,0.96); padding:16px 16px 32px; gap:10px;
+    overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch;
+    scroll-behavior:smooth; z-index:40; touch-action:pan-y; pointer-events:none;
+  }
+  .ovlay.on { display:flex; pointer-events:all; }
+  .ovl-title-row {
+    display:flex; align-items:center; justify-content:space-between;
+    width:100%; max-width:640px; gap:10px; margin-bottom:2px;
+  }
+  .ovl-title { font-family:'Cinzel',serif; font-size:17px; letter-spacing:3px; color:#e8d5ff; }
+  .ovl-close-btn {
+    background:rgba(30,12,8,0.85); border:1px solid rgba(170,102,51,0.333);
+    border-radius:3px; color:#ddaa77; font-size:13px; padding:6px 12px;
+    cursor:pointer; font-family:'Cinzel',serif; letter-spacing:1px; flex-shrink:0;
+  }
+  .ovl-close-btn:hover { border-color:#ddaa77; color:#fff8e8; }
+  /* Save overlay */
+  .briefing-overlay {
+    position:fixed; top:0; left:0; right:0; bottom:0; z-index:600;
+    display:flex; align-items:center; justify-content:center; background:rgba(2,0,8,0.95);
+  }
+  .briefing-panel {
+    background:rgba(8,2,22,0.98); border:1px solid rgba(68,17,136,0.4);
+    border-radius:8px; padding:16px 14px; max-width:500px; width:95%;
+    max-height:90vh; display:flex; flex-direction:column; gap:0;
+    box-shadow:0 0 50px rgba(51,0,102,0.267); overflow-y:auto;
+  }
+  .briefing-title {
+    font-family:'Cinzel',serif; font-size:15px; letter-spacing:3px; color:#e8d5ff;
+    text-align:center; padding-bottom:12px;
+    border-bottom:1px solid rgba(102,51,170,0.3); margin-bottom:14px;
+  }
+  .save-slot {
+    display:flex; align-items:flex-start; gap:10px; padding:10px 12px;
+    border:1px solid rgba(68,17,136,0.3); border-radius:4px;
+    background:rgba(12,4,28,0.8); margin-bottom:8px;
+  }
+  .save-slot.empty { opacity:0.55; }
+  .save-info { flex:1; min-width:0; }
+  .save-name { font-family:'Cinzel',serif; font-size:11px; color:#e8d5ff; margin-bottom:3px; }
+  .save-detail { font-size:9px; color:#8877aa; line-height:1.6; }
+  .save-actions { display:flex; flex-direction:column; gap:4px; flex-shrink:0; align-items:flex-end; }
+  .surf-save-lbl {
+    font-family:'Cinzel',serif; font-size:9px; letter-spacing:2px;
+    color:#665577; text-transform:uppercase; margin-bottom:5px; margin-top:4px;
+  }
+  /* Inventory */
+  .filter-row { display:flex; flex-wrap:wrap; gap:5px; width:100%; max-width:640px; }
+  .fbtn {
+    font-family:'Cinzel',serif; font-size:9px; letter-spacing:1px; padding:5px 10px;
+    border:1px solid rgba(51,0,85,0.4); border-radius:2px;
+    background:rgba(15,3,35,0.8); color:#ccc4e0; cursor:pointer; transition:all 0.15s;
+  }
+  .fbtn:hover,.fbtn.act { border-color:#9966dd; color:#cc99ff; }
+  .inv-body { display:flex; gap:16px; width:100%; max-width:640px; }
+  .inv-grid-wrap { flex:1; }
+  .inv-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  .inv-item {
+    background:rgba(18,4,40,0.85); border:1px solid rgba(51,0,68,0.4);
+    border-radius:4px; padding:8px 5px; text-align:center;
+    cursor:pointer; transition:all 0.15s; font-size:10px; color:#ccc4e0;
+  }
+  .inv-item:hover { border-color:#9966dd; background:rgba(40,10,80,0.9); }
+  .inv-item.sel   { border-color:#cc99ff; background:rgba(60,20,100,0.9); }
+  .inv-ico   { font-size:22px; margin-bottom:4px; }
+  .inv-iname { font-size:9px; color:#b8b0d0; line-height:1.3; }
+  .inv-empty { font-size:11px; color:#665577; font-style:italic; padding:20px 0; text-align:center; width:100%; }
+  .inv-detail {
+    width:160px; flex-shrink:0; background:rgba(12,4,28,0.9);
+    border:1px solid rgba(68,17,136,0.3); border-radius:4px; padding:12px;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .inv-detail-ico  { font-size:32px; text-align:center; }
+  .inv-detail-name { font-family:'Cinzel',serif; font-size:11px; color:#e8d5ff; text-align:center; }
+  .inv-detail-desc { font-size:10px; color:#9988bb; line-height:1.5; }
+  .inv-detail-val  { font-size:10px; color:#ccc4e0; }
+  #inv-footer { font-size:9px; color:#665577; margin-top:6px; width:100%; max-width:640px; }
+  /* Buttons */
+  .btn {
+    font-family:'Cinzel',serif; font-size:10px; letter-spacing:1px;
+    padding:7px 14px; border-radius:3px; cursor:pointer;
+    border:1px solid rgba(102,51,170,0.53); background:rgba(20,5,45,0.88); color:#ccc4e0;
+    transition:all 0.15s; user-select:none; -webkit-user-select:none;
+  }
+  .btn:hover { border-color:#9966dd; color:#e8d5ff; }
+  .btn.gd   { border-color:rgba(34,136,68,0.5); color:#88cc88; }
+  .btn.gd:hover  { border-color:#44cc88; }
+  .btn.dmg  { border-color:rgba(170,51,34,0.5); color:#cc6655; }
+  .btn.dmg:hover { border-color:#cc4422; }
+  .btn.sm   { font-size:9px; padding:5px 10px; }
+  .ssbtn {
+    font-family:'Cinzel',serif; font-size:9px; letter-spacing:0.5px; padding:5px 10px;
+    border-radius:2px; cursor:pointer; white-space:nowrap;
+    border:1px solid rgba(102,51,170,0.4); background:rgba(14,4,32,0.9); color:#ccc4e0;
+    transition:all 0.12s;
+  }
+  .ssbtn:hover { border-color:#9966dd; color:#e8d5ff; }
+  .ssbtn.gd   { border-color:rgba(34,136,68,0.5); color:#88cc88; }
+  .ssbtn.gd:hover { border-color:#44cc88; }
+  .ssbtn.dmg  { border-color:rgba(170,51,34,0.5); color:#cc6655; }
+  .ssbtn.dmg:hover { border-color:#cc4422; }
+  /* Stat panels */
+  .pbox {
+    background:rgba(8,2,22,0.85); border:1px solid rgba(68,17,136,0.3);
+    border-radius:5px; padding:12px; width:100%; max-width:640px;
+  }
+  .ptitle {
+    font-family:'Cinzel',serif; font-size:11px; letter-spacing:2px; color:#9977cc;
+    text-transform:uppercase; margin-bottom:8px;
+    border-bottom:1px solid rgba(68,17,136,0.2); padding-bottom:5px;
+  }
+  .srow { display:flex; justify-content:space-between; align-items:center; padding:3px 0; font-size:11px; }
+  .slabel { color:#8877aa; font-family:'Courier New',monospace; }
+  .sval   { color:#e8d5ff; font-family:'Cinzel',serif; font-size:11px; }
+  .bw { height:5px; background:rgba(30,10,60,0.8); border-radius:2px; margin:2px 0 4px; overflow:hidden; }
+  .bf { height:100%; border-radius:2px; transition:width 0.4s; }
+  .bh { background:#cc4444; } .ba { background:#44aacc; }
+  .bx { background:#cc8822; } .bc { background:#44cc88; }
+  /* Bottom bar sm buttons */
+  .hud-btn-sm {
+    font-family:'Cinzel',serif; font-size:9px; letter-spacing:0.5px; padding:6px 10px;
+    border:1px solid rgba(102,51,170,0.4); border-radius:3px; background:rgba(20,5,45,0.88);
+    color:#9977cc; cursor:pointer; flex-shrink:0; white-space:nowrap;
+    transition:all 0.12s; user-select:none; -webkit-user-select:none;
+  }
+  .hud-btn-sm:hover { border-color:#9966dd; color:#e8d5ff; }
+  /* Combat overlay */
   #surf-combat {
-    position:absolute; inset:0; z-index:45;
-    background:rgba(2,1,8,0.98);
+    position:absolute; inset:0; z-index:45; background:rgba(2,0,8,0.98);
     display:none; flex-direction:column; align-items:stretch;
     font-family:'Courier New',monospace; overflow:hidden;
   }
-  #sc-scene { width:100%; height:210px; flex-shrink:0; display:block; background:#000; }
+  #sc-scene { width:100%; height:180px; flex-shrink:0; display:block; background:#000; }
   #sc-log {
     flex:1 1 auto; min-height:52px; max-height:90px; overflow-y:auto;
-    padding:5px 10px; font-size:10px; color:#998877; line-height:1.65;
-    border-top:1px solid rgba(100,70,20,0.25);
-    border-bottom:1px solid rgba(100,70,20,0.25);
+    padding:5px 10px; font-size:10px; color:#9988bb; line-height:1.65;
+    border-top:1px solid rgba(68,17,136,0.2); border-bottom:1px solid rgba(68,17,136,0.2);
   }
-  .sc-log-hit  { color:#dd8855; } .sc-log-good { color:#77cc77; }
-  .sc-log-warn { color:#ffaa44; } .sc-log-info { color:#554433; }
+  .sc-log-hit { color:#dd8855; } .sc-log-good { color:#77cc77; }
+  .sc-log-warn { color:#ffaa44; } .sc-log-info { color:#554466; }
   #sc-menu { flex-shrink:0; padding:8px 10px 10px; display:flex; flex-direction:column; gap:5px; }
   #sc-menu-cats { display:flex; gap:6px; }
   .sc-cat {
-    flex:1; padding:9px 4px; font-family:'Courier New',monospace;
-    font-size:10px; letter-spacing:1px; text-transform:uppercase;
-    border-radius:3px; cursor:pointer; border:1px solid rgba(180,140,60,0.3);
-    background:rgba(14,7,0,0.9); color:#887755; transition:all 0.1s;
-    user-select:none; -webkit-user-select:none;
-  }
-  .sc-cat.active { background:rgba(50,28,4,0.95); border-color:#c89040; color:#ffd080; }
-  .sc-cat:disabled { opacity:0.25; cursor:default; }
-  .sc-cat-flee { border-color:rgba(80,55,25,0.3); color:#665544; }
-  #sc-menu-sub { display:flex; flex-direction:column; gap:4px; min-height:40px; }
-  .sc-sub {
-    padding:9px 14px; font-family:'Courier New',monospace;
-    font-size:10px; letter-spacing:0.5px;
-    border-radius:2px; cursor:pointer; border:1px solid rgba(90,60,15,0.2);
-    background:rgba(6,3,0,0.8); color:#998866;
-    display:flex; justify-content:space-between; align-items:center;
+    flex:1; padding:9px 4px; font-family:'Cinzel',serif; font-size:9px; letter-spacing:1px;
+    text-transform:uppercase; border-radius:3px; cursor:pointer;
+    border:1px solid rgba(102,51,170,0.3); background:rgba(14,4,32,0.9); color:#9977cc;
     transition:all 0.1s; user-select:none; -webkit-user-select:none;
   }
-  .sc-sub.focused { background:rgba(42,22,4,0.95); border-color:#aa7733; color:#e8c87a; }
+  .sc-cat.active { background:rgba(30,10,70,0.95); border-color:#9966dd; color:#e8d5ff; }
+  .sc-cat-flee   { border-color:rgba(100,80,40,0.3); color:#887766; }
+  #sc-menu-sub { display:flex; flex-direction:column; gap:4px; min-height:40px; }
+  .sc-sub {
+    padding:9px 14px; font-family:'Cinzel',serif; font-size:9px; letter-spacing:0.5px;
+    border-radius:2px; cursor:pointer; border:1px solid rgba(68,17,136,0.25);
+    background:rgba(6,2,16,0.9); color:#9977cc;
+    display:flex; justify-content:space-between; align-items:center; transition:all 0.1s;
+    user-select:none; -webkit-user-select:none;
+  }
+  .sc-sub.focused { background:rgba(30,8,60,0.95); border-color:#9966dd; color:#e8d5ff; }
   .sc-sub:disabled { opacity:0.25; cursor:default; }
-  .sc-sub-hint { font-size:9px; color:#554433; margin-left:8px; }
-
-  /* -- Surface Shop Overlay ---------------------------------------------- */
+  .sc-sub-hint { font-size:9px; color:#554466; margin-left:8px; }
+  /* Shop overlay */
   #surf-shop {
-    position:absolute; inset:0; z-index:35;
-    background:rgba(4,2,12,0.97);
+    position:absolute; inset:0; z-index:35; background:rgba(2,0,8,0.97);
     display:none; flex-direction:column; align-items:stretch;
-    font-family:'Courier New',monospace; color:#d4b896; overflow:hidden;
+    font-family:'Courier New',monospace; color:#ccc4e0; overflow:hidden;
   }
   #surf-shop-hdr {
-    display:flex; align-items:center; gap:10px; padding:10px 14px 8px;
-    border-bottom:1px solid rgba(180,140,60,0.25); flex-shrink:0;
+    display:flex; align-items:center; padding:10px 14px 8px; flex-shrink:0;
+    border-bottom:1px solid rgba(68,17,136,0.25);
+    font-family:'Cinzel',serif; font-size:13px; color:#e8d5ff; letter-spacing:2px;
   }
-  #surf-shop-npc  { flex:1; font-family:'Georgia',serif; font-size:13px; color:#e8c87a; letter-spacing:1px; }
-  #surf-shop-ts   { font-size:11px; color:#ffcc44; white-space:nowrap; }
-  #surf-shop-close{ background:none; border:none; color:#887744; font-size:16px; cursor:pointer; padding:0 4px; }
-  #surf-shop-close:hover { color:#ffd080; }
-  #surf-shop-tabs { display:flex; border-bottom:1px solid rgba(100,70,20,0.3); flex-shrink:0; }
+  #surf-shop-npc { flex:1; }
+  #surf-shop-ts  { font-size:11px; color:#cc99ff; white-space:nowrap; }
+  #surf-shop-close { background:none; border:none; color:#9966cc; font-size:17px; cursor:pointer; padding:0 4px; }
+  #surf-shop-close:hover { color:#e8d5ff; }
+  #surf-shop-tabs { display:flex; border-bottom:1px solid rgba(68,17,136,0.25); flex-shrink:0; }
   .surf-stab {
-    flex:1; padding:8px; font-family:'Courier New',monospace;
-    font-size:10px; letter-spacing:2px; text-transform:uppercase;
-    border:none; background:none; color:#665544; cursor:pointer;
+    flex:1; padding:8px; font-family:'Cinzel',serif; font-size:10px; letter-spacing:2px;
+    text-transform:uppercase; border:none; background:none; color:#665577; cursor:pointer;
     border-bottom:2px solid transparent; transition:all 0.1s;
   }
-  .surf-stab.active { color:#e8c87a; border-bottom-color:#c89040; }
+  .surf-stab.active { color:#e8d5ff; border-bottom-color:#9966dd; }
   #surf-shop-list { flex:1; overflow-y:auto; padding:8px 10px; display:flex; flex-direction:column; gap:5px; }
   .surf-shop-row {
     display:flex; align-items:center; gap:8px; padding:8px 12px;
-    border:1px solid rgba(100,70,20,0.2); border-radius:2px;
-    background:rgba(8,4,0,0.7); cursor:pointer; transition:all 0.1s;
+    border:1px solid rgba(68,17,136,0.2); border-radius:2px;
+    background:rgba(8,2,20,0.8); cursor:pointer; transition:all 0.1s;
   }
-  .surf-shop-row:hover:not(.cant-afford):not(.no-action) { background:rgba(38,20,3,0.9); border-color:#aa7733; }
+  .surf-shop-row:hover:not(.cant-afford) { background:rgba(25,8,55,0.9); border-color:#9966dd; }
   .surf-shop-row.cant-afford { opacity:0.32; cursor:default; }
-  .surf-shop-row.no-action   { cursor:default; }
-  .surf-shop-item-name { flex:1; font-size:10px; color:#d4b896; line-height:1.5; }
-  .surf-shop-item-sub  { font-size:9px; color:#554433; display:block; }
-  .surf-shop-item-price{ font-size:11px; color:#ffcc44; white-space:nowrap; }
-  #surf-shop-msg { padding:6px 14px 8px; font-size:10px; font-style:italic; color:#554433; flex-shrink:0; min-height:26px; }
-
-  /* ── Surface overlay shared base ────────────────────────────────── */
-  .surf-ovl {
-    position:absolute; inset:0; z-index:40;
-    background:rgba(4,2,12,0.97);
-    display:none; flex-direction:column; align-items:stretch;
-    font-family:'Courier New',monospace; color:#d4b896; overflow:hidden;
-  }
-  .surf-ovl-hdr {
-    display:flex; align-items:center; padding:10px 14px 8px; flex-shrink:0;
-    border-bottom:1px solid rgba(180,140,60,0.22);
-    font-family:'Georgia',serif; font-size:13px; color:#e8c87a; letter-spacing:2px;
-  }
-  .surf-ovl-hdr span { flex:1; }
-  .surf-ovl-close {
-    background:none; border:none; color:#887744; font-size:17px;
-    cursor:pointer; padding:0 2px; line-height:1;
-  }
-  .surf-ovl-close:hover { color:#ffd080; }
-  .surf-ovl-body { flex:1; overflow-y:auto; padding:10px 14px; display:flex; flex-direction:column; gap:8px; }
-
-  /* ── Stats overlay ───────────────────────────────────────────────── */
-  .stat-section { border-bottom:1px solid rgba(100,70,20,0.2); padding-bottom:8px; }
-  .stat-title   { font-size:9px; letter-spacing:2px; color:#554433; text-transform:uppercase; margin-bottom:5px; }
-  .stat-row     { display:flex; justify-content:space-between; font-size:10px; padding:2px 0; }
-  .stat-label   { color:#887755; }
-  .stat-val     { color:#d4b896; }
-  .stat-xp-bar  { height:5px; background:#1a0a00; border-radius:2px; margin-top:4px; overflow:hidden; }
-  .stat-xp-fill { height:100%; background:#cc8822; transition:width 0.4s; }
-
-  /* ── Inventory overlay ───────────────────────────────────────────── */
-  .inv-empty { font-size:10px; color:#443322; font-style:italic; padding:8px 0; }
-  .inv-item  {
-    display:flex; align-items:center; gap:8px; padding:8px 10px;
-    border:1px solid rgba(100,70,20,0.18); border-radius:2px;
-    background:rgba(8,4,0,0.65);
-  }
-  .inv-item-name { flex:1; font-size:10px; color:#d4b896; line-height:1.5; }
-  .inv-item-sub  { font-size:9px; color:#554433; display:block; }
-  .inv-item-qty  { font-size:10px; color:#887755; white-space:nowrap; }
-  .inv-use-btn   {
-    padding:4px 10px; border-radius:2px; cursor:pointer; white-space:nowrap;
-    border:1px solid rgba(100,180,60,0.3); background:rgba(8,16,4,0.8);
-    color:#88cc88; font-size:9px; font-family:'Courier New',monospace;
-  }
-  .inv-use-btn:hover { border-color:#88cc88; }
-
-  /* ── Save overlay ────────────────────────────────────────────────── */
-  .save-slot-row {
-    display:flex; align-items:center; gap:8px; padding:9px 10px;
-    border:1px solid rgba(100,70,20,0.18); border-radius:2px;
-    background:rgba(8,4,0,0.65);
-  }
-  .save-slot-info { flex:1; }
-  .save-slot-name { font-size:10px; color:#e8c87a; }
-  .save-slot-detail { font-size:9px; color:#554433; margin-top:2px; }
-  .save-slot-btns { display:flex; gap:5px; flex-shrink:0; }
-  .save-btn {
-    padding:5px 10px; border-radius:2px; cursor:pointer; font-size:9px;
-    font-family:'Courier New',monospace; letter-spacing:0.5px; white-space:nowrap;
-    border:1px solid rgba(180,140,60,0.3); background:rgba(14,7,0,0.9); color:#d4b896;
-  }
-  .save-btn:hover { border-color:#d4a060; color:#ffd080; }
-  .save-btn-load { border-color:rgba(60,120,60,0.4); color:#88cc88; }
-  .save-btn-load:hover { border-color:#88cc88; }
-  .save-btn-del  { border-color:rgba(120,40,20,0.3); color:#884422; }
-  .save-btn-del:hover { border-color:#cc4422; color:#ff6644; }
-  .save-autosave-lbl {
-    font-size:9px; letter-spacing:2px; color:#443322; text-transform:uppercase;
-    margin-bottom:4px; margin-top:4px;
-  }
-
-  /* ── Bottom bar buttons ──────────────────────────────────────────── */
-  .hud-btn-sm {
-    padding:5px 10px; font-family:'Courier New',monospace; font-size:9px;
-    letter-spacing:0.5px; color:#aaa; background:rgba(14,7,0,0.8);
-    border:1px solid rgba(120,80,40,0.3); border-radius:2px; cursor:pointer;
-    flex-shrink:0; white-space:nowrap;
-    user-select:none; -webkit-user-select:none;
-  }
-  .hud-btn-sm:hover { border-color:#d4a060; color:#e8c87a; }
-  .hud-btn-sm.active { border-color:#cc8833; color:#ffcc44; }
-
-  /* ── Minimap ─────────────────────────────────────────────────────── */
+  .surf-shop-item-name { flex:1; font-size:10px; color:#ccc4e0; line-height:1.5; }
+  .surf-shop-item-sub  { font-size:9px; color:#665577; display:block; }
+  .surf-shop-item-price{ font-size:11px; color:#cc99ff; white-space:nowrap; }
+  #surf-shop-msg { padding:6px 14px 8px; font-size:10px; font-style:italic; color:#665577; flex-shrink:0; min-height:26px; }
+  /* Minimap */
   #surf-minimap-shell {
-    position:absolute; bottom:56px; right:10px; z-index:22;
+    position:absolute; bottom:64px; right:12px; z-index:22;
     display:flex; flex-direction:column; align-items:flex-end; gap:3px;
   }
   #surf-minimap-toggle {
-    background:rgba(8,4,16,0.88); border:1px solid rgba(120,80,40,0.35);
-    border-radius:3px; color:#887744; font-size:9px; padding:3px 6px;
-    cursor:pointer; font-family:'Courier New',monospace; letter-spacing:1px;
-    user-select:none; -webkit-user-select:none;
+    background:rgba(4,0,13,0.9); border:1px solid rgba(68,17,136,0.4); border-radius:3px;
+    color:#9966cc; font-size:9px; padding:4px 8px; cursor:pointer;
+    font-family:'Cinzel',serif; letter-spacing:1px; user-select:none; -webkit-user-select:none;
   }
-  #surf-minimap-toggle:hover { color:#d4a060; }
+  #surf-minimap-toggle:hover { color:#e8d5ff; border-color:#9966dd; }
   #surf-minimap {
-    border-radius:50%; border:1px solid rgba(180,140,60,0.35);
-    display:block; background:#050208;
-    box-shadow:0 0 12px rgba(0,0,0,0.6);
+    border-radius:50%; border:1px solid rgba(68,17,136,0.4);
+    display:block; background:#050208; box-shadow:0 0 14px rgba(51,0,102,0.4);
   }
   #surf-minimap-shell.minimized #surf-minimap { display:none; }
+
 
   /* ── Transition overlay ──────────────────────────────────────── */
   #transition-overlay {
@@ -310,12 +355,14 @@
 </head>
 <body>
 
-<!-- HUD -->
+<!-- HUD (matches index.html header exactly) -->
 <div id="hud">
-  <span id="hud-title">⚔ FENTHERIS — SURFACE</span>
-  <span id="hud-pos"></span>
-  <span id="hud-clock">Day 1 — 06:00</span>
-  <span id="hud-fatigue" class="fresh">✦ Fresh</span>
+  <span id="hud-title" class="cinzel">&#9876; FENTHERIS</span>
+  <span id="hud-sep">|</span>
+  <span id="hud-location">SURFACE</span>
+  <span id="hud-pos" style="font-size:9px;color:#554466;margin-left:4px;"></span>
+  <span id="hud-clock">Day 1 &#8212; 06:00</span>
+  <span id="hud-fatigue" class="fresh">&#10022; Fresh</span>
   <div id="hud-captain">
     <span id="hud-cap-lv">Lv 1</span>
     <span class="hud-hp-mini"><span class="hud-hp-mini-fill" id="hud-cap-hpf" style="width:100%"></span></span>
@@ -326,7 +373,7 @@
 <!-- Main canvas -->
 <canvas id="surface-canvas"></canvas>
 <!-- Click catcher — receives taps on the game world for dialogue advance -->
-<div id="canvas-click-zone" style="position:absolute;top:36px;left:0;width:100%;height:calc(100% - 36px - 48px);z-index:5;"></div>
+<div id="canvas-click-zone" style="position:absolute;top:44px;left:0;width:100%;height:calc(100% - 44px - 52px);z-index:5;"></div>
 
 <!-- Dialogue box -->
 <div id="dialogue-box">
@@ -340,14 +387,14 @@
 <!-- Mobile action button (right thumb) -->
 <div id="surf-act-btn">✦</div>
 
-<!-- Bottom bar -->
+<!-- Bottom bar (matches index.html action bar) -->
 <div id="bottom-bar">
-  <button class="hud-btn" id="btn-return" onclick="returnToShip()">&#9973; Return</button>
+  <button class="hud-btn" id="btn-return" onclick="returnToShip()">&#9973; Return to Ship</button>
   <button class="hud-btn" id="btn-rest"   onclick="surfaceRest()">&#127769; Rest</button>
-  <button class="hud-btn-sm" onclick="surfOpenOvl('stats')">&#9876; Stats</button>
-  <button class="hud-btn-sm" onclick="surfOpenOvl('inv')">&#127869; Inv</button>
-  <button class="hud-btn-sm" onclick="surfOpenOvl('save')">&#128190; Save</button>
-  <span id="status-text" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;">Exploring the surface of Fentheris.</span>
+  <button class="hud-btn-sm ovl-btn" onclick="surfOpenOvl('stats')">&#9876; Captain</button>
+  <button class="hud-btn-sm ovl-btn" onclick="surfOpenOvl('inv')">&#128230; Cargo</button>
+  <button class="hud-btn-sm ovl-btn" onclick="surfOpenOvl('save')">&#128190; Log</button>
+  <span id="status-text">Exploring the surface of Fentheris.</span>
 </div>
 
 <!-- Minimap -->
@@ -356,31 +403,55 @@
   <canvas id="surf-minimap" width="110" height="110"></canvas>
 </div>
 
-<!-- Stats Overlay -->
-<div class="surf-ovl" id="surf-ovl-stats">
-  <div class="surf-ovl-hdr">
-    <span>&#9876; CAPTAIN STATS</span>
-    <button class="surf-ovl-close" onclick="surfCloseOvl('stats')">&#10005;</button>
+<!-- Captain Stats Overlay (matches index.html ovlay style) -->
+<div class="ovlay" id="surf-ovl-stats">
+  <div class="ovl-title-row">
+    <div class="ovl-title">&#9876; CAPTAIN</div>
+    <button class="ovl-close-btn" onclick="surfCloseOvl('stats')">&#10005;</button>
   </div>
-  <div class="surf-ovl-body" id="surf-stats-body"></div>
+  <div id="surf-stats-body" style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:640px;"></div>
 </div>
 
-<!-- Inventory Overlay -->
-<div class="surf-ovl" id="surf-ovl-inv">
-  <div class="surf-ovl-hdr">
-    <span>&#127869; INVENTORY</span>
-    <button class="surf-ovl-close" onclick="surfCloseOvl('inv')">&#10005;</button>
+<!-- Cargo / Inventory Overlay (matches index.html ov-inv exactly) -->
+<div class="ovlay" id="surf-ovl-inv">
+  <div class="ovl-title-row">
+    <div class="ovl-title">&#128230; CARGO MANIFEST</div>
+    <button class="ovl-close-btn" onclick="surfCloseOvl('inv')">&#10005;</button>
   </div>
-  <div class="surf-ovl-body" id="surf-inv-body"></div>
+  <div class="filter-row" id="surf-inv-filters">
+    <button class="fbtn act" onclick="surfSetFilter('all',this)">All</button>
+    <button class="fbtn" onclick="surfSetFilter('material',this)">Materials</button>
+    <button class="fbtn" onclick="surfSetFilter('potion',this)">Usable</button>
+    <button class="fbtn" onclick="surfSetFilter('ammo',this)">Ammo</button>
+  </div>
+  <div class="inv-body" style="width:100%;max-width:640px;">
+    <div class="inv-grid-wrap">
+      <div class="inv-grid" id="surf-inv-grid"></div>
+      <div class="inv-empty" id="surf-inv-empty" style="display:none;">Pack is empty.</div>
+      <div id="surf-inv-footer" style="font-size:9px;color:#665577;margin-top:6px;"></div>
+    </div>
+    <div class="inv-detail" id="surf-inv-detail" style="display:none;">
+      <div class="inv-detail-ico" id="surf-inv-d-ico">&#128230;</div>
+      <div class="inv-detail-name" id="surf-inv-d-name">—</div>
+      <div class="inv-detail-desc" id="surf-inv-d-desc"></div>
+      <div class="inv-detail-val" id="surf-inv-d-val"></div>
+      <div id="surf-inv-d-actions" style="display:flex;flex-direction:column;gap:5px;margin-top:4px;"></div>
+    </div>
+  </div>
 </div>
 
-<!-- Save Overlay -->
-<div class="surf-ovl" id="surf-ovl-save">
-  <div class="surf-ovl-hdr">
-    <span>&#128190; SAVE / LOAD</span>
-    <button class="surf-ovl-close" onclick="surfCloseOvl('save')">&#10005;</button>
+<!-- Save / Log Overlay (briefing-panel style matching index.html) -->
+<div class="ovlay" id="surf-ovl-save">
+  <div class="ovl-title-row">
+    <div class="ovl-title">&#128190; SHIP&#8217;S LOG</div>
+    <button class="ovl-close-btn" onclick="surfCloseOvl('save')">&#10005;</button>
   </div>
-  <div class="surf-ovl-body" id="surf-save-body"></div>
+  <div style="width:100%;max-width:640px;">
+    <div class="surf-save-lbl">Auto Save</div>
+    <div id="surf-autosave-slot" style="margin-bottom:10px;"></div>
+    <div class="surf-save-lbl">Manual Saves</div>
+    <div id="surf-save-slots-list"></div>
+  </div>
 </div>
 
 <!-- Transition overlay -->
@@ -1233,7 +1304,7 @@ document.addEventListener('keydown', e => {
   if (['ArrowUp','w','W'].includes(e.key))    S.keys.up    = true;
   if (['ArrowDown','s','S'].includes(e.key))  S.keys.down  = true;
   if (['Enter','z','Z',' '].includes(e.key))  { e.preventDefault(); tryInteract(); }
-  if (e.key === 'Escape') { closeDlg(); closeSurfShop(); _surfCloseAll(); }
+  if (e.key === 'Escape') { closeDlg(); _surfCloseAll(); }
   // Dialogue advance
   if (['Enter','z','Z',' '].includes(e.key) &&
       document.getElementById('dialogue-box').style.display !== 'none') {
@@ -2161,27 +2232,29 @@ function _shopMsg(t) { const el=document.getElementById('surf-shop-msg'); if(el)
 const SURF_SAVE_KEY  = 'fentheris_saves';
 const SURF_AUTO_KEY  = 'fentheris_surface_auto';
 
-// ── Overlay open/close ────────────────────────────────────────────────────────
+// ── Overlay open/close (mirrors openOverlay/closeOverlay in index.html) ────────
 const _SURF_OVLS = ['stats','inv','save'];
 function surfOpenOvl(id) {
+  // Close all first (one at a time, same as index.html)
   _SURF_OVLS.forEach(k => {
-    document.getElementById('surf-ovl-'+k).style.display = 'none';
+    const el = document.getElementById('surf-ovl-'+k);
+    if (el) el.classList.remove('on');
   });
   const el = document.getElementById('surf-ovl-'+id);
   if (!el) return;
-  el.style.display = 'flex';
+  el.classList.add('on');
   if (id==='stats') _buildStats();
-  if (id==='inv')   _buildInv();
-  if (id==='save')  _buildSaveSlots();
+  if (id==='inv')   surfBuildInvGrid();
+  if (id==='save')  _surfBuildSaveSlots();
 }
 function surfCloseOvl(id) {
   const el = document.getElementById('surf-ovl-'+id);
-  if (el) el.style.display = 'none';
+  if (el) el.classList.remove('on');
 }
 function _surfAnyOvlOpen() {
   return _SURF_OVLS.some(k => {
     const el = document.getElementById('surf-ovl-'+k);
-    return el && el.style.display === 'flex';
+    return el && el.classList.contains('on');
   });
 }
 function _surfCloseAll() {
@@ -2189,262 +2262,185 @@ function _surfCloseAll() {
   closeSurfShop();
 }
 
-// ── Stats overlay ─────────────────────────────────────────────────────────────
+// ── Stats overlay (pbox panels, mirrors index.html sidebar style) ─────────────
 function _buildStats() {
   const el = document.getElementById('surf-stats-body'); if (!el) return;
   const cap = S.captain;
-  const xpPct = Math.min(100, Math.round(cap.xp / xpToNext(cap.level) * 100));
-  const gear = [
-    cap.melee  ? cap.melee.name  + ' (' + cap.melee.dmgMin  + '-' + cap.melee.dmgMax  + ' dmg)' : null,
-    cap.ranged ? cap.ranged.name + ' (' + cap.ranged.dmgMin + '-' + cap.ranged.dmgMax + ' dmg, ' + (cap.shotsLoaded||0) + ' shots)' : null,
-    cap.armor  ? cap.armor.name  + ' (+' + cap.armor.hpBonus  + ' HP, ' + cap.armor.def  + ' def)' : null,
-    cap.helmet ? cap.helmet.name + ' (+' + cap.helmet.hpBonus + ' HP, ' + cap.helmet.def + ' def)' : null,
-  ].filter(Boolean);
-  el.innerHTML = `
-    <div class="stat-section">
-      <div class="stat-title">Captain</div>
-      <div class="stat-row"><span class="stat-label">Level</span><span class="stat-val">${cap.level}</span></div>
-      <div class="stat-row"><span class="stat-label">XP</span><span class="stat-val">${cap.xp} / ${xpToNext(cap.level)}</span></div>
-      <div class="stat-xp-bar"><div class="stat-xp-fill" style="width:${xpPct}%"></div></div>
-      <div class="stat-row" style="margin-top:4px;"><span class="stat-label">HP</span><span class="stat-val">${cap.hp} / ${cap.maxHp}</span></div>
-      <div class="stat-row"><span class="stat-label">Defense</span><span class="stat-val">${cap.defense}</span></div>
-      <div class="stat-row"><span class="stat-label">Gold</span><span class="stat-val">${S.gold} TS</span></div>
-    </div>
-    <div class="stat-section">
-      <div class="stat-title">Equipped</div>
-      ${gear.map(g=>'<div class="stat-row"><span class="stat-val" style="color:#887755;">'+g+'</span></div>').join('')}
-    </div>
-    <div class="stat-section">
-      <div class="stat-title">Session</div>
-      <div class="stat-row"><span class="stat-label">Day</span><span class="stat-val">${S.day}</span></div>
-      <div class="stat-row"><span class="stat-label">Hours awake</span><span class="stat-val">${S.hoursAwake.toFixed(1)}</span></div>
-      <div class="stat-row"><span class="stat-label">Enemies alive</span><span class="stat-val">${S.enemies.filter(e=>e.alive).length} / ${S.enemies.length}</span></div>
-    </div>
-  `;
+  const xpPct = Math.min(100, cap.xp / xpToNext(cap.level) * 100).toFixed(1);
+  const hpPct = Math.min(100, cap.hp / cap.maxHp * 100).toFixed(1);
+  const shotsPct = cap.ranged ? Math.min(100,(cap.shotsLoaded||0)/cap.ranged.shotsPerCombat*100).toFixed(1) : 0;
+  el.innerHTML =
+    '<div class="pbox">'
+    +'<div class="ptitle">&#9876; Your Captain</div>'
+    +'<div class="srow"><span class="slabel">Level</span><span class="sval">'+cap.level+'</span></div>'
+    +'<div class="srow"><span class="slabel">HP</span><span class="sval">'+cap.hp+' / '+cap.maxHp+'</span></div>'
+    +'<div class="bw"><div class="bf bh" style="width:'+hpPct+'%"></div></div>'
+    +'<div class="srow" style="margin-top:2px;"><span class="slabel">XP</span><span class="sval">'+cap.xp+' / '+xpToNext(cap.level)+'</span></div>'
+    +'<div class="bw"><div class="bf bx" style="width:'+xpPct+'%"></div></div>'
+    +'<div class="srow" style="margin-top:2px;"><span class="slabel">Defense</span><span class="sval">'+cap.defense+'</span></div>'
+    +'<div class="srow"><span class="slabel">Gold</span><span class="sval">'+S.gold+' TS</span></div>'
+    +'</div>'
+    +'<div class="pbox">'
+    +'<div class="ptitle">&#9874; Equipped Gear</div>'
+    +(cap.armor  ? '<div class="srow"><span class="slabel">Armor</span><span class="sval">'+cap.armor.name+' +'+cap.armor.hpBonus+' HP</span></div>' : '')
+    +(cap.helmet ? '<div class="srow"><span class="slabel">Helmet</span><span class="sval">'+cap.helmet.name+' +'+cap.helmet.hpBonus+' HP</span></div>' : '')
+    +(cap.melee  ? '<div class="srow"><span class="slabel">Melee</span><span class="sval">'+cap.melee.name+' '+cap.melee.dmgMin+'-'+cap.melee.dmgMax+'dmg</span></div>' : '')
+    +(cap.ranged ? '<div class="srow"><span class="slabel">Ranged</span><span class="sval">'+cap.ranged.name+' '+cap.ranged.dmgMin+'-'+cap.ranged.dmgMax+'dmg</span></div>' : '')
+    +(cap.ranged ? '<div class="srow"><span class="slabel">Shots</span><span class="sval">'+(cap.shotsLoaded||0)+' / '+cap.ranged.shotsPerCombat+'</span></div>'
+      +'<div class="bw"><div class="bf ba" style="width:'+shotsPct+'%"></div></div>' : '')
+    +'</div>'
+    +'<div class="pbox">'
+    +'<div class="ptitle">&#128336; Session</div>'
+    +'<div class="srow"><span class="slabel">Day</span><span class="sval">'+S.day+'</span></div>'
+    +'<div class="srow"><span class="slabel">Hours Awake</span><span class="sval">'+(S.hoursAwake||0).toFixed(1)+'</span></div>'
+    +'<div class="srow"><span class="slabel">Enemies Alive</span><span class="sval">'+S.enemies.filter(e=>e.alive).length+' / '+S.enemies.length+'</span></div>'
+    +'<div class="srow"><span class="slabel">Pack Items</span><span class="sval">'+cap.inv.length+'</span></div>'
+    +'</div>';
 }
 
-// ── Inventory overlay ─────────────────────────────────────────────────────────
-function _buildInv() {
-  const el = document.getElementById('surf-inv-body'); if (!el) return;
-  const inv = S.captain.inv;
-  if (!inv.length) { el.innerHTML = '<div class="inv-empty">Pack is empty.</div>'; return; }
-  el.innerHTML = '';
-  inv.forEach((item, idx) => {
-    const def = ITEM_DEFS[item.id] || {};
-    const qty  = item.qty || 1;
-    const sub  = item.type==='potion' ? 'Restores '+item.heal+' HP'
-               : item.type==='ammo'   ? '3 shots per magazine'
-               : item.type==='material' ? 'Sell value: '+(def.sellVal||'?')+' TS'
-               : '';
-    const canUse = item.type==='potion' && S.captain.hp < S.captain.maxHp;
-    const row = document.createElement('div');
-    row.className = 'inv-item';
-    row.innerHTML =
-      '<span class="inv-item-name">'+item.name+'<span class="inv-item-sub">'+sub+'</span></span>'+
-      '<span class="inv-item-qty">x'+qty+'</span>';
-    if (item.type==='potion') {
-      const btn = document.createElement('button');
-      btn.className = 'inv-use-btn';
-      btn.textContent = 'Use';
-      btn.disabled = !canUse;
-      btn.onclick = () => { _surfUsePotion(idx); _buildInv(); };
-      row.appendChild(btn);
-    }
-    el.appendChild(row);
-  });
+// ── Cargo / Inventory (mirrors buildInvGrid from index.html) ──────────────────
+let _surfInvFilter = 'all';
+function surfSetFilter(f, btn) {
+  _surfInvFilter = f;
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('act'));
+  if (btn) btn.classList.add('act');
+  surfBuildInvGrid();
 }
-function _surfUsePotion(idx) {
-  const item = S.captain.inv[idx];
-  if (!item || item.type !== 'potion') return;
-  if (S.captain.hp >= S.captain.maxHp) { setStatus('Already at full HP.'); return; }
-  const heal = item.heal || 20;
-  S.captain.hp = Math.min(S.captain.maxHp, S.captain.hp + heal);
-  item.qty = (item.qty||1) - 1;
-  if (item.qty <= 0) S.captain.inv.splice(idx, 1);
-  sfx('player_hurt', 0.4); // soft heal tone (use player_hurt in reverse; or add a heal sfx later)
-  setStatus('Used Healing Tincture. HP: '+S.captain.hp+'/'+S.captain.maxHp);
-}
-
-// ── Save / Load ───────────────────────────────────────────────────────────────
-function _surfBuildSave(label) {
-  // Build in index.html's exact format so both files share the same slots
-  const ie = S._indexEntry || {};
-  const ss = {
-    px: S.px, py: S.py,
-    day: S.day, gold: S.gold,
-    enemies: S.enemies.map(e=>({alive:e.alive,currentHp:e.currentHp,tx:e.tx,ty:e.ty,type:e.type})),
-  };
-  // Re-package index state, updating captain + gold from current surface values
-  const data = JSON.stringify({
-    ship:      { ...(ie.ship||{}), gold:S.gold, inv:S.captain.inv },
-    spheres:   ie.spheres   || [],
-    frags:     ie.frags     || 0,
-    clues:     ie.clues     || [],
-    fragsCollected: ie.fragsCollected || [],
-    localQuests: ie.localQuests || {},
-    lsQmStock:  ie.lsQmStock  || null,
-    lsLastSpawn:ie.lsLastSpawn|| {},
-    lsLastVisit:ie.lsLastVisit|| {},
-    lsState:   { inLocalSpace:false },
-    rep:       ie.rep    || {},
-    quests:    ie.quests || [],
-    completedQuests: ie.completedQuests || [],
-    postVictory: ie.postVictory || false,
-    breachEntered: ie.breachEntered || false,
-    worldBossDefeated: ie.worldBossDefeated || [],
-    breachIntel: ie.breachIntel || [],
-    wbDiscovered: ie.wbDiscovered || [],
-    wbPatrol:  ie.wbPatrol  || {},
-    shothothuqUnlocked: ie.shothothuqUnlocked || false,
-    farPhlo:   ie.farPhlo   || null,
-    _breachArrived: ie._breachArrived || {},
-    captainLog: ie.captainLog || [],
-    travelDays: ie.travelDays || 0,
-    watch:     ie.watch  || { day:S.day, totalHours:S.totalHours, hoursAwake:S.hoursAwake },
-    journeyOrigWatches: ie.journeyOrigWatches || 0,
-    journeyWpHit: ie.journeyWpHit || false,
-    tutorial:  ie.tutorial  || null,
-    lsOrbitHours: ie.lsOrbitHours || 0,
-    captain:   S.captain,
-    surfaceState: ss,
-  });
-  return {
-    context:  'surface',
-    name:      label,
-    timestamp: Date.now(),
-    shipName:  ie.ship?.name || 'Unknown',
-    shipType:  ie.ship?.type || '',
-    hull:      ie.ship?.hull || 0,
-    maxHull:   ie.ship?.maxHull || 0,
-    crew:      ie.ship?.crew || 0,
-    TS:        S.gold,
-    frags:     ie.frags || 0,
-    loc:       'Surface — Fentheris',
-    data,
-  };
-}
-function _surfApplySave(save) {
-  if (!save) return false;
-  try {
-    // Unified save: extract surfaceState from the data field
-    let ss = save.surfaceState || null;
-    if (!ss && save.data) {
-      try { const d=JSON.parse(save.data); ss=d.surfaceState||null; } catch(_){}
-    }
-    if (!ss) {
-      // Legacy surface-only format
-      ss = { px:save.px, py:save.py, day:save.day, gold:save.gold,
-             captain:save.captain, enemies:save.enemies };
-    }
-    if (ss.px)       S.px=ss.px;
-    if (ss.py)       S.py=ss.py;
-    if (ss.day)      S.day=ss.day;
-    if (ss.gold!=null) S.gold=ss.gold;
-    // Restore captain from data field (most up-to-date)
-    let cap = ss.captain;
-    if (!cap && save.data) {
-      try { cap=JSON.parse(save.data).captain; } catch(_){}
-    }
-    if (cap) {
-      S.captain={...S.captain,...cap};
-      ['melee','ranged','armor','helmet','inv'].forEach(k=>{if(cap[k])S.captain[k]=cap[k];});
-    }
-    // Restore enemy alive/hp state
-    if (ss.enemies && ss.enemies.length === S.enemies.length) {
-      ss.enemies.forEach((se,i)=>{
-        if(S.enemies[i]){S.enemies[i].alive=se.alive;S.enemies[i].currentHp=se.currentHp;}
-      });
-    }
-    // Update _indexEntry so next save includes fresh data
-    if (save.data) {
-      try {
-        const d=JSON.parse(save.data);
-        S._indexEntry={...S._indexEntry,...d,ship:{...(S._indexEntry?.ship||{}),gold:S.gold}};
-      } catch(_){}
-    }
-    updateHUD();
-    setStatus('Save loaded. Day '+S.day+'. HP '+S.captain.hp+'/'+S.captain.maxHp+'.');
-    return true;
-  } catch(e) { return false; }
-}
-function surfAutoSave() {
-  if (!S._indexEntry) return; // don't save before entry data is loaded
-  try {
-    const save = _surfBuildSave('Auto');
-    localStorage.setItem(SURF_AUTO_KEY, JSON.stringify(save));
-  } catch(_) {}
-}
-function _buildSaveSlots() {
-  const el = document.getElementById('surf-save-body'); if (!el) return;
-  el.innerHTML = '';
-  // Manual save button
-  const saveNowRow = document.createElement('div');
-  saveNowRow.style.cssText = 'display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;';
-  [0,1,2].forEach(slot => {
-    const b = document.createElement('button');
-    b.className = 'save-btn'; b.style.flex='1';
-    b.textContent = 'Save Slot '+(slot+1);
-    b.onclick = () => { _surfSaveToSlot(slot); _buildSaveSlots(); sfx('purchase',0.6); };
-    saveNowRow.appendChild(b);
-  });
-  el.appendChild(saveNowRow);
-  // Auto save slot
-  const autoLbl = document.createElement('div');
-  autoLbl.className = 'save-autosave-lbl'; autoLbl.textContent = 'Auto Save';
-  el.appendChild(autoLbl);
-  try {
-    const auto = JSON.parse(localStorage.getItem(SURF_AUTO_KEY)||'null');
-    el.appendChild(_makeSaveSlotRow(auto, 'auto'));
-  } catch(_) { el.appendChild(_makeSaveSlotRow(null,'auto')); }
-  // Manual slots
-  const manualLbl = document.createElement('div');
-  manualLbl.className = 'save-autosave-lbl'; manualLbl.style.marginTop='8px'; manualLbl.textContent = 'Manual Saves';
-  el.appendChild(manualLbl);
-  let saves = [];
-  try { saves = JSON.parse(localStorage.getItem(SURF_SAVE_KEY)||'[]'); } catch(_) {}
-  [0,1,2].forEach(slot => {
-    el.appendChild(_makeSaveSlotRow(saves[slot]||null, slot));
-  });
-}
-function _makeSaveSlotRow(save, slot) {
-  const row = document.createElement('div'); row.className = 'save-slot-row';
-  const info = document.createElement('div'); info.className = 'save-slot-info';
-  if (save) {
-    const d = new Date(save.timestamp).toLocaleString();
-    info.innerHTML =
-      '<div class="save-slot-name">'+(slot==='auto'?'&#128260; Auto':('&#128190; Slot '+(slot+1)))+' — Lv '+save.level+'</div>'+
-      '<div class="save-slot-detail">Day '+save.day+' &nbsp;|&nbsp; '+save.gold+' TS &nbsp;|&nbsp; HP '+save.hp+'/'+save.maxHp+'</div>'+
-      '<div class="save-slot-detail" style="color:#332211;">'+d+'</div>';
+function surfBuildInvGrid() {
+  const grid   = document.getElementById('surf-inv-grid');   if (!grid) return;
+  const empty  = document.getElementById('surf-inv-empty');
+  const footer = document.getElementById('surf-inv-footer');
+  const detail = document.getElementById('surf-inv-detail');
+  if (detail) detail.style.display = 'none';
+  grid.innerHTML = '';
+  const inv = S.captain.inv.filter(i => _surfInvFilter === 'all' || i.type === _surfInvFilter);
+  if (inv.length === 0) {
+    if (empty)  empty.style.display = 'block';
+    grid.style.display = 'none';
   } else {
-    info.innerHTML = '<div class="save-slot-name" style="color:#332211;">— Empty —</div>';
+    if (empty)  empty.style.display = 'none';
+    grid.style.display = 'grid';
+    inv.forEach(item => {
+      const def = ITEM_DEFS[item.id] || {};
+      const ico = item.type==='potion' ? '&#9879;' : item.type==='ammo' ? '&#128299;' : '&#128230;';
+      const qty = item.qty || 1;
+      const d = document.createElement('div');
+      d.className = 'inv-item';
+      d.innerHTML = '<div class="inv-ico">'+ico+'</div><div class="inv-iname">'+item.name+(qty>1?' x'+qty:'')+'</div>';
+      d.onclick = () => _surfSelectItem(item);
+      grid.appendChild(d);
+    });
   }
-  row.appendChild(info);
-  const btns = document.createElement('div'); btns.className = 'save-slot-btns';
-  if (save) {
-    const lb = document.createElement('button'); lb.className='save-btn save-btn-load'; lb.textContent='Load';
-    lb.onclick = () => { if(_surfApplySave(save)) surfCloseOvl('save'); };
-    btns.appendChild(lb);
-    if (slot !== 'auto') {
-      const db = document.createElement('button'); db.className='save-btn save-btn-del'; db.textContent='Del';
-      db.onclick = () => { _surfDeleteSlot(slot); _buildSaveSlots(); };
-      btns.appendChild(db);
-    }
-  }
-  row.appendChild(btns);
-  return row;
+  const total = S.captain.inv.reduce((a,i) => {
+    const def = ITEM_DEFS[i.id]||{}; return a + (def.sellVal||0)*(i.qty||1);
+  }, 0);
+  if (footer) footer.textContent = S.captain.inv.length + ' items — Est. sell value: ' + total + ' TS';
 }
-function _surfSaveToSlot(slot) {
-  let saves = [null,null,null];
-  try { saves = JSON.parse(localStorage.getItem(SURF_SAVE_KEY)||'[null,null,null]'); } catch(_) {}
-  saves[slot] = _surfBuildSave('Slot '+(slot+1));
-  try { localStorage.setItem(SURF_SAVE_KEY, JSON.stringify(saves)); } catch(_) {}
-  setStatus('Saved to Slot '+(slot+1)+'.');
+function _surfSelectItem(item) {
+  document.querySelectorAll('.inv-item').forEach(el => el.classList.remove('sel'));
+  const def = ITEM_DEFS[item.id] || {};
+  const detail = document.getElementById('surf-inv-detail');
+  if (!detail) return;
+  detail.style.display = 'flex';
+  const ico = item.type==='potion'?'&#9879;':item.type==='ammo'?'&#128299;':'&#128230;';
+  document.getElementById('surf-inv-d-ico').innerHTML  = ico;
+  document.getElementById('surf-inv-d-name').textContent = item.name + (item.qty>1?' x'+(item.qty):'');
+  const sub = item.type==='potion' ? 'Restores '+(item.heal||20)+' HP.'
+            : item.type==='ammo'   ? (item.shots||3)+' shots per magazine.'
+            : 'Salvage material.';
+  document.getElementById('surf-inv-d-desc').textContent = sub;
+  document.getElementById('surf-inv-d-val').textContent  = def.sellVal ? 'Sell value: '+def.sellVal+' TS ea' : '';
+  const acts = document.getElementById('surf-inv-d-actions'); acts.innerHTML = '';
+  if (item.type === 'potion') {
+    const ub = document.createElement('button'); ub.className = 'btn gd sm';
+    ub.textContent = '&#9879; Use';
+    ub.disabled = S.captain.hp >= S.captain.maxHp;
+    ub.onclick = () => {
+      if (S.captain.hp >= S.captain.maxHp) { setStatus('Already at full HP.'); return; }
+      S.captain.hp = Math.min(S.captain.maxHp, S.captain.hp + (item.heal||20));
+      item.qty = (item.qty||1) - 1;
+      if (item.qty <= 0) S.captain.inv = S.captain.inv.filter(i => i !== item);
+      setStatus('Used '+item.name+'. HP: '+S.captain.hp+'/'+S.captain.maxHp+'.');
+      surfBuildInvGrid();
+    };
+    acts.appendChild(ub);
+  }
+}
+
+// ── Save / Load (mirrors index.html exactly) ─────────────────────────
+const _SURF_SAVE_KEY = 'fentheris_saves';
+
+function _surfGetSaves() {
+  try { return JSON.parse(localStorage.getItem(_SURF_SAVE_KEY))||[null,null,null]; } catch(_) { return [null,null,null]; }
+}
+function _surfGetAuto() {
+  try { return JSON.parse(localStorage.getItem('fentheris_autosave'))||null; } catch(_) { return null; }
+}
+function _surfSlotHTML(save, slotId, isAuto) {
+  const canSave = !isAuto && !!S._indexEntry;
+  if (save) {
+    const date   = new Date(save.timestamp).toLocaleString();
+    const isSurf = save.context === 'surface';
+    const ctx    = isSurf ? ' [Surface]' : ' [Space]';
+    const name   = save.name || (isAuto ? 'Auto Save' : 'Slot '+(slotId+1));
+    const detail = isSurf
+      ? 'Day '+(save.day||'?')+' | '+(save.TS||save.gold||0)+' TS | '+(save.loc||'Surface')
+      : (save.shipName||'')+' | '+(save.loc||'')+' | '+(save.TS||save.gold||0)+' TS';
+    const lb = '<button class="ssbtn gd" data-slot="'+slotId+'" data-act="load">Load</button>';
+    const ob = (!isAuto&&canSave)?'<button class="ssbtn" data-slot="'+slotId+'" data-act="save">Overwrite</button>':''; 
+    const db = !isAuto?'<button class="ssbtn dmg" data-slot="'+slotId+'" data-act="del">Delete</button>':''; 
+    return '<div class="save-slot"><div class="save-info">'
+      +'<div class="save-name">'+(isAuto?'&#128260;':'&#128190;')+' '+name+ctx+'</div>'
+      +'<div class="save-detail">'+detail+'</div>'
+      +'<div class="save-detail" style="color:#332211;">'+date+'</div>'
+      +'</div><div class="save-actions">'+lb+ob+db+'</div></div>';
+  }
+  const sb = canSave?'<button class="ssbtn" data-slot="'+slotId+'" data-act="save">Save Here</button>':'';
+  return '<div class="save-slot empty"><div class="save-info"><div class="save-name" style="color:#554433;">— Empty Slot '+(isAuto?'':slotId+1)+' —</div></div><div class="save-actions">'+sb+'</div></div>';
+}
+function _surfBuildSaveSlots() {
+  const ae = document.getElementById('surf-autosave-slot');
+  if (ae) ae.innerHTML = _surfSlotHTML(_surfGetAuto(),'auto',true);
+  const list = document.getElementById('surf-save-slots-list'); if (!list) return;
+  list.innerHTML = '';
+  _surfGetSaves().forEach((save,i)=>{ const d=document.createElement('div'); d.innerHTML=_surfSlotHTML(save,i,false); list.appendChild(d.firstElementChild||d); });
+  // Event delegation — handles all ssbtn clicks via data-slot / data-act
+  const body = document.getElementById('surf-ovl-save');
+  if (body && !body._delegated) {
+    body._delegated = true;
+    body.addEventListener('click', e => {
+      const btn = e.target.closest('[data-act]'); if (!btn) return;
+      const slot = btn.dataset.slot, act = btn.dataset.act;
+      if (act==='load') _surfLoadSlot(slot==='auto'?'auto':parseInt(slot));
+      else if (act==='save') _surfPromptSave(parseInt(slot));
+      else if (act==='del')  _surfDeleteSlot(parseInt(slot));
+    });
+  }
+}
+function _surfPromptSave(slot) {
+  if (!S._indexEntry) { setStatus('Cannot save: enter via the ship first.'); return; }
+  const saves=_surfGetSaves(), def=saves[slot]?.name||'Surface — Day '+S.day;
+  const name=prompt('Name this save:',def); if (name===null) return;
+  const save=_surfBuildSave(name.trim()||def); saves[slot]=save;
+  try { localStorage.setItem(_SURF_SAVE_KEY,JSON.stringify(saves)); } catch(_) {}
+  sfx('purchase',0.5); setStatus('Saved to Slot '+(slot+1)+'.'); _surfBuildSaveSlots();
+}
+function _surfLoadSlot(slot) {
+  const save=slot==='auto'?_surfGetAuto():_surfGetSaves()[slot]; if (!save) return;
+  if (save.context==='surface') { _surfApplySave(save); surfCloseOvl('save'); }
+  else if (confirm('Space save. Return to ship to load it?')) {
+    sessionStorage.setItem('fentheris_surface_return','1'); window.location.href='index.html';
+  }
 }
 function _surfDeleteSlot(slot) {
-  let saves = [];
-  try { saves = JSON.parse(localStorage.getItem(SURF_SAVE_KEY)||'[]'); } catch(_) {}
-  saves[slot] = null;
-  try { localStorage.setItem(SURF_SAVE_KEY, JSON.stringify(saves)); } catch(_) {}
+  if (!confirm('Delete Slot '+(slot+1)+'?')) return;
+  const saves=_surfGetSaves(); saves[slot]=null;
+  try { localStorage.setItem(_SURF_SAVE_KEY,JSON.stringify(saves)); } catch(_) {}
+  _surfBuildSaveSlots();
+}
+function surfAutoSave() {
+  if (!S._indexEntry) return;
+  try { localStorage.setItem(SURF_AUTO_KEY,JSON.stringify(_surfBuildSave('Auto'))); } catch(_) {}
 }
 
 // ── Minimap ───────────────────────────────────────────────────────────────────
