@@ -2417,8 +2417,109 @@ function _surfBuildSaveSlots() {
     });
   }
 }
+function _surfBuildSave(label) {
+  // Surface state snapshot — works with or without _indexEntry
+  const ie = S._indexEntry || {};
+  const ss = {
+    px: S.px, py: S.py,
+    day: S.day, gold: S.gold,
+    enemies: S.enemies.map(e => ({ alive:e.alive, currentHp:e.currentHp, tx:e.tx, ty:e.ty, type:e.type })),
+  };
+  // Package in index.html's save format so slots are cross-compatible
+  const state = {
+    ship:      Object.assign({}, ie.ship || {}, { gold: S.gold, inv: S.captain.inv }),
+    spheres:   ie.spheres   || [],
+    frags:     ie.frags     || 0,
+    clues:     ie.clues     || [],
+    fragsCollected:     ie.fragsCollected     || [],
+    localQuests:        ie.localQuests        || {},
+    lsQmStock:          ie.lsQmStock          || null,
+    lsLastSpawn:        ie.lsLastSpawn        || {},
+    lsLastVisit:        ie.lsLastVisit        || {},
+    lsState:            { inLocalSpace: false },
+    rep:                ie.rep                || {},
+    quests:             ie.quests             || [],
+    completedQuests:    ie.completedQuests    || [],
+    postVictory:        ie.postVictory        || false,
+    breachEntered:      ie.breachEntered      || false,
+    worldBossDefeated:  ie.worldBossDefeated  || [],
+    breachIntel:        ie.breachIntel        || [],
+    wbDiscovered:       ie.wbDiscovered       || [],
+    wbPatrol:           ie.wbPatrol           || {},
+    shothothuqUnlocked: ie.shothothuqUnlocked || false,
+    farPhlo:            ie.farPhlo            || null,
+    _breachArrived:     ie._breachArrived     || {},
+    captainLog:         ie.captainLog         || [],
+    travelDays:         ie.travelDays         || 0,
+    watch:     ie.watch  || { day: S.day, totalHours: S.totalHours, hoursAwake: S.hoursAwake },
+    journeyOrigWatches: ie.journeyOrigWatches || 0,
+    journeyWpHit:       ie.journeyWpHit       || false,
+    tutorial:           ie.tutorial           || null,
+    lsOrbitHours:       ie.lsOrbitHours       || 0,
+    captain:   S.captain,
+    surfaceState: ss,
+  };
+  const ship = state.ship || {};
+  return {
+    context:   'surface',
+    name:      label,
+    timestamp: Date.now(),
+    shipName:  ship.name  || 'Unknown',
+    shipType:  ship.type  || '',
+    hull:      ship.hull  || 0,
+    maxHull:   ship.maxHull || 0,
+    crew:      ship.crew  || 0,
+    TS:        S.gold,
+    gold:      S.gold,
+    day:       S.day,
+    frags:     state.frags,
+    loc:       'Surface — Fentheris',
+    data:      JSON.stringify(state),
+  };
+}
+
+function _surfApplySave(save) {
+  if (!save) return false;
+  try {
+    // Extract surfaceState — try data field first, then top-level
+    let ss = null;
+    if (save.data) {
+      try { const d = JSON.parse(save.data); ss = d.surfaceState || null; } catch(_) {}
+    }
+    if (!ss) ss = save.surfaceState || null;
+    if (!ss) return false;
+    if (ss.px)         S.px   = ss.px;
+    if (ss.py)         S.py   = ss.py;
+    if (ss.day)        S.day  = ss.day;
+    if (ss.gold != null) S.gold = ss.gold;
+    // Restore captain
+    let cap = null;
+    if (save.data) { try { cap = JSON.parse(save.data).captain; } catch(_) {} }
+    if (!cap) cap = save.captain || null;
+    if (cap) {
+      S.captain = Object.assign({}, S.captain, cap);
+      ['melee','ranged','armor','helmet','inv'].forEach(k => { if (cap[k]) S.captain[k] = cap[k]; });
+    }
+    // Restore enemy alive/hp
+    if (ss.enemies && ss.enemies.length === S.enemies.length) {
+      ss.enemies.forEach((se, i) => {
+        if (S.enemies[i]) { S.enemies[i].alive = se.alive; S.enemies[i].currentHp = se.currentHp; }
+      });
+    }
+    // Refresh _indexEntry if save has full data
+    if (save.data) {
+      try {
+        const d = JSON.parse(save.data);
+        S._indexEntry = Object.assign({}, S._indexEntry || {}, d, { ship: Object.assign({}, d.ship, { gold: S.gold }) });
+      } catch(_) {}
+    }
+    updateHUD();
+    setStatus('Save loaded. Day ' + S.day + '. HP ' + S.captain.hp + '/' + S.captain.maxHp + '.');
+    return true;
+  } catch(e) { return false; }
+}
+
 function _surfPromptSave(slot) {
-  if (!S._indexEntry) { setStatus('Cannot save: enter via the ship first.'); return; }
   const saves=_surfGetSaves(), def=saves[slot]?.name||'Surface — Day '+S.day;
   const name=prompt('Name this save:',def); if (name===null) return;
   const save=_surfBuildSave(name.trim()||def); saves[slot]=save;
@@ -2439,7 +2540,7 @@ function _surfDeleteSlot(slot) {
   _surfBuildSaveSlots();
 }
 function surfAutoSave() {
-  if (!S._indexEntry) return;
+  if (!S._indexEntry && !S.captain.gearGiven) return; // no meaningful state yet
   try { localStorage.setItem(SURF_AUTO_KEY,JSON.stringify(_surfBuildSave('Auto'))); } catch(_) {}
 }
 
