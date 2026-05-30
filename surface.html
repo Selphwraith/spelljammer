@@ -2342,14 +2342,16 @@ function _surfSelectItem(item) {
   const detail = document.getElementById('surf-inv-detail');
   if (!detail) return;
   detail.style.display = 'flex';
-  const ico = item.type==='potion'?'&#9879;':item.type==='ammo'?'&#128299;':'&#128230;';
-  document.getElementById('surf-inv-d-ico').innerHTML  = ico;
-  document.getElementById('surf-inv-d-name').textContent = item.name + (item.qty>1?' x'+(item.qty):'');
-  const sub = item.type==='potion' ? 'Restores '+(item.heal||20)+' HP.'
-            : item.type==='ammo'   ? (item.shots||3)+' shots per magazine.'
-            : 'Salvage material.';
+  const displayName = item.name || item.n || item.id || '?';
+  const icoRaw = item.ico || (item.type==='potion'?'&#9879;':item.type==='ammo'?'&#128299;':'&#128230;');
+  document.getElementById('surf-inv-d-ico').innerHTML  = icoRaw;
+  document.getElementById('surf-inv-d-name').textContent = displayName + (item.qty>1?' x'+(item.qty):'');
+  const sub = item.desc || (item.type==='potion' ? 'Restores '+(item.heal||20)+' HP.'
+    : item.type==='ammo' ? (item.shots||3)+' shots per magazine.'
+    : 'Cargo item.');
   document.getElementById('surf-inv-d-desc').textContent = sub;
-  document.getElementById('surf-inv-d-val').textContent  = def.sellVal ? 'Sell value: '+def.sellVal+' TS ea' : '';
+  const sellV = def.sellVal ?? item.val ?? 0;
+  document.getElementById('surf-inv-d-val').textContent = sellV ? 'Sell value: '+sellV+' TS ea' : '';
   const acts = document.getElementById('surf-inv-d-actions'); acts.innerHTML = '';
   if (item.type === 'potion') {
     const ub = document.createElement('button'); ub.className = 'btn gd sm';
@@ -2360,7 +2362,7 @@ function _surfSelectItem(item) {
       S.captain.hp = Math.min(S.captain.maxHp, S.captain.hp + (item.heal||20));
       item.qty = (item.qty||1) - 1;
       if (item.qty <= 0) S.captain.inv = S.captain.inv.filter(i => i !== item);
-      setStatus('Used '+item.name+'. HP: '+S.captain.hp+'/'+S.captain.maxHp+'.');
+      setStatus('Used '+displayName+'. HP: '+S.captain.hp+'/'+S.captain.maxHp+'.');
       surfBuildInvGrid();
     };
     acts.appendChild(ub);
