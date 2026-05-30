@@ -349,7 +349,7 @@ body {
 #tvlf { height:100%; background:linear-gradient(90deg,#9933ff,#ff3399); transition:width 0.08s linear; }
 
 /* ── MSG BOX ── */
-#msgbox { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(4,0,13,0.97); border:1px solid #5522aa; border-radius:6px; padding:20px 26px; text-align:center; display:none; z-index:280; max-width:360px; max-height:88vh; overflow-y:auto; box-shadow:0 0 36px rgba(102,51,170,0.267); pointer-events:none; -webkit-overflow-scrolling:touch; }
+#msgbox { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(4,0,13,0.97); border:1px solid #5522aa; border-radius:6px; padding:20px 26px; text-align:center; display:none; z-index:8000; max-width:360px; max-height:88vh; overflow-y:auto; box-shadow:0 0 36px rgba(102,51,170,0.267); pointer-events:none; -webkit-overflow-scrolling:touch; }
 #msgbox.on { display:block; pointer-events:all; touch-action:manipulation; }
 #msgtitle { font-family:'Cinzel',serif; font-size: 1.063em; color:#ffd700; margin-bottom:8px; }
 #msgbody { font-size: 0.813em; color:#e4dcf4; margin-bottom:12px; line-height:1.6; white-space:pre-line; }
@@ -5491,6 +5491,9 @@ function _clockGameHoursPerMs() {
 }
 
 function _clockAccumulated() {
+  // When the watch-expired dialog is open, G.phase is 'map' but the clock should
+  // still show the banked time — not snap back to 0. Return the frozen accumulator.
+  if (G?.watch?._pauseShown) return _clockAccumH;
   // Outside active travel the accumulator is meaningless — return 0 so display stays clean
   if (G?.phase !== 'traveling') return 0;
   if (_clockPaused) return _clockAccumH;
@@ -16272,8 +16275,27 @@ function endCbt(won){
   if(G._resumeLanePoi){
     G._resumeLanePoi=false;
     if(won){ _lpoiResumePOI(); return; }
-    // Defeat while in POI — exit POI, then doDefeat handles the rest
-    G._inLanePoi=false; G._resumeLanePoi=false;
+    // Fled or defeated while in POI — tear down POI fully then handle outcome
+    G._inLanePoi=false;
+    // Close the POI overlay and restore travel state
+    const _lpoiEl=document.getElementById('ov-lane-poi');
+    if(_lpoiEl) _lpoiEl.classList.remove('on');
+    document.body.classList.remove('in-lpoi');
+    if(LPOI.animId){cancelAnimationFrame(LPOI.animId);LPOI.animId=null;}
+    LPOI.active=false;
+    // Restore phase so the map is interactive again
+    if(G.tvl) {
+      G.phase='traveling';
+      G.tvl._eventLocked=false;
+      G.tvl.timer=_tvlStart(G.tvl.tickMs||100);
+      resumeLiveClock();
+      if(!TS.animId&&TS.active){TS._lastTs=0;TS.animId=requestAnimationFrame(tsRender);}
+      else if(!TS.active) tsOpen(G.tvl.lane||getLane(G.tvl.from,G.tvl.to));
+      startTravelHum();
+      addLog('You flee the dungeon and return to the drift lane.','dmg');
+    } else {
+      G.phase='map'; setTag('Navigation'); updateUI();
+    }
     return;
   }
   // Local space / dungeon combat — return to LS instead of resuming travel
