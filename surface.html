@@ -513,6 +513,127 @@ const SHOP_STOCK = {
 
 
 
+// ============================================================
+// SURFACE SOUND SYSTEM  — mirrors index.html's snd() pattern
+// Drop .mp3 files in surface/sounds/ — missing files are silently skipped.
+// ============================================================
+
+const _SURF_SFX = {};   // preloaded Audio elements
+let   _SURF_MUTED = false;
+const _SURF_VOL = { master: 0.8, sfx: 0.8, ambient: 0.35 };
+
+// All surface sound files — path relative to surface.html
+const SURF_SOUND_DATA = {
+  // ── Combat ──────────────────────────────────────────────
+  knife_hit:      'surface/sounds/knife_hit.mp3',      // player melee connects
+  knife_swing:    'surface/sounds/knife_swing.mp3',    // melee swing whoosh
+  pistol_shot:    'surface/sounds/pistol_shot.mp3',    // ranged attack
+  pistol_empty:   'surface/sounds/pistol_empty.mp3',   // dry-fire click
+  reload:         'surface/sounds/reload.mp3',         // mag inserted
+  player_hurt:    'surface/sounds/player_hurt.mp3',    // captain takes damage
+  player_down:    'surface/sounds/player_down.mp3',    // knocked out
+  enemy_hurt:     'surface/sounds/enemy_hurt.mp3',     // any enemy hit
+  enemy_die:      'surface/sounds/enemy_die.mp3',      // enemy defeated
+  level_up:       'surface/sounds/level_up.mp3',       // captain levels up
+  // Enemy-type attacks (fall back to enemy_hurt if missing)
+  crawler_atk:    'surface/sounds/crawler_atk.mp3',   // void crawler hiss/skitter
+  lurker_atk:     'surface/sounds/lurker_atk.mp3',    // stone lurker slam/grind
+  watcher_atk:    'surface/sounds/watcher_atk.mp3',   // feral watcher screech
+  // ── Shop ────────────────────────────────────────────────
+  purchase:       'sounds/purchase.mp3',               // reuse index.html asset
+  sell:           'surface/sounds/sell.mp3',           // selling item clink
+  shop_open:      'surface/sounds/shop_open.mp3',      // shop overlay appears
+  shop_close:     'surface/sounds/shop_close.mp3',     // shop dismissed
+  // ── Exploration ─────────────────────────────────────────
+  footstep_dirt:  'surface/sounds/footstep_dirt.mp3',  // walking on dirt/grass
+  footstep_stone: 'surface/sounds/footstep_stone.mp3', // walking on cobble/floor
+  npc_interact:   'surface/sounds/npc_interact.mp3',   // dialogue opens
+  rest:           'surface/sounds/rest.mp3',           // resting/sleeping
+  // ── Ambient (looping) ───────────────────────────────────
+  ambient_field:  'surface/sounds/ambient_field.mp3',  // grassland/forest loop
+};
+
+// Load all sounds — fetch HEAD first so missing files never throw
+function _loadSurfSounds() {
+  Object.entries(SURF_SOUND_DATA).forEach(([key, path]) => {
+    fetch(path, { method: 'HEAD' })
+      .then(r => {
+        if (!r.ok) return;
+        try {
+          const a = new Audio();
+          a.preload = 'auto';
+          a.src = path;
+          _SURF_SFX[key] = a;
+        } catch(_) {}
+      })
+      .catch(() => {}); // network error — skip silently
+  });
+}
+
+// Play a surface sound — completely safe if key is missing
+function sfx(key, vol = 1.0) {
+  if (_SURF_MUTED || !_SURF_SFX[key]) return;
+  if (_SURF_VOL.master === 0 || _SURF_VOL.sfx === 0) return;
+  try {
+    const c = _SURF_SFX[key].cloneNode();
+    c.volume = Math.min(1, Math.max(0, vol * _SURF_VOL.master * _SURF_VOL.sfx));
+    c.play().catch(() => {});
+  } catch(_) {}
+}
+
+// Enemy-type attack sound with fallback to generic enemy_hurt
+function sfxEnemyAtk(enemyType) {
+  const map = { crawler:'crawler_atk', lurker:'lurker_atk', watcher:'watcher_atk' };
+  const key = map[enemyType] || 'enemy_hurt';
+  if (_SURF_SFX[key]) sfx(key, 0.85);
+  else sfx('enemy_hurt', 0.75);
+}
+
+// ── Ambient field loop ───────────────────────────────────────────────────────
+let _ambientEl = null;
+function startAmbient() {
+  if (_ambientEl || !_SURF_SFX['ambient_field']) return;
+  try {
+    _ambientEl = _SURF_SFX['ambient_field'].cloneNode();
+    _ambientEl.loop   = true;
+    _ambientEl.volume = Math.min(1, _SURF_VOL.master * _SURF_VOL.ambient);
+    _ambientEl.play().catch(() => {});
+  } catch(_) {}
+}
+function stopAmbient() {
+  if (!_ambientEl) return;
+  try { _ambientEl.pause(); _ambientEl.currentTime = 0; } catch(_) {}
+  _ambientEl = null;
+}
+// Duck ambient during combat, restore after
+function _ambientDuck(on) {
+  if (!_ambientEl) return;
+  try {
+    _ambientEl.volume = on
+      ? Math.min(1, _SURF_VOL.master * _SURF_VOL.ambient * 0.25)
+      : Math.min(1, _SURF_VOL.master * _SURF_VOL.ambient);
+  } catch(_) {}
+}
+
+// ── Footstep system ──────────────────────────────────────────────────────────
+// Tile IDs that use stone sound: cobble(2), floor(9), door(10), cliff(15)
+const STONE_TILES = new Set([2, 9, 10, 15]);
+let _stepTimer = 0;
+const STEP_INTERVAL = 0.32; // seconds between steps at full speed
+
+function _tickFootsteps(dt, moving) {
+  if (!moving) { _stepTimer = 0; return; }
+  _stepTimer += dt;
+  if (_stepTimer >= STEP_INTERVAL) {
+    _stepTimer = 0;
+    const tx = Math.floor(S.px / TILE_SIZE);
+    const ty = Math.floor(S.py / TILE_SIZE);
+    const tile = MAP_TILES[ty * MAP_W + tx] ?? 0;
+    const key  = STONE_TILES.has(tile) ? 'footstep_stone' : 'footstep_dirt';
+    sfx(key, 0.35 + Math.random() * 0.15);
+  }
+}
+
 // ── Map exit zone (return to ship) ────────────────────────────────────────
 // Walking to the top edge (row 0-1) triggers the return prompt.
 const EXIT_ZONE = { minTx: 0, maxTx: 31, minTy: 0, maxTy: 1 };
@@ -646,6 +767,7 @@ function surfaceRest() {
   const newMidnights  = Math.floor((S.totalHours + 6) / 24);
   S.day += newMidnights - prevMidnights;
   updateHUD();
+  sfx('rest',0.65);
   S.captain.hp=S.captain.maxHp;
   respawnEnemies();
   setStatus('Rested 8 hours. Captain fully healed. Enemies respawned.');
@@ -704,6 +826,7 @@ function tryInteract(){
   for(const[cx,cy]of cands){
     const npc=NPCS.find(n=>n.tx===cx&&n.ty===cy);
     if(npc){
+      sfx('npc_interact',0.55);
       if(npc.merchant){openSurfShop(npc);}else{openDlg(npc);}
       S.interactCooldown=30;return;
     }
@@ -924,7 +1047,9 @@ function loop(timestamp) {
     if(S.keys.up)dy-=1;if(S.keys.down)dy+=1;
     if(S.joystickActive){dx+=S.joystickX;dy+=S.joystickY;}
     const _mag=Math.sqrt(dx*dx+dy*dy);if(_mag>1){dx/=_mag;dy/=_mag;}
-    if(dx!==0||dy!==0)tryMove(dx,dy,dt);
+    const _moving=(dx!==0||dy!==0);
+    if(_moving)tryMove(dx,dy,dt);
+    _tickFootsteps(dt,_moving);
   }
 
   // ── Sprite animation ──
@@ -1583,6 +1708,7 @@ function startCombat(idx) {
     atkPhase:null,atkT:0,dmgNums:[],menuCat:'attack',menuFocus:0,btnsOn:false});
   // Show overlay + size canvas
   document.getElementById('surf-combat').style.display='flex';
+  _ambientDuck(true);
   const cv=document.getElementById('sc-scene');
   if (cv){cv.width=cv.clientWidth||360;cv.height=Math.min(Math.floor(cv.clientWidth*0.48),220);}
   // Build disabled menu
@@ -1610,6 +1736,7 @@ function closeCombat() {
   S.captain.shotsLoaded = S.combat.shotsLeft;
   S.combat.active=false;
   _cbtStopScene();
+  _ambientDuck(false);
   document.getElementById('surf-combat').style.display='none';
 }
 
@@ -1633,6 +1760,7 @@ function _setCbtBtns(on) { _cbtSetBtns(on); }
 // ── Player actions ─────────────────────────────────────────────────────────
 function _doPlayerAttack(wep) {
   const e=S.combat.enemy;
+  if(wep.type==='ranged'){sfx('pistol_shot',0.9);}else{sfx('knife_swing',0.7);setTimeout(()=>sfx('knife_hit',0.8),260);}
   const dmg=Math.max(1,_rng(wep.dmgMin,wep.dmgMax)-(e.def||0));
   e.currentHp=Math.max(0,e.currentHp-dmg);
   // Trigger animation
@@ -1681,6 +1809,7 @@ function cbtReload() {
   slot.qty=(slot.qty||1)-1;
   if(slot.qty<=0) S.captain.inv=S.captain.inv.filter(i=>i!==slot);
   S.combat.shotsLeft=3;
+  sfx('reload',0.85);
   cbtLog('You reload the Void Pistol — 3 shots ready.','good');
   _setCbtBtns(false);
   setTimeout(_cbtEnemyTurn, 700);
@@ -1703,8 +1832,10 @@ function cbtFlee() {
 function _cbtEnemyTurn() {
   if (S.combat.ended) return;
   const e=S.combat.enemy;
+  sfxEnemyAtk(e.type||'');
   const dmg=Math.max(1,_rng(e.atk[0],e.atk[1])-S.captain.defense);
   S.captain.hp=Math.max(0,S.captain.hp-dmg);
+  setTimeout(()=>sfx('player_hurt',0.75),200);
   // Trigger animation
   const cv=document.getElementById('sc-scene');
   const W=cv?cv.width:360, H=cv?cv.height:180;
@@ -1725,6 +1856,7 @@ function cbtWin() {
   e.alive = false;
   const xpGain = e.xp;
   S.captain.xp += xpGain;
+  sfx('enemy_die',0.9);
   cbtLog('Victory! +' + xpGain + ' XP (' + S.captain.xp + '/' + xpToNext(S.captain.level) + ')', 'good');
   // Level-up loop
   let leveled = false;
@@ -1734,6 +1866,7 @@ function cbtWin() {
     S.captain.maxHp += 5;
     S.captain.hp = S.captain.maxHp;
     leveled = true;
+    sfx('level_up',1.0);
     cbtLog('LEVEL UP! Captain is now Level ' + S.captain.level + '! Max HP: ' + S.captain.maxHp, 'good');
   }
   // Loot rolls
@@ -1756,6 +1889,7 @@ function cbtDefeat() {
   if (S.combat.ended) return;
   S.combat.ended = true;
   S.captain.hp = 1;
+  sfx('player_down',0.85);
   cbtLog('You collapse from your wounds... but survive at 1 HP.', 'warn');
   _setCbtBtns(false);
   setTimeout(() => { closeCombat(); setStatus('You were knocked out. Rest to recover.'); }, 2000);
@@ -1773,9 +1907,11 @@ function openSurfShop(npc) {
   document.querySelectorAll('.surf-stab').forEach(b => b.classList.remove('active'));
   document.getElementById('surf-stab-buy').classList.add('active');
   _buildShopList();
+  sfx('shop_open',0.6);
   document.getElementById('surf-shop').style.display = 'flex';
 }
 function closeSurfShop() {
+  sfx('shop_close',0.5);
   const el = document.getElementById('surf-shop');
   if (el) el.style.display = 'none';
   _shopNpc = null;
@@ -1839,6 +1975,7 @@ function _surfBuy(id) {
   else S.captain.inv.push({ id, name:def.name, type:def.type, qty:1,
     ...(def.heal  ? {heal:def.heal}  : {}),
     ...(def.shots ? {shots:def.shots}: {}) });
+  sfx('purchase',0.75);
   _shopMsg('Bought: ' + def.name);
   _buildShopList();
 }
@@ -1850,14 +1987,30 @@ function _surfSell(id) {
   slot.qty = (slot.qty||1)-1;
   if (slot.qty <= 0) S.captain.inv = S.captain.inv.filter(i => i !== slot);
   S.gold += price;
+  sfx('sell',0.7);
   _shopMsg('Sold for ' + price + ' TS.');
   _buildShopList();
 }
 function _shopMsg(t) { const el=document.getElementById('surf-shop-msg'); if(el) el.textContent=t; }
 
+
+// Start ambient on first interaction (browser requires gesture before Audio.play)
+(function() {
+  function _startAmbientOnce() {
+    startAmbient();
+    document.removeEventListener('keydown',    _startAmbientOnce);
+    document.removeEventListener('touchstart', _startAmbientOnce);
+    document.removeEventListener('mousedown',  _startAmbientOnce);
+  }
+  document.addEventListener('keydown',    _startAmbientOnce, { once:true });
+  document.addEventListener('touchstart', _startAmbientOnce, { once:true });
+  document.addEventListener('mousedown',  _startAmbientOnce, { once:true });
+})();
+
 // ── Init ──────────────────────────────────────────────────────────────────
 function init(){
   loadEntryData();
+  _loadSurfSounds();
   initEnemies();
   if (!S.captain.gearGiven) initStarterGear();
 
