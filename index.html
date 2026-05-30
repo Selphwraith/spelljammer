@@ -5757,6 +5757,8 @@ function watchExpiredMidJourney() {
     if (newLvl === 1) addLog(`⚠ Fatigue setting in — helmsman is Fatigued.`, 'dmg');
     if (newLvl >= 2)  addLog(`⚠ Constitution check failed — helmsman is ${fatigueName()}!`, 'dmg');
     jlogPushOn();
+    // Decrement _watchesLeft so the days-remaining display counts down correctly
+    if (G.tvl && G.tvl._watchesLeft > 0) G.tvl._watchesLeft--;
     updateWatchHUD();
     startLiveClock();
     if (G.tvl) { G.tvl.cur = 0; G.tvl.steps = 0; G.tvl._eventLocked = false; }
@@ -6602,8 +6604,11 @@ function _clockEnsureWorker() {
 }
 
 function _clockWorkerTick() {
-  if (_clockPaused) return;
-  if (G?.phase !== 'traveling') return;
+  // Allow render during the watch-expired dialog (_pauseShown) so the clock
+  // doesn't visually freeze while the player decides to anchor or push on.
+  const showingWatchDialog = G?.watch?._pauseShown;
+  if (_clockPaused && !showingWatchDialog) return;
+  if (G?.phase !== 'traveling' && !showingWatchDialog) return;
   if (!document.getElementById('watch-hud')?.classList.contains('on')) return;
   _clockRender();
 }
@@ -11190,9 +11195,11 @@ function tsRender(timestamp) {
     const pct = G.tvl.prog || 0;
     document.getElementById('ts-prog-bar').style.width = (isFinite(pct) ? pct : 0) + '%';
     // +1 to include the current active watch — an 8-day trip shows "8 days remaining" from the start
+    // _watchesLeft is the watches still to go after the current one; +1 for current
     const wl = (G.tvl._watchesLeft || 0) + 1;
+    const wlDisplay = Math.max(1, wl);
     document.getElementById('ts-watch-label').textContent =
-      wl > 1 ? `${wl} days remaining` : wl === 1 ? '1 day remaining' : 'approaching…';
+      wlDisplay > 1 ? `${wlDisplay} days remaining` : wlDisplay === 1 ? '1 day remaining' : 'approaching…';
   }
 
   // Update skip button disabled state
