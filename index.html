@@ -18841,33 +18841,30 @@ function _applyLoad(save) {
       G.ship.sigTier = SIG_ABILITY[G.ship.type] ? 1 : null;
     }
     _gameActive = true;
-    updateUI(); updateFragUI(); updateWatchHUD();
-    renderLoop(); loadSounds(); loadShipImages(); loadVoiceFiles(); ensureLqState();
-    setTimeout(() => playTitle(), 200); // ensure title playing
-    hideSaveOverlay(); hideLoad(); hideMainMenu();
-    addLog(`Voyage restored — ${save.shipName} at ${save.loc}. Welcome back, Captain.`, 'imp');
-    // Reopen local space if that's where the save happened
-    if(savedLs?.inLocalSpace) {
-      setTimeout(() => openLocalSpace(), 150);
-    }
-    // Surface save — redirect to surface.html immediately (before any render loop runs)
+
+    // ── Surface save: redirect BEFORE renderLoop() ever runs ─────────────────
     if (save.context === 'surface' && state.surfaceState) {
-      const ss = state.surfaceState;
-      // Write the entry so surface.html can restore full state on load
       const _surfEntry = {
         day:        G.watch?.day        || 1,
         totalHours: G.watch?.totalHours || 0,
         hoursAwake: G.watch?.hoursAwake || 0,
         gold:       G.ship.gold,
         captain:    { ...(G.captain||{}), inv: G.ship.inv||[] },
-        _savedSurface: ss,
+        _savedSurface: state.surfaceState,
       };
       try { sessionStorage.setItem('fentheris_surface_entry', JSON.stringify(_surfEntry)); } catch(_) {}
-      // Stop any render loops started by _applyLoad before redirect
-      if (G.animId) { cancelAnimationFrame(G.animId); G.animId = null; }
-      if (typeof TS !== 'undefined' && TS.animId) { cancelAnimationFrame(TS.animId); TS.animId = null; }
+      hideSaveOverlay(); hideLoad(); hideMainMenu();
       window.location.href = 'surface.html';
-      return; // never show chart
+      return; // renderLoop() is never called — no frozen chart
+    }
+
+    updateUI(); updateFragUI(); updateWatchHUD();
+    renderLoop(); loadSounds(); loadShipImages(); loadVoiceFiles(); ensureLqState();
+    setTimeout(() => playTitle(), 200);
+    hideSaveOverlay(); hideLoad(); hideMainMenu();
+    addLog(`Voyage restored — ${save.shipName} at ${save.loc}. Welcome back, Captain.`, 'imp');
+    if(savedLs?.inLocalSpace) {
+      setTimeout(() => openLocalSpace(), 150);
     }
   } catch(e) {
     addLog('Load failed — save data may be corrupted.', '');
