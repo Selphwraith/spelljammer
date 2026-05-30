@@ -459,13 +459,13 @@ const NPCS = [
   },
   {
     id: 'trader_1', img: 'surface/npc_villager.png',
-    tx: 33, ty: 10, dir: 'down',
+    tx: 33, ty: 11, dir: 'down',
     name: 'Mira Voss', merchant: true, shopId: 'trader_1',
     lines: ["Supplies and medicine — I stock what you need, and I buy what the void leaves behind."],
   },
   {
     id: 'salvage_1', img: 'surface/npc_guard.png',
-    tx: 41, ty: 12, dir: 'down',
+    tx: 41, ty: 14, dir: 'down',
     name: 'Jorek Vane', merchant: true, shopId: 'salvage_1',
     lines: ["I pay top rate for biological salvage. Don't bring me junk."],
   },
@@ -490,6 +490,28 @@ const ENEMY_SPAWNS = [
   { type:'lurker',  tx:14, ty:20 },
   { type:'watcher', tx:28, ty:8  },
 ];
+// -- Item catalog
+const ITEM_DEFS = {
+  chitin:      { name:'Crawler Chitin',    type:'material', sellVal:8   },
+  crawl_hide:  { name:'Crawler Hide',      type:'material', sellVal:5   },
+  venom_gel:   { name:'Crawler Venom Gel', type:'material', sellVal:14  },
+  shard:       { name:'Stone Shard',       type:'material', sellVal:8   },
+  bone_plate:  { name:'Bone Plate',        type:'material', sellVal:11  },
+  lurk_hide:   { name:'Lurker Hide',       type:'material', sellVal:16  },
+  eye:         { name:"Watcher's Eye",     type:'material', sellVal:28  },
+  membrane:    { name:'Watcher Membrane',  type:'material', sellVal:18  },
+  vital_fluid: { name:'Vital Fluid',       type:'material', sellVal:22  },
+  potion:      { name:'Healing Tincture',  type:'potion',   sellVal:14, buyVal:35, heal:20 },
+  pistol_mag:  { name:'Pistol Magazine',   type:'ammo',     sellVal:10, buyVal:22, shots:3  },
+};
+
+// Shop stock per merchant
+const SHOP_STOCK = {
+  trader_1:  { sells:['potion','pistol_mag'], buysAll:true, sellMult:1.0  },
+  salvage_1: { sells:[],                      buysAll:true, sellMult:1.25 },
+};
+
+
 
 // ── Map exit zone (return to ship) ────────────────────────────────────────
 // Walking to the top edge (row 0-1) triggers the return prompt.
