@@ -555,18 +555,16 @@ const SURF_SOUND_DATA = {
 
 // Load all sounds — fetch HEAD first so missing files never throw
 function _loadSurfSounds() {
+  // Directly create Audio elements — no fetch needed.
+  // If a file is missing the browser fires an error event which we ignore.
   Object.entries(SURF_SOUND_DATA).forEach(([key, path]) => {
-    fetch(path, { method: 'HEAD' })
-      .then(r => {
-        if (!r.ok) return;
-        try {
-          const a = new Audio();
-          a.preload = 'auto';
-          a.src = path;
-          _SURF_SFX[key] = a;
-        } catch(_) {}
-      })
-      .catch(() => {}); // network error — skip silently
+    try {
+      const a = new Audio();
+      a.preload = 'auto';
+      a.onerror = () => { delete _SURF_SFX[key]; }; // remove if file 404s
+      a.src = path;
+      _SURF_SFX[key] = a; // register immediately; onerror cleans up if missing
+    } catch(_) {}
   });
 }
 
