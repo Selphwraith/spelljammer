@@ -18598,6 +18598,7 @@ function _buildSaveEntry(slot, name) {
   return {
     slot,
     name,
+    context: 'space',
     timestamp: Date.now(),
     shipName:  G.ship.name,
     shipType:  G.ship.type,
@@ -18814,6 +18815,23 @@ function _applyLoad(save) {
     if(savedLs?.inLocalSpace) {
       setTimeout(() => openLocalSpace(), 150);
     }
+    // Surface save — descend to surface after G is fully restored
+    if (save.context === 'surface' && state.surfaceState) {
+      const ss = state.surfaceState;
+      setTimeout(() => {
+        // Pack surface entry via sessionStorage then open surface.html
+        const entry = {
+          day: G.watch?.day || 1,
+          totalHours: G.watch?.totalHours || 0,
+          hoursAwake: G.watch?.hoursAwake || 0,
+          gold: G.ship.gold,
+          captain: { ...(G.captain||{}), inv: G.ship.inv||[] },
+          _savedSurface: ss,  // surface position/enemy state to restore
+        };
+        sessionStorage.setItem('fentheris_surface_entry', JSON.stringify(entry));
+        window.location.href = 'surface.html';
+      }, 400);
+    }
   } catch(e) {
     addLog('Load failed — save data may be corrupted.', '');
   }
@@ -18864,7 +18882,7 @@ function _slotHTML(save, slotId, isAuto) {
     return `
       <div class="save-slot">
         <div class="save-info">
-          <div class="save-name">${isAuto ? '🔄' : '💾'} ${name}</div>
+          <div class="save-name">${isAuto ? '🔄' : (save.context==='surface' ? '🌍' : '💾')} ${name}${save.context==='surface' ? ' <span style="font-size:9px;color:#44aa66;">[Surface]</span>' : ''}</div>
           <div class="save-detail">${save.shipName} · ${save.loc} · ${save.frags}/6 Fragments · <img src="images/ts_coin.png" class="ts-ico" alt="TS"> ${save.gold} · Hull ${pct}%</div>
           <div class="save-detail" style="color:#b8b0d0;font-size:10px;">${date}</div>
         </div>

@@ -815,6 +815,7 @@ let S = {
     helmet:{name:'Void Helmet',  hpBonus:4, def:1},
     inv:[], gearGiven:false, shotsLoaded:3,
   },
+  _indexEntry:null, // raw data received from index.html, for unified saves
   enemies:[],
   combat:{active:false,enemy:null,enemyIdx:-1,log:[],playerTurn:true,shotsLeft:0,ended:false},
 };
@@ -854,6 +855,14 @@ function loadEntryData() {
     S.hoursAwake   = d.hoursAwake || 0;
     S.gold=d.gold||0;
     S.sessionStartHours=S.totalHours;
+    S._indexEntry=d; // stash for unified saves
+    // If loading from a surface save, restore position and enemy state
+    if(d._savedSurface){
+      const ss=d._savedSurface;
+      if(ss.px) S.px=ss.px;
+      if(ss.py) S.py=ss.py;
+      if(ss.day) S.day=ss.day;
+    }
     if(d.captain){
       const c=d.captain;S.captain={...S.captain,...c};
       if(c.melee)S.captain.melee=c.melee;
@@ -2149,8 +2158,8 @@ function _shopMsg(t) { const el=document.getElementById('surf-shop-msg'); if(el)
 // SURFACE UI — Stats / Inventory / Save / Minimap
 // ============================================================
 
-const SURF_SAVE_KEY  = 'fentheris_surface_saves';
-const SURF_AUTO_KEY  = 'fentheris_surface_auto';
+const SURF_SAVE_KEY  = 'fentheris_saves';
+const SURF_AUTO_KEY  = 'fentheris_autosave';
 
 // ── Overlay open/close ────────────────────────────────────────────────────────
 const _SURF_OVLS = ['stats','inv','save'];
@@ -2258,42 +2267,108 @@ function _surfUsePotion(idx) {
 
 // ── Save / Load ───────────────────────────────────────────────────────────────
 function _surfBuildSave(label) {
-  return {
-    label,
-    timestamp: Date.now(),
-    day: S.day,
-    gold: S.gold,
-    hp: S.captain.hp,
-    maxHp: S.captain.maxHp,
-    level: S.captain.level,
-    xp: S.captain.xp,
-    captain: JSON.parse(JSON.stringify(S.captain)),
+  // Build in index.html's exact format so both files share the same slots
+  const ie = S._indexEntry || {};
+  const ss = {
     px: S.px, py: S.py,
-    enemies: S.enemies.map(e=>({alive:e.alive, currentHp:e.currentHp, tx:e.tx, ty:e.ty, type:e.type})),
+    day: S.day, gold: S.gold,
+    enemies: S.enemies.map(e=>({alive:e.alive,currentHp:e.currentHp,tx:e.tx,ty:e.ty,type:e.type})),
+  };
+  // Re-package index state, updating captain + gold from current surface values
+  const data = JSON.stringify({
+    ship:      { ...(ie.ship||{}), gold:S.gold, inv:S.captain.inv },
+    spheres:   ie.spheres   || [],
+    frags:     ie.frags     || 0,
+    clues:     ie.clues     || [],
+    fragsCollected: ie.fragsCollected || [],
+    localQuests: ie.localQuests || {},
+    lsQmStock:  ie.lsQmStock  || null,
+    lsLastSpawn:ie.lsLastSpawn|| {},
+    lsLastVisit:ie.lsLastVisit|| {},
+    lsState:   { inLocalSpace:false },
+    rep:       ie.rep    || {},
+    quests:    ie.quests || [],
+    completedQuests: ie.completedQuests || [],
+    postVictory: ie.postVictory || false,
+    breachEntered: ie.breachEntered || false,
+    worldBossDefeated: ie.worldBossDefeated || [],
+    breachIntel: ie.breachIntel || [],
+    wbDiscovered: ie.wbDiscovered || [],
+    wbPatrol:  ie.wbPatrol  || {},
+    shothothuqUnlocked: ie.shothothuqUnlocked || false,
+    farPhlo:   ie.farPhlo   || null,
+    _breachArrived: ie._breachArrived || {},
+    captainLog: ie.captainLog || [],
+    travelDays: ie.travelDays || 0,
+    watch:     ie.watch  || { day:S.day, totalHours:S.totalHours, hoursAwake:S.hoursAwake },
+    journeyOrigWatches: ie.journeyOrigWatches || 0,
+    journeyWpHit: ie.journeyWpHit || false,
+    tutorial:  ie.tutorial  || null,
+    lsOrbitHours: ie.lsOrbitHours || 0,
+    captain:   S.captain,
+    surfaceState: ss,
+  });
+  return {
+    context:  'surface',
+    name:      label,
+    timestamp: Date.now(),
+    shipName:  ie.ship?.name || 'Unknown',
+    shipType:  ie.ship?.type || '',
+    hull:      ie.ship?.hull || 0,
+    maxHull:   ie.ship?.maxHull || 0,
+    crew:      ie.ship?.crew || 0,
+    TS:        S.gold,
+    frags:     ie.frags || 0,
+    loc:       'Surface — Fentheris',
+    data,
   };
 }
 function _surfApplySave(save) {
   if (!save) return false;
   try {
-    S.day       = save.day       || 1;
-    S.gold      = save.gold      || 0;
-    S.px        = save.px        || S.px;
-    S.py        = save.py        || S.py;
-    S.captain   = { ...S.captain, ...save.captain };
-    // Restore nested objects
-    ['melee','ranged','armor','helmet','inv'].forEach(k => { if (save.captain?.[k]) S.captain[k]=save.captain[k]; });
-    // Restore enemy state
-    if (save.enemies && save.enemies.length === S.enemies.length) {
-      save.enemies.forEach((se, i) => {
-        if (S.enemies[i]) { S.enemies[i].alive=se.alive; S.enemies[i].currentHp=se.currentHp; }
+    // Unified save: extract surfaceState from the data field
+    let ss = save.surfaceState || null;
+    if (!ss && save.data) {
+      try { const d=JSON.parse(save.data); ss=d.surfaceState||null; } catch(_){}
+    }
+    if (!ss) {
+      // Legacy surface-only format
+      ss = { px:save.px, py:save.py, day:save.day, gold:save.gold,
+             captain:save.captain, enemies:save.enemies };
+    }
+    if (ss.px)       S.px=ss.px;
+    if (ss.py)       S.py=ss.py;
+    if (ss.day)      S.day=ss.day;
+    if (ss.gold!=null) S.gold=ss.gold;
+    // Restore captain from data field (most up-to-date)
+    let cap = ss.captain;
+    if (!cap && save.data) {
+      try { cap=JSON.parse(save.data).captain; } catch(_){}
+    }
+    if (cap) {
+      S.captain={...S.captain,...cap};
+      ['melee','ranged','armor','helmet','inv'].forEach(k=>{if(cap[k])S.captain[k]=cap[k];});
+    }
+    // Restore enemy alive/hp state
+    if (ss.enemies && ss.enemies.length === S.enemies.length) {
+      ss.enemies.forEach((se,i)=>{
+        if(S.enemies[i]){S.enemies[i].alive=se.alive;S.enemies[i].currentHp=se.currentHp;}
       });
     }
+    // Update _indexEntry so next save includes fresh data
+    if (save.data) {
+      try {
+        const d=JSON.parse(save.data);
+        S._indexEntry={...S._indexEntry,...d,ship:{...(S._indexEntry?.ship||{}),gold:S.gold}};
+      } catch(_){}
+    }
     updateHUD();
-    setStatus('Save loaded. Welcome back, Captain.');
+    setStatus('Save loaded. Day '+S.day+'. HP '+S.captain.hp+'/'+S.captain.maxHp+'.');
     return true;
-  } catch(_) { return false; }
+  } catch(e) { return false; }
 }
 function surfAutoSave() {
+  if (!S._indexEntry) return; // don't save before entry data is loaded
   try {
     const save = _surfBuildSave('Auto');
     localStorage.setItem(SURF_AUTO_KEY, JSON.stringify(save));
@@ -2359,8 +2434,8 @@ function _makeSaveSlotRow(save, slot) {
   return row;
 }
 function _surfSaveToSlot(slot) {
-  let saves = [];
-  try { saves = JSON.parse(localStorage.getItem(SURF_SAVE_KEY)||'[]'); } catch(_) {}
+  let saves = [null,null,null];
+  try { saves = JSON.parse(localStorage.getItem(SURF_SAVE_KEY)||'[null,null,null]'); } catch(_) {}
   saves[slot] = _surfBuildSave('Slot '+(slot+1));
   try { localStorage.setItem(SURF_SAVE_KEY, JSON.stringify(saves)); } catch(_) {}
   setStatus('Saved to Slot '+(slot+1)+'.');
