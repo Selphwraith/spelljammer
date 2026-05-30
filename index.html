@@ -5757,12 +5757,17 @@ function watchExpiredMidJourney() {
     if (newLvl === 1) addLog(`⚠ Fatigue setting in — helmsman is Fatigued.`, 'dmg');
     if (newLvl >= 2)  addLog(`⚠ Constitution check failed — helmsman is ${fatigueName()}!`, 'dmg');
     jlogPushOn();
-    // Decrement _watchesLeft so the days-remaining display counts down correctly
     if (G.tvl && G.tvl._watchesLeft > 0) G.tvl._watchesLeft--;
+    // Restore traveling phase BEFORE startLiveClock — it guards on phase==='traveling'
+    // and travelTick kills itself if phase!='traveling'. Without this, both the clock
+    // and the travel timer die permanently after the first watch expires.
+    G.phase = 'traveling';
+    document.getElementById('tvlbar')?.classList.add('on');
     updateWatchHUD();
     startLiveClock();
     if (G.tvl) { G.tvl.cur = 0; G.tvl.steps = 0; G.tvl._eventLocked = false; }
     if (G.tvl?.timer == null) G.tvl.timer = _tvlStart(G.tvl.tickMs || 100);
+    if (!TS.animId && TS.active) { TS._lastTs = 0; TS.animId = requestAnimationFrame(tsRender); }
   };
 
   // ── MIDPOINT WAYSTATION ───────────────────────────────────────────────────
