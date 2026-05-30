@@ -5750,7 +5750,7 @@ function watchExpiredMidJourney() {
     doRest();
   };
 
-  // pushCb: seamless — do NOT tear down the travel sequence canvas
+  // pushCb: push on — resume travel for next watch leg via startTravel (resume path)
   const pushCb = () => {
     G.watch._pauseShown = false;
     const newLvl = fatigueLevel();
@@ -5758,16 +5758,17 @@ function watchExpiredMidJourney() {
     if (newLvl >= 2)  addLog(`⚠ Constitution check failed — helmsman is ${fatigueName()}!`, 'dmg');
     jlogPushOn();
     if (G.tvl && G.tvl._watchesLeft > 0) G.tvl._watchesLeft--;
-    // Restore traveling phase BEFORE startLiveClock — it guards on phase==='traveling'
-    // and travelTick kills itself if phase!='traveling'. Without this, both the clock
-    // and the travel timer die permanently after the first watch expires.
-    G.phase = 'traveling';
-    document.getElementById('tvlbar')?.classList.add('on');
-    updateWatchHUD();
-    startLiveClock();
-    if (G.tvl) { G.tvl.cur = 0; G.tvl.steps = 0; G.tvl._eventLocked = false; }
-    if (G.tvl?.timer == null) G.tvl.timer = _tvlStart(G.tvl.tickMs || 100);
-    if (!TS.animId && TS.active) { TS._lastTs = 0; TS.animId = requestAnimationFrame(tsRender); }
+    // Capture resume params BEFORE startTravel overwrites G.tvl
+    const _resumeTo       = G.tvl?.to;
+    const _resumeWatches  = G.tvl?._watchesLeft ?? 0;
+    const _resumePos      = G.ship.midLanePos ?? null;
+    const _resumeProg     = G.tvl?._pausedProg ?? G.tvl?.prog ?? 0;
+    const _resumeOrigin   = G.tvl?._laneOrigin ?? null;
+    // startTravel (resume path) resets prog/progEnd/steps for the new leg,
+    // sets G.phase='traveling', starts the clock and the tick timer correctly.
+    if (_resumeTo) {
+      startTravel(_resumeTo, _resumeWatches, _resumePos, _resumeProg, _resumeOrigin);
+    }
   };
 
   // ── MIDPOINT WAYSTATION ───────────────────────────────────────────────────
@@ -20809,7 +20810,6 @@ function descendToSurface() {
     totalHours: G.watch?.totalHours || 0,
     hoursAwake: G.watch?.hoursAwake || 0,
     gold:       G.ship.gold,
-    captain:     G.captain || null,
     captain: { ...(G.captain||{}), inv: G.ship.inv || [] },
   };
   try { sessionStorage.setItem('fentheris_surface_entry', JSON.stringify(entry)); } catch(e) {}
@@ -27147,7 +27147,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isSurfaceReturn) {
       sessionStorage.removeItem('fentheris_surface_return');
       const _savedEntry = getAutoSave();
-      if (_savedEntry) {
+      // Never restore a surface-context autosave on space-side return —
+      // descendToSurface() always writes a clean space save before leaving.
+      if (_savedEntry && _savedEntry.context !== 'surface') {
         // Hide splash and any intro video immediately — game is already loaded
         const _sp = document.getElementById('sp');
         if (_sp) _sp.style.display = 'none';
