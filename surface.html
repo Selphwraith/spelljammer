@@ -351,6 +351,9 @@ html, body {
   }
   #transition-overlay.fade-in  { opacity: 1; pointer-events: all; }
   #transition-overlay.fade-out { opacity: 0; }
+  .inv-header { font-family:'Cinzel',serif; font-size:17px; letter-spacing:3px; color:#e8d5ff; }
+  .inv-footer { font-size:9px; color:#665577; margin-top:6px; width:100%; max-width:640px; }
+  .inv-detail-actions { display:flex; flex-direction:column; gap:5px; margin-top:6px; }
 </style>
 </head>
 <body>
@@ -2245,7 +2248,7 @@ function surfOpenOvl(id) {
   if (!el) return;
   el.classList.add('on');
   if (id==='stats') _buildStats();
-  if (id==='inv')   surfBuildInvGrid();
+  if (id==='inv') { _surfInvFilter='all'; document.querySelectorAll('#surf-inv-filters .fbtn').forEach((b,i)=>b.classList.toggle('act',i===0)); surfBuildInvGrid(); }
   if (id==='save')  _surfBuildSaveSlots();
 }
 function surfCloseOvl(id) {
@@ -2301,72 +2304,121 @@ function _buildStats() {
 
 // ── Cargo / Inventory (mirrors buildInvGrid from index.html) ──────────────────
 let _surfInvFilter = 'all';
+let _surfSelItem   = null;
+
 function surfSetFilter(f, btn) {
   _surfInvFilter = f;
-  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('act'));
+  document.querySelectorAll('#surf-inv-filters .fbtn').forEach(b => b.classList.remove('act'));
   if (btn) btn.classList.add('act');
   surfBuildInvGrid();
 }
+
 function surfBuildInvGrid() {
   const grid   = document.getElementById('surf-inv-grid');   if (!grid) return;
   const empty  = document.getElementById('surf-inv-empty');
   const footer = document.getElementById('surf-inv-footer');
   const detail = document.getElementById('surf-inv-detail');
-  if (detail) detail.style.display = 'none';
+  if (detail) { detail.style.display = 'none'; _surfSelItem = null; }
   grid.innerHTML = '';
-  const inv = S.captain.inv.filter(i => _surfInvFilter === 'all' || i.type === _surfInvFilter);
-  if (inv.length === 0) {
-    if (empty)  empty.style.display = 'block';
+  const inv = S.captain.inv.filter(item => {
+    if (_surfInvFilter === 'all') return true;
+    return _surfItemDef(item).type === _surfInvFilter;
+  });
+  if (!inv.length) {
+    if (empty) empty.style.display = 'block';
     grid.style.display = 'none';
   } else {
-    if (empty)  empty.style.display = 'none';
+    if (empty) empty.style.display = 'none';
     grid.style.display = 'grid';
     inv.forEach(item => {
-      const def = ITEM_DEFS[item.id] || {};
-      const ico = item.type==='potion' ? '&#9879;' : item.type==='ammo' ? '&#128299;' : '&#128230;';
+      const def = _surfItemDef(item);
       const qty = item.qty || 1;
       const d = document.createElement('div');
       d.className = 'inv-item';
-      d.innerHTML = '<div class="inv-ico">'+ico+'</div><div class="inv-iname">'+item.name+(qty>1?' x'+qty:'')+'</div>';
+      d.setAttribute('data-sid', item.id || Math.random());
+      d.innerHTML = '<div class="inv-ico">' + def.ico + '</div>'
+        + '<div class="inv-iname">' + def.n + (qty > 1 ? ' \xd7' + qty : '') + '</div>';
       d.onclick = () => _surfSelectItem(item);
       grid.appendChild(d);
     });
   }
-  const total = S.captain.inv.reduce((a,i) => {
-    const def = ITEM_DEFS[i.id]||{}; return a + (def.sellVal||0)*(i.qty||1);
-  }, 0);
-  if (footer) footer.textContent = S.captain.inv.length + ' items — Est. sell value: ' + total + ' TS';
+  const total = S.captain.inv.reduce((a, item) => a + (_surfItemDef(item).val || 0) * (item.qty || 1), 0);
+  if (footer) footer.textContent = S.captain.inv.length + ' items \u2014 Est. sell value: ' + total + ' TS';
 }
+
 function _surfSelectItem(item) {
+  _surfSelItem = item;
   document.querySelectorAll('.inv-item').forEach(el => el.classList.remove('sel'));
-  const def = ITEM_DEFS[item.id] || {};
-  const detail = document.getElementById('surf-inv-detail');
-  if (!detail) return;
-  detail.style.display = 'flex';
-  const displayName = item.name || item.n || item.id || '?';
-  const icoRaw = item.ico || (item.type==='potion'?'&#9879;':item.type==='ammo'?'&#128299;':'&#128230;');
-  document.getElementById('surf-inv-d-ico').innerHTML  = icoRaw;
-  document.getElementById('surf-inv-d-name').textContent = displayName + (item.qty>1?' x'+(item.qty):'');
-  const sub = item.desc || (item.type==='potion' ? 'Restores '+(item.heal||20)+' HP.'
-    : item.type==='ammo' ? (item.shots||3)+' shots per magazine.'
-    : 'Cargo item.');
-  document.getElementById('surf-inv-d-desc').textContent = sub;
-  const sellV = def.sellVal ?? item.val ?? 0;
-  document.getElementById('surf-inv-d-val').textContent = sellV ? 'Sell value: '+sellV+' TS ea' : '';
+  event?.currentTarget?.classList.add('sel');
+  const def    = _surfItemDef(item);
+  const detail = document.getElementById('surf-inv-detail'); if (!detail) return;
+  detail.style.display = 'block';
+  document.getElementById('surf-inv-d-ico').textContent  = def.ico;
+  document.getElementById('surf-inv-d-name').textContent = def.n + (item.qty > 1 ? ' \xd7' + item.qty : '');
+  document.getElementById('surf-inv-d-desc').textContent = def.desc;
+  document.getElementById('surf-inv-d-val').textContent  = def.val;
   const acts = document.getElementById('surf-inv-d-actions'); acts.innerHTML = '';
-  if (item.type === 'potion') {
+
+  // Use / Install button
+  if (def.use) {
     const ub = document.createElement('button'); ub.className = 'btn gd sm';
-    ub.textContent = '&#9879; Use';
-    ub.disabled = S.captain.hp >= S.captain.maxHp;
-    ub.onclick = () => {
-      if (S.captain.hp >= S.captain.maxHp) { setStatus('Already at full HP.'); return; }
-      S.captain.hp = Math.min(S.captain.maxHp, S.captain.hp + (item.heal||20));
-      item.qty = (item.qty||1) - 1;
-      if (item.qty <= 0) S.captain.inv = S.captain.inv.filter(i => i !== item);
-      setStatus('Used '+displayName+'. HP: '+S.captain.hp+'/'+S.captain.maxHp+'.');
-      surfBuildInvGrid();
-    };
+    if (def.shipOnly) {
+      ub.disabled = true;
+      ub.style.opacity = '0.38';
+      ub.textContent = (def.type === 'equip' ? '\ud83d\udd29 Install' : '\u2728 Use') + ' (Ship only)';
+      ub.title = 'Return to your vessel to use this item';
+    } else if (def.use === 'heal20') {
+      ub.textContent = '\u2728 Use';
+      ub.disabled = S.captain.hp >= S.captain.maxHp;
+      if (ub.disabled) { ub.style.opacity='0.38'; ub.title='Already at full HP'; }
+      ub.onclick = () => {
+        if (S.captain.hp >= S.captain.maxHp) { setStatus('Already at full HP.'); return; }
+        S.captain.hp = Math.min(S.captain.maxHp, S.captain.hp + 20);
+        item.qty = (item.qty||1) - 1;
+        if (item.qty <= 0) S.captain.inv = S.captain.inv.filter(i => i !== item);
+        sfx('purchase', 0.5);
+        setStatus('Used ' + def.n + '. HP: ' + S.captain.hp + '/' + S.captain.maxHp + '.');
+        surfBuildInvGrid();
+      };
+    } else if (def.use === 'reload') {
+      const maxShots = S.captain.ranged?.shotsPerCombat || 3;
+      const loaded   = S.captain.shotsLoaded ?? 0;
+      ub.textContent = '\u21ba Reload Pistol';
+      ub.disabled = loaded >= maxShots;
+      if (ub.disabled) { ub.style.opacity='0.38'; ub.title='Pistol already fully loaded'; }
+      ub.onclick = () => {
+        item.qty = (item.qty||1) - 1;
+        if (item.qty <= 0) S.captain.inv = S.captain.inv.filter(i => i !== item);
+        S.captain.shotsLoaded = maxShots;
+        sfx('reload', 0.8);
+        setStatus('Reloaded \u2014 ' + maxShots + ' shots ready.');
+        surfBuildInvGrid();
+      };
+    }
     acts.appendChild(ub);
+  }
+
+  // Sell button
+  if (def.val > 0) {
+    const shopIsOpen = document.getElementById('surf-shop')?.style.display === 'flex';
+    const sb = document.createElement('button'); sb.className = 'btn sm';
+    sb.textContent = '\ud83d\udcb0 Sell (' + def.val + ' TS ea)';
+    if (!shopIsOpen || !_shopNpc) {
+      sb.disabled = true; sb.style.opacity = '0.45';
+      sb.title = 'Talk to Mira Voss or Jorek Vane to sell';
+    } else {
+      sb.onclick = () => {
+        const mult  = (SHOP_STOCK[_shopNpc?.shopId]?.sellMult || 1);
+        const price = Math.floor(def.val * mult);
+        item.qty = (item.qty||1) - 1;
+        if (item.qty <= 0) S.captain.inv = S.captain.inv.filter(i => i !== item);
+        S.gold += price;
+        sfx('sell', 0.7);
+        setStatus('Sold ' + def.n + ' for ' + price + ' TS.');
+        surfBuildInvGrid(); _buildShopList();
+      };
+    }
+    acts.appendChild(sb);
   }
 }
 
@@ -2618,6 +2670,113 @@ function _drawMinimap() {
   ctx.beginPath(); ctx.arc(R,R,R-1,0,Math.PI*2); ctx.stroke();
 }
 
+
+// ── Unified item catalog (mirrors index.html ITEMS exactly) ───────────────────
+// Used to look up name, icon, description, type and use-ability for both
+// space items (arriving in captain.inv from the ship) and native surface items.
+const SURF_ITEMS = {
+  // ── Space trade goods ───────────────────────────────────────────────────────
+  psicry:{n:'Void Crystal',ico:'💎',type:'trade',val:22,desc:'Pulsing Veilborn crystal.'},
+  mftent:{n:'Veilborn Tendril',ico:'🪱',type:'trade',val:11,desc:'Preserved Veilborn tentacle.'},
+  astsil:{n:'Astral Silk',ico:'🧵',type:'trade',val:18,desc:'Woven from astral threads.'},
+  cargobale:{n:'Exotic Cargo',ico:'📦',type:'trade',val:15,desc:'Assorted trade goods.'},
+  starcoin:{n:'Star Elven Coin Hoard',ico:'🪙',type:'trade',val:35,desc:'Ancient star elf coins.'},
+  levscal:{n:'Leviathan Scale',ico:'🐉',type:'trade',val:30,desc:'A scale shed from an astral leviathan.'},
+  plunder:{n:'Plundered Merchant Gold',ico:'💰',type:'trade',val:20,desc:'Stolen coinage and valuables.'},
+  // ── Space components ────────────────────────────────────────────────────────
+  silksw:{n:'Corsair Blade Shard',ico:'⚔️',type:'component',val:32,desc:'Fragment of a Drift Corsair blade.'},
+  ngvnm:{n:'Harvester Toxin Sac',ico:'🫙',type:'component',val:24,desc:'Preserved harvester venom.'},
+  spidsweb:{n:'Deepspace Webbing',ico:'🕸️',type:'component',val:9,desc:'Nearly indestructible void spider silk.'},
+  bheye:{n:'Sentinel Optical Array',ico:'👁️',type:'component',val:40,desc:'A severed Sentinel optical stalk.'},
+  arccore:{n:'Void Drive Core Shard',ico:'⚙️',type:'component',val:46,desc:'Damaged void drive core.'},
+  corskit:{n:'Corsair Weapon Cache',ico:'⚓',type:'component',val:25,desc:'Salvaged ballista bolts and charges.'},
+  trulltrophy:{n:'Trull War Trophy',ico:'💀',type:'component',val:28,desc:'A mounted trophy from Trull victories.'},
+  voidxtal:{n:'Void Crystal',ico:'🫧',type:'component',val:38,desc:'A crystallised Void Rift fragment.'},
+  tkfang:{n:'Swarm Hull Fang-Bolt',ico:'🦷',type:'component',val:22,desc:'A crystalline fang-bolt.'},
+  phlogmem:{n:'Drift Membrane',ico:'🌊',type:'component',val:18,desc:'Flexible membrane from a drift creature.'},
+  phlogcore:{n:'Drift Core Crystal',ico:'🔸',type:'component',val:35,desc:'Dense core of a drift predator.'},
+  voidclaw:{n:'Void Predator Claw',ico:'🦴',type:'component',val:20,desc:'A razor-edged claw from a void predator.'},
+  sharkskn:{n:'Void Shark Hide',ico:'🦈',type:'component',val:30,desc:'Thick hide from a void shark.'},
+  sharkfin:{n:'Void Shark Fin',ico:'🦴',type:'component',val:22,desc:'Dried fin from a void shark.'},
+  jellystem:{n:'Medusa Jellyfish Stinger',ico:'🪼',type:'component',val:24,desc:'Crystallised drift stinger.'},
+  vinespore:{n:'Vinecrawler Spore Pod',ico:'🌿',type:'component',val:19,desc:'Sealed spore pod.'},
+  flamequil:{n:'Flamewing Quill',ico:'🔥',type:'component',val:26,desc:'A crystalline quill still charged with drift fire.'},
+  moteash:{n:'Mote Swarm Ash',ico:'✨',type:'component',val:9,desc:'Fine ash residue from a drift mote swarm.'},
+  forgescrap:{n:'Dwarven Forge Scrap',ico:'⚒️',type:'component',val:10,desc:'Broken dwarven-forged equipment.'},
+  corsscrap:{n:'Corsair Gear Fragment',ico:'⚓',type:'component',val:11,desc:'A piece of broken corsair equipment.'},
+  sparelens:{n:'Cracked Navigation Lens',ico:'🔭',type:'component',val:7,desc:'A cracked optics lens from a wrecked void-sailer.'},
+  // ── Space usable — SHIP ONLY (greyed out on surface) ────────────────────────
+  levblood:{n:'Leviathan Blood Vial',ico:'🧪',type:'usable',val:30,desc:'Use: Restores 50 hull points.',use:'hp50',shipOnly:true},
+  crewmead:{n:"Crew's Courage Mead",ico:'🍺',type:'usable',val:20,desc:'Use: Restores 3 crew.',use:'crew3',shipOnly:true},
+  psiamp:{n:'Psionic Amplifier',ico:'🔮',type:'usable',val:45,desc:'Use in ship combat: Stuns enemy.',use:'stun',shipOnly:true},
+  repkit:{n:'Emergency Repair Kit',ico:'🔩',type:'usable',val:25,desc:'Use: Restores 20 hull points.',use:'hp20',shipOnly:true},
+  astralge:{n:'Astral Forge Elixir',ico:'⚗️',type:'usable',val:90,desc:'Use: Restores 100 hull and clears disruptions.',use:'hp100',shipOnly:true},
+  stimpack:{n:'Void Sailer Stimpack',ico:'💉',type:'usable',val:55,desc:'Use: Restores 6 crew.',use:'crew6',shipOnly:true},
+  surgerait:{n:'IEF Surge Rations',ico:'🎖️',type:'usable',val:110,desc:'Use: Restores 10 crew.',use:'crew10',shipOnly:true},
+  almend:{n:"Alchemist's Mend",ico:'🩹',type:'usable',val:35,desc:'Use: Restores 20 hull and 1 crew.',use:'hp20crew1',shipOnly:true},
+  voidsalve:{n:'Void Salve',ico:'🫧',type:'usable',val:50,desc:'Use: Removes weapon disruptions, +15 hull.',use:'voidsalve',shipOnly:true},
+  phasedis:{n:'Phase Disruptor',ico:'🌀',type:'usable',val:80,desc:'Use in ship combat: Disable an enemy weapon.',use:'disable',shipOnly:true},
+  nullgren:{n:'Null Sphere Grenade',ico:'💥',type:'usable',val:110,desc:'Use in ship combat: Stun + 15 damage.',use:'stundmg',shipOnly:true},
+  voidjam:{n:'Void Reality Jammer',ico:'🔮',type:'usable',val:160,desc:'Use in ship combat: Disable weapon 4 rounds.',use:'disable3',shipOnly:true},
+  beacon:{n:'Emergency Beacon',ico:'🔔',type:'usable',val:70,desc:'Use in ship combat: Guaranteed escape.',use:'beacon',shipOnly:true},
+  voidwelder:{n:'Void Welder',ico:'🔩⚡',type:'usable',val:140,desc:'Use: Restores 20 permanently lost max hull.',use:'voidwelder',shipOnly:true},
+  predblood:{n:'Predator Ichor Vial',ico:'🩸',type:'usable',val:40,desc:'Use: Applies caustic ichor to your hull.',use:'reflect8',shipOnly:true},
+  // ── Space equip — SHIP ONLY ──────────────────────────────────────────────────
+  runeshard:{n:'Rune-Carved Plate',ico:'🛡️',type:'equip',val:60,desc:'Install: +20 max hull.',use:'hull20',shipOnly:true},
+  antimag:{n:'Anti-Magic Sphere Shard',ico:'🌀',type:'equip',val:80,desc:'Install: -3 incoming damage.',use:'resist3',shipOnly:true},
+  thrallring:{n:'Thrall Binding Ring',ico:'💍',type:'equip',val:85,desc:'Install: +3 max crew.',use:'crew3p',shipOnly:true},
+  voidchart:{n:'Void Navigation Chart',ico:'📜',type:'equip',val:100,desc:'Install: +1 speed.',use:'speed1',shipOnly:true},
+  phaseplat:{n:'Phase Plating Fragment',ico:'🛡️',type:'equip',val:110,desc:'Install: -4 incoming damage.',use:'resist4',shipOnly:true},
+  clutchsig:{n:'Clutch-Mother Sigil',ico:'🪲',type:'equip',val:100,desc:'Install: +4 max crew.',use:'crew4p',shipOnly:true},
+  vodncore:{n:'Drift Navigation Core',ico:'⚙️',type:'equip',val:85,desc:'Install: +1 speed.',use:'speed1',shipOnly:true},
+  // ── Space artifacts ──────────────────────────────────────────────────────────
+  ebtiss:{n:'Trull Overmind Tissue',ico:'🧠',type:'artifact',val:200,desc:'A sample of Trull Overmind tissue.'},
+  silblade:{n:'Silver Astral Blade Frag',ico:'🗡️',type:'artifact',val:150,desc:'A fragment of a silver astral blade.'},
+  bfmanif:{n:'Black Fleet Manifest',ico:'📋',type:'artifact',val:110,desc:'A coded Black Fleet operations log.'},
+  vodeml:{n:'Enemy Command Seal',ico:'🔴',type:'artifact',val:75,desc:'A Trull Advance imperial command seal.'},
+  murecho:{n:'Murmur Echo',ico:'🌀',type:'artifact',val:200,desc:"A resonance crystal vibrating with The Murmur's frequency."},
+  trullbanner:{n:'Trull Warlord Banner',ico:'🚩',type:'artifact',val:160,desc:"A Trull commander's battle-standard."},
+  trlldogtag:{n:'Trull Identification Disc',ico:'🔖',type:'artifact',val:30,desc:'An engraved Trull identification disc.'},
+  trullsiege:{n:'Trull Siege Mark',ico:'⚙️',type:'artifact',val:65,desc:'A heavy iron command marker from a Trull Siege vessel.'},
+  trullcrest:{n:'Trull Warchief Crest',ico:'🛡️',type:'artifact',val:110,desc:"A Warchief's personal battle-crest."},
+  // ── Space trade (wreck/vault salvage) ────────────────────────────────────────
+  scrapplat:{n:'Scrap Hull Plating',ico:'🔩',type:'trade',val:3,desc:'Bent and corroded hull plate.'},
+  wreckcable:{n:'Wreck Wiring Bundle',ico:'🪛',type:'trade',val:3,desc:'Coil of scorched cabling.'},
+  driftjunk:{n:'Drift Junk',ico:'🗑️',type:'trade',val:2,desc:'Miscellaneous scrap.'},
+  vaultdust:{n:'Vault Stone Dust',ico:'🪨',type:'trade',val:4,desc:'Pulverised stone from a shattered golem.'},
+  ruinstone:{n:'Ruin-Carved Stone Shard',ico:'🪨',type:'trade',val:5,desc:'A fragment of carved vault stone.'},
+  gobteeth:{n:'Goblin Tooth Necklace',ico:'🦷',type:'trade',val:7,desc:'A string of goblin teeth.'},
+  gobsack:{n:'Goblin Plunder Sack',ico:'💼',type:'trade',val:12,desc:'A jumbled sack of stolen trinkets.'},
+  // ── Surface-native loot ───────────────────────────────────────────────────────
+  chitin:{n:'Crawler Chitin',ico:'🦗',type:'material',val:8,desc:'Tough chitin plates from a Void Crawler.'},
+  crawl_hide:{n:'Crawler Hide',ico:'🦎',type:'material',val:5,desc:'Leathery hide stripped from a Void Crawler.'},
+  venom_gel:{n:'Crawler Venom Gel',ico:'🫧',type:'material',val:14,desc:'Viscous venom extracted from a Crawler.'},
+  shard:{n:'Stone Shard',ico:'🪨',type:'material',val:8,desc:'A jagged stone shard from a Stone Lurker.'},
+  bone_plate:{n:'Bone Plate',ico:'🦴',type:'material',val:11,desc:'Dense bone plating from a Stone Lurker.'},
+  lurk_hide:{n:'Lurker Hide',ico:'🦎',type:'material',val:16,desc:'Thick hide from a Stone Lurker.'},
+  eye:{n:"Watcher's Eye",ico:'👁️',type:'material',val:28,desc:"A preserved eye from a Feral Watcher."},
+  membrane:{n:'Watcher Membrane',ico:'🫁',type:'material',val:18,desc:'Translucent membrane from a Feral Watcher.'},
+  vital_fluid:{n:'Vital Fluid',ico:'🩸',type:'material',val:22,desc:'Luminous vital fluid from a Feral Watcher.'},
+  // ── Captain consumables ───────────────────────────────────────────────────────
+  potion:{n:'Healing Tincture',ico:'⚗️',type:'usable',val:14,desc:'Use: Restores 20 HP.',use:'heal20'},
+  pistol_mag:{n:'Pistol Magazine',ico:'🔋',type:'ammo',val:10,desc:'3 shots. Reload takes one combat action.',use:'reload'},
+};
+
+// Which use-keys are usable by the captain (not ship-only)
+const _SURF_CAP_USE = { heal20:true, reload:true };
+
+// Resolve any item to its SURF_ITEMS definition (fallback to item fields)
+function _surfItemDef(item) {
+  return SURF_ITEMS[item.id] || {
+    n: item.name || item.n || item.id || '?',
+    ico: item.ico || '📦',
+    type: item.type || 'trade',
+    val: item.val || 0,
+    desc: item.desc || '',
+    use: item.use || null,
+    shipOnly: !!(item.use && !_SURF_CAP_USE[item.use]),
+  };
+}
 // ── Init ──────────────────────────────────────────────────────────────────
 function init(){
   loadEntryData();
