@@ -1666,9 +1666,15 @@ function _drawCaptain(ctx,x,y,t,flash) {
 // ─ Enemy dispatch ─
 function _drawEnemy(ctx,x,y,t,flash,e) {
   const type=(e.type||'').toLowerCase();
+  // Flip horizontally around x so right-facing sprites face the player (left)
+  ctx.save();
+  ctx.translate(x, 0);
+  ctx.scale(-1, 1);
+  ctx.translate(-x, 0);
   if (type==='crawler'||e.name.includes('Crawler')) _drawCrawler(ctx,x,y,t,flash);
   else if (type==='lurker'||e.name.includes('Lurker')) _drawLurker(ctx,x,y,t,flash);
   else _drawWatcher(ctx,x,y,t,flash);
+  ctx.restore();
 }
 
 function _drawCrawler(ctx,x,y,t,fl) {
