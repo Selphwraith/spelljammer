@@ -75,7 +75,7 @@ body {
 
 /* ── SHARED OVERLAY ── */
 .ovlay {
-  position:absolute; top:0; left:0; right:0; bottom:0;
+  position:fixed; top:0; left:0; right:0; bottom:0;
   display:none; flex-direction:column; align-items:center; justify-content:flex-start;
   background:rgba(3,0,12,0.96); padding:16px 16px 32px; gap:10px;
   overflow-y:auto; overflow-x:hidden;
@@ -968,8 +968,8 @@ body {
 
 /* ── LOCAL QUEST OVERLAY ─────────────────────────────────────── */
 #ov-localquest {
-  position: absolute; top:0; left:0; right:0; bottom:0;
-  display: none; z-index: 250;
+  position: fixed; top:0; left:0; right:0; bottom:0;
+  display: none;
   background: radial-gradient(ellipse at 40% 50%, #050018 60%, #020010 100%);
   overflow: hidden;
   pointer-events: none;
@@ -1534,21 +1534,10 @@ body {
 #ov-travel-seq.on { display: flex; }
 
 /* These overlays open from the travel-sequence header buttons and must render above it */
-/* All overlays openable during travel — above ov-travel-seq (260) */
-#ov-inv.on, #ov-shp.on, #ov-wpn.on, #ov-qlog.on, #ov-journal.on,
-#ov-captain.on, #ov-loot.on, #ov-localquest.on, #ov-dockmaster.on,
-#ov-faction-rep.on, #ov-cbt-inv.on { z-index: 420; }
+/* position:fixed on .ovlay makes these elevation overrides unnecessary */
 
 /* When inside a Lane POI (z-index 7000), overlays must render above it */
-/* All overlays above ov-lane-poi (7000) when dungeon active */
-#ov-lane-poi.on ~ #ov-inv, #ov-lane-poi.on ~ #ov-shp, #ov-lane-poi.on ~ #ov-wpn,
-#ov-lane-poi.on ~ #ov-qlog, #ov-lane-poi.on ~ #ov-journal, #ov-lane-poi.on ~ #ov-captain,
-#ov-lane-poi.on ~ #ov-loot, #ov-lane-poi.on ~ #ov-localquest,
-#ov-lane-poi.on ~ #ov-dockmaster, #ov-lane-poi.on ~ #ov-faction-rep { z-index: 7200; }
-body.in-lpoi #ov-inv.on, body.in-lpoi #ov-shp.on, body.in-lpoi #ov-wpn.on,
-body.in-lpoi #ov-qlog.on, body.in-lpoi #ov-journal.on, body.in-lpoi #ov-captain.on,
-body.in-lpoi #ov-loot.on, body.in-lpoi #ov-localquest.on,
-body.in-lpoi #ov-dockmaster.on, body.in-lpoi #ov-faction-rep.on { z-index: 7200; }
+/* position:fixed on .ovlay makes these lane-poi elevation rules unnecessary */
 
 /* ── Travel sequence top bar — mirrors the main header ── */
 #ts-topbar {
