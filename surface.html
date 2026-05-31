@@ -617,6 +617,9 @@ const TILE_UV = [
   [0,3],[1,3],[2,3],[3,3],
 ];
 
+// Dirt path tile ID → strip index in dirt_paths.png (tile IDs 16-22)
+const DIRT_PATH_IDS = {16:0, 17:1, 18:2, 19:3, 20:4, 21:5, 22:6};
+
 // Sprite row indices per direction
 const DIR_ROW = { down:0, left:1, right:2, up:3 };
 
@@ -851,6 +854,7 @@ function _ambientDuck(on) {
 // ── Footstep system ──────────────────────────────────────────────────────────
 // Tile IDs that use stone sound: cobble(2), floor(9), door(10), cliff(15)
 const STONE_TILES = new Set([2, 9, 10, 15]);
+// Dirt path IDs 16-22 are not in STONE_TILES → footstep_dirt fires automatically
 let _stepTimer = 0;
 const STEP_INTERVAL = 0.32; // seconds between steps at full speed
 
@@ -933,7 +937,8 @@ function loadImg(key, src) {
 function allImgsLoaded() { return imgsLoaded >= imgsTotal; }
 
 // Load all assets
-loadImg('tileset', 'surface/tileset.png');
+loadImg('tileset',    'surface/tileset.png');
+loadImg('dirt_paths', 'surface/dirt_paths.png');
 loadImg('player',  'surface/player.png');
 NPCS.forEach(n => loadImg(n.img, n.img));
 // Combat sprite sheets (fail silently — procedural fallback used when missing)
@@ -1184,7 +1189,11 @@ function render(ctx, cW, cH) {
       const tileId = getTile(tx, ty);
       const dx = tx * TILE_SIZE + camOffX;
       const dy = ty * TILE_SIZE + camOffY;
-      if (tileSet?.complete && tileSet.naturalWidth > 0) {
+      if (DIRT_PATH_IDS[tileId] !== undefined && dirtPathImg) {
+        ctx.drawImage(dirtPathImg,
+          DIRT_PATH_IDS[tileId] * TILE_SIZE, 0, TILE_SIZE, TILE_SIZE,
+          dx, dy, TILE_SIZE, TILE_SIZE);
+      } else if (tileSet?.complete && tileSet.naturalWidth > 0) {
         const [uc, ur] = TILE_UV[tileId] || [0,0];
         ctx.drawImage(tileSet,
           uc * TILE_SIZE, ur * TILE_SIZE, TILE_SIZE, TILE_SIZE,
@@ -2707,6 +2716,8 @@ function _drawMinimap() {
     0:'#142008', 1:'#1a1206', 2:'#1a1a12', 3:'#0a1804',
     4:'#0a0808', 5:'#0a0808', 8:'#282214', 9:'#1a1208',
     10:'#2a1c0a', 15:'#0a0808',
+    16:'#2a1a06', 17:'#2a1a06', 18:'#2a1a06',
+    19:'#2a1a06', 20:'#2a1a06', 21:'#2a1a06', 22:'#2a1a06',
   };
   for (let ty=0; ty<MAP_H; ty++) {
     for (let tx=0; tx<MAP_W; tx++) {
