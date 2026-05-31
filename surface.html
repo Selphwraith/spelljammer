@@ -954,8 +954,9 @@ function buildExitData() {
     hoursAwake:  S.hoursAwake + hoursSpent,
     totalHours:  S.totalHours + hoursSpent,
     day:         S.day,
-    gold:S.gold,
-    captain:S.captain,
+    gold:        S.gold,
+    captain:     S.captain,
+    shipInv:     S.captain.inv,  // explicit inv sync back to G.ship.inv
   };
 }
 
@@ -2622,7 +2623,10 @@ function init(){
   loadEntryData();
   _loadSurfSounds();
   initEnemies();
-  if (!S.captain.gearGiven) initStarterGear();
+  // Only give starter gear on very first surface visit (empty inv, no flag).
+  // descendToSurface always sets gearGiven:true in the entry so this
+  // only fires when opening surface.html directly without the handshake.
+  if (!S.captain.gearGiven && S.captain.inv.length === 0) initStarterGear();
 
   // Fade in
   const ov = document.getElementById('transition-overlay');

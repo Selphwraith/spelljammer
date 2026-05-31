@@ -16562,6 +16562,7 @@ function _closeSidebarOverlays() {
     if(el) el.classList.remove('on');
   });
   _kbNavResetOnClose();
+  if(which==='captain'){ buildCaptainOverlay(); document.getElementById('ov-captain').classList.add('on'); }
   _syncWatchHudVisibility();
 }
 
@@ -18498,6 +18499,85 @@ function _cpSell(id) {
   _buildCaptainPack(); updateUI();
 }
 
+
+// ── Captain's Loadout overlay ──────────────────────────────────────
+const _CAP_SELL = {
+  psicry:22,mftent:11,astsil:18,cargobale:15,starcoin:35,levscal:30,plunder:20,
+  silksw:32,ngvnm:24,spidsweb:9,bheye:40,arccore:46,corskit:25,
+  levblood:30,crewmead:20,psiamp:45,repkit:25,astralge:90,stimpack:55,
+  surgerait:110,almend:35,voidsalve:50,phasedis:80,nullgren:110,
+  voidjam:160,beacon:70,runeshard:60,antimag:80,thrallring:85,
+  voidchart:100,voidwelder:140,ebtiss:200,silblade:150,bfmanif:110,
+  chitin:8,crawl_hide:5,venom_gel:14,shard:8,bone_plate:11,lurk_hide:16,
+  eye:28,membrane:18,vital_fluid:22,potion:14,pistol_mag:10,
+};
+function buildCaptainOverlay() {
+  const cap = G.captain;
+  const statGrid=document.getElementById('cap-stat-grid');
+  const gearList=document.getElementById('cap-gear-list');
+  const invList =document.getElementById('cap-inv-list');
+  if (!cap) {
+    if(statGrid) statGrid.innerHTML='<div style="font-size:11px;color:#665577;font-style:italic;padding:12px 0;grid-column:1/-1;">No captain data. Complete a surface mission first.</div>';
+    if(gearList) gearList.innerHTML=''; if(invList) invList.innerHTML=''; return;
+  }
+  if(statGrid) statGrid.innerHTML=[
+    {label:'Level',val:cap.level||1},{label:'HP',val:(cap.hp||0)+' / '+(cap.maxHp||30)},
+    {label:'Defense',val:cap.defense||0},{label:'XP',val:(cap.xp||0)+' / '+((cap.level||1)*100)},
+  ].map(s=>'<div class="cap-stat-box"><div class="cap-stat-label">'+s.label+'</div><div class="cap-stat-val">'+s.val+'</div></div>').join('');
+  const xpNext=(cap.level||1)*100, xpPct=Math.min(100,((cap.xp||0)/xpNext*100)).toFixed(1);
+  const xpFill=document.getElementById('cap-xp-fill'),xpLbl=document.getElementById('cap-xp-label');
+  if(xpFill) xpFill.style.width=xpPct+'%';
+  if(xpLbl)  xpLbl.textContent=(cap.xp||0)+' / '+xpNext+' XP to Lv'+(((cap.level||1)+1));
+  const gear=[
+    {slot:'Armor', item:cap.armor, stat:cap.armor?'+'+cap.armor.hpBonus+' HP, '+cap.armor.def+' DEF':''},
+    {slot:'Helmet',item:cap.helmet,stat:cap.helmet?'+'+cap.helmet.hpBonus+' HP, '+cap.helmet.def+' DEF':''},
+    {slot:'Melee', item:cap.melee, stat:cap.melee?cap.melee.dmgMin+'-'+cap.melee.dmgMax+' dmg':''},
+    {slot:'Ranged',item:cap.ranged,stat:cap.ranged?cap.ranged.dmgMin+'-'+cap.ranged.dmgMax+' dmg | '+(cap.shotsLoaded||0)+'/'+cap.ranged.shotsPerCombat+' shots':''},
+  ];
+  if(gearList) gearList.innerHTML=gear.map(g=>
+    '<div class="cap-gear-row"><span class="cap-gear-slot">'+g.slot+'</span>'
+    +'<span class="cap-gear-name">'+(g.item?(g.item.name||'?'):'<em style="color:#443355;">Empty</em>')+'</span>'
+    +(g.stat?'<span class="cap-gear-stat">'+g.stat+'</span>':'')+'</div>'
+  ).join('');
+  const inv=G.ship.inv||cap.inv||[];
+  const ce=document.getElementById('cap-inv-count'); if(ce) ce.textContent='('+inv.length+' items)';
+  if(!invList) return;
+  if(!inv.length){invList.innerHTML='<div style="font-size:10px;color:#443355;font-style:italic;padding:6px 0;">Pack is empty.</div>';return;}
+  const atPort=G.phase==='port';
+  invList.innerHTML='';
+  inv.forEach(item=>{
+    const name=item.name||item.n||item.id||'?';
+    const qty=item.qty||1;
+    const ico=item.ico||(item.type==='potion'?'&#9879;':item.type==='ammo'?'&#128299;':'&#128230;');
+    const sv=_CAP_SELL[item.id]||item.val||0;
+    const row=document.createElement('div'); row.className='cap-gear-row';
+    row.innerHTML='<span style="font-size:16px;width:28px;flex-shrink:0;">'+ico+'</span>'
+      +'<span class="cap-gear-name">'+name+(qty>1?' ×'+qty:'')+'</span>'
+      +(sv?'<span class="cap-gear-stat">'+sv+' TS ea</span>':'');
+    if(sv>0&&atPort){
+      const sb=document.createElement('button');sb.className='btn gd sm';sb.style.marginLeft='6px';sb.textContent='Sell';
+      sb.onclick=()=>{
+        item.qty=(item.qty||1)-1;
+        if(item.qty<=0){G.ship.inv=G.ship.inv.filter(i=>i!==item);if(cap.inv)cap.inv=cap.inv.filter(i=>i!==item);}
+        G.ship.gold+=sv; addLog('Sold '+name+' for '+sv+' TS.','gd');
+        updateUI();buildCaptainOverlay();
+      };row.appendChild(sb);
+    }
+    if(item.type==='potion'){
+      const ub=document.createElement('button');ub.className='btn sm';ub.style.marginLeft='6px';ub.textContent='Use';
+      ub.onclick=()=>{
+        if(!G.captain)return;
+        G.captain.hp=Math.min(G.captain.maxHp||30,(G.captain.hp||0)+(item.heal||20));
+        item.qty=(item.qty||1)-1;
+        if(item.qty<=0){G.ship.inv=G.ship.inv.filter(i=>i!==item);if(cap.inv)cap.inv=cap.inv.filter(i=>i!==item);}
+        addLog('Captain used '+name+'. HP: '+G.captain.hp+'/'+(G.captain.maxHp||30)+'.','gd');
+        updateUI();buildCaptainOverlay();
+      };row.appendChild(ub);
+    }
+    invList.appendChild(row);
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const b = document.getElementById('briefing-overlay');
   if (b) { b.classList.add('hidden'); b.style.display = 'none'; }
@@ -18525,7 +18605,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (d.gold    != null) G.ship.gold = d.gold;
         if (d.captain) {
           G.captain = d.captain;
-          if (d.captain.inv) G.ship.inv = d.captain.inv; // items are unified
+          // Sync inv: prefer explicit shipInv, fall back to captain.inv
+          const _returnedInv = d.shipInv || d.captain.inv;
+          if (_returnedInv) G.ship.inv = _returnedInv;
+          G.ship.gold = d.gold ?? G.ship.gold;
         }
         addLog(`Returned from the surface of Fentheris. ${h.toFixed(1)} hours elapsed.`, '');
         updateWatchHUD(); updateUI();
@@ -20804,12 +20887,20 @@ function descendToSurface() {
   }
   // Write autosave now so the surface return fast-path restores current state
   _writeAutoSave();
+  // Build the captain object — merge existing captain data with full ship inv.
+  // gearGiven:true prevents initStarterGear from pushing duplicate starter items
+  // onto the already-populated inv on every subsequent descent.
+  const _capEntry = {
+    ...(G.captain || {}),
+    inv:       G.ship.inv || [],
+    gearGiven: true,   // inv already contains everything; never run initStarterGear again
+  };
   const entry = {
     day:        G.watch?.day        || 1,
     totalHours: G.watch?.totalHours || 0,
     hoursAwake: G.watch?.hoursAwake || 0,
     gold:       G.ship.gold,
-    captain: { ...(G.captain||{}), inv: G.ship.inv || [] },
+    captain:    _capEntry,
   };
   try { sessionStorage.setItem('fentheris_surface_entry', JSON.stringify(entry)); } catch(e) {}
   const ov = document.createElement('div');
@@ -27131,6 +27222,10 @@ function drawCinCanvas(idx){
 }
 
 // wait for DOMContentLoaded before touching those elements.
+
+// ── Captain's Loadout overlay ──────────────────────────────────────
+
+
 document.addEventListener('DOMContentLoaded', () => {
   initFontScale(); // apply saved text size preference before anything renders
   loadSounds();
