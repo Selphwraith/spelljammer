@@ -81,7 +81,7 @@ body {
   overflow-y:auto; overflow-x:hidden;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
-  z-index:250;
+  z-index: 400;
   touch-action: pan-y;
   pointer-events: none;
   /* Prevent browser zoom inside overlays */
@@ -1534,19 +1534,21 @@ body {
 #ov-travel-seq.on { display: flex; }
 
 /* These overlays open from the travel-sequence header buttons and must render above it */
-#ov-inv.on, #ov-shp.on, #ov-wpn.on, #ov-qlog.on, #ov-journal.on { z-index: 320; }
+/* All overlays openable during travel — above ov-travel-seq (260) */
+#ov-inv.on, #ov-shp.on, #ov-wpn.on, #ov-qlog.on, #ov-journal.on,
+#ov-captain.on, #ov-loot.on, #ov-localquest.on, #ov-dockmaster.on,
+#ov-faction-rep.on, #ov-cbt-inv.on { z-index: 420; }
 
 /* When inside a Lane POI (z-index 7000), overlays must render above it */
-#ov-lane-poi.on ~ #ov-inv,
-#ov-lane-poi.on ~ #ov-shp,
-#ov-lane-poi.on ~ #ov-wpn,
-#ov-lane-poi.on ~ #ov-qlog,
-#ov-lane-poi.on ~ #ov-journal { z-index: 7100; }
-body.in-lpoi #ov-inv.on,
-body.in-lpoi #ov-shp.on,
-body.in-lpoi #ov-wpn.on,
-body.in-lpoi #ov-qlog.on,
-body.in-lpoi #ov-journal.on { z-index: 7100; }
+/* All overlays above ov-lane-poi (7000) when dungeon active */
+#ov-lane-poi.on ~ #ov-inv, #ov-lane-poi.on ~ #ov-shp, #ov-lane-poi.on ~ #ov-wpn,
+#ov-lane-poi.on ~ #ov-qlog, #ov-lane-poi.on ~ #ov-journal, #ov-lane-poi.on ~ #ov-captain,
+#ov-lane-poi.on ~ #ov-loot, #ov-lane-poi.on ~ #ov-localquest,
+#ov-lane-poi.on ~ #ov-dockmaster, #ov-lane-poi.on ~ #ov-faction-rep { z-index: 7200; }
+body.in-lpoi #ov-inv.on, body.in-lpoi #ov-shp.on, body.in-lpoi #ov-wpn.on,
+body.in-lpoi #ov-qlog.on, body.in-lpoi #ov-journal.on, body.in-lpoi #ov-captain.on,
+body.in-lpoi #ov-loot.on, body.in-lpoi #ov-localquest.on,
+body.in-lpoi #ov-dockmaster.on, body.in-lpoi #ov-faction-rep.on { z-index: 7200; }
 
 /* ── Travel sequence top bar — mirrors the main header ── */
 #ts-topbar {
