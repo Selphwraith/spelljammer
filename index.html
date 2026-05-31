@@ -16569,7 +16569,6 @@ function _closeSidebarOverlays() {
     if(el) el.classList.remove('on');
   });
   _kbNavResetOnClose();
-  if(which==='captain'){ buildCaptainOverlay(); document.getElementById('ov-captain').classList.add('on'); }
   _syncWatchHudVisibility();
 }
 
@@ -16585,6 +16584,7 @@ function openOverlay(which){
     manualTab(_manualActiveTab || 'welcome');
     document.getElementById('ov-journal').classList.add('on');
   }
+  if(which==='captain'){ buildCaptainOverlay(); document.getElementById('ov-captain').classList.add('on'); }
   _syncWatchHudVisibility();
 }
 function closeOverlay(which){ document.getElementById('ov-'+which).classList.remove('on'); _kbNavResetOnClose(); _syncWatchHudVisibility(); }
