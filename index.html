@@ -16796,17 +16796,39 @@ function buildWpnOverlay(){
     const wk=G.ship.wpns[i]; const d=document.createElement('div');
     if(!wk){
       d.className='wpn-card empty';
-      d.innerHTML=`<div class="wpn-slot-label">Slot ${i+1}</div><div style="color:#444;font-style:italic;font-size:13px;">— Empty —</div><div style="font-size:11px;color:#333;margin-top:6px;">Install a weapon at any port.</div>`;
+      const cw2 = G.ship.inv.filter(ci => ci.type==='weapon' && ci.wk);
+      const emptyInstallBtns = cw2.length > 0
+        ? `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">${
+            cw2.map(ci =>
+              `<button class="btn sm gd" style="font-size:9px;padding:4px 8px;"
+               onclick="closeOverlay('wpn');openArmoryEquip(JSON.parse(decodeURIComponent('${encodeURIComponent(JSON.stringify({...ci,cost:0}))}')))"
+               >&#128295; Install: ${WPN[ci.wk]?.n||ci.n}</button>`
+            ).join('')
+          }</div>`
+        : `<div style="font-size:11px;color:#333;margin-top:6px;">No weapons in cargo — buy at a port.</div>`;
+      d.innerHTML=`<div class="wpn-slot-label">Slot ${i+1}</div><div style="color:#444;font-style:italic;font-size:13px;">— Empty —</div>${emptyInstallBtns}`;
     } else {
       const w=WPN[wk]; const cd=G.cbt.cds?.[i]||0; const maxCd=w.cd||1;
       const cdPct=w.cd===0?100:Math.max(0,((maxCd-cd)/maxCd)*100);
       const ready=cd===0;
       d.className='wpn-card';
       let statusHtml=ready?`<div class="wpn-status rdy">● Ready</div>`:`<div class="wpn-status wait">⟳ ${cd} round${cd>1?'s':''} remaining</div>`;
+      // Weapons in cargo that could be swapped in
+      const cargoWpns = G.ship.inv.filter(ci => ci.type === 'weapon' && ci.wk);
+      const swapBtns = cargoWpns.length > 0
+        ? `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">${
+            cargoWpns.map(ci =>
+              `<button class="btn sm" style="font-size:9px;padding:4px 8px;border-color:rgba(170,136,34,0.4);color:#ffcc88;"
+               onclick="closeOverlay('wpn');openArmoryEquip(JSON.parse(decodeURIComponent('${encodeURIComponent(JSON.stringify({...ci,cost:0}))}')))"
+               >&#128295; Swap &#8594; ${WPN[ci.wk]?.n||ci.n}</button>`
+            ).join('')
+          }</div>`
+        : '';
       d.innerHTML=`<div class="wpn-slot-label">Slot ${i+1}</div><div class="wpn-name">${w.n}</div><div class="wpn-dmg">${w.d[0]}d${w.d[1]} damage</div><div class="wpn-info">${w.info}</div>${w.special?`<div style="font-size:10px;color:#ff9944">★ ${w.special==='burn'?'Burns target (DoT)':'Special'}</div>`:''}
       <div class="wpn-cd-label">${w.cd===0?'No cooldown — fires every round':`${w.cd}-round reload cycle`}</div>
       ${w.cd>0?`<div class="wpn-cd-track"><div class="wpn-cd-fill" style="width:${cdPct}%"></div></div>`:''}
-      ${G.phase==='combat'?statusHtml:''}`;
+      ${G.phase==='combat'?statusHtml:''}
+      ${swapBtns}`;
     }
     grid.appendChild(d);
   }
@@ -23348,7 +23370,10 @@ function openArmoryEquip(item) {
   btn.style.display = 'none';
 
   document.getElementById('wpnpicker-compare').classList.remove('on');
+  // Close any open overlay (cargo, armory, weapons) before picker takes over
+  document.getElementById('ov-inv').classList.remove('on');
   document.getElementById('ov-armory').classList.remove('on');
+  document.getElementById('ov-wpn').classList.remove('on');
   document.getElementById('ov-wpnpicker').classList.add('on');
 
   _wpnPickerBuildSlots();
