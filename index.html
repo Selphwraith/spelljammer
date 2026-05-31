@@ -5757,15 +5757,19 @@ function watchExpiredMidJourney() {
     if (newLvl === 1) addLog(`⚠ Fatigue setting in — helmsman is Fatigued.`, 'dmg');
     if (newLvl >= 2)  addLog(`⚠ Constitution check failed — helmsman is ${fatigueName()}!`, 'dmg');
     jlogPushOn();
-    if (G.tvl && G.tvl._watchesLeft > 0) G.tvl._watchesLeft--;
-    // Capture resume params BEFORE startTravel overwrites G.tvl
-    const _resumeTo       = G.tvl?.to;
-    const _resumeWatches  = G.tvl?._watchesLeft ?? 0;
-    const _resumePos      = G.ship.midLanePos ?? null;
-    const _resumeProg     = G.tvl?._pausedProg ?? G.tvl?.prog ?? 0;
-    const _resumeOrigin   = G.tvl?._laneOrigin ?? null;
-    // startTravel (resume path) resets prog/progEnd/steps for the new leg,
-    // sets G.phase='traveling', starts the clock and the tick timer correctly.
+    // DO NOT decrement _watchesLeft here — startTravel does totalWatches-1 itself.
+    // A manual decrement here causes a double-skip (6→4→2 instead of 6→5→4).
+    const _resumeTo      = G.tvl?.to;
+    const _resumeWatches = G.tvl?._watchesLeft ?? 0;
+    const _resumePos     = G.ship.midLanePos ?? null;
+    const _resumeProg    = G.tvl?._pausedProg ?? G.tvl?.prog ?? 0;
+    const _resumeOrigin  = G.tvl?._laneOrigin ?? null;
+    // Reset clock accumulator before startTravel so the new leg begins at 06:00.
+    // pauseLiveClock() banks _clockAccumH=8; without resetting it here the new
+    // leg's first tick sees _clockAccumulated()>=LEG_HOURS immediately, snaps
+    // prog to segEnd, and collapses every remaining watch in one tick each.
+    _clockAccumH = 0;
+    _clockPaused = false;
     if (_resumeTo) {
       startTravel(_resumeTo, _resumeWatches, _resumePos, _resumeProg, _resumeOrigin);
     }
@@ -6549,7 +6553,11 @@ function _tvlEnsureWorker() {
     `], { type: 'application/javascript' });
     const url = URL.createObjectURL(blob);
     const w = new Worker(url);
-    w.onmessage = () => { if (_tvlActive && G?.phase === 'traveling' && !G?.tvl?._eventLocked) travelTick(); };
+    w.onmessage = () => {
+      if (!_tvlActive || G?.phase !== 'traveling' || G?.tvl?._eventLocked) return;
+      if (typeof _anyOverlayOpen === 'function' && _anyOverlayOpen()) return;
+      travelTick();
+    };
     w.onerror = () => { _tvlWorker = null; _tvlUseFallback(); };
     _tvlWorker = w;
   } catch(e) {
@@ -6570,7 +6578,11 @@ function _tvlStart(ms) {
     _tvlWorker.postMessage({ cmd: 'start', ms: _tvlTickMs });
   } else {
     if (_tvlFallback) clearInterval(_tvlFallback);
-    _tvlFallback = setInterval(() => { if (_tvlActive && !G?.tvl?._eventLocked) travelTick(); }, _tvlTickMs);
+    _tvlFallback = setInterval(() => {
+      if (!_tvlActive || G?.phase !== 'traveling' || G?.tvl?._eventLocked) return;
+      if (typeof _anyOverlayOpen === 'function' && _anyOverlayOpen()) return;
+      travelTick();
+    }, _tvlTickMs);
   }
   return '__worker__';
 }
@@ -10528,6 +10540,9 @@ function _tsEventMissed(ev) {
 function tsRender(timestamp) {
   if (!TS.active) return;
   TS.animId = requestAnimationFrame(tsRender);
+  // Pause visual rendering while any overlay is open (ship freezes mid-canvas).
+  // The animId loop continues so it resumes immediately on overlay close.
+  if (typeof _anyOverlayOpen === 'function' && _anyOverlayOpen() && G?.phase !== 'combat') return;
 
   const cv  = document.getElementById('ts-canvas');
   const ctx = cv.getContext('2d');
