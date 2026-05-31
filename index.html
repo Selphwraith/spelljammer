@@ -92,7 +92,7 @@ body {
 .ovlay.on {
   display:flex;
   pointer-events: all;
-}
+  touch-action: auto; }
 /* Global overlay text boost — ensures readable contrast on bright screens */
 .ovlay, .ovlay * { -webkit-font-smoothing:antialiased; }
 .ls-dock-label  { color:#99aacc; }
@@ -660,6 +660,7 @@ body {
   gap: 8px;
   transform: translateY(100%);
   transition: transform 0.25s ease;
+  touch-action: auto;
 }
 #stats-drawer.open {
   transform: translateY(0);
@@ -1035,7 +1036,7 @@ body {
   overflow: hidden;
   pointer-events: none;
 }
-#ov-localspace.on { display: block; pointer-events: all; touch-action: none; }
+#ov-localspace.on { display: block; pointer-events: all; touch-action: auto; }
 #ls-canvas { position:absolute; inset:0; width:100%; height:100%; display:block; z-index:1; cursor:crosshair; }
 
 /* ── Lane POI Overlay ── */
@@ -1044,7 +1045,7 @@ body {
   display:none; flex-direction:column;
   pointer-events:none;
 }
-#ov-lane-poi.on { display:flex; pointer-events:all; }
+#ov-lane-poi.on { display:flex; pointer-events:all;   touch-action: auto; }
 #lpoi-canvas { position:absolute; inset:0; width:100%; height:100%; display:block; cursor:crosshair; z-index:1; }
 /* ── LPOI canvas and menu bar ── */
 #lpoi-canvas { position:absolute; inset:0; width:100%; height:100%; display:block; cursor:crosshair; z-index:1; }
