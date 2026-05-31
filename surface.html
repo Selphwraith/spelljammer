@@ -292,39 +292,55 @@ html, body {
   .sc-sub:disabled { opacity:0.25; cursor:default; }
   .sc-sub-hint { font-size:9px; color:#554466; margin-left:8px; }
   /* Shop overlay */
+  /* ── Surface Shop (mirrors index.html port shop) ─────────────── */
   #surf-shop {
-    position:absolute; inset:0; z-index:35; background:rgba(2,0,8,0.97);
-    display:none; flex-direction:column; align-items:stretch;
-    font-family:'Courier New',monospace; color:#ccc4e0; overflow:hidden;
+    position:absolute; inset:0; z-index:35;
+    background:rgba(3,0,12,0.96);
+    display:none; flex-direction:column; align-items:center;
+    overflow:hidden; padding:14px 12px 10px; gap:0;
   }
   #surf-shop-hdr {
-    display:flex; align-items:center; padding:10px 14px 8px; flex-shrink:0;
-    border-bottom:1px solid rgba(68,17,136,0.25);
-    font-family:'Cinzel',serif; font-size:13px; color:#e8d5ff; letter-spacing:2px;
+    display:flex; align-items:center; width:100%; max-width:640px; margin-bottom:8px; gap:8px;
   }
-  #surf-shop-npc { flex:1; }
-  #surf-shop-ts  { font-size:11px; color:#cc99ff; white-space:nowrap; }
-  #surf-shop-close { background:none; border:none; color:#9966cc; font-size:17px; cursor:pointer; padding:0 4px; }
-  #surf-shop-close:hover { color:#e8d5ff; }
-  #surf-shop-tabs { display:flex; border-bottom:1px solid rgba(68,17,136,0.25); flex-shrink:0; }
+  #surf-shop-npc  { flex:1; font-family:'Cinzel',serif; font-size:15px; color:#e8d5ff; letter-spacing:2px; }
+  #surf-shop-ts   { font-size:11px; color:#cc99ff; white-space:nowrap; font-family:'Cinzel',serif; }
+  #surf-shop-close { background:rgba(30,12,8,0.85); border:1px solid rgba(170,102,51,0.333);
+    border-radius:3px; color:#ddaa77; font-size:12px; padding:5px 12px;
+    cursor:pointer; font-family:'Cinzel',serif; letter-spacing:1px; }
+  #surf-shop-close:hover { border-color:#ddaa77; color:#fff8e8; }
+  .surf-shop-tabs { display:flex; gap:6px; width:100%; max-width:640px; margin-bottom:8px; }
   .surf-stab {
-    flex:1; padding:8px; font-family:'Cinzel',serif; font-size:10px; letter-spacing:2px;
-    text-transform:uppercase; border:none; background:none; color:#665577; cursor:pointer;
-    border-bottom:2px solid transparent; transition:all 0.1s;
+    font-family:'Cinzel',serif; font-size:10px; letter-spacing:1px; padding:5px 12px;
+    border:1px solid rgba(51,0,85,0.4); border-radius:2px;
+    background:rgba(15,3,35,0.8); color:#9977cc; cursor:pointer; transition:all 0.15s;
   }
-  .surf-stab.active { color:#e8d5ff; border-bottom-color:#9966dd; }
-  #surf-shop-list { flex:1; overflow-y:auto; padding:8px 10px; display:flex; flex-direction:column; gap:5px; }
-  .surf-shop-row {
-    display:flex; align-items:center; gap:8px; padding:8px 12px;
-    border:1px solid rgba(68,17,136,0.2); border-radius:2px;
-    background:rgba(8,2,20,0.8); cursor:pointer; transition:all 0.1s;
+  .surf-stab.active,.surf-stab:hover { border-color:#9966dd; color:#cc99ff; background:rgba(40,10,80,0.9); }
+  #surf-shop-sell-filters { display:none; gap:4px; width:100%; max-width:640px; margin-bottom:6px; flex-wrap:wrap; }
+  #surf-shop-sell-filters.on { display:flex; }
+  .surf-sflt {
+    font-family:'Cinzel',serif; font-size:9px; letter-spacing:1px; padding:4px 10px;
+    border:1px solid rgba(51,0,85,0.4); border-radius:2px;
+    background:rgba(10,2,25,0.9); color:#8866aa; cursor:pointer; transition:all 0.12s;
   }
-  .surf-shop-row:hover:not(.cant-afford) { background:rgba(25,8,55,0.9); border-color:#9966dd; }
-  .surf-shop-row.cant-afford { opacity:0.32; cursor:default; }
-  .surf-shop-item-name { flex:1; font-size:10px; color:#ccc4e0; line-height:1.5; }
-  .surf-shop-item-sub  { font-size:9px; color:#665577; display:block; }
-  .surf-shop-item-price{ font-size:11px; color:#cc99ff; white-space:nowrap; }
-  #surf-shop-msg { padding:6px 14px 8px; font-size:10px; font-style:italic; color:#665577; flex-shrink:0; min-height:26px; }
+  .surf-sflt.active,.surf-sflt:hover { border-color:#9966dd; color:#cc99ff; background:rgba(40,10,80,0.9); }
+  #surf-shop-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px;
+    width:100%; max-width:640px; overflow-y:auto; flex:1; align-content:start;
+    margin-bottom:6px; }
+  .ssurf-item {
+    background:rgba(16,4,38,0.88); border:1px solid rgba(68,17,136,0.4);
+    border-radius:4px; padding:8px; text-align:center; cursor:pointer; transition:all 0.2s;
+  }
+  .ssurf-item:hover:not(.dis) { border-color:#aa77ff; background:rgba(35,10,75,0.9); transform:translateY(-2px); }
+  .ssurf-item.dis  { opacity:0.4; cursor:not-allowed; transform:none; }
+  .ssurf-item.sell-all { border-color:rgba(68,238,136,0.4); }
+  .ssurf-name { font-family:'Cinzel',serif; font-size:11px; color:#c8a0ff; margin-bottom:2px; }
+  .ssurf-desc { font-size:10px; color:#c0b8dc; margin-bottom:4px; }
+  .ssurf-cost { font-size:11px; color:#ffd700; }
+  .ssurf-sell { font-size:11px; color:#44ee88; }
+  #surf-shop-msg { width:100%; max-width:640px; padding:4px 0 2px;
+    font-size:10px; font-style:italic; color:#665577; min-height:20px; }
+
+
   /* Minimap */
   #surf-minimap-shell {
     position:absolute; bottom:64px; right:12px; z-index:22;
@@ -472,18 +488,26 @@ html, body {
     <div id="sc-menu-sub"></div>
   </div>
 </div>
-<!-- Surface Shop Overlay -->
+<!-- Surface Shop Overlay (mirrors index.html port shop) -->
 <div id="surf-shop">
   <div id="surf-shop-hdr">
     <span id="surf-shop-npc">Trader</span>
     <span id="surf-shop-ts">0 TS</span>
-    <button id="surf-shop-close" onclick="closeSurfShop()">&#10005;</button>
+    <button id="surf-shop-close" onclick="closeSurfShop()">&#10005; Leave</button>
   </div>
-  <div id="surf-shop-tabs">
-    <button class="surf-stab active" id="surf-stab-buy"  onclick="surfShopTab('buy')">Buy</button>
-    <button class="surf-stab"        id="surf-stab-sell" onclick="surfShopTab('sell')">Sell</button>
+  <div class="surf-shop-tabs">
+    <button class="surf-stab active" id="surf-stab-buy"  onclick="surfShopTab('buy')">Supplies &amp; Stock</button>
+    <button class="surf-stab"        id="surf-stab-sell" onclick="surfShopTab('sell')">Sell Items</button>
   </div>
-  <div id="surf-shop-list"></div>
+  <div id="surf-shop-sell-filters">
+    <button class="surf-sflt active" onclick="surfSellFilter('all',this)">All</button>
+    <button class="surf-sflt" onclick="surfSellFilter('material',this)">Materials</button>
+    <button class="surf-sflt" onclick="surfSellFilter('trade',this)">Trade</button>
+    <button class="surf-sflt" onclick="surfSellFilter('component',this)">Components</button>
+    <button class="surf-sflt" onclick="surfSellFilter('usable',this)">Usables</button>
+    <button class="surf-sflt" onclick="surfSellFilter('artifact',this)">Artifacts</button>
+  </div>
+  <div id="surf-shop-grid"></div>
   <div id="surf-shop-msg">Select an item to trade.</div>
 </div>
 
@@ -2118,22 +2142,26 @@ function cbtDefeat() {
 }
 
 // ============================================================
-// SURFACE SHOP SYSTEM
+// SURFACE SHOP SYSTEM (mirrors index.html port shop)
 // ============================================================
-let _shopNpc = null;
-let _shopTab  = 'buy';
+let _shopNpc     = null;
+let _shopTab     = 'buy';
+let _surfSellFlt = 'all';
 
 function openSurfShop(npc) {
-  _shopNpc = npc; _shopTab = 'buy';
+  _shopNpc    = npc;
+  _shopTab    = 'buy';
+  _surfSellFlt = 'all';
   document.getElementById('surf-shop-npc').textContent = npc.name;
   document.querySelectorAll('.surf-stab').forEach(b => b.classList.remove('active'));
   document.getElementById('surf-stab-buy').classList.add('active');
-  _buildShopList();
-  sfx('shop_open',0.6);
+  document.getElementById('surf-shop-sell-filters').classList.remove('on');
+  sfx('shop_open', 0.6);
+  _surfBuildShopGrid();
   document.getElementById('surf-shop').style.display = 'flex';
 }
 function closeSurfShop() {
-  sfx('shop_close',0.5);
+  sfx('shop_close', 0.5);
   const el = document.getElementById('surf-shop');
   if (el) el.style.display = 'none';
   _shopNpc = null;
@@ -2141,54 +2169,125 @@ function closeSurfShop() {
 function surfShopTab(tab) {
   _shopTab = tab;
   document.querySelectorAll('.surf-stab').forEach(b => b.classList.remove('active'));
-  const tb = document.getElementById('surf-stab-' + tab);
-  if (tb) tb.classList.add('active');
-  _buildShopList();
+  document.getElementById('surf-stab-' + tab)?.classList.add('active');
+  const filt = document.getElementById('surf-shop-sell-filters');
+  if (filt) filt.classList.toggle('on', tab === 'sell');
+  _surfSellFlt = 'all';
+  document.querySelectorAll('.surf-sflt').forEach((b,i) => b.classList.toggle('active', i===0));
+  _surfBuildShopGrid();
 }
-function _buildShopList() {
-  const list = document.getElementById('surf-shop-list'); if (!list) return;
+function surfSellFilter(f, btn) {
+  _surfSellFlt = f;
+  document.querySelectorAll('.surf-sflt').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  _surfBuildShopGrid();
+}
+
+function _surfBuildShopGrid() {
+  const grid = document.getElementById('surf-shop-grid'); if (!grid) return;
   const msg  = document.getElementById('surf-shop-msg');
   const tsEl = document.getElementById('surf-shop-ts');
   if (tsEl) tsEl.textContent = S.gold + ' TS';
-  list.innerHTML = '';
-  const stock = SHOP_STOCK[_shopNpc?.shopId]; if (!stock) return;
+  grid.innerHTML = '';
+
+  const stock = SHOP_STOCK[_shopNpc?.shopId];
+  if (!stock) return;
+
   if (_shopTab === 'buy') {
-    if (!stock.sells.length) {
-      list.innerHTML = '<div style="padding:14px;font-size:10px;color:#443322;font-style:italic;text-align:center;">This merchant sells nothing.</div>';
+    // ── Buy tab: show what this merchant sells ────────────────────
+    if (!stock.sells?.length) {
+      _mkShopEmpty(grid, 'This merchant buys only — nothing for sale here.');
+      if (msg) msg.textContent = '';
       return;
     }
     stock.sells.forEach(id => {
       const def = ITEM_DEFS[id]; if (!def?.buyVal) return;
-      const ok = S.gold >= def.buyVal;
-      const row = document.createElement('div');
-      row.className = 'surf-shop-row' + (ok ? '' : ' cant-afford');
-      const sub = def.type==='potion' ? 'Restores '+def.heal+' HP' : def.type==='ammo' ? '3 shots per magazine' : '';
-      row.innerHTML = '<span class="surf-shop-item-name">'+def.name+'<span class="surf-shop-item-sub">'+sub+'</span></span><span class="surf-shop-item-price">'+def.buyVal+' TS</span>';
-      if (ok) row.onclick = () => _surfBuy(id);
-      list.appendChild(row);
+      const canAfford = S.gold >= def.buyVal;
+      const sub = def.type === 'potion'  ? 'Restores 20 HP'
+                : def.type === 'ammo'    ? '3 shots per magazine'
+                : def.desc || '';
+      const d = _mkShopCard(def.ico || '📦', def.name, sub, def.buyVal + ' TS', false, !canAfford);
+      if (canAfford) d.onclick = () => _surfShopBuy(id);
+      grid.appendChild(d);
     });
     if (msg) msg.textContent = 'You have ' + S.gold + ' TS.';
+
   } else {
+    // ── Sell tab: show captain inventory filtered ─────────────────
     const mult = stock.sellMult || 1;
-    const sellable = S.captain.inv.filter(i => ITEM_DEFS[i.id]?.sellVal && (stock.buysAll || stock.buys?.includes(i.id)));
-    if (!sellable.length) {
-      list.innerHTML = '<div style="padding:14px;font-size:10px;color:#443322;font-style:italic;text-align:center;">Nothing to sell.</div>';
+    const SELL_TYPES = { trade:true, component:true, artifact:true, usable:true,
+                         material:true, ammo:true, equip:true };
+    const all = S.captain.inv.filter(item => {
+      const def = _surfItemDef(item);
+      return SELL_TYPES[def.type] && (def.val || item.val || 0) > 0;
+    });
+    const filtered = all.filter(item => {
+      if (_surfSellFlt === 'all') return true;
+      return _surfItemDef(item).type === _surfSellFlt;
+    });
+
+    if (!filtered.length) {
+      _mkShopEmpty(grid, 'Nothing to sell' + (_surfSellFlt !== 'all' ? ' in this category.' : '.'));
+      if (msg) msg.textContent = '';
       return;
     }
-    sellable.forEach(item => {
-      const def = ITEM_DEFS[item.id]; if (!def) return;
-      const price = Math.floor(def.sellVal * mult);
+
+    // Sell All button
+    if (filtered.length > 1) {
+      const totalVal = filtered.reduce((a, item) => {
+        const def = _surfItemDef(item);
+        return a + Math.floor((def.val || item.val || 0) * (item.qty || 1) * mult);
+      }, 0);
+      const allCard = _mkShopCard('💰', 'Sell All (' + filtered.length + ' items)', '', totalVal + ' TS', true, false);
+      allCard.classList.add('sell-all');
+      allCard.onclick = () => {
+        filtered.forEach(item => { S.captain.inv = S.captain.inv.filter(i => i !== item); });
+        S.gold += totalVal;
+        sfx('sell', 0.8);
+        _shopMsg('Sold ' + filtered.length + ' items for ' + totalVal + ' TS.');
+        _surfBuildShopGrid();
+      };
+      grid.appendChild(allCard);
+    }
+
+    filtered.forEach(item => {
+      const def   = _surfItemDef(item);
       const qty   = item.qty || 1;
-      const row   = document.createElement('div');
-      row.className = 'surf-shop-row';
-      row.innerHTML = '<span class="surf-shop-item-name">'+item.name+(qty>1?' &times;'+qty:'')+'<span class="surf-shop-item-sub">'+(mult>1?'Premium buyer':'')+'</span></span><span class="surf-shop-item-price">'+price+' TS ea</span>';
-      row.onclick = () => _surfSell(item.id);
-      list.appendChild(row);
+      const price = Math.floor((def.val || item.val || 0) * mult);
+      const name  = def.n + (qty > 1 ? ' ×' + qty : '');
+      const sub   = def.desc ? def.desc.slice(0, 45) + (def.desc.length > 45 ? '…' : '') : def.type;
+      const priceStr = price + (qty > 1 ? ' ea' : '') + ' TS' + (mult > 1 ? ' ★' : '');
+      const d = _mkShopCard(def.ico || '📦', name, sub, priceStr, true, false);
+      d.onclick = () => {
+        item.qty = (item.qty || 1) - 1;
+        if (item.qty <= 0) S.captain.inv = S.captain.inv.filter(i => i !== item);
+        S.gold += price;
+        sfx('sell', 0.7);
+        _shopMsg('Sold ' + def.n + ' for ' + price + ' TS' + (mult > 1 ? ' (premium!)' : '') + '.');
+        _surfBuildShopGrid();
+        surfBuildInvGrid(); // keep cargo overlay in sync
+      };
+      grid.appendChild(d);
     });
-    if (msg) msg.textContent = 'Tap item to sell one unit.';
+    if (msg) msg.textContent = 'You have ' + S.gold + ' TS. ' + (mult > 1 ? '★ Premium buyer — ' + Math.round((mult-1)*100) + '% bonus.' : '');
   }
 }
-function _surfBuy(id) {
+
+function _mkShopCard(ico, name, desc, costStr, isSell, disabled) {
+  const d = document.createElement('div');
+  d.className = 'ssurf-item' + (disabled ? ' dis' : '');
+  d.innerHTML = '<div class="ssurf-name">' + ico + ' ' + name + '</div>'
+    + '<div class="ssurf-desc">' + desc + '</div>'
+    + '<div class="' + (isSell ? 'ssurf-sell' : 'ssurf-cost') + '">' + costStr + '</div>';
+  return d;
+}
+function _mkShopEmpty(grid, text) {
+  const d = document.createElement('div');
+  d.style.cssText = 'color:#9977aa;font-style:italic;font-size:13px;grid-column:1/-1;text-align:center;padding:20px;';
+  d.textContent = text;
+  grid.appendChild(d);
+}
+function _surfShopBuy(id) {
   const def = ITEM_DEFS[id]; if (!def?.buyVal) return;
   if (S.gold < def.buyVal) { _shopMsg('Not enough TS.'); return; }
   S.gold -= def.buyVal;
@@ -2197,44 +2296,14 @@ function _surfBuy(id) {
   else S.captain.inv.push({ id, name:def.name, type:def.type, qty:1,
     ...(def.heal  ? {heal:def.heal}  : {}),
     ...(def.shots ? {shots:def.shots}: {}) });
-  sfx('purchase',0.75);
-  _shopMsg('Bought: ' + def.name);
-  _buildShopList();
+  sfx('purchase', 0.75);
+  _shopMsg('Bought: ' + def.name + ' (−' + def.buyVal + ' TS)');
+  _surfBuildShopGrid();
 }
-function _surfSell(id) {
-  const stock = SHOP_STOCK[_shopNpc?.shopId]; if (!stock) return;
-  const def = ITEM_DEFS[id]; if (!def) return;
-  const price = Math.floor(def.sellVal * (stock.sellMult||1));
-  const slot  = S.captain.inv.find(i => i.id === id); if (!slot) return;
-  slot.qty = (slot.qty||1)-1;
-  if (slot.qty <= 0) S.captain.inv = S.captain.inv.filter(i => i !== slot);
-  S.gold += price;
-  sfx('sell',0.7);
-  _shopMsg('Sold for ' + price + ' TS.');
-  _buildShopList();
+function _shopMsg(t) {
+  const el = document.getElementById('surf-shop-msg'); if (el) el.textContent = t;
 }
-function _shopMsg(t) { const el=document.getElementById('surf-shop-msg'); if(el) el.textContent=t; }
 
-
-// Start ambient on first interaction (browser requires gesture before Audio.play)
-(function() {
-  function _startAmbientOnce() {
-    startAmbient();
-    document.removeEventListener('keydown',    _startAmbientOnce);
-    document.removeEventListener('touchstart', _startAmbientOnce);
-    document.removeEventListener('mousedown',  _startAmbientOnce);
-  }
-  document.addEventListener('keydown',    _startAmbientOnce, { once:true });
-  document.addEventListener('touchstart', _startAmbientOnce, { once:true });
-  document.addEventListener('mousedown',  _startAmbientOnce, { once:true });
-})();
-
-// ============================================================
-// SURFACE UI — Stats / Inventory / Save / Minimap
-// ============================================================
-
-const SURF_SAVE_KEY  = 'fentheris_saves';
-const SURF_AUTO_KEY  = 'fentheris_surface_auto';
 
 // ── Overlay open/close (mirrors openOverlay/closeOverlay in index.html) ────────
 const _SURF_OVLS = ['stats','inv','save'];
