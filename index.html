@@ -2690,8 +2690,8 @@ body {
   <div class="pbox">
     <div class="ptitle">⊞ Overlays</div>
     <div class="drawer-ovl-btns">
-      <button class="drawer-ovl-btn" onclick="openOverlay('inv')">📦 Cargo</button>
-      <button class="drawer-ovl-btn" onclick="openOverlay('wpn')">⚔ Weapons</button>
+      <button class="drawer-ovl-btn" onclick="toggleStatsDrawer(event);openOverlay('inv')">📦 Cargo</button>
+      <button class="drawer-ovl-btn" onclick="toggleStatsDrawer(event);openOverlay('wpn')">⚔ Weapons</button>
       <button class="drawer-ovl-btn" onclick="toggleStatsDrawer(event);openOverlay('shp')">🚀 Ship</button>
       <button class="drawer-ovl-btn" onclick="toggleStatsDrawer(event);openOverlay('qlog')" style="color:#ffcc66;">📜 Quests</button>
       <button class="drawer-ovl-btn" id="mobile-lq-btn" onclick="toggleStatsDrawer(event);openLocalQuest()" style="display:none;color:#44ffcc;">🌌 Local</button>
@@ -2731,8 +2731,8 @@ body {
   </div>
   <div class="pbox ovl-btns">
     <div class="ptitle">⊞ Overlays</div>
-    <button class="ovl-btn" onclick="openOverlay('inv')">📦 Cargo Manifest</button>
-    <button class="ovl-btn" onclick="openOverlay('wpn')">⚔ Weapon Loadout</button>
+    <button class="ovl-btn" onclick="toggleStatsDrawer(event);openOverlay('inv')">📦 Cargo Manifest</button>
+    <button class="ovl-btn" onclick="toggleStatsDrawer(event);openOverlay('wpn')">⚔ Weapon Loadout</button>
     <button class="ovl-btn" id="sidebar-armory-btn" onclick="openArmory()" style="border-color:rgba(170,136,34,0.33);color:#ffcc88;">🛠 Armory</button>
     <button class="ovl-btn" onclick="openOverlay('shp')">🚀 Ship Details</button>
     <button class="ovl-btn" onclick="openOverlay('qlog')">📜 Quest Log</button>
@@ -3829,8 +3829,8 @@ body {
   <div id="lpoi-menu-bar" style="display:none">
     <span id="lpoi-bar-title">🔮 Drift Anomaly</span>
     <div id="lpoi-bar-btns">
-      <button class="lpoi-tbtn" onclick="openOverlay('inv')" title="Cargo Manifest">🎒 Items</button>
-      <button class="lpoi-tbtn" onclick="openOverlay('wpn')" title="Weapon Loadout">⚔ Weapons</button>
+      <button class="lpoi-tbtn" onclick="toggleStatsDrawer(event);openOverlay('inv')" title="Cargo Manifest">🎒 Items</button>
+      <button class="lpoi-tbtn" onclick="toggleStatsDrawer(event);openOverlay('wpn')" title="Weapon Loadout">⚔ Weapons</button>
       <button class="lpoi-tbtn" onclick="openOverlay('shp')" title="Ship Details">🚀 Ship</button>
       <button class="lpoi-tbtn" onclick="openOverlay('qlog')" title="Quest Log">📋 Quests</button>
       <button class="lpoi-tbtn" onclick="openOverlay('journal')" title="Captain's Log">📖 Log</button>
@@ -3861,9 +3861,9 @@ body {
   <!-- Menu bar — hidden during combat, visible when exploring -->
   <div id="lpoi-menu-bar" style="display:none">
     <span class="lpoi-mbar-status" id="lpoi-mbar-status">⚠ COMBAT</span>
-    <button class="lpoi-mbar-btn" onclick="openOverlay('inv')">📦 Items</button>
+    <button class="lpoi-mbar-btn" onclick="toggleStatsDrawer(event);openOverlay('inv')">📦 Items</button>
     <button class="lpoi-mbar-btn" onclick="openOverlay('shp')">⛵ Ship</button>
-    <button class="lpoi-mbar-btn" onclick="openOverlay('wpn')">⚔ Weapons</button>
+    <button class="lpoi-mbar-btn" onclick="toggleStatsDrawer(event);openOverlay('wpn')">⚔ Weapons</button>
     <button class="lpoi-mbar-btn" onclick="openOverlay('qlog')">📋 Quests</button>
     <button class="lpoi-mbar-btn" onclick="openOverlay('journal')">📖 Journal</button>
   </div>
