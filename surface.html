@@ -96,6 +96,21 @@ html, body {
   #dialogue-box .dlg-close:hover { color: #ffd080; }
 
   /* -- Mobile joystick --------------------------------------------------- */
+  /* ── Northern Field HUD + bottom bar ─────────────────────────── */
+  #nf-hud {
+    height:44px; flex-shrink:0;
+    background:rgba(4,0,13,0.96); border-bottom:1px solid rgba(68,17,136,0.4);
+    display:flex; align-items:center; gap:10px; padding:0 14px;
+    font-family:'Cinzel',serif; font-size:11px; color:#ccc4e0; letter-spacing:1px;
+    z-index:2; position:relative;
+  }
+  #nf-bottom-bar {
+    height:52px; flex-shrink:0;
+    background:rgba(4,0,13,0.96); border-top:1px solid rgba(68,17,136,0.4);
+    display:flex; align-items:center; gap:8px; padding:0 12px;
+    z-index:2; position:relative;
+  }
+
   #surf-joy-zone {
     position:absolute; bottom:68px; left:18px;
     width:104px; height:104px; z-index:25;
@@ -3434,6 +3449,8 @@ function _nfTileOccupied(tx, ty, self) {
   return NF.enemies.some(e => e !== self && e.alive && e.tx===tx && e.ty===ty);
 }
 
+function _nfOpenOvl(id) { surfOpenOvl(id); }
+
 function openNorthernField() {
   if (NF.active) return;
   NF.active = true;
@@ -3454,7 +3471,13 @@ function openNorthernField() {
     alertCooldown: 0,
   }));
   const _nfCv = document.getElementById('nf-canvas');
-  if (_nfCv) { _nfCv.width=window.innerWidth; _nfCv.height=window.innerHeight; }
+  if (_nfCv) {
+    requestAnimationFrame(() => {
+      _nfCv.width  = _nfCv.offsetWidth  || window.innerWidth;
+      _nfCv.height = _nfCv.offsetHeight || (window.innerHeight - 96);
+      NF._canvas = _nfCv;
+    });
+  }
   document.getElementById('ov-nfield').classList.add('on');
   // ── Virtual thumbstick on nf-canvas ────────────────────────────────────────
   const _nfCvEl = document.getElementById('nf-canvas');
@@ -3643,6 +3666,21 @@ function _nfStartCombat(e) {
 // NF kill tracking is now inline in cbtWin below
 
 function _nfDraw() {
+  const _nfHpEl=document.getElementById('nf-hud-hp');
+  const _nfHpf =document.getElementById('nf-hud-hpf');
+  const _nfLvEl=document.getElementById('nf-hud-lv');
+  const _nfClk =document.getElementById('nf-hud-clock');
+  const _nfFat =document.getElementById('nf-hud-fatigue');
+  if(_nfHpEl) _nfHpEl.textContent=(S.captain.hp||0)+'/'+(S.captain.maxHp||30);
+  if(_nfHpf)  _nfHpf.style.width=Math.max(0,Math.min(100,(S.captain.hp||0)/(S.captain.maxHp||30)*100))+'%';
+  if(_nfLvEl) _nfLvEl.textContent='Lv '+(S.captain.level||1);
+  if(_nfClk){const _h=document.getElementById('hud-clock');if(_h)_nfClk.textContent=_h.textContent;}
+  if(_nfFat){const _f=document.getElementById('hud-fatigue');if(_f){_nfFat.textContent=_f.textContent;_nfFat.className=_f.className;}}
+  const _nfStat=document.getElementById('nf-status-text');
+  const alive2=NF.enemies.filter(e=>e.alive).length;
+  if(_nfStat) _nfStat.textContent = S.quest.active
+    ? 'Hunt: '+S.quest.killed+'/'+S.quest.target+' '+S.quest.label+(alive2===0?' — Field cleared!':'')
+    : (alive2===0?'Field cleared! Walk south to return.':'Enemies: '+alive2+' remaining');
   const cv = document.getElementById('nf-canvas');
   if (!cv) return;
   const ctx = cv.getContext('2d');
@@ -3742,22 +3780,7 @@ function _nfDraw() {
     ctx.fillStyle='#4488ff'; ctx.fillRect(px+6,py+4,20,24);
   }
 
-  // HUD overlay
-  ctx.fillStyle='rgba(0,0,0,0.55)';
-  ctx.fillRect(0,0,cW,22);
-  ctx.fillStyle='#e8d5ff'; ctx.font='bold 11px Cinzel,serif';
-  ctx.fillText('Northern Field', 10, 15);
-  const alive=NF.enemies.filter(e=>e.alive).length;
-  ctx.fillStyle='#cc8888'; ctx.font='10px Courier New';
-  ctx.fillText('Enemies: '+alive, cW-90, 15);
-  if (S.quest.active) {
-    ctx.fillStyle='#ffcc44';
-    ctx.fillText('Hunt: '+S.quest.killed+'/'+S.quest.target+' '+S.quest.label, cW/2-50, 15);
-  }
-  // South exit hint
-  ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(0,cH-20,cW,20);
-  ctx.fillStyle='#9977aa'; ctx.font='9px Courier New';
-  ctx.fillText('Walk south to return to the village', 8, cH-6);
+  // HUD is now in HTML bars above/below canvas
 }
 
 // North exit trigger — check in main game loop
