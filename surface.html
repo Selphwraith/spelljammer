@@ -2521,7 +2521,7 @@ function surfOpenOvl(id) {
   if (!el) return;
   el.classList.add('on');
   // If Northern Field is active, boost z-index above the NF overlay (z:40)
-  if (NF.active) el.style.zIndex = '450';
+  if (NF.active) el.style.zIndex = '500';  // must beat NF overlay z-index:50
   if (id==='stats') _buildStats();
   if (id==='inv') { _surfInvFilter='all'; document.querySelectorAll('#surf-inv-filters .fbtn').forEach((b,i)=>b.classList.toggle('act',i===0)); surfBuildInvGrid(); }
   if (id==='save')  _surfBuildSaveSlots();
@@ -3573,10 +3573,10 @@ function openNorthernField() {
   const _nfEl = document.getElementById('ov-nfield');
   if (_nfEl) {
     _nfEl.classList.add('on');
-    // Belt-and-suspenders: force flex layout via JS in case CSS is cached
-    _nfEl.style.display        = 'flex';
-    _nfEl.style.flexDirection  = 'column';
-    _nfEl.style.pointerEvents  = 'all';
+    _nfEl.style.display       = 'flex';
+    _nfEl.style.flexDirection = 'column';
+    _nfEl.style.pointerEvents = 'all';
+    _nfEl.style.zIndex        = '50';  // explicit — overlays set to 500 beat this
   }
   // ── Virtual thumbstick on nf-canvas ────────────────────────────────────────
   const _nfCvEl = document.getElementById('nf-canvas');
@@ -3657,7 +3657,8 @@ function closeNorthernField() {
   const _nfEl2 = document.getElementById('ov-nfield');
   if (_nfEl2) {
     _nfEl2.classList.remove('on');
-    _nfEl2.style.display = 'none';
+    _nfEl2.style.display  = 'none';
+    _nfEl2.style.zIndex   = '';
   }
   // Reset any boosted overlay z-indexes
   _SURF_OVLS.forEach(k => {
@@ -3840,14 +3841,16 @@ function _nfDraw() {
       const _fh = Math.floor(eImg.naturalHeight / 4);
       const _srcX = nfAnimFrame * _fw;
       const _srcY = 0;  // row 0 = idle
-      // Watcher is tall — render 2 tiles tall, centred on the tile position
-      // Other enemies render at standard 1 tile
+      // Size the display based on enemy type
+      // Watcher: draw at full 64px wide/tall so thin body is not squished
       const _isWatcher = e.type === 'watcher';
-      const _drawW = NF_TILE;
-      const _drawH = _isWatcher ? NF_TILE * 2 : NF_TILE;
-      const _drawOY = _isWatcher ? ey - NF_TILE : ey;
+      const _drawW  = _isWatcher ? _fw      : NF_TILE;   // 64 or 32
+      const _drawH  = _isWatcher ? _fh      : NF_TILE;   // 64 or 32
+      // Centre horizontally on tile, anchor feet to tile bottom
+      const _drawOX = _isWatcher ? ex - (_drawW - NF_TILE) / 2 : ex;
+      const _drawOY = _isWatcher ? ey - (_drawH - NF_TILE)     : ey;
       ctx.save();
-      ctx.translate(ex + _drawW, 0);
+      ctx.translate(_drawOX + _drawW, 0);
       ctx.scale(-1, 1);
       ctx.drawImage(eImg, _srcX, _srcY, _fw, _fh, 0, _drawOY, _drawW, _drawH);
       ctx.restore();
