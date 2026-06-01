@@ -1095,18 +1095,61 @@ function isWalkable(tx, ty) {
 // ── Player movement ───────────────────────────────────────────────────────
 function tryMove(dx, dy, dt) {
   dt = dt || (1/60);
-  const nextPx = S.px + dx * TILE_SIZE * WALK_SPEED * dt;
-  const nextPy = S.py + dy * TILE_SIZE * WALK_SPEED * dt;
+  const spd     = TILE_SIZE * WALK_SPEED * dt;
+  const nextPx  = S.px + dx * spd;
+  const nextPy  = S.py + dy * spd;
+  const margin  = TILE_SIZE * 0.38;  // collision box inset
+  const slide   = spd * 0.9;         // slide nudge speed (slightly slower than walk)
+  const T       = TILE_SIZE;
 
-  // Tile the player centre will land in (with small margin so player fits between tiles)
-  const margin = TILE_SIZE * 0.4;
-  const canMoveX = isWalkable(Math.floor((nextPx + margin * dx) / TILE_SIZE), Math.floor(S.py / TILE_SIZE))
-                && isWalkable(Math.floor((nextPx + margin * dx) / TILE_SIZE), Math.floor((S.py + TILE_SIZE * 0.5) / TILE_SIZE));
-  const canMoveY = isWalkable(Math.floor(S.px / TILE_SIZE), Math.floor((nextPy + margin * dy) / TILE_SIZE))
-                && isWalkable(Math.floor((S.px + TILE_SIZE * 0.5) / TILE_SIZE), Math.floor((nextPy + margin * dy) / TILE_SIZE));
+  // ── Helper: check if a pixel-space point is walkable ─────────────────────
+  const wk = (px, py) => isWalkable(Math.floor(px / T), Math.floor(py / T));
 
-  if (dx !== 0 && canMoveX) S.px = Math.max(0, Math.min((MAP_W - 1) * TILE_SIZE, nextPx));
-  if (dy !== 0 && canMoveY) S.py = Math.max(0, Math.min((MAP_H - 1) * TILE_SIZE, nextPy));
+  // ── Moving horizontally (dx ≠ 0) ─────────────────────────────────────────
+  if (dx !== 0) {
+    const ex    = nextPx + margin * Math.sign(dx);  // leading edge X
+    const topOk = wk(ex, S.py + margin);            // top of player
+    const botOk = wk(ex, S.py + T - margin);        // bottom of player
+
+    if (topOk && botOk) {
+      // Both clear — move normally
+      S.px = Math.max(0, Math.min((MAP_W - 1) * T, nextPx));
+    } else if (topOk && !botOk) {
+      // Bottom corner is clipped — slide upward along the wall
+      S.px = Math.max(0, Math.min((MAP_W - 1) * T, nextPx));
+      if (isWalkable(Math.floor(S.px / T), Math.floor((S.py - slide) / T)))
+        S.py = Math.max(0, S.py - slide);
+    } else if (!topOk && botOk) {
+      // Top corner is clipped — slide downward along the wall
+      S.px = Math.max(0, Math.min((MAP_W - 1) * T, nextPx));
+      if (isWalkable(Math.floor(S.px / T), Math.floor((S.py + slide) / T)))
+        S.py = Math.min((MAP_H - 1) * T, S.py + slide);
+    }
+    // Both blocked: no movement (player stops cleanly)
+  }
+
+  // ── Moving vertically (dy ≠ 0) ────────────────────────────────────────────
+  if (dy !== 0) {
+    const ey     = nextPy + margin * Math.sign(dy);  // leading edge Y
+    const leftOk = wk(S.px + margin,     ey);        // left of player
+    const rgtOk  = wk(S.px + T - margin, ey);        // right of player
+
+    if (leftOk && rgtOk) {
+      // Both clear — move normally
+      S.py = Math.max(0, Math.min((MAP_H - 1) * T, nextPy));
+    } else if (leftOk && !rgtOk) {
+      // Right corner is clipped — slide left along the wall
+      S.py = Math.max(0, Math.min((MAP_H - 1) * T, nextPy));
+      if (isWalkable(Math.floor((S.px - slide) / T), Math.floor(S.py / T)))
+        S.px = Math.max(0, S.px - slide);
+    } else if (!leftOk && rgtOk) {
+      // Left corner is clipped — slide right along the wall
+      S.py = Math.max(0, Math.min((MAP_H - 1) * T, nextPy));
+      if (isWalkable(Math.floor((S.px + slide) / T), Math.floor(S.py / T)))
+        S.px = Math.min((MAP_W - 1) * T, S.px + slide);
+    }
+    // Both blocked: no movement
+  }
 
   if (dx !== 0 || dy !== 0) {
     S.dir=Math.abs(dx)>=Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');
@@ -1256,8 +1299,10 @@ function render(ctx, cW, cH) {
         ctx.drawImage(dirtPathImg,
           DIRT_PATH_IDS[tileId] * TILE_SIZE, 0, TILE_SIZE, TILE_SIZE,
           dx, dy, TILE_SIZE, TILE_SIZE);
-      } else if (tileSet?.complete && tileSet.naturalWidth > 0) {
-        const [uc, ur] = TILE_UV[tileId] || [0,0];
+      } else if (tileSet?.complete && tileSet.naturalWidth > 0 && TILE_UV[tileId]) {
+        // Only draw from tileset if this tile ID has a UV entry.
+        // IDs 23+ (pew, altar) have no UV and must use procedural fallback.
+        const [uc, ur] = TILE_UV[tileId];
         ctx.drawImage(tileSet,
           uc * TILE_SIZE, ur * TILE_SIZE, TILE_SIZE, TILE_SIZE,
           dx, dy, TILE_SIZE, TILE_SIZE);
@@ -3594,7 +3639,8 @@ function _closeNFSilent() {
   const _a = document.getElementById('surf-act-btn');
   if (_j) _j.style.zIndex='';
   if (_a) _a.style.zIndex='';
-  document.getElementById('ov-nfield').classList.remove('on');
+  const _nfElS = document.getElementById('ov-nfield');
+  if (_nfElS) { _nfElS.classList.remove('on'); _nfElS.style.display='none'; }
 }
 
 function closeNorthernField() {
@@ -3607,10 +3653,14 @@ function closeNorthernField() {
   const _actEl2 = document.getElementById('surf-act-btn');
   if (_joyEl2) _joyEl2.style.zIndex='';
   if (_actEl2) _actEl2.style.zIndex='';
-  document.getElementById('ov-nfield').classList.remove('on');
-  // Exit at top of north dirt path (tx=16, ty=1) — just south of the gate
+  const _nfEl2 = document.getElementById('ov-nfield');
+  if (_nfEl2) {
+    _nfEl2.classList.remove('on');
+    _nfEl2.style.display = 'none';  // clear inline display set by openNF JS fix
+  }
+  // Exit to ty=3 on the north dirt path — safely below the NF trigger zone
   S.px = 16 * TILE_SIZE;
-  S.py =  1 * TILE_SIZE;
+  S.py =  3 * TILE_SIZE;
   setStatus('You return south to the village.');
 }
 
@@ -3780,17 +3830,18 @@ function _nfDraw() {
     if (ex<-NF_TILE||ex>cW||ey<-NF_TILE||ey>cH) continue;
     const eImg = ENM_IMGS[e.type];
     if (eImg && eImg.naturalWidth>0) {
-      // Derive actual frame size from the sheet (handles any resolution)
       const _fw = Math.floor(eImg.naturalWidth  / 4);
       const _fh = Math.floor(eImg.naturalHeight / 4);
-      // Row 0 = idle, col = animated frame
       const _srcX = nfAnimFrame * _fw;
-      const _srcY = 0;  // idle row
-      // Flip to face left
+      const _srcY = 0;  // row 0 = idle
+      // Draw slightly larger than one tile so watcher's tall body is visible
+      const _drawW = e.type === 'watcher' ? NF_TILE * 1.2 : NF_TILE;
+      const _drawH = e.type === 'watcher' ? NF_TILE * 1.8 : NF_TILE;
+      const _drawOY = e.type === 'watcher' ? ey - NF_TILE * 0.8 : ey;
       ctx.save();
-      ctx.translate(ex + NF_TILE, 0);
+      ctx.translate(ex + _drawW, 0);
       ctx.scale(-1, 1);
-      ctx.drawImage(eImg, _srcX, _srcY, _fw, _fh, 0, ey, NF_TILE, NF_TILE);
+      ctx.drawImage(eImg, _srcX, _srcY, _fw, _fh, 0, _drawOY, _drawW, _drawH);
       ctx.restore();
     } else {
       const ECOL={crawler:'#1a3a10',lurker:'#555050',watcher:'#3a1a4a'};
