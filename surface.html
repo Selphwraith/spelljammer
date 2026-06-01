@@ -509,7 +509,6 @@ html, body {
 
   <!-- NF bottom bar (mirrors village bottom bar) -->
   <div id="nf-bottom-bar" style="height:52px;flex-shrink:0;background:rgba(4,0,13,0.96);border-top:1px solid rgba(68,17,136,0.4);display:flex;align-items:center;gap:8px;padding:0 12px;z-index:2;">
-    <button class="hud-btn" onclick="closeNorthernField()">&#9664; Leave Field</button>
     <button class="hud-btn-sm ovl-btn" onclick="surfOpenOvl('stats')">&#9876; Captain</button>
     <button class="hud-btn-sm ovl-btn" onclick="surfOpenOvl('inv')">&#128230; Cargo</button>
     <button class="hud-btn-sm ovl-btn" onclick="surfOpenOvl('save')">&#128190; Log</button>
@@ -974,6 +973,7 @@ let S = {
   },
   _indexEntry:null,
   nfRespawnDay: 1,  // day enemies last respawned — respawn every 3 days
+  nfQuestTier: 0,   // 0=crawlers, 1=lurkers, 2=watchers — controls what spawns in NF
   quest:{ active:false, target:0, killed:0, type:'crawler', label:'', reward:0, rewarded:false, completions:0 }, // raw data received from index.html, for unified saves
   enemies:[],
   combat:{active:false,enemy:null,enemyIdx:-1,log:[],playerTurn:true,shotsLeft:0,ended:false},
@@ -2173,13 +2173,13 @@ function _doPlayerAttack(wep) {
 
 let _lastAttackT = 0;
 function cbtMelee() {
-  if (!S.combat.playerTurn || S.combat.ended) return;
+  if (!S.combat.playerTurn || S.combat.ended || !_cbtA.btnsOn) return;
   const _n=Date.now(); if(_n-_lastAttackT<400)return; _lastAttackT=_n;
   _doPlayerAttack(S.captain.melee);
 }
 
 function cbtRanged() {
-  if (!S.combat.playerTurn || S.combat.ended) return;
+  if (!S.combat.playerTurn || S.combat.ended || !_cbtA.btnsOn) return;
   const _nr=Date.now(); if(_nr-_lastAttackT<400)return; _lastAttackT=_nr;
   if (S.combat.shotsLeft <= 0) { cbtLog('Out of shots!', 'warn'); return; }
   S.combat.shotsLeft--;
@@ -2315,6 +2315,12 @@ const CLINIC_SPAWN_TX = 23, CLINIC_SPAWN_TY = 12;  // inside chapel
 function cbtDefeat() {
   if (S.combat.ended) return;
   S.combat.ended = true;
+  // Reset quest tier — a tougher group drove the enemy back and crawlers moved in
+  if ((S.nfQuestTier||0) > 0) {
+    S.nfQuestTier = 0;
+    S.quest.active = false;
+    S.quest.killed = 0;
+  }
   sfx('player_down', 0.85);
   cbtLog('Everything goes dark…', 'warn');
   _setCbtBtns(false);
@@ -2764,7 +2770,7 @@ function _surfBuildSave(label) {
   const ie = S._indexEntry || {};
   const ss = {
     px: S.px, py: S.py,
-    day: S.day, nfRespawnDay: S.nfRespawnDay, gold: S.gold,
+    day: S.day, nfRespawnDay: S.nfRespawnDay, nfQuestTier: S.nfQuestTier, gold: S.gold,
     enemies: S.enemies.map(e => ({ alive:e.alive, currentHp:e.currentHp, tx:e.tx, ty:e.ty, type:e.type })),
   };
   // Package in index.html's save format so slots are cross-compatible
@@ -2833,7 +2839,8 @@ function _surfApplySave(save) {
     if (ss.px)         S.px   = ss.px;
     if (ss.py)         S.py   = ss.py;
     if (ss.day)        S.day         = ss.day;
-    if (ss.nfRespawnDay) S.nfRespawnDay = ss.nfRespawnDay;
+    if (ss.nfRespawnDay)  S.nfRespawnDay  = ss.nfRespawnDay;
+    if (ss.nfQuestTier != null) S.nfQuestTier = ss.nfQuestTier;
     if (ss.gold != null) S.gold = ss.gold;
     // Restore captain
     let cap = null;
@@ -3291,7 +3298,8 @@ const HUNT_TARGETS = [
   { type:'crawler', count:5, label:'Void Crawlers',  reward:60,
     offerLine:  'Those Void Crawlers north of town are multiplying. I need five of them put down. Follow the dirt path north past the chapel into the Northern Field. Come back when it\'s done.',
     returnLine: 'Five Void Crawlers. Good work. The farmers can sleep soundly tonight. Here\'s your pay.',
-    repeatLine: 'They\'re back again. Another five Void Crawlers — same field, same deal.' },
+    repeatLine: 'They\'re back again. Another five Void Crawlers — same field, same deal.',
+    defeatLine: 'A tougher group came through and took care of that last problem — but they stirred up a fresh pack of Void Crawlers moving in. Want to try your hand again?' },
   { type:'lurker',  count:4, label:'Stone Lurkers',  reward:100,
     offerLine:  'Harder work this time. Stone Lurkers have moved into the field — four of them. They\'re slow but they hit like a siege stone. Watch your footing and come back alive.',
     returnLine: 'Four Stone Lurkers. I didn\'t think you\'d manage it. The field is safer now. Take your reward.',
@@ -3316,8 +3324,11 @@ function openQuestDialogue(npc) {
 
   // ── No active quest: offer one ──────────────────────────────────────
   if (!q.active) {
-    // Show the offer FIRST, then mark active so re-talking shows in-progress msg
-    const offerText = isRepeat ? target.repeatLine : target.offerLine;
+    const wasReset = (S.nfQuestTier === 0 && (q.completions||0) > 0 && !q._shownDefeatLine);
+    const offerText = wasReset
+      ? (HUNT_TARGETS[0].defeatLine || HUNT_TARGETS[0].offerLine)
+      : isRepeat ? target.repeatLine : target.offerLine;
+    if (wasReset) q._shownDefeatLine = true;
     _showQuestLine(npc, offerText);
     // Activate quest after dialogue is shown
     q.active   = true;
@@ -3343,13 +3354,16 @@ function openQuestDialogue(npc) {
 
   // ── Quest complete: turn in ─────────────────────────────────────────
   if (q.active && q.killed >= q.target) {
-    q.active   = false;
-    q.rewarded = false;
+    q.active      = false;
+    q.rewarded    = false;
     q.completions = (q.completions||0) + 1;
-    S.gold += q.reward;
+    S.gold       += q.reward;
     sfx('level_up', 0.9);
+    // Advance to next enemy tier (crawlers→lurkers→watchers, then stop)
+    const nextTier = (S.nfQuestTier||0) + 1;
+    if (nextTier < 3) S.nfQuestTier = nextTier;
     _showQuestLine(npc, target.returnLine + ' (+' + q.reward + ' TS)');
-    setStatus('Quest complete! +' + q.reward + ' TS earned. (' + q.completions + ' hunts total)');
+    setStatus('Quest complete! +' + q.reward + ' TS earned.');
     q.killed = 0;
     return;
   }
@@ -3576,20 +3590,24 @@ function _nfOpenOvl(id) { surfOpenOvl(id); }
 function openNorthernField() {
   if (NF.active) return;
   NF.active = true;
-  NF.px = 23*NF_TILE;
-  NF.py = (NF_H - 3)*NF_TILE;
+  // Enter NF at player's current x coordinate — exit returns to same x in village
+  NF.px = S.px;  // match village x position
+  NF.py = (NF_H - 3) * NF_TILE;
   NF.dir = 'up';
+  NF._entryX = S.px;  // remember entry x for exit
   // Reset enemies
-  NF.enemies = NF_SPAWNS.map((sp,i) => ({
+  // Only spawn the enemy type matching the current quest tier
+  const _tierType = ['crawler','lurker','watcher'][S.nfQuestTier || 0];
+  const _tierSpawns = NF_SPAWNS.filter(sp => sp.type === _tierType);
+  NF.enemies = _tierSpawns.map((sp,i) => ({
     ...sp, alive:true,
     currentHp: {crawler:18,lurker:30,watcher:45}[sp.type]||20,
     uid: 'nf_'+i,
-    // Patrol state
-    homeTx: sp.tx, homeTy: sp.ty,   // spawn tile
+    homeTx: sp.tx, homeTy: sp.ty,
     facingDir: ['up','right','down','left'][i%4],
-    patrolT:   Math.random()*4,      // stagger timers so they don't all move together
+    patrolT:   Math.random()*4,
     patrolStep: 0,
-    alerted: false,                  // true = moving toward player
+    alerted: false,
     alertCooldown: 0,
   }));
   const _nfCv = document.getElementById('nf-canvas');
@@ -3695,9 +3713,9 @@ function closeNorthernField() {
     const el = document.getElementById('surf-ovl-'+k);
     if (el) { el.classList.remove('on'); el.style.zIndex=''; }
   });
-  // Exit to ty=3 on the north dirt path — safely below the NF trigger zone
-  S.px = 16 * TILE_SIZE;
-  S.py =  3 * TILE_SIZE;
+  // Return player to their entry x coordinate, just below the north gate
+  S.px = NF._entryX || 16 * TILE_SIZE;
+  S.py = 3 * TILE_SIZE;
   setStatus('You return south to the village.');
 }
 
