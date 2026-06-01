@@ -973,6 +973,7 @@ let S = {
     inv:[], gearGiven:false, shotsLoaded:3,
   },
   _indexEntry:null,
+  nfRespawnDay: 1,  // day enemies last respawned — respawn every 3 days
   quest:{ active:false, target:0, killed:0, type:'crawler', label:'', reward:0, rewarded:false, completions:0 }, // raw data received from index.html, for unified saves
   enemies:[],
   combat:{active:false,enemy:null,enemyIdx:-1,log:[],playerTurn:true,shotsLeft:0,ended:false},
@@ -1025,6 +1026,8 @@ function loadEntryData() {
       if(ss.py) S.py=ss.py;
       if(ss.day) S.day=ss.day;
     }
+    // Sync day counter from index.html so surface and space share the same clock
+    if (d.day) S.day = d.day;
     if(d.captain){
       const c=d.captain;S.captain={...S.captain,...c};
       if(c.melee)S.captain.melee=c.melee;
@@ -1078,9 +1081,17 @@ function surfaceRest() {
   _drawMinimap();
   sfx('rest',0.65);
   surfAutoSave();
-  S.captain.hp=S.captain.maxHp;
-  respawnEnemies();
-  setStatus('Rested 8 hours. Captain fully healed. Enemies respawned.');
+  S.captain.hp = S.captain.maxHp;
+  // Respawn NF enemies every 3 days — not every rest
+  const daysSinceRespawn = S.day - (S.nfRespawnDay || 1);
+  if (daysSinceRespawn >= 3) {
+    respawnEnemies();
+    S.nfRespawnDay = S.day;
+    setStatus('Rested 8 hours. Captain healed. The field stirs again — enemies have returned.');
+  } else {
+    const daysLeft = 3 - daysSinceRespawn;
+    setStatus('Rested 8 hours. Captain healed. Enemies return in ~' + daysLeft + ' day(s).');
+  }
 }
 
 // ── Tile helpers ──────────────────────────────────────────────────────────
@@ -2753,7 +2764,7 @@ function _surfBuildSave(label) {
   const ie = S._indexEntry || {};
   const ss = {
     px: S.px, py: S.py,
-    day: S.day, gold: S.gold,
+    day: S.day, nfRespawnDay: S.nfRespawnDay, gold: S.gold,
     enemies: S.enemies.map(e => ({ alive:e.alive, currentHp:e.currentHp, tx:e.tx, ty:e.ty, type:e.type })),
   };
   // Package in index.html's save format so slots are cross-compatible
@@ -2821,7 +2832,8 @@ function _surfApplySave(save) {
     if (!ss) return false;
     if (ss.px)         S.px   = ss.px;
     if (ss.py)         S.py   = ss.py;
-    if (ss.day)        S.day  = ss.day;
+    if (ss.day)        S.day         = ss.day;
+    if (ss.nfRespawnDay) S.nfRespawnDay = ss.nfRespawnDay;
     if (ss.gold != null) S.gold = ss.gold;
     // Restore captain
     let cap = null;
@@ -3396,20 +3408,29 @@ const NF_TILE = 32;
 // Northern Field map — grassland / sparse forest
 // 0=grass 3=tall-grass 4=tree-top 5=tree-bot 15=cliff(south boundary)
 const NF_TILES = (() => {
+  // Use a proper pseudo-random hash to avoid column artifacts
+  const hash = (x, y) => {
+    let h = (x * 374761393 + y * 1103515245 + 12345) & 0x7fffffff;
+    h = ((h >> 16) ^ h) * 0x45d9f3b & 0x7fffffff;
+    return h % 100;
+  };
   const t = [];
-  for (let y=0; y<NF_H; y++) {
-    for (let x=0; x<NF_W; x++) {
-      let tid = 0;
-      // Cliff at south edge (boundary back to village)
-      if (y >= NF_H-2) { t.push(15); continue; }
-      // Only outermost column is solid trees — allows full east/west traversal
-      if (x===0 || x===NF_W-1) { t.push(y%2===0?4:5); continue; }
-      // Scattered trees
-      const seed = (x*7+y*13+x*y) % 31;
-      if (seed < 3) { t.push(4); continue; }
-      if (seed < 6 && y > 0 && t[(y-1)*NF_W+x]===4) { t.push(5); continue; }
-      // Tall grass patches
-      if (seed >= 18 && seed < 22) { t.push(3); continue; }
+  for (let y = 0; y < NF_H; y++) {
+    for (let x = 0; x < NF_W; x++) {
+      // Cliff at south edge
+      if (y >= NF_H - 2) { t.push(15); continue; }
+      // Single border column each side
+      if (x === 0 || x === NF_W - 1) { t.push(y % 2 === 0 ? 4 : 5); continue; }
+      const h = hash(x, y);
+      const hN = y > 0 ? hash(x, y-1) : 100;
+      // Tree top: ~12% of tiles, never adjacent columns (check neighbours)
+      const leftH  = x > 1 ? hash(x-1, y) : 100;
+      const rightH = x < NF_W-2 ? hash(x+1, y) : 100;
+      if (h < 12 && leftH >= 12 && rightH >= 12) { t.push(4); continue; }
+      // Tree bottom: only directly below a tree top
+      if (t.length > 0 && t[(y-1)*NF_W + x] === 4 && y > 0) { t.push(5); continue; }
+      // Tall grass patches: ~15%
+      if (h >= 70 && h < 85) { t.push(3); continue; }
       t.push(0);
     }
   }
@@ -3418,9 +3439,18 @@ const NF_TILES = (() => {
 
 // Northern Field enemy spawns
 const NF_SPAWNS = [
-  {type:'crawler',tx:8, ty:4},{type:'crawler',tx:15,ty:7},{type:'crawler',tx:30,ty:3},
-  {type:'crawler',tx:38,ty:8},{type:'lurker', tx:12,ty:10},{type:'lurker', tx:25,ty:12},
-  {type:'lurker', tx:40,ty:5},{type:'watcher',tx:20,ty:6},{type:'watcher',tx:35,ty:11},
+  // 5 Void Crawlers — spread across full field width
+  {type:'crawler', tx: 6, ty: 3}, {type:'crawler', tx:18, ty: 6},
+  {type:'crawler', tx:30, ty: 4}, {type:'crawler', tx:40, ty: 8},
+  {type:'crawler', tx:12, ty:14},
+  // 5 Stone Lurkers — mid-field
+  {type:'lurker',  tx: 9, ty: 9}, {type:'lurker',  tx:22, ty:11},
+  {type:'lurker',  tx:35, ty: 6}, {type:'lurker',  tx:43, ty:13},
+  {type:'lurker',  tx:16, ty:16},
+  // 5 Feral Watchers — deeper in the field
+  {type:'watcher', tx:25, ty: 5}, {type:'watcher', tx:38, ty:10},
+  {type:'watcher', tx: 7, ty:13}, {type:'watcher', tx:32, ty:15},
+  {type:'watcher', tx:20, ty: 2},
 ];
 
 const NF = {
