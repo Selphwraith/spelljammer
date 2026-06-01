@@ -3524,7 +3524,14 @@ function openNorthernField() {
       NF._canvas = _nfCv;
     });
   }
-  document.getElementById('ov-nfield').classList.add('on');
+  const _nfEl = document.getElementById('ov-nfield');
+  if (_nfEl) {
+    _nfEl.classList.add('on');
+    // Belt-and-suspenders: force flex layout via JS in case CSS is cached
+    _nfEl.style.display        = 'flex';
+    _nfEl.style.flexDirection  = 'column';
+    _nfEl.style.pointerEvents  = 'all';
+  }
   // ── Virtual thumbstick on nf-canvas ────────────────────────────────────────
   const _nfCvEl = document.getElementById('nf-canvas');
   if (_nfCvEl) { _nfCvEl.style.pointerEvents='all'; NF._canvas=_nfCvEl; }
