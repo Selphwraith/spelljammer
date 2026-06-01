@@ -490,8 +490,31 @@ html, body {
 </div>
 
 <!-- Northern Field Overlay -->
-<div class="ovlay" id="ov-nfield" style="background:#0a0c06;padding:0;">
-  <canvas id="nf-canvas" style="width:100%;height:100%;display:block;"></canvas>
+<div class="ovlay" id="ov-nfield" style="background:#0a0c06;padding:0;flex-direction:column;">
+
+  <!-- NF HUD bar (mirrors village HUD) -->
+  <div id="nf-hud" style="height:44px;flex-shrink:0;background:rgba(4,0,13,0.96);border-bottom:1px solid rgba(68,17,136,0.4);display:flex;align-items:center;gap:10px;padding:0 14px;font-family:'Cinzel',serif;font-size:11px;color:#ccc4e0;letter-spacing:1px;z-index:2;">
+    <span style="font-weight:700;font-size:14px;color:#e8d5ff;letter-spacing:3px;">&#9876; FENTHERIS</span>
+    <span style="color:rgba(102,51,170,0.5);font-size:18px;">|</span>
+    <span style="font-size:10px;color:#9966cc;letter-spacing:2px;">NORTHERN FIELD</span>
+    <span id="nf-hud-clock" style="color:#b8b0d0;font-size:10px;margin-left:auto;"></span>
+    <span id="nf-hud-fatigue" class="fresh" style="padding:2px 8px;border-radius:2px;font-size:10px;">&#10022; Fresh</span>
+    <span id="nf-hud-lv" style="font-family:'Cinzel',serif;color:#cc99ff;font-size:10px;margin-left:8px;"></span>
+    <span class="hud-hp-mini"><span class="hud-hp-mini-fill" id="nf-hud-hpf" style="width:100%"></span></span>
+    <span id="nf-hud-hp" style="color:#cc7777;font-size:10px;"></span>
+  </div>
+
+  <!-- Canvas fills middle -->
+  <canvas id="nf-canvas" style="flex:1;width:100%;display:block;min-height:0;"></canvas>
+
+  <!-- NF bottom bar (mirrors village bottom bar) -->
+  <div id="nf-bottom-bar" style="height:52px;flex-shrink:0;background:rgba(4,0,13,0.96);border-top:1px solid rgba(68,17,136,0.4);display:flex;align-items:center;gap:8px;padding:0 12px;z-index:2;">
+    <button class="hud-btn" onclick="closeNorthernField()">&#9664; Leave Field</button>
+    <button class="hud-btn-sm ovl-btn" onclick="surfOpenOvl('stats')">&#9876; Captain</button>
+    <button class="hud-btn-sm ovl-btn" onclick="surfOpenOvl('inv')">&#128230; Cargo</button>
+    <button class="hud-btn-sm ovl-btn" onclick="surfOpenOvl('save')">&#128190; Log</button>
+    <span id="nf-status-text" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:#7766aa;font-style:italic;">Northern Field</span>
+  </div>
 </div>
 
 <!-- Transition overlay -->
@@ -706,9 +729,7 @@ const NPCS = [
     name: 'Warden Tessick',
     isQuestGiver: true,
     lines: [
-      "*studies you carefully* Captain. Those creatures north of the settlement are getting bold. Follow the path past the chapel — the Northern Field. I need someone to cull their numbers. Kill five of them and come back.",
-      "You've returned. How many did you clear? Report your count.",
-      "The village owes you. Come back when they start making trouble again — they always do.",
+      "Speak to me when you have a kill count to report.",
     ],
   },
   {
@@ -3207,9 +3228,19 @@ function _drawShipInDock(ctx, ox, oy) {
 // HUNT QUEST SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════════
 const HUNT_TARGETS = [
-  { type:'crawler', count:5,  label:'Void Crawlers',  reward:60  },
-  { type:'lurker',  count:4,  label:'Stone Lurkers',  reward:100 },
-  { type:'watcher', count:3,  label:'Feral Watchers', reward:150 },
+  // Each hunt gets progressively harder — cycles: crawlers → lurkers → watchers → repeat (scaled)
+  { type:'crawler', count:5, label:'Void Crawlers',  reward:60,
+    offerLine:  'Those Void Crawlers north of town are multiplying. I need five of them put down. Follow the dirt path north past the chapel into the Northern Field. Come back when it\'s done.',
+    returnLine: 'Five Void Crawlers. Good work. The farmers can sleep soundly tonight. Here\'s your pay.',
+    repeatLine: 'They\'re back again. Another five Void Crawlers — same field, same deal.' },
+  { type:'lurker',  count:4, label:'Stone Lurkers',  reward:100,
+    offerLine:  'Harder work this time. Stone Lurkers have moved into the field — four of them. They\'re slow but they hit like a siege stone. Watch your footing and come back alive.',
+    returnLine: 'Four Stone Lurkers. I didn\'t think you\'d manage it. The field is safer now. Take your reward.',
+    repeatLine: 'Another pack of Stone Lurkers has moved in. Four of them again. Don\'t get crushed.' },
+  { type:'watcher', count:3, label:'Feral Watchers', reward:150,
+    offerLine:  'This one is dangerous. Three Feral Watchers have nested in the field. One eye, one mind, one instinct: hunt. Kill all three. I\'ll pay well — because not everyone comes back from this.',
+    returnLine: 'Three Feral Watchers. You\'re either very skilled or very lucky. Either way — take the coin.',
+    repeatLine: 'More Watchers. Three of them. I won\'t pretend this gets easier.' },
 ];
 
 function _getHuntTarget() {
@@ -3222,9 +3253,10 @@ function _getHuntTarget() {
 function openQuestDialogue(npc) {
   const q = S.quest;
   const target = _getHuntTarget();
+  const isRepeat = (q.completions||0) > 0;
 
-  if (!q.active && !q.rewarded) {
-    // Offer quest
+  // ── No active quest: offer one ──────────────────────────────────────
+  if (!q.active) {
     q.active   = true;
     q.type     = target.type;
     q.target   = target.count;
@@ -3232,32 +3264,46 @@ function openQuestDialogue(npc) {
     q.label    = target.label;
     q.reward   = target.reward;
     q.rewarded = false;
-    openDlg(npc);
+    // Override NPC line to the specific hunt offer
+    const offerText = isRepeat ? target.repeatLine : target.offerLine;
+    _showQuestLine(npc, offerText);
     setStatus('Quest: Hunt ' + target.count + ' ' + target.label + ' in the Northern Field.');
     return;
   }
 
-  if (q.active && q.killed >= q.target) {
-    // Turn in quest
-    q.active   = false;
-    q.rewarded = true;
-    S.gold    += q.reward;
-    sfx('level_up', 0.9);
-    setStatus('Quest complete! Received ' + q.reward + ' TS. (' + (S.quest.completions=((S.quest&&S.quest.completions)||0)+1) + ' hunts total)');
-    // Reset for next quest
-    setTimeout(() => {
-      q.rewarded = false;
-      q.killed   = 0;
-    }, 100);
-    openDlg(npc);
+  // ── Quest active, not yet complete: show progress ──────────────────
+  if (q.active && q.killed < q.target) {
+    const rem = q.target - q.killed;
+    _showQuestLine(npc,
+      'You still have work to do. ' + q.killed + ' down, ' + rem + ' ' + q.label +
+      ' left to kill. Head north through the field.');
+    setStatus('Hunt: ' + q.killed + '/' + q.target + ' ' + q.label);
     return;
   }
 
-  if (q.active) {
-    // In-progress
-    setStatus('Hunt progress: ' + q.killed + ' / ' + q.target + ' ' + q.label + ' slain.');
+  // ── Quest complete: turn in ─────────────────────────────────────────
+  if (q.active && q.killed >= q.target) {
+    q.active   = false;
+    q.rewarded = false;
+    q.completions = (q.completions||0) + 1;
+    S.gold += q.reward;
+    sfx('level_up', 0.9);
+    _showQuestLine(npc, target.returnLine + ' (+' + q.reward + ' TS)');
+    setStatus('Quest complete! +' + q.reward + ' TS earned. (' + q.completions + ' hunts total)');
+    q.killed = 0;
+    return;
   }
-  openDlg(npc);
+}
+
+// Show a single custom line in the NPC dialogue box (overrides npc.lines temporarily)
+function _showQuestLine(npc, text) {
+  const dlg = document.getElementById('surf-dlg');
+  const nameEl = document.getElementById('surf-dlg-name');
+  const textEl = document.getElementById('surf-dlg-text');
+  if (!dlg || !textEl) { openDlg(npc); return; }
+  if (nameEl) nameEl.textContent = npc.name;
+  textEl.textContent = text;
+  dlg.style.display = 'flex';
 }
 
 // Hook into tryInteract to intercept quest giver
@@ -3287,10 +3333,10 @@ function _questTrackKill(enemyType) {
   if (enemyType === q.type) {
     q.killed++;
     if (q.killed >= q.target) {
-      setStatus('Quest complete! Return to Warden Tessick for your reward.');
+      setStatus('Quest complete! Return to Warden Tessick for your reward. (' + q.killed + '/' + q.target + ')');
       sfx('level_up', 0.7);
     } else {
-      setStatus('Hunt: ' + q.killed + ' / ' + q.target + ' ' + q.label + ' slain.');
+      setStatus('Hunt: ' + q.killed + '/' + q.target + ' ' + q.label + ' — ' + (q.target-q.killed) + ' remaining.');
     }
   }
 }
