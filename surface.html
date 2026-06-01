@@ -273,7 +273,7 @@ html, body {
   .hud-btn-sm:hover { border-color:#9966dd; color:#e8d5ff; }
   /* Combat overlay */
   #surf-combat {
-    position:absolute; inset:0; z-index:45; background:rgba(2,0,8,0.98);
+    position:absolute; inset:0; z-index:200; background:rgba(2,0,8,0.98);
     display:none; flex-direction:column; align-items:stretch;
     font-family:'Courier New',monospace; overflow:hidden;
   }
@@ -1003,7 +1003,8 @@ NPCS.forEach(n => loadImg(n.img, n.img));
 loadImg('cbt_captain', 'surface/captain_combat.png');
 loadImg('cbt_crawler', 'surface/enemy_crawler.png');
 loadImg('cbt_lurker',  'surface/enemy_lurker.png');
-loadImg('cbt_watcher', 'surface/enemy_watcher.png');
+loadImg('cbt_watcher',      'surface/enemy_watcher.png');
+loadImg('nf_watcher_idle',  'surface/npc_watcher_idle.png');
 
 // ── sessionStorage handshake — receive from index.html ────────────────────
 function loadEntryData() {
@@ -3826,7 +3827,14 @@ function _nfDraw() {
   }
 
   // Draw enemies using idle sprite (row 0, animated across 4 frames)
-  const ENM_IMGS = { crawler:IMGS['cbt_crawler'], lurker:IMGS['cbt_lurker'], watcher:IMGS['cbt_watcher'] };
+  // Watcher uses its own 4-frame idle strip (192×48, 48×48 per frame)
+  // Falls back to combat sheet if idle sheet not yet uploaded
+  const ENM_IMGS = {
+    crawler: IMGS['cbt_crawler'],
+    lurker:  IMGS['cbt_lurker'],
+    watcher: IMGS['nf_watcher_idle'] && IMGS['nf_watcher_idle'].naturalWidth > 0
+             ? IMGS['nf_watcher_idle'] : IMGS['cbt_watcher'],
+  };
   const ENM_HP   = { crawler:18, lurker:30, watcher:45 };
   const ENM_FW=64, ENM_FH=64;  // enemy sheets: 256×256, 4×4 grid, 64×64 per frame
   const nfAnimFrame = Math.floor(Date.now()/300)%4;  // idle cycle 4 frames
@@ -3836,8 +3844,13 @@ function _nfDraw() {
     if (ex<-NF_TILE||ex>cW||ey<-NF_TILE||ey>cH) continue;
     const eImg = ENM_IMGS[e.type];
     if (eImg && eImg.naturalWidth>0) {
-      const _fw = Math.floor(eImg.naturalWidth  / 4);
-      const _fh = Math.floor(eImg.naturalHeight / 4);
+      // Frame dimensions: always 4 columns wide.
+      // Watcher idle strip is single-row (192×48) so height = naturalHeight.
+      // Combat sheets are 4×4 grids so height = naturalHeight/4.
+      const _fw = Math.floor(eImg.naturalWidth / 4);
+      const _fh = (e.type === 'watcher' && eImg === IMGS['nf_watcher_idle'])
+                  ? eImg.naturalHeight           // single-row idle strip
+                  : Math.floor(eImg.naturalHeight / 4);  // 4×4 combat sheet
       const _srcX = nfAnimFrame * _fw;
       const _srcY = 0;  // row 0 = idle
       // Watcher draws at native 64x64; others at 32x32
