@@ -886,7 +886,7 @@ function _tickFootsteps(dt, moving) {
     const ty = Math.floor(S.py / TILE_SIZE);
     const tile = MAP_TILES[ty * MAP_W + tx] ?? 0;
     const key  = STONE_TILES.has(tile) ? 'footstep_stone' : 'footstep_dirt';
-    sfx(key, 0.35 + Math.random() * 0.15);
+    sfx(key, 0.17 + Math.random() * 0.08);
   }
 }
 
@@ -3254,8 +3254,8 @@ const NF_TILES = (() => {
       let tid = 0;
       // Cliff at south edge (boundary back to village)
       if (y >= NF_H-2) { t.push(15); continue; }
-      // Tree clusters at edges and scattered
-      if (x<=1 || x>=NF_W-2) { t.push(y%2===0?4:5); continue; }
+      // Only outermost column is solid trees — allows full east/west traversal
+      if (x===0 || x===NF_W-1) { t.push(y%2===0?4:5); continue; }
       // Scattered trees
       const seed = (x*7+y*13+x*y) % 31;
       if (seed < 3) { t.push(4); continue; }
@@ -3286,6 +3286,113 @@ const NF = {
   cameraY: 0,
 };
 
+
+// ── Northern Field enemy patrol + vision AI ──────────────────────────────────
+const NF_PATROL_RADIUS = 5;   // tiles from home before turning back
+const NF_VISION_RANGE  = 6;   // tiles distance for cone detection
+const NF_VISION_ARC    = 0.7; // radians half-arc (~40°) — narrow but meaningful
+const NF_CHASE_SPEED   = 0.6; // tiles per second (slower than player 1.2)
+
+function _nfVisionCone(e) {
+  // Returns true if the player is inside this enemy's vision cone
+  const ptx = NF.px / NF_TILE;
+  const pty = NF.py / NF_TILE;
+  const dx  = ptx - e.tx;
+  const dy  = pty - e.ty;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  if (dist > NF_VISION_RANGE) return false;
+
+  // Enemy facing angle
+  const faceAng = { up:-Math.PI/2, down:Math.PI/2, left:Math.PI, right:0 }[e.facingDir] || 0;
+  const toPlayerAng = Math.atan2(dy, dx);
+  let diff = Math.abs(toPlayerAng - faceAng);
+  if (diff > Math.PI) diff = 2*Math.PI - diff;
+  return diff <= NF_VISION_ARC;
+}
+
+function _nfUpdateEnemies(dt) {
+  const ptx = NF.px / NF_TILE;
+  const pty = NF.py / NF_TILE;
+  const DIRS = ['up','right','down','left'];
+
+  for (const e of NF.enemies) {
+    if (!e.alive) continue;
+
+    // Cooldown tick
+    if (e.alertCooldown > 0) e.alertCooldown -= dt;
+
+    // Vision check — become alerted if player enters cone
+    if (!e.alerted && e.alertCooldown <= 0) {
+      if (_nfVisionCone(e)) {
+        e.alerted = true;
+        // Brief pause before charging
+        e.alertCooldown = 0.4;
+        continue;
+      }
+    }
+
+    // ── Alerted: move toward player ──────────────────────────────────────
+    if (e.alerted) {
+      // Re-check: if player is dead or out of a larger "give up" range, de-alert
+      const chaseDist = Math.abs(ptx-e.tx) + Math.abs(pty-e.ty);
+      if (chaseDist > NF_VISION_RANGE * 2.5) {
+        e.alerted = false; e.alertCooldown = 1.0; continue;
+      }
+
+      // Step toward player
+      e.patrolT += dt;
+      if (e.patrolT >= 1.0 / NF_CHASE_SPEED) {
+        e.patrolT = 0;
+        const ddx = ptx - e.tx;
+        const ddy = pty - e.ty;
+        // Move one tile in dominant axis
+        let moveTx = e.tx, moveTy = e.ty;
+        if (Math.abs(ddx) >= Math.abs(ddy)) {
+          moveTx += ddx > 0 ? 1 : -1;
+          e.facingDir = ddx > 0 ? 'right' : 'left';
+        } else {
+          moveTy += ddy > 0 ? 1 : -1;
+          e.facingDir = ddy > 0 ? 'down' : 'up';
+        }
+        if (_nfIsWalkable(moveTx, moveTy) && !_nfTileOccupied(moveTx, moveTy, e)) {
+          e.tx = moveTx; e.ty = moveTy;
+        }
+      }
+      continue;
+    }
+
+    // ── Patrol: wander near home, turn to look around ────────────────────
+    e.patrolT += dt;
+    const turnInterval = 2.5 + (e.uid.charCodeAt(3) % 3);  // 2.5-5.5s vary per enemy
+    if (e.patrolT >= turnInterval) {
+      e.patrolT = 0;
+      e.patrolStep++;
+      // Every 4 steps: look around (turn without moving)
+      if (e.patrolStep % 4 === 0) {
+        e.facingDir = DIRS[Math.floor(Math.random()*4)];
+        continue;
+      }
+      // Try to move one tile in facing direction, or pick new direction
+      const moveMap = { up:[0,-1], down:[0,1], left:[-1,0], right:[1,0] };
+      let [mdx, mdy] = moveMap[e.facingDir] || [0,0];
+      const newTx = e.tx + mdx, newTy = e.ty + mdy;
+      const homeDist = Math.abs(newTx-e.homeTx) + Math.abs(newTy-e.homeTy);
+      if (_nfIsWalkable(newTx, newTy) && homeDist <= NF_PATROL_RADIUS
+          && !_nfTileOccupied(newTx, newTy, e)) {
+        e.tx = newTx; e.ty = newTy;
+      } else {
+        // Turn to a random new direction
+        e.facingDir = DIRS[(DIRS.indexOf(e.facingDir) + 1 + Math.floor(Math.random()*3)) % 4];
+      }
+    }
+  }
+}
+
+function _nfTileOccupied(tx, ty, self) {
+  // Prevent two enemies from stacking on the same tile
+  return NF.enemies.some(e => e !== self && e.alive && e.tx===tx && e.ty===ty);
+}
+
 function openNorthernField() {
   if (NF.active) return;
   NF.active = true;
@@ -3297,36 +3404,65 @@ function openNorthernField() {
     ...sp, alive:true,
     currentHp: {crawler:18,lurker:30,watcher:45}[sp.type]||20,
     uid: 'nf_'+i,
+    // Patrol state
+    homeTx: sp.tx, homeTy: sp.ty,   // spawn tile
+    facingDir: ['up','right','down','left'][i%4],
+    patrolT:   Math.random()*4,      // stagger timers so they don't all move together
+    patrolStep: 0,
+    alerted: false,                  // true = moving toward player
+    alertCooldown: 0,
   }));
   const _nfCv = document.getElementById('nf-canvas');
   if (_nfCv) { _nfCv.width=window.innerWidth; _nfCv.height=window.innerHeight; }
   document.getElementById('ov-nfield').classList.add('on');
-  // Wire touch controls to nf-canvas (joystick is hidden under the overlay)
+  // ── Virtual thumbstick on nf-canvas ────────────────────────────────────────
   const _nfCvEl = document.getElementById('nf-canvas');
+  if (_nfCvEl) { _nfCvEl.style.pointerEvents='all'; NF._canvas=_nfCvEl; }
+  // Show village joystick + act button over NF canvas (same z-index elevation)
+  const _nfJoy = document.getElementById('surf-joy-zone');
+  const _nfAct = document.getElementById('surf-act-btn');
+  if (_nfJoy) { _nfJoy.style.display='flex'; _nfJoy.style.zIndex='450'; }
+  if (_nfAct) { _nfAct.style.display='flex'; _nfAct.style.zIndex='450'; }
   if (_nfCvEl && !_nfCvEl._touchBound) {
     _nfCvEl._touchBound = true;
-    let _nfTouchId = null, _nfTouchOriginX=0, _nfTouchOriginY=0;
-    _nfCvEl.addEventListener('touchstart', e=>{
-      e.preventDefault();
-      const t=e.changedTouches[0]; _nfTouchId=t.identifier;
-      _nfTouchOriginX=t.clientX; _nfTouchOriginY=t.clientY;
+    // Thumbstick state — drawn in _nfDraw, updated here
+    const STICK_R = 44;  // base radius px
+    const KNOB_R  = 20;  // knob radius px
+    const DEAD    = 10;  // dead zone px
+
+    _nfCvEl.addEventListener('touchstart', ev=>{
+      ev.preventDefault();
+      if (NF.stick?.active) return;  // one finger only
+      const t = ev.changedTouches[0];
+      // Only activate if touch is in bottom-left 55% of screen
+      if (t.clientX > _nfCvEl.clientWidth * 0.55) return;
+      NF.stick = { active:true, id:t.identifier, baseX:t.clientX, baseY:t.clientY };
     }, {passive:false});
-    _nfCvEl.addEventListener('touchmove', e=>{
-      e.preventDefault();
-      for (const t of e.changedTouches) {
-        if (t.identifier!==_nfTouchId) continue;
-        const dx=t.clientX-_nfTouchOriginX, dy=t.clientY-_nfTouchOriginY;
-        const dead=12;
-        S.keys.left  = dx<-dead; S.keys.right = dx>dead;
-        S.keys.up    = dy<-dead; S.keys.down  = dy>dead;
+
+    _nfCvEl.addEventListener('touchmove', ev=>{
+      ev.preventDefault();
+      for (const t of ev.changedTouches) {
+        if (!NF.stick || t.identifier !== NF.stick.id) continue;
+        const dx = t.clientX - NF.stick.baseX;
+        const dy = t.clientY - NF.stick.baseY;
+        S.keys.left  = dx < -DEAD;
+        S.keys.right = dx >  DEAD;
+        S.keys.up    = dy < -DEAD;
+        S.keys.down  = dy >  DEAD;
       }
     }, {passive:false});
-    const _nfTouchEnd = ()=>{ S.keys.left=S.keys.right=S.keys.up=S.keys.down=false; _nfTouchId=null; };
-    _nfCvEl.addEventListener('touchend',   _nfTouchEnd, {passive:false});
-    _nfCvEl.addEventListener('touchcancel',_nfTouchEnd, {passive:false});
+
+    const _nfRelease = ev=>{
+      for (const t of ev.changedTouches) {
+        if (NF.stick && t.identifier === NF.stick.id) {
+          NF.stick = null;
+          S.keys.left=S.keys.right=S.keys.up=S.keys.down=false;
+        }
+      }
+    };
+    _nfCvEl.addEventListener('touchend',    _nfRelease, {passive:false});
+    _nfCvEl.addEventListener('touchcancel', _nfRelease, {passive:false});
   }
-  // Enable pointer events on canvas so touch reaches it
-  if (_nfCvEl) _nfCvEl.style.pointerEvents='all';
   sfx('ambient_field', 0.4);
   if (!NF.animId) { NF.lastTs=0; NF.animId=requestAnimationFrame(_nfLoop); }
   setStatus('Northern Field — enemies hunt here. Find and fight them.');
@@ -3337,6 +3473,11 @@ function closeNorthernField() {
   cancelAnimationFrame(NF.animId); NF.animId=null;
   // Clear any keys that were held during NF so player doesn't sprint on return
   S.keys.left=S.keys.right=S.keys.up=S.keys.down=false;
+  // Restore joystick to normal village visibility
+  const _joyEl2 = document.getElementById('surf-joy-zone');
+  const _actEl2 = document.getElementById('surf-act-btn');
+  if (_joyEl2) _joyEl2.style.zIndex='';
+  if (_actEl2) _actEl2.style.zIndex='';
   document.getElementById('ov-nfield').classList.remove('on');
   // Move player to north path exit
   S.px = 23*TILE_SIZE; S.py = 1*TILE_SIZE;
@@ -3355,13 +3496,18 @@ function _nfLoop(ts) {
   const dt = NF.lastTs ? Math.min((ts-NF.lastTs)/1000, 0.1) : 0.016;
   NF.lastTs = ts;
 
-  // Input — reuse S.keys
+  // Input — keyboard (S.keys) OR village joystick (S.joystickX/Y)
   let dx=0, dy=0;
-  if (S.combat.active) { _nfDraw(); return; } // freeze movement during combat
+  if (S.combat.active) { _nfDraw(); return; }
   if (S.keys.left)  dx=-1;
   if (S.keys.right) dx=1;
   if (S.keys.up)    dy=-1;
   if (S.keys.down)  dy=1;
+  // Joystick axes override keys when active
+  if (S.joystickActive) {
+    dx = Math.abs(S.joystickX||0) > 0.15 ? S.joystickX : dx;
+    dy = Math.abs(S.joystickY||0) > 0.15 ? S.joystickY : dy;
+  }
 
   NF.moving = !!(dx||dy);
   if (dx||dy) {
@@ -3382,7 +3528,10 @@ function _nfLoop(ts) {
     closeNorthernField(); return;
   }
 
-  // Enemy proximity combat
+  // Update enemy patrol / vision AI
+  if (!S.combat.active) _nfUpdateEnemies(dt);
+
+  // Enemy proximity combat — engage if enemy walked into player
   if (!S.combat.active) {
     const ptx = Math.floor(NF.px/NF_TILE), pty = Math.floor(NF.py/NF_TILE);
     for (const e of NF.enemies) {
@@ -3399,11 +3548,39 @@ function _nfLoop(ts) {
 }
 
 function _nfStartCombat(e) {
-  const def = ENEMY_DEFS[e.type];
-  if (!def) return;
-  S.combat.enemy = { ...def, type:e.type, alive:true,
-    currentHp:e.currentHp, _nfRef:e };
-  startCombat();
+  if (S.combat.active) return;
+  const def = ENEMY_DEFS[e.type]; if (!def) return;
+  // Build the enemy object directly — don't use startCombat(idx)
+  // because NF enemies aren't in S.enemies[]
+  const nfEnemy = { ...def, type:e.type, alive:true,
+    currentHp:e.currentHp, maxHp:def.hp, _nfRef:e };
+  S.combat.active     = true;
+  S.combat.enemy      = nfEnemy;
+  S.combat.enemyIdx   = -1;  // signal: NF enemy, not in S.enemies[]
+  S.combat.log        = [];
+  S.combat.playerTurn = true;
+  S.combat.shotsLeft  = S.captain.ranged?.shotsPerCombat || 3;
+  S.combat.ended      = false;
+  Object.assign(_cbtA,{t:0,capOffX:0,enmOffX:0,capFlash:0,enmFlash:0,
+    atkPhase:null,atkT:0,dmgNums:[],menuCat:'attack',menuFocus:0,btnsOn:false});
+  document.getElementById('surf-combat').style.display='flex';
+  _ambientDuck(true);
+  const cv=document.getElementById('sc-scene');
+  if (cv){cv.width=cv.clientWidth||360;cv.height=Math.min(Math.floor(cv.clientWidth*0.48),220);}
+  _cbtStartScene();  // start the render loop — this is what draws sprites
+  cbtMenuCat('dummy'); _cbtBuildSub();
+  sfx('combat_start',0.8);
+  // Initiative roll — who goes first
+  const initRoll = Math.random()*10 + (S.captain.level||1)*2;
+  const enmInit  = Math.random()*10 + def.initiative;
+  if (enmInit > initRoll) {
+    S.combat.playerTurn = false;
+    cbtLog(nfEnemy.name+' moves first!','warn');
+    setTimeout(_cbtEnemyTurn, 800);
+  } else {
+    cbtLog('You face a '+nfEnemy.name+'. Your move.','');
+  }
+  setTimeout(()=>{ _setCbtBtns(true); _cbtBuildSub(); }, 200);
 }
 
 // Hook combat victory to track NF kills and remove enemy
@@ -3465,15 +3642,38 @@ function _nfDraw() {
     if (ex<-NF_TILE||ex>cW||ey<-NF_TILE||ey>cH) continue;
     const eImg = ENM_IMGS[e.type];
     if (eImg && eImg.naturalWidth>0) {
-      // Flip to face left (toward player)
+      // Derive actual frame size from the sheet (handles any resolution)
+      const _fw = Math.floor(eImg.naturalWidth  / 4);
+      const _fh = Math.floor(eImg.naturalHeight / 4);
+      // Row 0 = idle, col = animated frame
+      const _srcX = nfAnimFrame * _fw;
+      const _srcY = 0;  // idle row
+      // Flip to face left
       ctx.save();
-      ctx.translate(ex+NF_TILE, 0);
-      ctx.scale(-1,1);
-      ctx.drawImage(eImg, nfAnimFrame*ENM_FW, 0, ENM_FW, ENM_FH, 0, ey, NF_TILE, NF_TILE);
+      ctx.translate(ex + NF_TILE, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(eImg, _srcX, _srcY, _fw, _fh, 0, ey, NF_TILE, NF_TILE);
       ctx.restore();
     } else {
       const ECOL={crawler:'#1a3a10',lurker:'#555050',watcher:'#3a1a4a'};
       ctx.fillStyle=ECOL[e.type]||'#333'; ctx.fillRect(ex+4,ey+4,NF_TILE-8,NF_TILE-8);
+    }
+    // Vision cone
+    if (!e.alerted) {
+      const faceAng = {up:-Math.PI/2,down:Math.PI/2,left:Math.PI,right:0}[e.facingDir]||0;
+      ctx.save();
+      ctx.globalAlpha = 0.13;
+      ctx.fillStyle = '#ffee44';
+      ctx.beginPath();
+      ctx.moveTo(ex+NF_TILE/2, ey+NF_TILE/2);
+      ctx.arc(ex+NF_TILE/2, ey+NF_TILE/2,
+        NF_VISION_RANGE*NF_TILE, faceAng-NF_VISION_ARC, faceAng+NF_VISION_ARC);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+    } else {
+      // Alert indicator — red exclamation
+      ctx.fillStyle='#ff3333'; ctx.font='bold 14px Courier New';
+      ctx.fillText('!', ex+NF_TILE/2-4, ey-6);
     }
     // HP bar
     const maxHp=ENM_HP[e.type]||20;
