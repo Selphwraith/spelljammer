@@ -409,6 +409,7 @@ html, body {
 <!-- Bottom bar (matches index.html action bar) -->
 <div id="bottom-bar">
   <button class="hud-btn" id="btn-return" onclick="returnToShip()">&#9973; Return to Ship</button>
+  <span id="dock-hint" style="font-size:9px;color:#665577;font-style:italic;">(must be at dock)</span>
   <button class="hud-btn" id="btn-rest"   onclick="surfaceRest()">&#127769; Rest</button>
   <button class="hud-btn-sm ovl-btn" onclick="surfOpenOvl('stats')">&#9876; Captain</button>
   <button class="hud-btn-sm ovl-btn" onclick="surfOpenOvl('inv')">&#128230; Cargo</button>
@@ -471,6 +472,11 @@ html, body {
     <div class="surf-save-lbl">Manual Saves</div>
     <div id="surf-save-slots-list"></div>
   </div>
+</div>
+
+<!-- Northern Field Overlay -->
+<div class="ovlay" id="ov-nfield" style="background:#0a0c06;padding:0;">
+  <canvas id="nf-canvas" style="width:100%;height:100%;display:block;"></canvas>
 </div>
 
 <!-- Transition overlay -->
@@ -674,13 +680,14 @@ const NPCS = [
   {
     id: 'guard_1',
     img: 'surface/npc_guard.png',
-    tx: 12, ty: 5,
+    tx: 12, ty: 13,
     dir: 'down',
     name: 'Warden Tessick',
+    isQuestGiver: true,
     lines: [
-      "Halt. State your purpose in the settlement.",
-      "...A ship captain. Right. Well, you're not under arrest. Yet.",
-      "Keep your void-craft business away from the commons. Last captain who started trading here caused a riot over a crate of 'exotic cargo'.",
+      "*studies you carefully* Captain. Those creatures north of the settlement are getting bold. Follow the path past the chapel — the Northern Field. I need someone to cull their numbers. Kill five of them and come back.",
+      "You've returned. How many did you clear? Report your count.",
+      "The village owes you. Come back when they start making trouble again — they always do.",
     ],
   },
   {
@@ -1079,21 +1086,7 @@ function tryMove(dx, dy, dt) {
 }
 
 // ── NPC interaction ───────────────────────────────────────────────────────
-function tryInteract(){
-  if(S.interactCooldown>0)return;
-  const tx=Math.floor(S.px/TILE_SIZE),ty=Math.floor(S.py/TILE_SIZE);
-  const fdx=S.dir==='left'?-1:S.dir==='right'?1:0;
-  const fdy=S.dir==='up'  ?-1:S.dir==='down' ?1:0;
-  const cands=[[tx+fdx,ty+fdy],[tx,ty-1],[tx,ty+1],[tx-1,ty],[tx+1,ty]];
-  for(const[cx,cy]of cands){
-    const npc=NPCS.find(n=>n.tx===cx&&n.ty===cy);
-    if(npc){
-      sfx('npc_interact',0.55);
-      if(npc.merchant){openSurfShop(npc);}else{openDlg(npc);}
-      S.interactCooldown=30;return;
-    }
-  }
-}
+// tryInteract overridden by quest system above
 
 function openDlg(npc) {
   S.dlgNpcId = npc.id;
@@ -1233,6 +1226,12 @@ function render(ctx, cW, cH) {
     }
   }
 
+  // ── Draw ship in dock ──
+  const _dockScreenX = DOCK_DOOR_TX*TILE_SIZE + camOffX;
+  const _dockScreenY = (DOCK_DOOR_TY-4)*TILE_SIZE + camOffY;
+  if (_dockScreenX > -200 && _dockScreenX < cW+200) {
+    _drawShipInDock(ctx, _dockScreenX, _dockScreenY);
+  }
   // ── Draw Vael (patrol NPC — rendered separately at her patrol position)
   _drawVael(ctx, camOffX, camOffY);
   // ── Draw NPCs ──
@@ -1323,6 +1322,7 @@ function loop(timestamp) {
   S.sessionT += dt;
   if (S.interactCooldown > 0) S.interactCooldown--;
   _updateVael(dt);
+  if (!S.combat.active && !NF.active) _checkNorthExit();
 
   // ── Input ──
   S.moving = false;
@@ -1374,7 +1374,7 @@ document.addEventListener('keydown', e => {
   if (['ArrowUp','w','W'].includes(e.key))    S.keys.up    = true;
   if (['ArrowDown','s','S'].includes(e.key))  S.keys.down  = true;
   if (['Enter','z','Z',' '].includes(e.key))  { e.preventDefault(); tryInteract(); }
-  if (e.key === 'Escape') { closeDlg(); _surfCloseAll(); }
+  if (e.key === 'Escape') { closeDlg(); _surfCloseAll(); if(NF.active) closeNorthernField(); }
   // Dialogue advance
   if (['Enter','z','Z',' '].includes(e.key) &&
       document.getElementById('dialogue-box').style.display !== 'none') {
@@ -3033,6 +3033,441 @@ function _drawVael(ctx, camOffX, camOffY) {
     ctx.fillRect(sx+6, sy+2, 20, 28);
     ctx.fillStyle = '#aa8855';
     ctx.fillRect(sx+10, sy+2, 12, 10);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DOCK SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════════
+const DOCK_DOOR_TX = 4, DOCK_DOOR_TY = 21;  // door tile position
+const DOCK_PROXIMITY = 2;                    // tiles radius for Return to Ship
+
+function isNearDock() {
+  const ptx = Math.round(S.px / TILE_SIZE);
+  const pty = Math.round(S.py / TILE_SIZE);
+  return Math.abs(ptx - DOCK_DOOR_TX) <= DOCK_PROXIMITY &&
+         Math.abs(pty - DOCK_DOOR_TY) <= DOCK_PROXIMITY;
+}
+
+// Override returnToShip to require dock proximity
+const _originalReturnToShip = typeof returnToShip !== 'undefined' ? returnToShip : null;
+function returnToShip() {
+  if (!isNearDock()) {
+    setStatus('You must return to your ship at the dock — follow the path south.');
+    sfx('npc_interact', 0.3);
+    return;
+  }
+  surfAutoSave();
+  closeDlg();
+  const ov = document.getElementById('transition-overlay');
+  if (ov) { ov.style.opacity='1'; ov.style.transition='opacity 0.5s'; }
+  setTimeout(() => {
+    try {
+      sessionStorage.setItem('fentheris_surface_exit', JSON.stringify(buildExitData()));
+      sessionStorage.setItem('fentheris_surface_return', '1');
+    } catch(e) {}
+    window.location.href = 'index.html';
+  }, 500);
+}
+
+// Draw ship in dock — procedural pixel art based on G.ship.type from index entry
+function _drawShipInDock(ctx, ox, oy) {
+  const shipType = S._indexEntry?.ship?.type || 'pinnace';
+  const W2 = 7 * TILE_SIZE, H2 = 3 * TILE_SIZE;
+
+  // Hull base
+  const hullCols = {
+    pinnace:   ['#4a5a8a','#6a7aaa','#3a4a7a'],
+    sloop:     ['#5a6a4a','#7a8a6a','#4a5a3a'],
+    brig:      ['#7a5a3a','#9a7a5a','#5a3a2a'],
+    frigate:   ['#6a4a8a','#8a6aaa','#5a3a7a'],
+    galleon:   ['#8a3a3a','#aa5a5a','#6a2a2a'],
+    'man-o-war':['#3a3a6a','#5a5a9a','#2a2a5a'],
+  };
+  const [hull, highlight, shadow] = hullCols[shipType] || hullCols['pinnace'];
+
+  // Simple top-down ship silhouette
+  const sx = ox + TILE_SIZE, sy = oy;
+
+  // Hull
+  ctx.fillStyle = hull;
+  ctx.fillRect(sx+4, sy+8, W2-8, H2-10);
+  ctx.fillStyle = highlight;
+  ctx.fillRect(sx+6, sy+10, W2-12, 8);
+  ctx.fillStyle = shadow;
+  ctx.fillRect(sx+4, sy+H2-12, W2-8, 6);
+
+  // Bow (pointed front - top)
+  ctx.fillStyle = hull;
+  ctx.beginPath();
+  ctx.moveTo(sx+W2/2, sy+2);
+  ctx.lineTo(sx+8, sy+10);
+  ctx.lineTo(sx+W2-8, sy+10);
+  ctx.closePath();
+  ctx.fill();
+
+  // Stern (flat back - bottom)
+  ctx.fillStyle = shadow;
+  ctx.fillRect(sx+8, sy+H2-10, W2-16, 6);
+
+  // Mast
+  ctx.fillStyle = '#8a6a30';
+  ctx.fillRect(sx+W2/2-2, sy+4, 4, H2-10);
+
+  // Sails (simple rectangles)
+  ctx.fillStyle = 'rgba(220,210,180,0.85)';
+  ctx.fillRect(sx+W2/2-12, sy+6, 24, 14);
+  if (shipType === 'brig' || shipType === 'frigate' || shipType === 'galleon' || shipType === 'man-o-war') {
+    ctx.fillRect(sx+W2/2-8, sy+22, 16, 10);
+  }
+
+  // Rigging lines
+  ctx.strokeStyle = '#6a5a30';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(sx+W2/2, sy+4); ctx.lineTo(sx+10, sy+14);
+  ctx.moveTo(sx+W2/2, sy+4); ctx.lineTo(sx+W2-10, sy+14);
+  ctx.stroke();
+
+  // Name label
+  const name = S._indexEntry?.ship?.name || 'Your Vessel';
+  ctx.fillStyle = 'rgba(200,220,255,0.9)';
+  ctx.font = '9px Courier New';
+  ctx.textAlign = 'center';
+  ctx.fillText(name, sx+W2/2, sy+H2+10);
+  ctx.textAlign = 'left';
+
+  // Water shimmer under ship
+  ctx.fillStyle = 'rgba(30,80,140,0.3)';
+  ctx.fillRect(sx+2, sy+H2-4, W2-4, 4);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HUNT QUEST SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════════
+const HUNT_TARGETS = [
+  { type:'crawler', count:5,  label:'Void Crawlers',  reward:60  },
+  { type:'lurker',  count:4,  label:'Stone Lurkers',  reward:100 },
+  { type:'watcher', count:3,  label:'Feral Watchers', reward:150 },
+];
+
+function _getHuntTarget() {
+  // Rotate through types, scaling up
+  const idx = (S.quest.completions || 0) % HUNT_TARGETS.length;
+  return HUNT_TARGETS[idx];
+}
+
+function openQuestDialogue(npc) {
+  const q = S.quest;
+  const target = _getHuntTarget();
+
+  if (!q.active && !q.rewarded) {
+    // Offer quest
+    q.active   = true;
+    q.type     = target.type;
+    q.target   = target.count;
+    q.killed   = 0;
+    q.label    = target.label;
+    q.reward   = target.reward;
+    q.rewarded = false;
+    openDlg(npc);
+    setStatus('Quest: Hunt ' + target.count + ' ' + target.label + ' in the Northern Field.');
+    return;
+  }
+
+  if (q.active && q.killed >= q.target) {
+    // Turn in quest
+    q.active   = false;
+    q.rewarded = true;
+    S.gold    += q.reward;
+    sfx('level_up', 0.9);
+    setStatus('Quest complete! Received ' + q.reward + ' TS. (' + (S.quest.completions=(S.quest.completions||0)+1) + ' hunts total)');
+    // Reset for next quest
+    setTimeout(() => {
+      q.rewarded = false;
+      q.killed   = 0;
+    }, 100);
+    openDlg(npc);
+    return;
+  }
+
+  if (q.active) {
+    // In-progress
+    setStatus('Hunt progress: ' + q.killed + ' / ' + q.target + ' ' + q.label + ' slain.');
+  }
+  openDlg(npc);
+}
+
+// Hook into tryInteract to intercept quest giver
+const _origTryInteract = tryInteract;
+function tryInteract() {
+  const tx = Math.floor(S.px/TILE_SIZE), ty = Math.floor(S.py/TILE_SIZE);
+  const fdx = S.dir==='left'?-1:S.dir==='right'?1:0;
+  const fdy = S.dir==='up' ?-1:S.dir==='down' ?1:0;
+  const cands=[[tx+fdx,ty+fdy],[tx,ty-1],[tx,ty+1],[tx-1,ty],[tx+1,ty]];
+  for (const [cx,cy] of cands) {
+    const npc = NPCS.find(n=>n.tx===cx&&n.ty===cy);
+    if (npc) {
+      sfx('npc_interact', 0.55);
+      if (npc.isQuestGiver) { openQuestDialogue(npc); }
+      else if (npc.merchant) { openSurfShop(npc); }
+      else { openDlg(npc); }
+      S.interactCooldown = 30;
+      return;
+    }
+  }
+}
+
+// Track kills for quest
+function _questTrackKill(enemyType) {
+  const q = S.quest;
+  if (!q.active || q.killed >= q.target) return;
+  if (enemyType === q.type) {
+    q.killed++;
+    if (q.killed >= q.target) {
+      setStatus('Quest complete! Return to Warden Tessick for your reward.');
+      sfx('level_up', 0.7);
+    } else {
+      setStatus('Hunt: ' + q.killed + ' / ' + q.target + ' ' + q.label + ' slain.');
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NORTHERN FIELD OVERLAY
+// ═══════════════════════════════════════════════════════════════════════════════
+const NF_W = 48, NF_H = 20;
+const NF_TILE = 32;
+
+// Northern Field map — grassland / sparse forest
+// 0=grass 3=tall-grass 4=tree-top 5=tree-bot 15=cliff(south boundary)
+const NF_TILES = (() => {
+  const t = [];
+  for (let y=0; y<NF_H; y++) {
+    for (let x=0; x<NF_W; x++) {
+      let tid = 0;
+      // Cliff at south edge (boundary back to village)
+      if (y >= NF_H-2) { t.push(15); continue; }
+      // Tree clusters at edges and scattered
+      if (x<=1 || x>=NF_W-2) { t.push(y%2===0?4:5); continue; }
+      // Scattered trees
+      const seed = (x*7+y*13+x*y) % 31;
+      if (seed < 3) { t.push(4); continue; }
+      if (seed < 6 && y > 0 && t[(y-1)*NF_W+x]===4) { t.push(5); continue; }
+      // Tall grass patches
+      if (seed >= 18 && seed < 22) { t.push(3); continue; }
+      t.push(0);
+    }
+  }
+  return t;
+})();
+
+// Northern Field enemy spawns
+const NF_SPAWNS = [
+  {type:'crawler',tx:8, ty:4},{type:'crawler',tx:15,ty:7},{type:'crawler',tx:30,ty:3},
+  {type:'crawler',tx:38,ty:8},{type:'lurker', tx:12,ty:10},{type:'lurker', tx:25,ty:12},
+  {type:'lurker', tx:40,ty:5},{type:'watcher',tx:20,ty:6},{type:'watcher',tx:35,ty:11},
+];
+
+const NF = {
+  active: false,
+  px: 23*NF_TILE, py: NF_H*NF_TILE - 3*NF_TILE, // spawn near south edge
+  dir: 'up',
+  enemies: [],
+  animId: null,
+  lastTs: 0,
+  cameraX: 0,
+  cameraY: 0,
+};
+
+function openNorthernField() {
+  if (NF.active) return;
+  NF.active = true;
+  NF.px = 23*NF_TILE;
+  NF.py = (NF_H - 3)*NF_TILE;
+  NF.dir = 'up';
+  // Reset enemies
+  NF.enemies = NF_SPAWNS.map((sp,i) => ({
+    ...sp, alive:true,
+    currentHp: {crawler:18,lurker:30,watcher:45}[sp.type]||20,
+    uid: 'nf_'+i,
+  }));
+  const _nfCv = document.getElementById('nf-canvas');
+  if (_nfCv) { _nfCv.width=window.innerWidth; _nfCv.height=window.innerHeight; }
+  document.getElementById('ov-nfield').classList.add('on');
+  sfx('ambient_field', 0.4);
+  if (!NF.animId) { NF.lastTs=0; NF.animId=requestAnimationFrame(_nfLoop); }
+  setStatus('Northern Field — enemies hunt here. Find and fight them.');
+}
+
+function closeNorthernField() {
+  NF.active = false;
+  cancelAnimationFrame(NF.animId); NF.animId=null;
+  document.getElementById('ov-nfield').classList.remove('on');
+  // Move player to north path exit
+  S.px = 23*TILE_SIZE; S.py = 1*TILE_SIZE;
+  setStatus('You return south to the village.');
+}
+
+function _nfIsWalkable(tx,ty) {
+  if (tx<0||tx>=NF_W||ty<0||ty>=NF_H) return false;
+  const t = NF_TILES[ty*NF_W+tx];
+  return t!==4 && t!==5 && t!==15 && t!==8;
+}
+
+function _nfLoop(ts) {
+  if (!NF.active) return;
+  NF.animId = requestAnimationFrame(_nfLoop);
+  const dt = NF.lastTs ? Math.min((ts-NF.lastTs)/1000, 0.1) : 0.016;
+  NF.lastTs = ts;
+
+  // Input — reuse S.keys
+  let dx=0, dy=0;
+  if (S.combat.active) { _nfDraw(); return; } // freeze movement during combat
+  if (S.keys.left)  dx=-1;
+  if (S.keys.right) dx=1;
+  if (S.keys.up)    dy=-1;
+  if (S.keys.down)  dy=1;
+
+  if (dx||dy) {
+    const speed = WALK_SPEED * NF_TILE * dt;
+    const margin = NF_TILE*0.4;
+    const nx = NF.px + dx*speed;
+    const ny = NF.py + dy*speed;
+    if (_nfIsWalkable(Math.floor((nx + margin*Math.sign(dx||1))/NF_TILE), Math.floor(NF.py/NF_TILE)))
+      NF.px = nx;
+    if (_nfIsWalkable(Math.floor(NF.px/NF_TILE), Math.floor((ny + margin*Math.sign(dy||1))/NF_TILE)))
+      NF.py = ny;
+    NF.dir = Math.abs(dx)>Math.abs(dy) ? (dx>0?'right':'left') : (dy>0?'down':'up');
+  }
+
+  // South edge exit
+  if (NF.py / NF_TILE >= NF_H - 2.5) {
+    closeNorthernField(); return;
+  }
+
+  // Enemy proximity combat
+  if (!S.combat.active) {
+    const ptx = Math.floor(NF.px/NF_TILE), pty = Math.floor(NF.py/NF_TILE);
+    for (const e of NF.enemies) {
+      if (!e.alive) continue;
+      const dist = Math.abs(e.tx-ptx)+Math.abs(e.ty-pty);
+      if (dist <= 1) {
+        // Redirect combat to NF context
+        _nfStartCombat(e); break;
+      }
+    }
+  }
+
+  _nfDraw();
+}
+
+function _nfStartCombat(e) {
+  const def = ENEMY_DEFS[e.type];
+  if (!def) return;
+  S.combat.enemy = { ...def, type:e.type, alive:true,
+    currentHp:e.currentHp, _nfRef:e };
+  startCombat();
+}
+
+// Hook combat victory to track NF kills and remove enemy
+const _origCbtWin = cbtWin;
+function cbtWin() {
+  const e = S.combat.enemy;
+  if (e && e._nfRef) {
+    e._nfRef.alive = false;
+    e._nfRef.currentHp = 0;
+    _questTrackKill(e.type);
+  }
+  _origCbtWin();
+}
+
+function _nfDraw() {
+  const cv = document.getElementById('nf-canvas');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const cW=cv.width, cH=cv.height;
+
+  // Camera
+  NF.cameraX = NF.px - cW/2 + NF_TILE/2;
+  NF.cameraY = NF.py - cH/2 + NF_TILE/2;
+  NF.cameraX = Math.max(0, Math.min(NF.cameraX, NF_W*NF_TILE-cW));
+  NF.cameraY = Math.max(0, Math.min(NF.cameraY, NF_H*NF_TILE-cH));
+
+  ctx.clearRect(0,0,cW,cH);
+  ctx.fillStyle='#0a0c06'; ctx.fillRect(0,0,cW,cH);
+
+  const offX=-NF.cameraX, offY=-NF.cameraY;
+  const tileSet = IMGS['tileset'];
+  const NF_COL = {0:'#243018',3:'#182408',4:'#0e1a06',5:'#0e1a06',15:'#0a0808'};
+  const startTx=Math.max(0,Math.floor(NF.cameraX/NF_TILE));
+  const startTy=Math.max(0,Math.floor(NF.cameraY/NF_TILE));
+  const endTx=Math.min(NF_W,startTx+Math.ceil(cW/NF_TILE)+2);
+  const endTy=Math.min(NF_H,startTy+Math.ceil(cH/NF_TILE)+2);
+
+  for (let ty=startTy;ty<endTy;ty++) {
+    for (let tx=startTx;tx<endTx;tx++) {
+      const tid=NF_TILES[ty*NF_W+tx]||0;
+      const dx=Math.floor(tx*NF_TILE+offX), dy=Math.floor(ty*NF_TILE+offY);
+      if (tileSet?.complete && tileSet.naturalWidth>0 && TILE_UV[tid]) {
+        const [uc,ur]=TILE_UV[tid];
+        ctx.drawImage(tileSet,uc*TILE_SIZE,ur*TILE_SIZE,TILE_SIZE,TILE_SIZE,dx,dy,NF_TILE,NF_TILE);
+      } else {
+        ctx.fillStyle=NF_COL[tid]||'#1a2010'; ctx.fillRect(dx,dy,NF_TILE,NF_TILE);
+      }
+    }
+  }
+
+  // Draw enemies
+  const ECOL={crawler:'#1a3a10',lurker:'#555050',watcher:'#3a1a4a'};
+  for (const e of NF.enemies) {
+    if (!e.alive) continue;
+    const ex=Math.floor(e.tx*NF_TILE+offX), ey=Math.floor(e.ty*NF_TILE+offY);
+    if (ex<-NF_TILE||ex>cW||ey<-NF_TILE||ey>cH) continue;
+    ctx.fillStyle=ECOL[e.type]||'#333';
+    ctx.fillRect(ex+4,ey+4,NF_TILE-8,NF_TILE-8);
+    // HP bar
+    const hpPct=e.currentHp/({crawler:18,lurker:30,watcher:45}[e.type]||20);
+    ctx.fillStyle='#330000'; ctx.fillRect(ex,ey-4,NF_TILE,3);
+    ctx.fillStyle='#cc3322'; ctx.fillRect(ex,ey-4,NF_TILE*hpPct,3);
+  }
+
+  // Draw player
+  const px=Math.floor(NF.px+offX), py=Math.floor(NF.py+offY);
+  const capImg = IMGS['surface/captain.png'];
+  if (capImg?.complete && capImg.naturalWidth>0) {
+    const DR_={down:0,left:1,right:2,up:3};
+    const row=DR_[NF.dir]||0;
+    ctx.drawImage(capImg,0,row*FRAME_H,FRAME_W,FRAME_H,px,py,FRAME_W,FRAME_H);
+  } else {
+    ctx.fillStyle='#4488ff'; ctx.fillRect(px+6,py+4,20,24);
+  }
+
+  // HUD overlay
+  ctx.fillStyle='rgba(0,0,0,0.55)';
+  ctx.fillRect(0,0,cW,22);
+  ctx.fillStyle='#e8d5ff'; ctx.font='bold 11px Cinzel,serif';
+  ctx.fillText('Northern Field', 10, 15);
+  const alive=NF.enemies.filter(e=>e.alive).length;
+  ctx.fillStyle='#cc8888'; ctx.font='10px Courier New';
+  ctx.fillText('Enemies: '+alive, cW-90, 15);
+  if (S.quest.active) {
+    ctx.fillStyle='#ffcc44';
+    ctx.fillText('Hunt: '+S.quest.killed+'/'+S.quest.target+' '+S.quest.label, cW/2-50, 15);
+  }
+  // South exit hint
+  ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(0,cH-20,cW,20);
+  ctx.fillStyle='#9977aa'; ctx.font='9px Courier New';
+  ctx.fillText('Walk south to return to the village', 8, cH-6);
+}
+
+// North exit trigger — check in main game loop
+function _checkNorthExit() {
+  const pty = Math.floor(S.py/TILE_SIZE);
+  const ptx = Math.floor(S.px/TILE_SIZE);
+  // North edge: ty <= 0 and near the north path column (tx ~23)
+  if (pty <= 0 && Math.abs(ptx-23) <= 2) {
+    openNorthernField();
   }
 }
 
