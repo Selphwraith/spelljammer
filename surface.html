@@ -2513,14 +2513,15 @@ function _shopMsg(t) {
 // ── Overlay open/close (mirrors openOverlay/closeOverlay in index.html) ────────
 const _SURF_OVLS = ['stats','inv','save'];
 function surfOpenOvl(id) {
-  // Close all first (one at a time, same as index.html)
   _SURF_OVLS.forEach(k => {
     const el = document.getElementById('surf-ovl-'+k);
-    if (el) el.classList.remove('on');
+    if (el) { el.classList.remove('on'); el.style.zIndex=''; }
   });
   const el = document.getElementById('surf-ovl-'+id);
   if (!el) return;
   el.classList.add('on');
+  // If Northern Field is active, boost z-index above the NF overlay (z:40)
+  if (NF.active) el.style.zIndex = '450';
   if (id==='stats') _buildStats();
   if (id==='inv') { _surfInvFilter='all'; document.querySelectorAll('#surf-inv-filters .fbtn').forEach((b,i)=>b.classList.toggle('act',i===0)); surfBuildInvGrid(); }
   if (id==='save')  _surfBuildSaveSlots();
@@ -3656,8 +3657,13 @@ function closeNorthernField() {
   const _nfEl2 = document.getElementById('ov-nfield');
   if (_nfEl2) {
     _nfEl2.classList.remove('on');
-    _nfEl2.style.display = 'none';  // clear inline display set by openNF JS fix
+    _nfEl2.style.display = 'none';
   }
+  // Reset any boosted overlay z-indexes
+  _SURF_OVLS.forEach(k => {
+    const el = document.getElementById('surf-ovl-'+k);
+    if (el) { el.classList.remove('on'); el.style.zIndex=''; }
+  });
   // Exit to ty=3 on the north dirt path — safely below the NF trigger zone
   S.px = 16 * TILE_SIZE;
   S.py =  3 * TILE_SIZE;
@@ -3834,10 +3840,12 @@ function _nfDraw() {
       const _fh = Math.floor(eImg.naturalHeight / 4);
       const _srcX = nfAnimFrame * _fw;
       const _srcY = 0;  // row 0 = idle
-      // Draw slightly larger than one tile so watcher's tall body is visible
-      const _drawW = e.type === 'watcher' ? NF_TILE * 1.2 : NF_TILE;
-      const _drawH = e.type === 'watcher' ? NF_TILE * 1.8 : NF_TILE;
-      const _drawOY = e.type === 'watcher' ? ey - NF_TILE * 0.8 : ey;
+      // Watcher is tall — render 2 tiles tall, centred on the tile position
+      // Other enemies render at standard 1 tile
+      const _isWatcher = e.type === 'watcher';
+      const _drawW = NF_TILE;
+      const _drawH = _isWatcher ? NF_TILE * 2 : NF_TILE;
+      const _drawOY = _isWatcher ? ey - NF_TILE : ey;
       ctx.save();
       ctx.translate(ex + _drawW, 0);
       ctx.scale(-1, 1);
