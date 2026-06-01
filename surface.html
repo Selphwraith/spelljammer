@@ -3303,6 +3303,10 @@ function openQuestDialogue(npc) {
 
   // ── No active quest: offer one ──────────────────────────────────────
   if (!q.active) {
+    // Show the offer FIRST, then mark active so re-talking shows in-progress msg
+    const offerText = isRepeat ? target.repeatLine : target.offerLine;
+    _showQuestLine(npc, offerText);
+    // Activate quest after dialogue is shown
     q.active   = true;
     q.type     = target.type;
     q.target   = target.count;
@@ -3310,9 +3314,6 @@ function openQuestDialogue(npc) {
     q.label    = target.label;
     q.reward   = target.reward;
     q.rewarded = false;
-    // Override NPC line to the specific hunt offer
-    const offerText = isRepeat ? target.repeatLine : target.offerLine;
-    _showQuestLine(npc, offerText);
     setStatus('Quest: Hunt ' + target.count + ' ' + target.label + ' in the Northern Field.');
     return;
   }
@@ -3343,13 +3344,11 @@ function openQuestDialogue(npc) {
 
 // Show a single custom line in the NPC dialogue box (overrides npc.lines temporarily)
 function _showQuestLine(npc, text) {
-  const dlg = document.getElementById('surf-dlg');
-  const nameEl = document.getElementById('surf-dlg-name');
-  const textEl = document.getElementById('surf-dlg-text');
-  if (!dlg || !textEl) { openDlg(npc); return; }
-  if (nameEl) nameEl.textContent = npc.name;
-  textEl.textContent = text;
-  dlg.style.display = 'flex';
+  // Inject text into the real dialogue system
+  const savedLines = npc.lines;
+  npc.lines = [text];
+  openDlg(npc);
+  npc.lines = savedLines;  // restore immediately after
 }
 
 // Hook into tryInteract to intercept quest giver
@@ -3841,18 +3840,18 @@ function _nfDraw() {
       const _fh = Math.floor(eImg.naturalHeight / 4);
       const _srcX = nfAnimFrame * _fw;
       const _srcY = 0;  // row 0 = idle
-      // Size the display based on enemy type
-      // Watcher: draw at full 64px wide/tall so thin body is not squished
+      // Watcher draws at native 64x64; others at 32x32
       const _isWatcher = e.type === 'watcher';
-      const _drawW  = _isWatcher ? _fw      : NF_TILE;   // 64 or 32
-      const _drawH  = _isWatcher ? _fh      : NF_TILE;   // 64 or 32
-      // Centre horizontally on tile, anchor feet to tile bottom
-      const _drawOX = _isWatcher ? ex - (_drawW - NF_TILE) / 2 : ex;
-      const _drawOY = _isWatcher ? ey - (_drawH - NF_TILE)     : ey;
+      const _drawW = _isWatcher ? _fw       : NF_TILE;
+      const _drawH = _isWatcher ? _fh       : NF_TILE;
+      // Anchor horizontally centred on tile, feet at tile bottom
+      const _destX = Math.round(ex - (_drawW - NF_TILE) / 2);
+      const _destY = Math.round(ey - (_drawH - NF_TILE));
+      // Flip horizontally using offscreen canvas to avoid clip issues with translate/scale
       ctx.save();
-      ctx.translate(_drawOX + _drawW, 0);
+      ctx.translate(_destX + _drawW, _destY);
       ctx.scale(-1, 1);
-      ctx.drawImage(eImg, _srcX, _srcY, _fw, _fh, 0, _drawOY, _drawW, _drawH);
+      ctx.drawImage(eImg, _srcX, _srcY, _fw, _fh, 0, 0, _drawW, _drawH);
       ctx.restore();
     } else {
       const ECOL={crawler:'#1a3a10',lurker:'#555050',watcher:'#3a1a4a'};
