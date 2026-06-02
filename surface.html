@@ -1081,7 +1081,7 @@ function surfaceRest() {
   _drawMinimap();
   sfx('rest',0.65);
   surfAutoSave();
-  S.captain.hp = S.captain.maxHp;
+  Captain.fullHeal(S.captain);  // captain.js: HP→maxHp, persists
   // Respawn NF enemies every 3 days — not every rest
   const daysSinceRespawn = S.day - (S.nfRespawnDay || 1);
   if (daysSinceRespawn >= 3) {

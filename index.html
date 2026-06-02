@@ -18875,7 +18875,13 @@ function _applyLoad(save) {
       farPhlo: state.farPhlo || null,
       _breachArrived: state._breachArrived || {},
       captainLog: state.captainLog || [],
-      captain:    state.captain    || null,
+      // captain: merge localStorage (freshest) with the saved state.captain
+      captain: (() => {
+        const lsCap = loadCaptain();
+        return state.captain
+          ? mergeCaptainFromEntry(lsCap, { captain: state.captain })
+          : lsCap;
+      })(),
       travelDays: state.travelDays || 0,
       watch: state.watch || { day:1, totalHours:0, hoursAwake:0, legsPushed:0, moveBudget:1, moveUsed:0, watchesWithoutRest:0, restingPhase:false },
       _lsOrbitHours: state.lsOrbitHours || 0, // restore planet orbital positions
@@ -20911,6 +20917,9 @@ function openLocalSpace() {
 // ── Descend to Fentheris surface ──────────────────────────────────────────
 // Only available when docked at Fentheris Orbital Station (Realm sphere).
 function descendToSurface() {
+  // Persist captain to localStorage before switching to surface.html
+  if (G.captain) saveCaptain(G.captain);
+
   if (G.ship?.loc !== 'realm') return;
   if (typeof LS_GAME_HOURS_PER_SEC !== 'undefined') {
     G._lsOrbitHours = (G._lsOrbitHours || 0) + (LS.t || 0) * LS_GAME_HOURS_PER_SEC * LS_ORBIT_SPEED_MULT;
