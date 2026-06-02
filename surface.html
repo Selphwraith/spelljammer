@@ -2849,6 +2849,8 @@ function _surfApplySave(save) {
     if (cap) {
       S.captain = Object.assign({}, S.captain, cap);
       ['melee','ranged','armor','helmet','inv'].forEach(k => { if (cap[k]) S.captain[k] = cap[k]; });
+      // Persist restored captain to localStorage so loadCaptain() is consistent
+      saveCaptain(S.captain);
     }
     // Restore enemy alive/hp
     if (ss.enemies && ss.enemies.length === S.enemies.length) {
@@ -2874,6 +2876,7 @@ function _surfPromptSave(slot) {
   const name=prompt('Name this save:',def); if (name===null) return;
   const save=_surfBuildSave(name.trim()||def); saves[slot]=save;
   try { localStorage.setItem(_SURF_SAVE_KEY,JSON.stringify(saves)); } catch(_) {}
+  saveCaptain(S.captain);  // keep captain.js in sync with manual save
   sfx('purchase',0.5); setStatus('Saved to Slot '+(slot+1)+'.'); _surfBuildSaveSlots();
 }
 function _surfLoadSlot(slot) {
@@ -2890,8 +2893,10 @@ function _surfDeleteSlot(slot) {
   _surfBuildSaveSlots();
 }
 function surfAutoSave() {
-  if (!S._indexEntry && !S.captain.gearGiven) return; // no meaningful state yet
+  if (!S._indexEntry && !S.captain.gearGiven) return;
   try { localStorage.setItem(SURF_AUTO_KEY,JSON.stringify(_surfBuildSave('Auto'))); } catch(_) {}
+  // Keep captain.js localStorage in sync with every autosave
+  saveCaptain(S.captain);
 }
 
 // ── Minimap ───────────────────────────────────────────────────────────────────
@@ -3970,6 +3975,11 @@ function _checkNorthExit() {
 
 // ── Init ──────────────────────────────────────────────────────────────────
 function init(){
+  // 1. Load captain from localStorage FIRST — captain.js owns all defaults.
+  //    This must run before loadEntryData() so mergeCaptainFromEntry has
+  //    a valid base object to merge incoming session data onto.
+  S.captain = loadCaptain();
+  // 2. Merge any incoming data from index.html (sessionStorage handshake)
   loadEntryData();
   _loadSurfSounds();
   initEnemies();
