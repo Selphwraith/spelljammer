@@ -185,6 +185,9 @@ select.prop-input { cursor:pointer; }
       <div class="tool-btn" id="tool-npc" onclick="setTool('npc')" title="Place NPC (N)">
         👤<span>NPC</span>
       </div>
+      <div class="tool-btn" id="tool-transition" onclick="setTool('transition')" title="Place Transition">
+        🌀<span>Portal</span>
+      </div>
       <div class="tool-btn" id="tool-select" onclick="setTool('select')" title="Select (S)">
         ⬚<span>Select</span>
       </div>
@@ -206,6 +209,7 @@ select.prop-input { cursor:pointer; }
     <div class="ptab" onclick="showTab('npc')"  id="tab-npc">NPCs</div>
     <div class="ptab" onclick="showTab('tmpl')" id="tab-tmpl">TEMPLATES</div>
     <div class="ptab" onclick="showTab('map')"  id="tab-map">MAP</div>
+    <div class="ptab" onclick="showTab('zones')" id="tab-zones">ZONES</div>
   </div>
   <div id="props-body">
     <!-- Tab: INFO -->
@@ -327,6 +331,47 @@ select.prop-input { cursor:pointer; }
       </div>
     </div>
 
+    <!-- Tab: ZONES -->
+    <div id="tab-content-zones" style="display:none;">
+      <div class="prop-label" style="margin-bottom:8px;">ZONE MANAGER</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <select class="prop-input" id="zone-selector" onchange="switchZone(this.value)" style="flex:1;"></select>
+        <button class="pbtn" onclick="newZone()" title="Create new zone">+</button>
+      </div>
+      <div id="zone-editor">
+        <div class="prop-row"><label>Zone ID</label><input class="prop-input" id="zone-id" placeholder="market_district"></div>
+        <div class="prop-row"><label>Name</label><input class="prop-input" id="zone-name" placeholder="Market District"></div>
+        <div class="prop-row"><label>Width</label><input class="prop-input small" id="zone-w" value="48"></div>
+        <div class="prop-row"><label>Height</label><input class="prop-input small" id="zone-h" value="24"></div>
+        <button class="pbtn" onclick="applyZoneMeta()" style="width:100%;margin-bottom:8px;">✓ Apply Name/Size</button>
+        <button class="pbtn danger" onclick="deleteZone()" style="width:100%;">🗑 Delete Zone</button>
+      </div>
+      <hr style="border-color:var(--border);margin:12px 0;">
+      <div class="prop-label" style="margin-bottom:6px;">TRANSITIONS
+        <button class="pbtn" onclick="setTool('transition')" style="float:right;padding:2px 8px;font-size:10px;">+ Place</button>
+      </div>
+      <div style="font-size:10px;color:var(--text-dim);margin-bottom:8px;">
+        Select "Place" then click a tile to add a transition portal. Edit its destination below.
+      </div>
+      <div id="transition-list"><!-- populated --></div>
+      <div id="transition-editor" style="display:none;border-top:1px solid var(--border);padding-top:10px;margin-top:8px;">
+        <div class="prop-label" style="margin-bottom:6px;">EDIT TRANSITION</div>
+        <div class="prop-row"><label>From</label><span id="tr-from" style="color:var(--accent);font-size:12px;">—</span></div>
+        <div class="prop-row"><label>To Zone</label>
+          <select class="prop-input" id="tr-tozone"></select>
+        </div>
+        <div class="prop-row"><label>Entry tx</label><input class="prop-input small" id="tr-etx" placeholder="24"></div>
+        <div class="prop-row"><label>Entry ty</label><input class="prop-input small" id="tr-ety" placeholder="18"></div>
+        <div class="prop-row"><label>Entry dir</label>
+          <select class="prop-input" id="tr-edir"><option>down</option><option>up</option><option>left</option><option>right</option></select>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="pbtn" onclick="applyTransition()" style="flex:1;">✓ Apply</button>
+          <button class="pbtn danger" onclick="deleteTransition()">🗑</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Tab: MAP -->
     <div id="tab-content-map" style="display:none;">
       <div class="prop-section">
@@ -404,6 +449,7 @@ const TILE_DEFS = [
   { id: 20, name:'Path ↓→',       col:'#9a7040', pass:true,  group:'Paths'   },
   { id: 21, name:'Path ↑←',       col:'#9a7040', pass:true,  group:'Paths'   },
   { id: 22, name:'Path ↑→',       col:'#9a7040', pass:true,  group:'Paths'   },
+  { id: 25, name:'Portal/Trans',   col:'#4a1a8a', pass:true,  group:'Zones'   },
 ];
 const TILE_BY_ID = {};
 TILE_DEFS.forEach(t => TILE_BY_ID[t.id] = t);
@@ -427,11 +473,17 @@ const PATH_IDS = new Set([16,17,18,19,20,21,22]);
 // ═══════════════════════════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════════════════════════
-let fileHandle = null;   // File System Access API handle
-let rawHTML    = '';     // original file text
-let tiles      = [];     // flat array [W*H]
-let npcs       = [];     // array of NPC objects
+let fileHandle = null;
+let rawHTML    = '';
+let tiles      = [];
+let npcs       = [];
 let MAP_W = 48, MAP_H = 30;
+
+// ── Multi-zone state ────────────────────────────────────────────────────
+let zones        = {};    // { zoneId: { id, name, width, height, tiles, npcs, enemies, transitions } }
+let activeZoneId = 'village';
+let transitions  = [];    // active zone's transitions array
+
 let dirty = false;
 
 let activeTile    = 0;
@@ -549,12 +601,20 @@ function parseHTML(html) {
 
   undoStack = []; redoStack = [];
   updateUndoButtons();
+  parseZones(html);  // extract multi-zone data
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
 // INJECT back into HTML
 // ═══════════════════════════════════════════════════════════════════════════
 function injectIntoHTML(html) {
+  // Save current zone data back to zones object before injecting
+  if (zones[activeZoneId]) {
+    zones[activeZoneId].tiles = [...tiles];
+    zones[activeZoneId].npcs  = JSON.parse(JSON.stringify(npcs));
+    zones[activeZoneId].transitions = [...transitions];
+  }
+
   // 1. Replace MAP_TILES
   const colHdr = '//  ' + Array.from({length:MAP_W},(_,i)=>String(i).padStart(3)).join('');
   const rows = [];
@@ -581,6 +641,48 @@ function injectIntoHTML(html) {
     );
   }).join(',\n');
   html = html.replace(/const NPCS = \[[\s\S]*?\n\];/, `const NPCS = [\n${npcLines},\n];`);
+
+  // 3. Write transitions for village zone into registerZone call
+  const villageTrs = JSON.stringify((zones.village||{}).transitions||[], null, 2)
+    .replace(/^/gm, '  ');
+  html = html.replace(
+    /registerZone\(\{[\s\S]*?id:\s*'village'[\s\S]*?transitions:\s*\[[\s\S]*?\]/,
+    (m) => m.replace(/transitions:\s*\[[\s\S]*?\]/, 'transitions: ' + villageTrs)
+  );
+
+  // 4. For non-village zones, inject registerZone blocks after the village block
+  const extraZones = Object.values(zones).filter(z=>z.id!=='village');
+  if (extraZones.length > 0) {
+    const zoneBlocks = extraZones.map(z => {
+      const tileRows = [];
+      for (let y=0; y<z.height; y++)
+        tileRows.push('    '+z.tiles.slice(y*z.width,(y+1)*z.width).map(v=>String(v).padStart(3)).join(',')+',');
+      const tileStr = tileRows.join('\n');
+      const npcStr  = z.npcs.map(npc => {
+        const lines = npc.lines.map(l=>'      "'+l.replace(/"/g,'\\"')+'"').join(',\n');
+        return `  {\n    id: '${npc.id}', img: '${npc.img}',\n    tx: ${npc.tx}, ty: ${npc.ty},\n    dir: '${npc.dir}',\n    name: '${npc.name}',\n    lines: [\n${lines},\n    ],\n  }`;
+      }).join(',\n');
+      const trStr = JSON.stringify(z.transitions||[], null, 2).replace(/^/gm,'  ');
+      return (
+        `// ── Zone: ${z.name} (${z.id}) ──\n`+
+        `const ZONE_TILES_${z.id.toUpperCase()} = [\n${tileStr}\n];\n`+
+        `const ZONE_NPCS_${z.id.toUpperCase()} = [\n${npcStr}\n];\n`+
+        `registerZone({\n`+
+        `  id: '${z.id}', name: '${z.name}',\n`+
+        `  width: ${z.width}, height: ${z.height},\n`+
+        `  tiles: ZONE_TILES_${z.id.toUpperCase()},\n`+
+        `  npcs:  ZONE_NPCS_${z.id.toUpperCase()},\n`+
+        `  enemies: [],\n`+
+        `  transitions: ${trStr},\n`+
+        '});'
+      );
+    }).join('\n\n');
+    // Insert before closing comment or at end of ZONE_DATA section
+    html = html.replace(
+      '// Initialise live globals from the starting zone',
+      zoneBlocks + '\n\n// Initialise live globals from the starting zone'
+    );
+  }
 
   return html;
 }
@@ -997,9 +1099,8 @@ canvas.addEventListener('mousedown', e => {
     if (tx>=0&&tx<MAP_W&&ty>=0&&ty<MAP_H) selectTile(tiles[ty*MAP_W+tx]);
     return;
   }
-  if (activeTool === 'npc') {
-    placeNPC(tx, ty); return;
-  }
+  if (activeTool === 'npc') { placeNPC(tx, ty); return; }
+  if (activeTool === 'transition') { placeTransition(tx, ty); return; }
 
   // Paint / erase
   isPainting = true;
@@ -1174,7 +1275,7 @@ function toggleCollision() {
 }
 
 function showTab(id) {
-  ['info','npc','tmpl','map'].forEach(t => {
+  ['info','npc','tmpl','map','zones'].forEach(t => {
     document.getElementById('tab-content-'+t).style.display = t===id ? '' : 'none';
     document.getElementById('tab-'+t).classList.toggle('active', t===id);
   });
@@ -1206,6 +1307,210 @@ function updateMapStats() {
       return `${def?def.name:'?'} (${id}): ${c}`;
     }).join('<br>');
   document.getElementById('map-breakdown').innerHTML = lines;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ZONE MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════════════
+
+function parseZones(html) {
+  // Parse ZONE_DATA registrations from surface.html
+  zones = {};
+  activeZoneId = 'village';
+  transitions = [];
+
+  // Extract MAP_TILES (village tiles)
+  const tileM = html.match(/const MAP_TILES = \[([\s\S]*?)\];/);
+  const rawTiles = tileM ? tileM[1].replace(/\/\/[^\n]*/g,'').split(',')
+    .map(s=>s.trim()).filter(s=>s!=='').map(Number) : [];
+
+  // Extract village transitions from ZONE_DATA registration
+  const trM = html.match(/registerZone\(\{[\s\S]*?id:\s*'village'[\s\S]*?transitions:\s*(\[[\s\S]*?\])/);
+  let villageTr = [];
+  if (trM) {
+    try { villageTr = eval(trM[1]); } catch(e) {}
+  }
+
+  zones['village'] = {
+    id: 'village', name: 'Fentheris Settlement',
+    width: MAP_W, height: MAP_H,
+    tiles: rawTiles, npcs: npcs,
+    enemies: [], transitions: villageTr,
+  };
+
+  // Look for additional registered zones
+  const zoneBlocks = html.matchAll(/registerZone\(\{([\s\S]*?)\}\);/g);
+  for (const block of zoneBlocks) {
+    const idM   = block[1].match(/id:\s*'([^']+)'/);
+    const nameM = block[1].match(/name:\s*'([^']+)'/);
+    const wM    = block[1].match(/width:\s*(\d+)/);
+    const hM    = block[1].match(/height:\s*(\d+)/);
+    if (!idM || idM[1] === 'village') continue;
+    zones[idM[1]] = {
+      id:    idM[1],
+      name:  nameM ? nameM[1] : idM[1],
+      width: wM ? parseInt(wM[1]) : 48,
+      height:hM ? parseInt(hM[1]) : 24,
+      tiles: Array(parseInt(wM?wM[1]:48) * parseInt(hM?hM[1]:24)).fill(0),
+      npcs: [], enemies: [], transitions: [],
+    };
+  }
+
+  transitions = (zones[activeZoneId] || {}).transitions || [];
+  updateZoneSelector();
+  updateTransitionList();
+}
+
+function updateZoneSelector() {
+  const sel = document.getElementById('zone-selector');
+  sel.innerHTML = Object.values(zones).map(z =>
+    `<option value="${z.id}"${z.id===activeZoneId?' selected':''}>${z.name} (${z.id})</option>`
+  ).join('');
+  // Update to-zone dropdowns
+  const toSel = document.getElementById('tr-tozone');
+  if (toSel) {
+    toSel.innerHTML = Object.values(zones).map(z =>
+      `<option value="${z.id}">${z.name}</option>`
+    ).join('');
+  }
+}
+
+function switchZone(id) {
+  // Save current zone data back
+  if (zones[activeZoneId]) {
+    zones[activeZoneId].tiles = [...tiles];
+    zones[activeZoneId].npcs  = JSON.parse(JSON.stringify(npcs));
+    zones[activeZoneId].transitions = [...transitions];
+  }
+  activeZoneId = id;
+  const zone = zones[id];
+  if (!zone) return;
+  tiles       = [...zone.tiles];
+  npcs        = JSON.parse(JSON.stringify(zone.npcs));
+  transitions = [...(zone.transitions||[])];
+  MAP_W       = zone.width;
+  MAP_H       = zone.height;
+  // Update zone editor fields
+  document.getElementById('zone-id').value   = zone.id;
+  document.getElementById('zone-name').value = zone.name;
+  document.getElementById('zone-w').value    = zone.width;
+  document.getElementById('zone-h').value    = zone.height;
+  updateTransitionList();
+  updateNPCList(); updateMapStats(); redraw();
+  setStatus('Switched to zone: ' + zone.name);
+}
+
+function newZone() {
+  const id = 'zone_' + Date.now();
+  zones[id] = {
+    id, name: 'New Zone', width: 48, height: 24,
+    tiles: Array(48*24).fill(0), npcs: [], enemies: [], transitions: [],
+  };
+  updateZoneSelector();
+  switchZone(id);
+  showTab('zones');
+  setStatus('New zone created. Set its ID and name above.');
+}
+
+function applyZoneMeta() {
+  const id   = document.getElementById('zone-id').value.trim();
+  const name = document.getElementById('zone-name').value.trim();
+  const w    = parseInt(document.getElementById('zone-w').value) || 48;
+  const h    = parseInt(document.getElementById('zone-h').value) || 24;
+  const zone = zones[activeZoneId];
+  if (!zone) return;
+  // Resize tiles array if dimensions changed
+  if (w !== zone.width || h !== zone.height) {
+    const newTiles = Array(w*h).fill(0);
+    for (let ty=0; ty<Math.min(h,zone.height); ty++)
+      for (let tx=0; tx<Math.min(w,zone.width); tx++)
+        newTiles[ty*w+tx] = zone.tiles[ty*zone.width+tx] || 0;
+    tiles = newTiles; zone.tiles = newTiles;
+    MAP_W = w; MAP_H = h;
+  }
+  // Handle ID rename
+  if (id !== activeZoneId) {
+    zones[id] = zone; delete zones[activeZoneId];
+    activeZoneId = id;
+  }
+  zone.id = id; zone.name = name; zone.width = w; zone.height = h;
+  updateZoneSelector(); redraw(); updateMapStats();
+  setStatus('Zone updated: ' + name);
+}
+
+function deleteZone() {
+  if (activeZoneId === 'village') { setStatus('Cannot delete the village zone.'); return; }
+  if (!confirm('Delete zone "' + zones[activeZoneId].name + '"?')) return;
+  delete zones[activeZoneId];
+  switchZone('village');
+  updateZoneSelector();
+}
+
+// ── Transitions ──────────────────────────────────────────────────────────────
+let selectedTrIdx = -1;
+
+function updateTransitionList() {
+  const list = document.getElementById('transition-list');
+  if (!list) return;
+  list.innerHTML = '';
+  (transitions||[]).forEach((tr, idx) => {
+    const card = document.createElement('div');
+    card.className = 'npc-card' + (idx===selectedTrIdx?' selected':'');
+    const toName = zones[tr.toZone] ? zones[tr.toZone].name : tr.toZone;
+    card.innerHTML = `<div class="npc-card-name">📍 ${coordStr(tr.tx,tr.ty)} → ${toName}</div>
+      <div class="npc-card-pos">Entry: ${coordStr(tr.entryTx,tr.entryTy)} facing ${tr.entryDir||'down'}</div>`;
+    card.onclick = () => editTransition(idx);
+    list.appendChild(card);
+  });
+}
+
+function placeTransition(tx, ty) {
+  pushUndo();
+  tiles[ty*MAP_W+tx] = 25; // portal tile
+  transitions.push({ tx, ty, toZone: Object.keys(zones).find(k=>k!==activeZoneId)||'village',
+                     entryTx:24, entryTy:18, entryDir:'down' });
+  dirty = true; updateTitle();
+  updateTransitionList(); redraw();
+  editTransition(transitions.length-1);
+  showTab('zones');
+  setStatus('Transition placed at ' + coordStr(tx,ty) + ' — set destination below.');
+}
+
+function editTransition(idx) {
+  selectedTrIdx = idx;
+  updateTransitionList();
+  const tr = transitions[idx];
+  if (!tr) return;
+  document.getElementById('transition-editor').style.display='block';
+  document.getElementById('tr-from').textContent = coordStr(tr.tx,tr.ty);
+  document.getElementById('tr-etx').value  = tr.entryTx;
+  document.getElementById('tr-ety').value  = tr.entryTy;
+  document.getElementById('tr-edir').value = tr.entryDir||'down';
+  // Populate to-zone dropdown
+  const toSel = document.getElementById('tr-tozone');
+  toSel.innerHTML = Object.values(zones).filter(z=>z.id!==activeZoneId)
+    .map(z=>`<option value="${z.id}"${z.id===tr.toZone?' selected':''}>${z.name}</option>`).join('');
+}
+
+function applyTransition() {
+  if (selectedTrIdx<0) return;
+  const tr = transitions[selectedTrIdx];
+  tr.toZone   = document.getElementById('tr-tozone').value;
+  tr.entryTx  = parseInt(document.getElementById('tr-etx').value)||0;
+  tr.entryTy  = parseInt(document.getElementById('tr-ety').value)||0;
+  tr.entryDir = document.getElementById('tr-edir').value;
+  updateTransitionList(); setStatus('Transition updated.');
+}
+
+function deleteTransition() {
+  if (selectedTrIdx<0) return;
+  const tr = transitions[selectedTrIdx];
+  // Remove portal tile
+  if (tr.tx>=0&&tr.ty>=0) tiles[tr.ty*MAP_W+tr.tx] = 0;
+  transitions.splice(selectedTrIdx,1);
+  selectedTrIdx=-1;
+  document.getElementById('transition-editor').style.display='none';
+  updateTransitionList(); redraw(); dirty=true; updateTitle();
 }
 
 function exportArrayOnly() {
