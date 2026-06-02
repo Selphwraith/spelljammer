@@ -386,6 +386,8 @@ html, body {
   .inv-footer { font-size:9px; color:#665577; margin-top:6px; width:100%; max-width:640px; }
   .inv-detail-actions { display:flex; flex-direction:column; gap:5px; margin-top:6px; }
 </style>
+<!-- captain.js: shared captain data layer -->
+<script src="captain.js"></script>
 </head>
 <body>
 
@@ -770,7 +772,7 @@ const NPCS = [
 
 
 // -- XP formula: 100 XP to reach Lv2, 200 for Lv3, etc.
-function xpToNext(lv) { return lv * 100; }
+// xpToNext() defined in captain.js — not redefined here to avoid duplicate declaration
 
 // -- Enemy definitions
 const ENEMY_DEFS = {
@@ -963,10 +965,12 @@ let S = {
 
   joystickActive:false, joystickX:0, joystickY:0,
 
-  captain:{
-    level:1, xp:0, xpToNext:100, hp:30, maxHp:30, defense:0, initiative:0,
-    melee: {name:'Combat Knife', dmgMin:3,  dmgMax:6,  type:'melee'},
-    ranged:{name:'Void Pistol',  dmgMin:6,  dmgMax:10, type:'ranged', shotsPerCombat:3},
+  // captain: safe defaults until init() calls loadCaptain()
+  // All mutations go through captain.js Captain.* functions
+  captain: {
+    level:1, xp:0, hp:30, maxHp:30, defense:0, initiative:0,
+    melee: {name:'Combat Knife', dmgMin:3, dmgMax:6,  type:'melee'},
+    ranged:{name:'Void Pistol',  dmgMin:6, dmgMax:10, type:'ranged', shotsPerCombat:3},
     armor: {name:'Leather Armor',hpBonus:8, def:1},
     helmet:{name:'Void Helmet',  hpBonus:4, def:1},
     inv:[], gearGiven:false, shotsLoaded:3,
@@ -1220,6 +1224,7 @@ function updateCamera(cW, cH) {
 
 // ── HUD update ────────────────────────────────────────────────────────────
 function updateHUD() {
+  if (!S.captain) return;  // guard: called before init() completes
   const h   = S.totalHours + S.sessionT * SURFACE_HOURS_PER_SEC;
   const hour = Math.floor((6 + h) % 24);
   const min  = Math.floor((h % 1) * 60);
@@ -1452,7 +1457,9 @@ function loop(timestamp) {
 
   // ── Canvas sizing ──
   const cv = document.getElementById('surface-canvas');
-  const cW = cv.clientWidth, cH = cv.clientHeight;
+  // clientWidth/Height can be 0 on first paint — use window dimensions as fallback
+  const cW = cv.clientWidth  || window.innerWidth;
+  const cH = cv.clientHeight || (window.innerHeight - 96);
   if (cv.width !== cW || cv.height !== cH) { cv.width = cW; cv.height = cH; }
 
   updateCamera(cW, cH);
