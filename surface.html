@@ -1108,14 +1108,9 @@ function loadEntryData() {
     }
     // Sync day counter from index.html so surface and space share the same clock
     if (d.day) S.day = d.day;
-    if(d.captain){
-      const c=d.captain;S.captain={...S.captain,...c};
-      if(c.melee)S.captain.melee=c.melee;
-      if(c.ranged)S.captain.ranged=c.ranged;
-      if(c.armor)S.captain.armor=c.armor;
-      if(c.helmet)S.captain.helmet=c.helmet;
-      if(c.inv)S.captain.inv=c.inv;
-    }
+    // Captain comes from localStorage — loadCaptain() in init() already loaded it.
+    // Only merge gear/scalars from entry (first-descent gearGiven handshake).
+    if (d.captain) S.captain = mergeCaptainFromEntry(S.captain, { captain: d.captain });
     // Load ship PNG for dock rendering
     _loadDockShipImage(d.shipType || d.ship?.type || 'pinnace');
     sessionStorage.removeItem('fentheris_surface_entry');
@@ -1137,6 +1132,8 @@ function buildExitData() {
 }
 
 function returnToShip() {
+  saveCaptain(S.captain);  // flush to localStorage before leaving
+
   stopAllAudio();
   surfAutoSave();
   closeDlg();

@@ -7039,6 +7039,9 @@ function wpnSound(wk) {
 // ║  GAME STATE                                          ║
 // ╚══════════════════════════════════════════════════════╝
 let G = {};
+// Load captain immediately so G.captain is available before any save/load
+// (captain.js must load before this script runs — it's in <head>)
+if (typeof loadCaptain === 'function') G.captain = loadCaptain();
 // ╔══════════════════════════════════════════════════════════════════════════╗
 // ║  TUTORIAL SYSTEM                                                         ║
 // ╚══════════════════════════════════════════════════════════════════════════╝
@@ -18652,14 +18655,12 @@ document.addEventListener('DOMContentLoaded', () => {
           G.ship.air = Math.max(0, G.ship.air - 1);
           if (G.ship.air <= 0) { doDefeat('air'); return; }
         }
-        if (d.gold    != null) G.ship.gold = d.gold;
-        if (d.captain) {
-          G.captain = d.captain;
-          // Sync inv: prefer explicit shipInv, fall back to captain.inv
-          const _returnedInv = d.shipInv || d.captain.inv;
-          if (_returnedInv) G.ship.inv = _returnedInv;
-          G.ship.gold = d.gold ?? G.ship.gold;
-        }
+        if (d.gold != null) G.ship.gold = d.gold;
+        // Captain: surface.html always calls saveCaptain() before returnToShip()
+        // so localStorage has the latest data. Just reload it.
+        G.captain = loadCaptain();
+        const _surfRetInv = d.shipInv || (d.captain && d.captain.inv);
+        if (_surfRetInv) G.ship.inv = _surfRetInv;
         addLog(`Returned from the surface of Fentheris. ${h.toFixed(1)} hours elapsed.`, '');
         updateWatchHUD(); updateUI();
         // Reopen LS if we were in the Realm sphere
@@ -18896,13 +18897,8 @@ function _applyLoad(save) {
       farPhlo: state.farPhlo || null,
       _breachArrived: state._breachArrived || {},
       captainLog: state.captainLog || [],
-      // captain: merge localStorage (freshest) with the saved state.captain
-      captain: (() => {
-        const lsCap = loadCaptain();
-        return state.captain
-          ? mergeCaptainFromEntry(lsCap, { captain: state.captain })
-          : lsCap;
-      })(),
+      // captain: always from localStorage (most current source)
+      captain: loadCaptain(),
       travelDays: state.travelDays || 0,
       watch: state.watch || { day:1, totalHours:0, hoursAwake:0, legsPushed:0, moveBudget:1, moveUsed:0, watchesWithoutRest:0, restingPhase:false },
       _lsOrbitHours: state.lsOrbitHours || 0, // restore planet orbital positions
