@@ -415,6 +415,11 @@ html, body {
 <div id="dialogue-box">
   <div class="dlg-name" id="dlg-name">—</div>
   <div id="dlg-text"></div>
+  <!-- Shown only for merchants / cleric -->
+  <div id="dlg-actions" style="display:none;margin-top:8px;display:none;gap:6px;flex-wrap:wrap;">
+    <button class="btn gd sm" id="dlg-btn-shop" onclick="dlgOpenShop()" style="display:none;">🛒 Visit Shop</button>
+    <button class="btn sm"    id="dlg-btn-next" onclick="dlgNextLine()">💬 Continue</button>
+  </div>
   <button class="dlg-close" onclick="closeDlg()">✕</button>
 </div>
 
@@ -764,9 +769,9 @@ const NPCS = [
   },
   {
     id: 'cleric_1', img: 'surface/npc_vael.png',
-    tx: 23, ty: 2,
-    dir: 'down',
+    tx: 23, ty: 2, dir: 'down',
     name: 'Sister Vael',
+    merchant: true, shopId: 'cleric_1',
     lines: [
       "Rest, traveller. The void wounds deeply, but the light endures.",
       "I have tended many who thought their last breath was spent on that surface.",
@@ -801,14 +806,43 @@ const ITEM_DEFS = {
   membrane:    { name:'Watcher Membrane',  type:'material', sellVal:18  },
   vital_fluid: { name:'Vital Fluid',       type:'material', sellVal:22  },
   potion:      { name:'Healing Tincture',  type:'potion',   sellVal:14, buyVal:35, heal:20 },
+  potion_lg:    { name:'Greater Tincture',  type:'usable', heal:50,  buyVal:48 },
+  blessed_salve:{ name:'Blessed Salve',     type:'usable', regen:5, regenTurns:5, buyVal:55 },
+  void_draught: { name:'Void Draught',      type:'usable', healFull:true, buyVal:90 },
   pistol_mag:  { name:'Pistol Magazine',   type:'ammo',     sellVal:10, buyVal:22, shots:3  },
 };
 
 // Shop stock per merchant
 const SHOP_STOCK = {
-  trader_1:  { sells:['potion','pistol_mag'], buysAll:true, sellMult:1.0  },
-  salvage_1: { sells:[],                      buysAll:true, sellMult:1.25 },
+  trader_1:  { sells:['potion','pistol_mag'], buysAll:true, sellMult:1.0,
+               dailyLimits:{ potion:5, pistol_mag:10 } },
+  salvage_1: { sells:[],                      buysAll:true, sellMult:1.25,
+               dailyLimits:{} },
+  // Sister Vael — healing shop
+  // dailyLimits: max purchases per item per in-game day
+  cleric_1:  { sells:['potion','potion_lg','blessed_salve','void_draught'],
+               buysAll:false, sellMult:1.0,
+               dailyLimits:{ potion:5, potion_lg:3, blessed_salve:2, void_draught:1 } },
 };
+
+// Daily purchase tracking — reset when S.day advances
+// Format: { 'shopId:itemId:day': purchaseCount }
+const _shopDailyLog = {};
+
+function _shopDailyKey(shopId, itemId) {
+  return shopId + ':' + itemId + ':' + (S.day || 1);
+}
+function _shopDailyRemaining(shopId, itemId) {
+  const stock = SHOP_STOCK[shopId];
+  if (!stock || !stock.dailyLimits || stock.dailyLimits[itemId] == null) return 99;
+  const limit = stock.dailyLimits[itemId];
+  const used  = _shopDailyLog[_shopDailyKey(shopId, itemId)] || 0;
+  return Math.max(0, limit - used);
+}
+function _shopDailySpend(shopId, itemId) {
+  const key = _shopDailyKey(shopId, itemId);
+  _shopDailyLog[key] = (_shopDailyLog[key] || 0) + 1;
+}
 
 
 
@@ -1196,8 +1230,25 @@ function openDlg(npc) {
   S.dlgNpcId = npc.id;
   S.dlgLine  = 0;
   document.getElementById('dlg-name').textContent = npc.name;
-  document.getElementById('dlg-text').textContent = npc.lines[0];
+  document.getElementById('dlg-text').textContent = (npc.lines||['...'])[0];
+  // Show shop button for merchants
+  const shopBtn = document.getElementById('dlg-btn-shop');
+  const actDiv  = document.getElementById('dlg-actions');
+  if (shopBtn) shopBtn.style.display = npc.merchant ? 'inline-block' : 'none';
+  if (actDiv)  actDiv.style.display  = 'flex';
   document.getElementById('dialogue-box').style.display = 'block';
+}
+
+function dlgOpenShop() {
+  const npc = NPCS.find(n => n.id === S.dlgNpcId);
+  if (npc && npc.merchant) { closeDlg(); openSurfShop(npc); }
+}
+
+function dlgNextLine() {
+  const npc = NPCS.find(n => n.id === S.dlgNpcId);
+  if (!npc) return;
+  S.dlgLine = ((S.dlgLine||0) + 1) % npc.lines.length;
+  document.getElementById('dlg-text').textContent = npc.lines[S.dlgLine];
 }
 
 function advanceDlg() {
@@ -1215,6 +1266,7 @@ function advanceDlg() {
 function closeDlg() {
   S.dlgNpcId = null;
   document.getElementById('dialogue-box').style.display = 'none';
+  const a = document.getElementById('dlg-actions'); if (a) a.style.display='none';
   const p = document.getElementById('vael-heal-panel');
   if (p) p.style.display = 'none';
 }
@@ -2187,14 +2239,27 @@ function _doPlayerAttack(wep) {
 }
 
 let _lastAttackT = 0;
+// Apply regen at the start of each player action (if active)
+function _applyRegen() {
+  if (!(S.captain.regenRounds > 0)) return;
+  const gained = Captain.healHP(S.captain, S.captain.regenPerRound || 5);
+  S.captain.regenRounds--;
+  cbtLog('Blessed Salve: +' + gained + ' HP regen (' + S.captain.regenRounds + ' turns left). HP: '
+         + S.captain.hp + '/' + S.captain.maxHp, 'good');
+  updateHUD();
+  if (S.captain.regenRounds <= 0) S.captain.regenRounds = 0;
+}
+
 function cbtMelee() {
   if (!S.combat.playerTurn || S.combat.ended || !_cbtA.btnsOn) return;
+  _applyRegen();
   const _n=Date.now(); if(_n-_lastAttackT<400)return; _lastAttackT=_n;
   _doPlayerAttack(S.captain.melee);
 }
 
 function cbtRanged() {
   if (!S.combat.playerTurn || S.combat.ended || !_cbtA.btnsOn) return;
+  _applyRegen();
   const _nr=Date.now(); if(_nr-_lastAttackT<400)return; _lastAttackT=_nr;
   if (S.combat.shotsLeft <= 0) { cbtLog('Out of shots!', 'warn'); return; }
   S.combat.shotsLeft--;
@@ -2441,11 +2506,14 @@ function _surfBuildShopGrid() {
     stock.sells.forEach(id => {
       const def = ITEM_DEFS[id]; if (!def?.buyVal) return;
       const canAfford = S.gold >= def.buyVal;
-      const sub = def.type === 'potion'  ? 'Restores 20 HP'
-                : def.type === 'ammo'    ? '3 shots per magazine'
-                : def.desc || '';
-      const d = _mkShopCard(def.ico || '📦', def.name, sub, def.buyVal + ' TS', false, !canAfford);
-      if (canAfford) d.onclick = () => _surfShopBuy(id);
+      const remaining = _shopDailyRemaining(_shopNpc?.shopId, id);
+      const soldOut   = remaining <= 0;
+      const surfDef = SURF_ITEMS[id];
+      const sub = surfDef ? surfDef.desc : (def.desc || '');
+      const dailyStr = stock.dailyLimits?.[id] != null ? ` (${remaining} left today)` : '';
+      const disabled = !canAfford || soldOut;
+      const d = _mkShopCard(surfDef?.ico || '📦', def.name + dailyStr, sub, def.buyVal + ' TS', false, disabled);
+      if (!disabled) d.onclick = () => _surfShopBuy(id);
       grid.appendChild(d);
     });
     if (msg) msg.textContent = 'You have ' + S.gold + ' TS.';
@@ -2528,7 +2596,13 @@ function _mkShopEmpty(grid, text) {
 function _surfShopBuy(id) {
   const def = ITEM_DEFS[id]; if (!def?.buyVal) return;
   if (S.gold < def.buyVal) { _shopMsg('Not enough TS.'); return; }
+  // Check daily limit
+  const shopId = _shopNpc?.shopId;
+  if (shopId && _shopDailyRemaining(shopId, id) <= 0) {
+    _shopMsg('Sister Vael has no more of that today. Come back tomorrow.'); return;
+  }
   S.gold -= def.buyVal;
+  if (shopId) _shopDailySpend(shopId, id);  // record daily purchase
   const ex = S.captain.inv.find(i => i.id === id);
   if (ex) ex.qty = (ex.qty||1)+1;
   else S.captain.inv.push({ id, name:def.name, type:def.type, qty:1,
@@ -2675,17 +2749,31 @@ function _surfSelectItem(item) {
       ub.style.opacity = '0.38';
       ub.textContent = (def.type === 'equip' ? '\ud83d\udd29 Install' : '\u2728 Use') + ' (Ship only)';
       ub.title = 'Return to your vessel to use this item';
-    } else if (def.use === 'heal20') {
+    } else if (def.use === 'heal20' || def.use === 'heal50' || def.use === 'healfull') {
       ub.textContent = '\u2728 Use';
       ub.disabled = S.captain.hp >= S.captain.maxHp;
       if (ub.disabled) { ub.style.opacity='0.38'; ub.title='Already at full HP'; }
       ub.onclick = () => {
         if (S.captain.hp >= S.captain.maxHp) { setStatus('Already at full HP.'); return; }
-        S.captain.hp = Math.min(S.captain.maxHp, S.captain.hp + 20);
+        const healAmt = def.use==='heal50' ? 50 : def.use==='healfull' ? S.captain.maxHp : 20;
+        Captain.healHP(S.captain, healAmt);
         item.qty = (item.qty||1) - 1;
         if (item.qty <= 0) S.captain.inv = S.captain.inv.filter(i => i !== item);
         sfx('purchase', 0.5);
         setStatus('Used ' + def.n + '. HP: ' + S.captain.hp + '/' + S.captain.maxHp + '.');
+        surfBuildInvGrid();
+      };
+    } else if (def.use === 'regen') {
+      ub.textContent = '\u2728 Use (Regen)';
+      ub.disabled = (S.captain.regenRounds||0) > 0;
+      if (ub.disabled) { ub.style.opacity='0.38'; ub.title='Regen already active'; }
+      ub.onclick = () => {
+        S.captain.regenRounds   = 5;
+        S.captain.regenPerRound = 5;
+        item.qty = (item.qty||1) - 1;
+        if (item.qty <= 0) S.captain.inv = S.captain.inv.filter(i => i !== item);
+        sfx('purchase', 0.5);
+        setStatus('Blessed Salve active — regenerating 5 HP per combat turn for 5 turns.');
         surfBuildInvGrid();
       };
     } else if (def.use === 'reload') {
@@ -3076,12 +3164,16 @@ const SURF_ITEMS = {
   membrane:{n:'Watcher Membrane',ico:'🫁',type:'material',val:18,desc:'Translucent membrane from a Feral Watcher.'},
   vital_fluid:{n:'Vital Fluid',ico:'🩸',type:'material',val:22,desc:'Luminous vital fluid from a Feral Watcher.'},
   // ── Captain consumables ───────────────────────────────────────────────────────
-  potion:{n:'Healing Tincture',ico:'⚗️',type:'usable',val:14,desc:'Use: Restores 20 HP.',use:'heal20'},
+  potion:      {n:'Healing Tincture',   ico:'⚗️', type:'usable',val:14, desc:'Restores 20 HP.',           use:'heal20'},
+  potion_lg:   {n:'Greater Tincture',   ico:'💊', type:'usable',val:35, desc:'Restores 50 HP.',           use:'heal50'},
+  blessed_salve:{n:'Blessed Salve',     ico:'✨', type:'usable',val:40, desc:'Regenerates 5 HP/turn for 5 turns in combat (25 HP total).', use:'regen'},
+  void_draught: {n:'Void Draught',      ico:'🫗', type:'usable',val:80, desc:'Restores HP to full instantly.',use:'healfull'},
+
   pistol_mag:{n:'Pistol Magazine',ico:'🔋',type:'ammo',val:10,desc:'3 shots. Reload takes one combat action.',use:'reload'},
 };
 
 // Which use-keys are usable by the captain (not ship-only)
-const _SURF_CAP_USE = { heal20:true, reload:true };
+const _SURF_CAP_USE = { heal20:true, heal50:true, healfull:true, regen:true, reload:true };
 
 // Resolve any item to its SURF_ITEMS definition (fallback to item fields)
 function _surfItemDef(item) {
