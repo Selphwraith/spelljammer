@@ -415,11 +415,6 @@ html, body {
 <div id="dialogue-box">
   <div class="dlg-name" id="dlg-name">—</div>
   <div id="dlg-text"></div>
-  <!-- Shown only for merchants / cleric -->
-  <div id="dlg-actions" style="display:none;margin-top:8px;gap:6px;flex-wrap:wrap;">
-    <button class="btn gd sm" id="dlg-btn-shop" onclick="dlgOpenShop()" style="display:none;">🛒 Visit Shop</button>
-    <button class="btn sm"    id="dlg-btn-next" onclick="dlgNextLine()">💬 Continue</button>
-  </div>
   <button class="dlg-close" onclick="closeDlg()">✕</button>
 </div>
 
@@ -565,8 +560,6 @@ html, body {
 
 <script>
 // ── captain.js safety fallback ───────────────────────────────────────────────
-// If captain.js fails to load (missing from repo), these stubs prevent crashes.
-// Fix: upload captain.js to repo root alongside index.html and surface.html.
 if (typeof loadCaptain==='undefined') window.loadCaptain=()=>({level:1,xp:0,hp:30,maxHp:30,defense:0,initiative:0,melee:{name:'Combat Knife',dmgMin:3,dmgMax:6,type:'melee'},ranged:{name:'Void Pistol',dmgMin:6,dmgMax:10,type:'ranged',shotsPerCombat:3},armor:{name:'Leather Armor',hpBonus:8,def:1},helmet:{name:'Void Helmet',hpBonus:4,def:1},inv:[],gearGiven:false,shotsLoaded:3});
 if (typeof saveCaptain==='undefined') window.saveCaptain=()=>{};
 if (typeof mergeCaptainFromEntry==='undefined') window.mergeCaptainFromEntry=(cap)=>cap;
@@ -779,11 +772,11 @@ const NPCS = [
   },
   {
     id: 'cleric_1', img: 'surface/npc_vael.png',
-    tx: 23, ty: 2, dir: 'down',
+    tx: 23, ty: 2,
+    dir: 'down',
     name: 'Sister Vael',
-    merchant: true, shopId: 'cleric_1',
     lines: [
-      "The Drift takes its toll on all of us, Captain. I have what you need — tinctures, salves, draughts. Name your need or leave your coin.",
+      "Rest, traveller. The void wounds deeply, but the light endures.",
       "I have tended many who thought their last breath was spent on that surface.",
       "Come back if you need healing. My door is always open.",
     ],
@@ -816,43 +809,14 @@ const ITEM_DEFS = {
   membrane:    { name:'Watcher Membrane',  type:'material', sellVal:18  },
   vital_fluid: { name:'Vital Fluid',       type:'material', sellVal:22  },
   potion:      { name:'Healing Tincture',  type:'potion',   sellVal:14, buyVal:35, heal:20 },
-  potion_lg:    { name:'Greater Tincture',  type:'usable', heal:50,  buyVal:48 },
-  blessed_salve:{ name:'Blessed Salve',     type:'usable', regen:5, regenTurns:5, buyVal:55 },
-  void_draught: { name:'Void Draught',      type:'usable', healFull:true, buyVal:90 },
   pistol_mag:  { name:'Pistol Magazine',   type:'ammo',     sellVal:10, buyVal:22, shots:3  },
 };
 
 // Shop stock per merchant
 const SHOP_STOCK = {
-  trader_1:  { sells:['potion','pistol_mag'], buysAll:true, sellMult:1.0,
-               dailyLimits:{ potion:5, pistol_mag:10 } },
-  salvage_1: { sells:[],                      buysAll:true, sellMult:1.25,
-               dailyLimits:{} },
-  // Sister Vael — healing shop
-  // dailyLimits: max purchases per item per in-game day
-  cleric_1:  { sells:['potion','potion_lg','blessed_salve','void_draught'],
-               buysAll:false, sellMult:1.0,
-               dailyLimits:{ potion:5, potion_lg:3, blessed_salve:2, void_draught:1 } },
+  trader_1:  { sells:['potion','pistol_mag'], buysAll:true, sellMult:1.0  },
+  salvage_1: { sells:[],                      buysAll:true, sellMult:1.25 },
 };
-
-// Daily purchase tracking — reset when S.day advances
-// Format: { 'shopId:itemId:day': purchaseCount }
-const _shopDailyLog = {};
-
-function _shopDailyKey(shopId, itemId) {
-  return shopId + ':' + itemId + ':' + (S.day || 1);
-}
-function _shopDailyRemaining(shopId, itemId) {
-  const stock = SHOP_STOCK[shopId];
-  if (!stock || !stock.dailyLimits || stock.dailyLimits[itemId] == null) return 99;
-  const limit = stock.dailyLimits[itemId];
-  const used  = _shopDailyLog[_shopDailyKey(shopId, itemId)] || 0;
-  return Math.max(0, limit - used);
-}
-function _shopDailySpend(shopId, itemId) {
-  const key = _shopDailyKey(shopId, itemId);
-  _shopDailyLog[key] = (_shopDailyLog[key] || 0) + 1;
-}
 
 
 
@@ -863,7 +827,7 @@ function _shopDailySpend(shopId, itemId) {
 
 const _SURF_SFX = {};   // preloaded Audio elements
 let   _SURF_MUTED = false;
-const _SURF_VOL = { master: 0.8, sfx: 0.8, ambient: 0.35 };
+const _SURF_VOL = { master: 0.8, sfx: 0.8, ambient: 0.35 , music: 0.7};
 
 // All surface sound files — path relative to surface.html
 const SURF_SOUND_DATA = {
@@ -894,6 +858,12 @@ const SURF_SOUND_DATA = {
   rest:           'surface/sounds/rest.mp3',           // resting/sleeping
   // ── Ambient (looping) ───────────────────────────────────
   ambient_field:  'surface/sounds/ambient_field.mp3',  // grassland/forest loop
+  music_1: 'sounds/title.mp3',
+  music_2: 'sounds/title_2.mp3',
+  music_3: 'sounds/title_3.mp3',
+  music_4: 'sounds/title_4.mp3',
+  music_5: 'sounds/title_5.mp3',
+  combat_music: 'sounds/combat.mp3',
 };
 
 // Load all sounds — fetch HEAD first so missing files never throw
@@ -930,31 +900,69 @@ function sfxEnemyAtk(enemyType) {
   else sfx('enemy_hurt', 0.75);
 }
 
-// ── Ambient field loop ───────────────────────────────────────────────────────
-let _ambientEl = null;
-function startAmbient() {
-  if (_ambientEl || !_SURF_SFX['ambient_field']) return;
-  try {
-    _ambientEl = _SURF_SFX['ambient_field'].cloneNode();
-    _ambientEl.loop   = true;
-    _ambientEl.volume = Math.min(1, _SURF_VOL.master * _SURF_VOL.ambient);
-    _ambientEl.play().catch(() => {});
-  } catch(_) {}
+// ═══════════════════════════════════════════════════════════════════════════════
+// MUSIC + AMBIENT MANAGER
+// ═══════════════════════════════════════════════════════════════════════════════
+let _ambientEl=null, _musicEl=null, _combatMusicEl=null;
+let _musicIdx=0, _inCombatMusic=false;
+const MUSIC_KEYS=['music_1','music_2','music_3','music_4','music_5'];
+
+function startAmbient(){
+  if(_ambientEl)return; const snd=_SURF_SFX['ambient_field'];if(!snd)return;
+  try{_ambientEl=snd.cloneNode();_ambientEl.loop=true;
+  _ambientEl.volume=Math.min(1,_SURF_VOL.master*_SURF_VOL.ambient*0.5);
+  _ambientEl.play().catch(()=>{});}catch(_){}
 }
-function stopAmbient() {
-  if (!_ambientEl) return;
-  try { _ambientEl.pause(); _ambientEl.currentTime = 0; } catch(_) {}
-  _ambientEl = null;
+function stopAmbient(){
+  if(!_ambientEl)return;
+  try{_ambientEl.pause();_ambientEl.currentTime=0;}catch(_){} _ambientEl=null;
 }
-// Duck ambient during combat, restore after
-function _ambientDuck(on) {
-  if (!_ambientEl) return;
-  try {
-    _ambientEl.volume = on
-      ? Math.min(1, _SURF_VOL.master * _SURF_VOL.ambient * 0.25)
-      : Math.min(1, _SURF_VOL.master * _SURF_VOL.ambient);
-  } catch(_) {}
+function startMusic(){
+  if(_musicEl||_inCombatMusic)return;
+  let key=null;
+  for(let i=0;i<MUSIC_KEYS.length;i++){
+    const k=MUSIC_KEYS[(_musicIdx+i)%MUSIC_KEYS.length];
+    if(_SURF_SFX[k]){key=k;_musicIdx=(_musicIdx+i)%MUSIC_KEYS.length;break;}
+  }
+  if(!key)return;
+  try{
+    _musicEl=_SURF_SFX[key].cloneNode();
+    _musicEl.loop=false;
+    _musicEl.volume=Math.min(1,_SURF_VOL.master*_SURF_VOL.music);
+    _musicEl.onended=()=>{
+      _musicEl=null;_musicIdx=(_musicIdx+1)%MUSIC_KEYS.length;
+      if(!_inCombatMusic)setTimeout(startMusic,500);
+    };
+    _musicEl.play().catch(()=>{_musicEl=null;});
+  }catch(_){_musicEl=null;}
 }
+function stopMusic(){
+  if(!_musicEl)return;
+  try{_musicEl.pause();_musicEl.currentTime=0;}catch(_){} _musicEl=null;
+}
+function startCombatMusic(){
+  if(_inCombatMusic)return; _inCombatMusic=true;
+  if(_musicEl)try{_musicEl.volume=0;}catch(_){}
+  const snd=_SURF_SFX['combat_music'];if(!snd)return;
+  try{
+    _combatMusicEl=snd.cloneNode();_combatMusicEl.loop=true;
+    _combatMusicEl.volume=Math.min(1,_SURF_VOL.master*_SURF_VOL.music);
+    _combatMusicEl.play().catch(()=>{});
+  }catch(_){}
+}
+function stopCombatMusic(){
+  if(!_inCombatMusic)return; _inCombatMusic=false;
+  if(_combatMusicEl){try{_combatMusicEl.pause();_combatMusicEl.currentTime=0;}catch(_){}_combatMusicEl=null;}
+  if(_musicEl){try{_musicEl.volume=Math.min(1,_SURF_VOL.master*_SURF_VOL.music);}catch(_){}}
+  else startMusic();
+}
+function stopAllAudio(){
+  stopAmbient();stopMusic();
+  if(_combatMusicEl){try{_combatMusicEl.pause();_combatMusicEl.currentTime=0;}catch(_){}_combatMusicEl=null;}
+  _inCombatMusic=false;
+  Object.values(_SURF_SFX).forEach(a=>{try{if(a&&!a.paused){a.pause();a.currentTime=0;}}catch(_){}});
+}
+function _ambientDuck(_on){}  // legacy no-op — combat music system handles this now
 
 // ── Footstep system ──────────────────────────────────────────────────────────
 // Tile IDs that use stone sound: cobble(2), floor(9), door(10), cliff(15)
@@ -1089,8 +1097,6 @@ function loadEntryData() {
       if(c.helmet)S.captain.helmet=c.helmet;
       if(c.inv)S.captain.inv=c.inv;
     }
-    // Preload the ship image for dock rendering
-    _loadDockShipImage(d.shipType || d.ship?.type || 'pinnace');
     sessionStorage.removeItem('fentheris_surface_entry');
   } catch(e) {}
 }
@@ -1110,7 +1116,7 @@ function buildExitData() {
 }
 
 function returnToShip() {
-  saveCaptain(S.captain);  // persist latest captain before sending to index.html
+  stopAllAudio();
   surfAutoSave();
   closeDlg();
   const ov = document.getElementById('transition-overlay');
@@ -1242,35 +1248,9 @@ function tryMove(dx, dy, dt) {
 function openDlg(npc) {
   S.dlgNpcId = npc.id;
   S.dlgLine  = 0;
-  const nameEl = document.getElementById('dlg-name');
-  const textEl = document.getElementById('dlg-text');
-  const actDiv = document.getElementById('dlg-actions');
-  const shopBtn= document.getElementById('dlg-btn-shop');
-  const nextBtn= document.getElementById('dlg-btn-next');
-  if (nameEl) nameEl.textContent = npc.name;
-  if (textEl) textEl.textContent = (npc.lines||['...'])[0];
-  // Merchant dialogue: show Trade + Leave buttons
-  if (npc.merchant) {
-    if (shopBtn) { shopBtn.textContent = '🛒 Trade'; shopBtn.style.display='inline-block'; }
-    if (nextBtn) { nextBtn.textContent = '👋 Leave'; nextBtn.onclick = closeDlg; }
-  } else {
-    if (shopBtn) shopBtn.style.display = 'none';
-    if (nextBtn) { nextBtn.textContent = '💬 Continue'; nextBtn.onclick = dlgNextLine; }
-  }
-  if (actDiv) actDiv.style.display = 'flex';
+  document.getElementById('dlg-name').textContent = npc.name;
+  document.getElementById('dlg-text').textContent = npc.lines[0];
   document.getElementById('dialogue-box').style.display = 'block';
-}
-
-function dlgOpenShop() {
-  const npc = NPCS.find(n => n.id === S.dlgNpcId);
-  if (npc && npc.merchant) { closeDlg(); openSurfShop(npc); }
-}
-
-function dlgNextLine() {
-  const npc = NPCS.find(n => n.id === S.dlgNpcId);
-  if (!npc) return;
-  S.dlgLine = ((S.dlgLine||0) + 1) % npc.lines.length;
-  document.getElementById('dlg-text').textContent = npc.lines[S.dlgLine];
 }
 
 function advanceDlg() {
@@ -1288,9 +1268,6 @@ function advanceDlg() {
 function closeDlg() {
   S.dlgNpcId = null;
   document.getElementById('dialogue-box').style.display = 'none';
-  const a = document.getElementById('dlg-actions'); if (a) a.style.display='none';
-  const p = document.getElementById('vael-heal-panel');
-  if (p) p.style.display = 'none';
 }
 
 // ── Camera ────────────────────────────────────────────────────────────────
@@ -1560,21 +1537,12 @@ document.addEventListener('keydown', e => {
   if (['ArrowRight','d','D'].includes(e.key)) S.keys.right = true;
   if (['ArrowUp','w','W'].includes(e.key))    S.keys.up    = true;
   if (['ArrowDown','s','S'].includes(e.key))  S.keys.down  = true;
+  if (['Enter','z','Z',' '].includes(e.key))  { e.preventDefault(); tryInteract(); }
   if (e.key === 'Escape') { closeDlg(); _surfCloseAll(); if(NF.active) closeNorthernField(); }
-  if (['Enter','z','Z',' '].includes(e.key)) {
-    e.preventDefault();
-    // Use getComputedStyle — style.display returns '' on fresh load, not 'none'
-    const _dlgEl  = document.getElementById('dialogue-box');
-    const dlgOpen = _dlgEl && window.getComputedStyle(_dlgEl).display !== 'none';
-    if (dlgOpen) {
-      // Dialogue already open — advance it (only if no action buttons showing)
-      const actDiv = document.getElementById('dlg-actions');
-      const actShowing = actDiv && actDiv.style.display === 'flex';
-      if (!actShowing) advanceDlg();
-    } else {
-      // Dialogue closed — interact to open it
-      tryInteract();
-    }
+  // Dialogue advance
+  if (['Enter','z','Z',' '].includes(e.key) &&
+      document.getElementById('dialogue-box').style.display !== 'none') {
+    e.preventDefault(); advanceDlg();
   }
 });
 
@@ -2200,7 +2168,7 @@ function startCombat(idx) {
     atkPhase:null,atkT:0,dmgNums:[],menuCat:'attack',menuFocus:0,btnsOn:false});
   // Show overlay + size canvas
   document.getElementById('surf-combat').style.display='flex';
-  _ambientDuck(true);
+  startCombatMusic();
   const cv=document.getElementById('sc-scene');
   if (cv){cv.width=cv.clientWidth||360;cv.height=Math.min(Math.floor(cv.clientWidth*0.48),220);}
   // Build disabled menu
@@ -2226,8 +2194,8 @@ function startCombat(idx) {
 
 function closeCombat() {
   S.captain.shotsLoaded = S.combat.shotsLeft;
-  S.combat.active = false;
-  S.combat.ended  = false;  // reset so NF loop unfreezes after combat
+  S.combat.active = false; S.combat.ended = false;
+  stopCombatMusic();  // reset so NF loop unfreezes after combat
   _cbtStopScene();
   _ambientDuck(false);
   document.getElementById('surf-combat').style.display='none';
@@ -2270,27 +2238,14 @@ function _doPlayerAttack(wep) {
 }
 
 let _lastAttackT = 0;
-// Apply regen at the start of each player action (if active)
-function _applyRegen() {
-  if (!(S.captain.regenRounds > 0)) return;
-  const gained = Captain.healHP(S.captain, S.captain.regenPerRound || 5);
-  S.captain.regenRounds--;
-  cbtLog('Blessed Salve: +' + gained + ' HP regen (' + S.captain.regenRounds + ' turns left). HP: '
-         + S.captain.hp + '/' + S.captain.maxHp, 'good');
-  updateHUD();
-  if (S.captain.regenRounds <= 0) S.captain.regenRounds = 0;
-}
-
 function cbtMelee() {
   if (!S.combat.playerTurn || S.combat.ended || !_cbtA.btnsOn) return;
-  _applyRegen();
   const _n=Date.now(); if(_n-_lastAttackT<400)return; _lastAttackT=_n;
   _doPlayerAttack(S.captain.melee);
 }
 
 function cbtRanged() {
   if (!S.combat.playerTurn || S.combat.ended || !_cbtA.btnsOn) return;
-  _applyRegen();
   const _nr=Date.now(); if(_nr-_lastAttackT<400)return; _lastAttackT=_nr;
   if (S.combat.shotsLeft <= 0) { cbtLog('Out of shots!', 'warn'); return; }
   S.combat.shotsLeft--;
@@ -2537,14 +2492,11 @@ function _surfBuildShopGrid() {
     stock.sells.forEach(id => {
       const def = ITEM_DEFS[id]; if (!def?.buyVal) return;
       const canAfford = S.gold >= def.buyVal;
-      const remaining = _shopDailyRemaining(_shopNpc?.shopId, id);
-      const soldOut   = remaining <= 0;
-      const surfDef = SURF_ITEMS[id];
-      const sub = surfDef ? surfDef.desc : (def.desc || '');
-      const dailyStr = stock.dailyLimits?.[id] != null ? ` (${remaining} left today)` : '';
-      const disabled = !canAfford || soldOut;
-      const d = _mkShopCard(surfDef?.ico || '📦', def.name + dailyStr, sub, def.buyVal + ' TS', false, disabled);
-      if (!disabled) d.onclick = () => _surfShopBuy(id);
+      const sub = def.type === 'potion'  ? 'Restores 20 HP'
+                : def.type === 'ammo'    ? '3 shots per magazine'
+                : def.desc || '';
+      const d = _mkShopCard(def.ico || '📦', def.name, sub, def.buyVal + ' TS', false, !canAfford);
+      if (canAfford) d.onclick = () => _surfShopBuy(id);
       grid.appendChild(d);
     });
     if (msg) msg.textContent = 'You have ' + S.gold + ' TS.';
@@ -2580,7 +2532,6 @@ function _surfBuildShopGrid() {
       allCard.onclick = () => {
         filtered.forEach(item => { S.captain.inv = S.captain.inv.filter(i => i !== item); });
         S.gold += totalVal;
-        saveCaptain(S.captain);  // persist sell-all immediately
         sfx('sell', 0.8);
         _shopMsg('Sold ' + filtered.length + ' items for ' + totalVal + ' TS.');
         _surfBuildShopGrid();
@@ -2600,7 +2551,6 @@ function _surfBuildShopGrid() {
         item.qty = (item.qty || 1) - 1;
         if (item.qty <= 0) S.captain.inv = S.captain.inv.filter(i => i !== item);
         S.gold += price;
-        saveCaptain(S.captain);  // persist sell immediately
         sfx('sell', 0.7);
         _shopMsg('Sold ' + def.n + ' for ' + price + ' TS' + (mult > 1 ? ' (premium!)' : '') + '.');
         _surfBuildShopGrid();
@@ -2629,19 +2579,12 @@ function _mkShopEmpty(grid, text) {
 function _surfShopBuy(id) {
   const def = ITEM_DEFS[id]; if (!def?.buyVal) return;
   if (S.gold < def.buyVal) { _shopMsg('Not enough TS.'); return; }
-  // Check daily limit
-  const shopId = _shopNpc?.shopId;
-  if (shopId && _shopDailyRemaining(shopId, id) <= 0) {
-    _shopMsg('Sister Vael has no more of that today. Come back tomorrow.'); return;
-  }
   S.gold -= def.buyVal;
-  if (shopId) _shopDailySpend(shopId, id);  // record daily purchase
   const ex = S.captain.inv.find(i => i.id === id);
   if (ex) ex.qty = (ex.qty||1)+1;
   else S.captain.inv.push({ id, name:def.name, type:def.type, qty:1,
     ...(def.heal  ? {heal:def.heal}  : {}),
     ...(def.shots ? {shots:def.shots}: {}) });
-  saveCaptain(S.captain);  // persist buy immediately
   sfx('purchase', 0.75);
   _shopMsg('Bought: ' + def.name + ' (−' + def.buyVal + ' TS)');
   _surfBuildShopGrid();
@@ -2783,31 +2726,17 @@ function _surfSelectItem(item) {
       ub.style.opacity = '0.38';
       ub.textContent = (def.type === 'equip' ? '\ud83d\udd29 Install' : '\u2728 Use') + ' (Ship only)';
       ub.title = 'Return to your vessel to use this item';
-    } else if (def.use === 'heal20' || def.use === 'heal50' || def.use === 'healfull') {
+    } else if (def.use === 'heal20') {
       ub.textContent = '\u2728 Use';
       ub.disabled = S.captain.hp >= S.captain.maxHp;
       if (ub.disabled) { ub.style.opacity='0.38'; ub.title='Already at full HP'; }
       ub.onclick = () => {
         if (S.captain.hp >= S.captain.maxHp) { setStatus('Already at full HP.'); return; }
-        const healAmt = def.use==='heal50' ? 50 : def.use==='healfull' ? S.captain.maxHp : 20;
-        Captain.healHP(S.captain, healAmt);
+        S.captain.hp = Math.min(S.captain.maxHp, S.captain.hp + 20);
         item.qty = (item.qty||1) - 1;
         if (item.qty <= 0) S.captain.inv = S.captain.inv.filter(i => i !== item);
         sfx('purchase', 0.5);
         setStatus('Used ' + def.n + '. HP: ' + S.captain.hp + '/' + S.captain.maxHp + '.');
-        surfBuildInvGrid();
-      };
-    } else if (def.use === 'regen') {
-      ub.textContent = '\u2728 Use (Regen)';
-      ub.disabled = (S.captain.regenRounds||0) > 0;
-      if (ub.disabled) { ub.style.opacity='0.38'; ub.title='Regen already active'; }
-      ub.onclick = () => {
-        S.captain.regenRounds   = 5;
-        S.captain.regenPerRound = 5;
-        item.qty = (item.qty||1) - 1;
-        if (item.qty <= 0) S.captain.inv = S.captain.inv.filter(i => i !== item);
-        sfx('purchase', 0.5);
-        setStatus('Blessed Salve active — regenerating 5 HP per combat turn for 5 turns.');
         surfBuildInvGrid();
       };
     } else if (def.use === 'reload') {
@@ -2843,7 +2772,6 @@ function _surfSelectItem(item) {
         item.qty = (item.qty||1) - 1;
         if (item.qty <= 0) S.captain.inv = S.captain.inv.filter(i => i !== item);
         S.gold += price;
-        saveCaptain(S.captain);  // persist sell immediately
         sfx('sell', 0.7);
         setStatus('Sold ' + def.n + ' for ' + price + ' TS.');
         surfBuildInvGrid(); _buildShopList();
@@ -3199,16 +3127,12 @@ const SURF_ITEMS = {
   membrane:{n:'Watcher Membrane',ico:'🫁',type:'material',val:18,desc:'Translucent membrane from a Feral Watcher.'},
   vital_fluid:{n:'Vital Fluid',ico:'🩸',type:'material',val:22,desc:'Luminous vital fluid from a Feral Watcher.'},
   // ── Captain consumables ───────────────────────────────────────────────────────
-  potion:      {n:'Healing Tincture',   ico:'⚗️', type:'usable',val:14, desc:'Restores 20 HP.',           use:'heal20'},
-  potion_lg:   {n:'Greater Tincture',   ico:'💊', type:'usable',val:35, desc:'Restores 50 HP.',           use:'heal50'},
-  blessed_salve:{n:'Blessed Salve',     ico:'✨', type:'usable',val:40, desc:'Regenerates 5 HP/turn for 5 turns in combat (25 HP total).', use:'regen'},
-  void_draught: {n:'Void Draught',      ico:'🫗', type:'usable',val:80, desc:'Restores HP to full instantly.',use:'healfull'},
-
+  potion:{n:'Healing Tincture',ico:'⚗️',type:'usable',val:14,desc:'Use: Restores 20 HP.',use:'heal20'},
   pistol_mag:{n:'Pistol Magazine',ico:'🔋',type:'ammo',val:10,desc:'3 shots. Reload takes one combat action.',use:'reload'},
 };
 
 // Which use-keys are usable by the captain (not ship-only)
-const _SURF_CAP_USE = { heal20:true, heal50:true, healfull:true, regen:true, reload:true };
+const _SURF_CAP_USE = { heal20:true, reload:true };
 
 // Resolve any item to its SURF_ITEMS definition (fallback to item fields)
 function _surfItemDef(item) {
@@ -3331,48 +3255,21 @@ function _drawVael(ctx, camOffX, camOffY) {
   }
 }
 
-
-// ── Dock ship image loader ─────────────────────────────────────────────────
-// Maps ship type keys to their PNG paths (same files used by index.html).
-// Called from loadEntryData() when the player descends.
-let _dockShipImg = null;
-const _DOCK_SHIP_IMGS = {
-  'pinnace': 'images/ship_pinnace.png',
-  'squid': 'images/ship_squid.png',
-  'hammer': 'images/ship_hammer.png',
-  'manow': 'images/ship_manow.png',
-  'corsair': 'images/ship_corsair.png',
-  'corsair_scout': 'images/ship_corsair.png',
-  'plunderer': 'images/ship_plunderer.png',
-  'blackfleet': 'images/ship_blackfleet.png',
-  'nautiloid': 'images/ship_nautiloid.png',
-  'githyanki': 'images/ship_githyanki.png',
-  'beholder': 'images/ship_beholder.png',
-  'leviathan': 'images/ship_leviathan.png',
-};
-function _loadDockShipImage(shipType) {
-  const path = _DOCK_SHIP_IMGS[shipType] || _DOCK_SHIP_IMGS['pinnace'];
-  if (!path) return;
-  _dockShipImg = new Image();
-  _dockShipImg.src = path;
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // DOCK SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════════
-const DOCK_DOOR_TX  = 4,  DOCK_DOOR_TY  = 27;
-// Full dock building zone — player can return to ship from anywhere inside
-const DOCK_ZONE_TX1 = 0,  DOCK_ZONE_TX2 = 11;
-const DOCK_ZONE_TY1 = 21, DOCK_ZONE_TY2 = 29;
+const DOCK_DOOR_TX = 4, DOCK_DOOR_TY = 27;  // door tile position
+const DOCK_PROXIMITY = 2;                    // tiles radius for Return to Ship
 
 function isNearDock() {
   const ptx = Math.round(S.px / TILE_SIZE);
   const pty = Math.round(S.py / TILE_SIZE);
-  return ptx >= DOCK_ZONE_TX1 && ptx <= DOCK_ZONE_TX2 &&
-         pty >= DOCK_ZONE_TY1 && pty <= DOCK_ZONE_TY2;
+  return Math.abs(ptx - DOCK_DOOR_TX) <= DOCK_PROXIMITY &&
+         Math.abs(pty - DOCK_DOOR_TY) <= DOCK_PROXIMITY;
 }
 
-// returnToShip — requires player to be inside the dock zone
+// Override returnToShip to require dock proximity
+const _originalReturnToShip = typeof returnToShip !== 'undefined' ? returnToShip : null;
 function returnToShip() {
   if (!isNearDock()) {
     setStatus('You must return to your ship at the dock — follow the path south.');
@@ -3394,67 +3291,74 @@ function returnToShip() {
 
 // Draw ship in dock — procedural pixel art based on G.ship.type from index entry
 function _drawShipInDock(ctx, ox, oy) {
-  const shipType = S._indexEntry?.shipType || S._indexEntry?.ship?.type || 'pinnace';
-  const DW = 9 * TILE_SIZE, DH = 5 * TILE_SIZE;
+  const shipType = S._indexEntry?.ship?.type || 'pinnace';
+  const W2 = 7 * TILE_SIZE, H2 = 3 * TILE_SIZE;
 
-  // Water background
-  ctx.fillStyle = 'rgba(10,30,70,0.85)';
-  ctx.fillRect(ox, oy, DW, DH);
-  // Water shimmer
-  ctx.strokeStyle = 'rgba(40,100,180,0.3)';
+  // Hull base
+  const hullCols = {
+    pinnace:   ['#4a5a8a','#6a7aaa','#3a4a7a'],
+    sloop:     ['#5a6a4a','#7a8a6a','#4a5a3a'],
+    brig:      ['#7a5a3a','#9a7a5a','#5a3a2a'],
+    frigate:   ['#6a4a8a','#8a6aaa','#5a3a7a'],
+    galleon:   ['#8a3a3a','#aa5a5a','#6a2a2a'],
+    'man-o-war':['#3a3a6a','#5a5a9a','#2a2a5a'],
+  };
+  const [hull, highlight, shadow] = hullCols[shipType] || hullCols['pinnace'];
+
+  // Simple top-down ship silhouette
+  const sx = ox + TILE_SIZE, sy = oy;
+
+  // Hull
+  ctx.fillStyle = hull;
+  ctx.fillRect(sx+4, sy+8, W2-8, H2-10);
+  ctx.fillStyle = highlight;
+  ctx.fillRect(sx+6, sy+10, W2-12, 8);
+  ctx.fillStyle = shadow;
+  ctx.fillRect(sx+4, sy+H2-12, W2-8, 6);
+
+  // Bow (pointed front - top)
+  ctx.fillStyle = hull;
+  ctx.beginPath();
+  ctx.moveTo(sx+W2/2, sy+2);
+  ctx.lineTo(sx+8, sy+10);
+  ctx.lineTo(sx+W2-8, sy+10);
+  ctx.closePath();
+  ctx.fill();
+
+  // Stern (flat back - bottom)
+  ctx.fillStyle = shadow;
+  ctx.fillRect(sx+8, sy+H2-10, W2-16, 6);
+
+  // Mast
+  ctx.fillStyle = '#8a6a30';
+  ctx.fillRect(sx+W2/2-2, sy+4, 4, H2-10);
+
+  // Sails (simple rectangles)
+  ctx.fillStyle = 'rgba(220,210,180,0.85)';
+  ctx.fillRect(sx+W2/2-12, sy+6, 24, 14);
+  if (shipType === 'brig' || shipType === 'frigate' || shipType === 'galleon' || shipType === 'man-o-war') {
+    ctx.fillRect(sx+W2/2-8, sy+22, 16, 10);
+  }
+
+  // Rigging lines
+  ctx.strokeStyle = '#6a5a30';
   ctx.lineWidth = 1;
-  for (let w=0; w<4; w++) {
-    ctx.beginPath();
-    ctx.moveTo(ox+4, oy+10+w*12);
-    ctx.lineTo(ox+DW-4, oy+10+w*12);
-    ctx.stroke();
-  }
-  // Pier planks
-  ctx.fillStyle='#5a4a30';
-  ctx.fillRect(ox, oy+DH-10, DW, 10);
-  ctx.fillStyle='#4a3a20';
-  for (let x=0; x<DW; x+=14) ctx.fillRect(ox+x, oy+DH-10, 2, 10);
-
-  // ── Ship image (PNG) ──────────────────────────────────────────────────────
-  const imgW = Math.floor(DW * 0.84);
-  const imgH = Math.floor(DH * 0.78);
-  const imgX = ox + (DW-imgW)/2;
-  const imgY = oy + (DH-imgH)/2 - 8;
-
-  if (_dockShipImg && _dockShipImg.complete && _dockShipImg.naturalWidth > 0) {
-    ctx.save();
-    ctx.globalAlpha = 0.95;
-    ctx.drawImage(_dockShipImg, imgX, imgY, imgW, imgH);
-    ctx.restore();
-  } else {
-    // ── Procedural fallback ────────────────────────────────────────────────
-    const hullCols = {
-      pinnace:['#4a5a8a','#6a7aaa','#3a4a7a'], squid:['#2a5a5a','#4a8a8a','#1a4a4a'],
-      hammer:['#6a4a2a','#9a7a4a','#4a3a1a'],  manow:['#3a3a6a','#5a5a9a','#2a2a5a'],
-      corsair:['#5a2a2a','#8a4a4a','#4a1a1a'], plunderer:['#4a3a6a','#7a6a9a','#3a2a5a'],
-    };
-    const [hull,hl,shd] = hullCols[shipType] || hullCols.pinnace;
-    ctx.fillStyle=hull; ctx.fillRect(imgX+8,imgY+10,imgW-16,imgH-16);
-    ctx.fillStyle=hl;   ctx.fillRect(imgX+12,imgY+14,imgW-24,10);
-    ctx.fillStyle=shd;  ctx.fillRect(imgX+10,imgY+imgH-20,imgW-20,8);
-    ctx.fillStyle=hull;
-    ctx.beginPath();
-    ctx.moveTo(imgX+imgW/2,imgY+4);
-    ctx.lineTo(imgX+12,imgY+14);
-    ctx.lineTo(imgX+imgW-12,imgY+14);
-    ctx.closePath(); ctx.fill();
-    ctx.fillStyle='#8a6a30'; ctx.fillRect(imgX+imgW/2-2,imgY+6,4,imgH-18);
-    ctx.fillStyle='rgba(220,210,180,0.85)';
-    ctx.fillRect(imgX+imgW/2-16,imgY+8,32,18);
-  }
+  ctx.beginPath();
+  ctx.moveTo(sx+W2/2, sy+4); ctx.lineTo(sx+10, sy+14);
+  ctx.moveTo(sx+W2/2, sy+4); ctx.lineTo(sx+W2-10, sy+14);
+  ctx.stroke();
 
   // Name label
-  const name = S._indexEntry?.shipName || S._indexEntry?.ship?.name || 'Your Vessel';
-  ctx.fillStyle='rgba(200,220,255,0.9)';
-  ctx.font='bold 10px Courier New';
-  ctx.textAlign='center';
-  ctx.fillText(name, ox+DW/2, oy+DH+12);
-  ctx.textAlign='left';
+  const name = S._indexEntry?.ship?.name || 'Your Vessel';
+  ctx.fillStyle = 'rgba(200,220,255,0.9)';
+  ctx.font = '9px Courier New';
+  ctx.textAlign = 'center';
+  ctx.fillText(name, sx+W2/2, sy+H2+10);
+  ctx.textAlign = 'left';
+
+  // Water shimmer under ship
+  ctx.fillStyle = 'rgba(30,80,140,0.3)';
+  ctx.fillRect(sx+2, sy+H2-4, W2-4, 4);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -3557,7 +3461,8 @@ function tryInteract() {
     if (npc) {
       sfx('npc_interact', 0.55);
       if (npc.isQuestGiver) { openQuestDialogue(npc); }
-      else { openDlg(npc); }  // merchants handled inside openDlg via Trade button
+      else if (npc.merchant) { openSurfShop(npc); }
+      else { openDlg(npc); }
       S.interactCooldown = 30;
       return;
     }
@@ -3967,7 +3872,7 @@ function _nfStartCombat(e) {
   Object.assign(_cbtA,{t:0,capOffX:0,enmOffX:0,capFlash:0,enmFlash:0,
     atkPhase:null,atkT:0,dmgNums:[],menuCat:'attack',menuFocus:0,btnsOn:false});
   document.getElementById('surf-combat').style.display='flex';
-  _ambientDuck(true);
+  startCombatMusic();
   const cv=document.getElementById('sc-scene');
   if (cv){cv.width=cv.clientWidth||360;cv.height=Math.min(Math.floor(cv.clientWidth*0.48),220);}
   _cbtStartScene();  // start the render loop — this is what draws sprites
