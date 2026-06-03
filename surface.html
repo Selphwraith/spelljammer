@@ -1550,12 +1550,19 @@ document.addEventListener('keydown', e => {
   if (['ArrowRight','d','D'].includes(e.key)) S.keys.right = true;
   if (['ArrowUp','w','W'].includes(e.key))    S.keys.up    = true;
   if (['ArrowDown','s','S'].includes(e.key))  S.keys.down  = true;
-  if (['Enter','z','Z',' '].includes(e.key))  { e.preventDefault(); tryInteract(); }
   if (e.key === 'Escape') { closeDlg(); _surfCloseAll(); if(NF.active) closeNorthernField(); }
-  // Dialogue advance
-  if (['Enter','z','Z',' '].includes(e.key) &&
-      document.getElementById('dialogue-box').style.display !== 'none') {
-    e.preventDefault(); advanceDlg();
+  if (['Enter','z','Z',' '].includes(e.key)) {
+    e.preventDefault();
+    const dlgOpen = document.getElementById('dialogue-box').style.display !== 'none';
+    if (dlgOpen) {
+      // Dialogue already open — advance it (only if no action buttons showing)
+      const actDiv = document.getElementById('dlg-actions');
+      const actShowing = actDiv && actDiv.style.display === 'flex';
+      if (!actShowing) advanceDlg();
+    } else {
+      // Dialogue closed — interact to open it
+      tryInteract();
+    }
   }
 });
 
@@ -2561,6 +2568,7 @@ function _surfBuildShopGrid() {
       allCard.onclick = () => {
         filtered.forEach(item => { S.captain.inv = S.captain.inv.filter(i => i !== item); });
         S.gold += totalVal;
+        saveCaptain(S.captain);  // persist sell-all immediately
         sfx('sell', 0.8);
         _shopMsg('Sold ' + filtered.length + ' items for ' + totalVal + ' TS.');
         _surfBuildShopGrid();
@@ -2580,6 +2588,7 @@ function _surfBuildShopGrid() {
         item.qty = (item.qty || 1) - 1;
         if (item.qty <= 0) S.captain.inv = S.captain.inv.filter(i => i !== item);
         S.gold += price;
+        saveCaptain(S.captain);  // persist sell immediately
         sfx('sell', 0.7);
         _shopMsg('Sold ' + def.n + ' for ' + price + ' TS' + (mult > 1 ? ' (premium!)' : '') + '.');
         _surfBuildShopGrid();
@@ -2620,6 +2629,7 @@ function _surfShopBuy(id) {
   else S.captain.inv.push({ id, name:def.name, type:def.type, qty:1,
     ...(def.heal  ? {heal:def.heal}  : {}),
     ...(def.shots ? {shots:def.shots}: {}) });
+  saveCaptain(S.captain);  // persist buy immediately
   sfx('purchase', 0.75);
   _shopMsg('Bought: ' + def.name + ' (−' + def.buyVal + ' TS)');
   _surfBuildShopGrid();
@@ -2821,6 +2831,7 @@ function _surfSelectItem(item) {
         item.qty = (item.qty||1) - 1;
         if (item.qty <= 0) S.captain.inv = S.captain.inv.filter(i => i !== item);
         S.gold += price;
+        saveCaptain(S.captain);  // persist sell immediately
         sfx('sell', 0.7);
         setStatus('Sold ' + def.n + ' for ' + price + ' TS.');
         surfBuildInvGrid(); _buildShopList();
