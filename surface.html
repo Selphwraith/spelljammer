@@ -1116,6 +1116,8 @@ function loadEntryData() {
       if(c.helmet)S.captain.helmet=c.helmet;
       if(c.inv)S.captain.inv=c.inv;
     }
+    // Load ship PNG for dock rendering
+    _loadDockShipImage(d.shipType || d.ship?.type || 'pinnace');
     sessionStorage.removeItem('fentheris_surface_entry');
   } catch(e) {}
 }
@@ -3314,17 +3316,42 @@ function _drawVael(ctx, camOffX, camOffY) {
   }
 }
 
+
+let _dockShipImg = null;
+const _DOCK_SHIP_IMGS = {
+  'pinnace':'images/ship_pinnace.png',
+  'squid':'images/ship_squid.png',
+  'hammer':'images/ship_hammer.png',
+  'manow':'images/ship_manow.png',
+  'corsair':'images/ship_corsair.png',
+  'corsair_scout':'images/ship_corsair.png',
+  'plunderer':'images/ship_plunderer.png',
+  'blackfleet':'images/ship_blackfleet.png',
+  'nautiloid':'images/ship_nautiloid.png',
+  'githyanki':'images/ship_githyanki.png',
+  'beholder':'images/ship_beholder.png',
+  'leviathan':'images/ship_leviathan.png',
+};
+function _loadDockShipImage(shipType) {
+  const path = _DOCK_SHIP_IMGS[shipType] || _DOCK_SHIP_IMGS['pinnace'];
+  if (!path) return;
+  _dockShipImg = new Image();
+  _dockShipImg.src = path;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // DOCK SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════════
-const DOCK_DOOR_TX = 4, DOCK_DOOR_TY = 27;  // door tile position
-const DOCK_PROXIMITY = 2;                    // tiles radius for Return to Ship
+const DOCK_DOOR_TX  = 4,  DOCK_DOOR_TY  = 27;  // centre tile for ship draw
+// Full dock building interior — covers all grey floor tiles visible in the map
+const DOCK_ZONE_TX1 = 0,  DOCK_ZONE_TX2 = 14;  // west → east wall
+const DOCK_ZONE_TY1 = 21, DOCK_ZONE_TY2 = 29;  // north → south wall
 
 function isNearDock() {
   const ptx = Math.round(S.px / TILE_SIZE);
   const pty = Math.round(S.py / TILE_SIZE);
-  return Math.abs(ptx - DOCK_DOOR_TX) <= DOCK_PROXIMITY &&
-         Math.abs(pty - DOCK_DOOR_TY) <= DOCK_PROXIMITY;
+  return ptx >= DOCK_ZONE_TX1 && ptx <= DOCK_ZONE_TX2 &&
+         pty >= DOCK_ZONE_TY1 && pty <= DOCK_ZONE_TY2;
 }
 
 // Override returnToShip to require dock proximity
@@ -3350,74 +3377,65 @@ function returnToShip() {
 
 // Draw ship in dock — procedural pixel art based on G.ship.type from index entry
 function _drawShipInDock(ctx, ox, oy) {
-  const shipType = S._indexEntry?.ship?.type || 'pinnace';
-  const W2 = 7 * TILE_SIZE, H2 = 3 * TILE_SIZE;
+  // Ship type from entry — flat field 'shipType' sent by descendToSurface
+  const shipType = S._indexEntry?.shipType || S._indexEntry?.ship?.type || 'pinnace';
+  const shipName = S._indexEntry?.shipName || S._indexEntry?.ship?.name || 'Your Vessel';
 
-  // Hull base
-  const hullCols = {
-    pinnace:   ['#4a5a8a','#6a7aaa','#3a4a7a'],
-    sloop:     ['#5a6a4a','#7a8a6a','#4a5a3a'],
-    brig:      ['#7a5a3a','#9a7a5a','#5a3a2a'],
-    frigate:   ['#6a4a8a','#8a6aaa','#5a3a7a'],
-    galleon:   ['#8a3a3a','#aa5a5a','#6a2a2a'],
-    'man-o-war':['#3a3a6a','#5a5a9a','#2a2a5a'],
-  };
-  const [hull, highlight, shadow] = hullCols[shipType] || hullCols['pinnace'];
+  // Draw area: 9 tiles wide × 5 tiles tall, centred in the dock
+  const DW = 9 * TILE_SIZE, DH = 5 * TILE_SIZE;
 
-  // Simple top-down ship silhouette
-  const sx = ox + TILE_SIZE, sy = oy;
+  // Water background
+  ctx.fillStyle = 'rgba(15,40,90,0.88)';
+  ctx.fillRect(ox, oy, DW, DH);
+  // Shimmer lines
+  ctx.strokeStyle = 'rgba(50,120,200,0.25)'; ctx.lineWidth = 1;
+  for (let w=0; w<5; w++) {
+    ctx.beginPath();
+    ctx.moveTo(ox+4, oy+8+w*14);
+    ctx.lineTo(ox+DW-4, oy+8+w*14);
+    ctx.stroke();
+  }
+  // Pier planks at bottom
+  ctx.fillStyle='#5a4a30'; ctx.fillRect(ox, oy+DH-8, DW, 8);
+  ctx.fillStyle='#4a3a20';
+  for (let x=0; x<DW; x+=14) ctx.fillRect(ox+x, oy+DH-8, 2, 8);
 
-  // Hull
-  ctx.fillStyle = hull;
-  ctx.fillRect(sx+4, sy+8, W2-8, H2-10);
-  ctx.fillStyle = highlight;
-  ctx.fillRect(sx+6, sy+10, W2-12, 8);
-  ctx.fillStyle = shadow;
-  ctx.fillRect(sx+4, sy+H2-12, W2-8, 6);
+  // ── Try PNG first ──────────────────────────────────────────────────────────
+  const imgW = Math.floor(DW * 0.82), imgH = Math.floor(DH * 0.80);
+  const imgX = ox + (DW-imgW)/2, imgY = oy + (DH-imgH)/2 - 6;
 
-  // Bow (pointed front - top)
-  ctx.fillStyle = hull;
-  ctx.beginPath();
-  ctx.moveTo(sx+W2/2, sy+2);
-  ctx.lineTo(sx+8, sy+10);
-  ctx.lineTo(sx+W2-8, sy+10);
-  ctx.closePath();
-  ctx.fill();
-
-  // Stern (flat back - bottom)
-  ctx.fillStyle = shadow;
-  ctx.fillRect(sx+8, sy+H2-10, W2-16, 6);
-
-  // Mast
-  ctx.fillStyle = '#8a6a30';
-  ctx.fillRect(sx+W2/2-2, sy+4, 4, H2-10);
-
-  // Sails (simple rectangles)
-  ctx.fillStyle = 'rgba(220,210,180,0.85)';
-  ctx.fillRect(sx+W2/2-12, sy+6, 24, 14);
-  if (shipType === 'brig' || shipType === 'frigate' || shipType === 'galleon' || shipType === 'man-o-war') {
-    ctx.fillRect(sx+W2/2-8, sy+22, 16, 10);
+  if (_dockShipImg && _dockShipImg.complete && _dockShipImg.naturalWidth > 0) {
+    ctx.save();
+    ctx.globalAlpha = 0.96;
+    ctx.drawImage(_dockShipImg, imgX, imgY, imgW, imgH);
+    ctx.restore();
+  } else {
+    // ── Procedural fallback (coloured by ship type) ────────────────────────
+    const hullCols = {
+      pinnace:['#4a5a8a','#6a7aaa','#3a4a7a'], squid:['#2a5a5a','#4a8a8a','#1a4a4a'],
+      hammer:['#6a4a2a','#9a7a4a','#4a3a1a'],  manow:['#3a3a6a','#5a5a9a','#2a2a5a'],
+      corsair:['#5a2a2a','#8a4a4a','#4a1a1a'],  plunderer:['#4a3a6a','#7a6a9a','#3a2a5a'],
+      blackfleet:['#1a1a2a','#3a3a4a','#0a0a1a'],
+    };
+    const [hull,hl,shd] = hullCols[shipType] || hullCols.pinnace;
+    ctx.fillStyle=hull; ctx.fillRect(imgX+8,imgY+10,imgW-16,imgH-16);
+    ctx.fillStyle=hl;   ctx.fillRect(imgX+12,imgY+14,imgW-24,10);
+    ctx.fillStyle=shd;  ctx.fillRect(imgX+10,imgY+imgH-18,imgW-20,8);
+    ctx.fillStyle=hull;
+    ctx.beginPath();
+    ctx.moveTo(imgX+imgW/2,imgY+4);
+    ctx.lineTo(imgX+12,imgY+14);
+    ctx.lineTo(imgX+imgW-12,imgY+14);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#8a6a30'; ctx.fillRect(imgX+imgW/2-2,imgY+6,4,imgH-18);
+    ctx.fillStyle='rgba(220,210,180,0.85)'; ctx.fillRect(imgX+imgW/2-16,imgY+8,32,18);
   }
 
-  // Rigging lines
-  ctx.strokeStyle = '#6a5a30';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(sx+W2/2, sy+4); ctx.lineTo(sx+10, sy+14);
-  ctx.moveTo(sx+W2/2, sy+4); ctx.lineTo(sx+W2-10, sy+14);
-  ctx.stroke();
-
-  // Name label
-  const name = S._indexEntry?.ship?.name || 'Your Vessel';
-  ctx.fillStyle = 'rgba(200,220,255,0.9)';
-  ctx.font = '9px Courier New';
-  ctx.textAlign = 'center';
-  ctx.fillText(name, sx+W2/2, sy+H2+10);
-  ctx.textAlign = 'left';
-
-  // Water shimmer under ship
-  ctx.fillStyle = 'rgba(30,80,140,0.3)';
-  ctx.fillRect(sx+2, sy+H2-4, W2-4, 4);
+  // Ship name label
+  ctx.fillStyle='rgba(200,220,255,0.92)'; ctx.font='bold 11px Courier New';
+  ctx.textAlign='center';
+  ctx.fillText(shipName, ox+DW/2, oy+DH+13);
+  ctx.textAlign='left';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
