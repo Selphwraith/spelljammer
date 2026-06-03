@@ -564,6 +564,16 @@ html, body {
 <div id="transition-overlay"></div>
 
 <script>
+// ── captain.js safety fallback ───────────────────────────────────────────────
+// If captain.js fails to load (missing from repo), these stubs prevent crashes.
+// Fix: upload captain.js to repo root alongside index.html and surface.html.
+if (typeof loadCaptain==='undefined') window.loadCaptain=()=>({level:1,xp:0,hp:30,maxHp:30,defense:0,initiative:0,melee:{name:'Combat Knife',dmgMin:3,dmgMax:6,type:'melee'},ranged:{name:'Void Pistol',dmgMin:6,dmgMax:10,type:'ranged',shotsPerCombat:3},armor:{name:'Leather Armor',hpBonus:8,def:1},helmet:{name:'Void Helmet',hpBonus:4,def:1},inv:[],gearGiven:false,shotsLoaded:3});
+if (typeof saveCaptain==='undefined') window.saveCaptain=()=>{};
+if (typeof mergeCaptainFromEntry==='undefined') window.mergeCaptainFromEntry=(cap)=>cap;
+if (typeof xpToNext==='undefined') window.xpToNext=(lv)=>lv*100;
+if (typeof recalcStats==='undefined') window.recalcStats=(cap)=>cap;
+if (typeof Captain==='undefined') window.Captain={gainXP:(c,n)=>{c.xp=(c.xp||0)+n;return{leveled:false,newLevel:c.level||1};},takeDamage:(c,n)=>{const d=Math.max(1,n-(c.defense||0));c.hp=Math.max(0,(c.hp||0)-d);return d;},healHP:(c,n)=>{const b=c.hp||0;c.hp=Math.min(c.maxHp||30,b+n);return c.hp-b;},fullHeal:(c)=>{c.hp=c.maxHp||30;},addToInv:(c,i)=>{(c.inv=c.inv||[]).push(i);},removeFromInv:(c,id,q=1)=>{const s=c.inv.find(i=>i.id===id);if(!s)return false;s.qty=(s.qty||1)-q;if(s.qty<=0)c.inv=c.inv.filter(i=>i!==s);return true;},applyPenalty:(c,g,tf=0.1,xf=0.1)=>{const tc=Math.ceil(g*tf);const xc=Math.ceil((c.xp||0)*xf);c.xp=Math.max(0,(c.xp||0)-xc);c.hp=1;return{tsCut:tc,xpCut:xc};},reload:()=>false};
+// ─────────────────────────────────────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════════════
 // FENTHERIS SURFACE — surface.html
 // Orthographic RPG view. Sprite-sheet animation, tilemap, NPC dialogue,
@@ -1553,7 +1563,9 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { closeDlg(); _surfCloseAll(); if(NF.active) closeNorthernField(); }
   if (['Enter','z','Z',' '].includes(e.key)) {
     e.preventDefault();
-    const dlgOpen = document.getElementById('dialogue-box').style.display !== 'none';
+    // Use getComputedStyle — style.display returns '' on fresh load, not 'none'
+    const _dlgEl  = document.getElementById('dialogue-box');
+    const dlgOpen = _dlgEl && window.getComputedStyle(_dlgEl).display !== 'none';
     if (dlgOpen) {
       // Dialogue already open — advance it (only if no action buttons showing)
       const actDiv = document.getElementById('dlg-actions');
