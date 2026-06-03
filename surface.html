@@ -415,6 +415,10 @@ html, body {
 <div id="dialogue-box">
   <div class="dlg-name" id="dlg-name">—</div>
   <div id="dlg-text"></div>
+  <div id="dlg-actions" style="display:none;margin-top:8px;gap:6px;flex-wrap:wrap;">
+    <button class="btn gd sm" id="dlg-btn-shop" onclick="dlgOpenShop()" style="display:none;">🛒 Trade</button>
+    <button class="btn sm"    id="dlg-btn-next" onclick="dlgNextLine()">💬 Continue</button>
+  </div>
   <button class="dlg-close" onclick="closeDlg()">✕</button>
 </div>
 
@@ -772,11 +776,11 @@ const NPCS = [
   },
   {
     id: 'cleric_1', img: 'surface/npc_vael.png',
-    tx: 23, ty: 2,
-    dir: 'down',
+    tx: 23, ty: 2, dir: 'down',
     name: 'Sister Vael',
+    merchant: true, shopId: 'cleric_1',
     lines: [
-      "Rest, traveller. The void wounds deeply, but the light endures.",
+      "The Drift takes its toll on all of us. I have tinctures, salves, and draughts. Name your need — or leave your coin on the altar.",
       "I have tended many who thought their last breath was spent on that surface.",
       "Come back if you need healing. My door is always open.",
     ],
@@ -816,7 +820,22 @@ const ITEM_DEFS = {
 const SHOP_STOCK = {
   trader_1:  { sells:['potion','pistol_mag'], buysAll:true, sellMult:1.0  },
   salvage_1: { sells:[],                      buysAll:true, sellMult:1.25 },
+  cleric_1: { sells:['potion','potion_lg','blessed_salve','void_draught'],
+              buysAll:false, sellMult:1.0,
+              dailyLimits:{ potion:5, potion_lg:3, blessed_salve:2, void_draught:1 } },
 };
+const _shopDailyLog = {};
+function _shopDailyKey(shopId,itemId){ return shopId+':'+itemId+':'+(S.day||1); }
+function _shopDailyRemaining(shopId,itemId){
+  const stock=SHOP_STOCK[shopId];
+  if(!stock||!stock.dailyLimits||stock.dailyLimits[itemId]==null)return 99;
+  return Math.max(0,stock.dailyLimits[itemId]-(_shopDailyLog[_shopDailyKey(shopId,itemId)]||0));
+}
+function _shopDailySpend(shopId,itemId){
+  const k=_shopDailyKey(shopId,itemId);
+  _shopDailyLog[k]=(_shopDailyLog[k]||0)+1;
+}
+
 
 
 
@@ -1249,8 +1268,31 @@ function openDlg(npc) {
   S.dlgNpcId = npc.id;
   S.dlgLine  = 0;
   document.getElementById('dlg-name').textContent = npc.name;
-  document.getElementById('dlg-text').textContent = npc.lines[0];
-  document.getElementById('dialogue-box').style.display = 'block';
+  document.getElementById('dlg-text').textContent = (npc.lines||['...'])[0];
+  const actDiv  = document.getElementById('dlg-actions');
+  const shopBtn = document.getElementById('dlg-btn-shop');
+  const nextBtn = document.getElementById('dlg-btn-next');
+  if (npc.merchant) {
+    if (shopBtn) { shopBtn.style.display='inline-block'; shopBtn.textContent='🛒 Trade'; }
+    if (nextBtn) { nextBtn.textContent='👋 Leave'; nextBtn.onclick=closeDlg; }
+  } else {
+    if (shopBtn) shopBtn.style.display='none';
+    if (nextBtn) { nextBtn.textContent='💬 Continue'; nextBtn.onclick=dlgNextLine; }
+  }
+  if (actDiv) actDiv.style.display='flex';
+  document.getElementById('dialogue-box').style.display='block';
+}
+
+function dlgOpenShop() {
+  const npc = NPCS.find(n=>n.id===S.dlgNpcId);
+  if (npc && npc.merchant) { closeDlg(); openSurfShop(npc); }
+}
+
+function dlgNextLine() {
+  const npc = NPCS.find(n=>n.id===S.dlgNpcId); if(!npc) return;
+  S.dlgLine = ((S.dlgLine||0)+1) % (npc.lines||['']).length;
+  const el = document.getElementById('dlg-text');
+  if(el) el.textContent = npc.lines[S.dlgLine];
 }
 
 function advanceDlg() {
@@ -1268,6 +1310,7 @@ function advanceDlg() {
 function closeDlg() {
   S.dlgNpcId = null;
   document.getElementById('dialogue-box').style.display = 'none';
+  const a = document.getElementById('dlg-actions'); if(a) a.style.display='none';
 }
 
 // ── Camera ────────────────────────────────────────────────────────────────
@@ -2726,17 +2769,33 @@ function _surfSelectItem(item) {
       ub.style.opacity = '0.38';
       ub.textContent = (def.type === 'equip' ? '\ud83d\udd29 Install' : '\u2728 Use') + ' (Ship only)';
       ub.title = 'Return to your vessel to use this item';
-    } else if (def.use === 'heal20') {
-      ub.textContent = '\u2728 Use';
+    } else if (def.use === 'heal20' || def.heal || def.healFull) {
+      ub.textContent = '✨ Use';
       ub.disabled = S.captain.hp >= S.captain.maxHp;
       if (ub.disabled) { ub.style.opacity='0.38'; ub.title='Already at full HP'; }
       ub.onclick = () => {
         if (S.captain.hp >= S.captain.maxHp) { setStatus('Already at full HP.'); return; }
-        S.captain.hp = Math.min(S.captain.maxHp, S.captain.hp + 20);
+        const healAmt = def.healFull ? S.captain.maxHp : (def.heal || 20);
+        Captain.healHP(S.captain, healAmt);
         item.qty = (item.qty||1) - 1;
         if (item.qty <= 0) S.captain.inv = S.captain.inv.filter(i => i !== item);
+        saveCaptain(S.captain);
         sfx('purchase', 0.5);
-        setStatus('Used ' + def.n + '. HP: ' + S.captain.hp + '/' + S.captain.maxHp + '.');
+        setStatus('Used ' + (def.name||def.n) + '. HP: ' + S.captain.hp + '/' + S.captain.maxHp);
+        surfBuildInvGrid();
+      };
+    } else if (def.regen) {
+      ub.textContent = '✨ Apply (Regen)';
+      ub.disabled = (S.captain.regenRounds||0) > 0;
+      if (ub.disabled) { ub.style.opacity='0.38'; ub.title='Regen already active'; }
+      ub.onclick = () => {
+        S.captain.regenRounds   = def.regenTurns || 5;
+        S.captain.regenPerRound = def.regen || 5;
+        item.qty = (item.qty||1) - 1;
+        if (item.qty <= 0) S.captain.inv = S.captain.inv.filter(i => i !== item);
+        saveCaptain(S.captain);
+        sfx('purchase', 0.5);
+        setStatus('Blessed Salve active — +' + (def.regen||5) + ' HP/turn for ' + (def.regenTurns||5) + ' turns.');
         surfBuildInvGrid();
       };
     } else if (def.use === 'reload') {
@@ -3461,8 +3520,7 @@ function tryInteract() {
     if (npc) {
       sfx('npc_interact', 0.55);
       if (npc.isQuestGiver) { openQuestDialogue(npc); }
-      else if (npc.merchant) { openSurfShop(npc); }
-      else { openDlg(npc); }
+      else { openDlg(npc); }  // merchants show Trade button inside dialogue
       S.interactCooldown = 30;
       return;
     }
