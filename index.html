@@ -20961,6 +20961,8 @@ function descendToSurface() {
     hoursAwake: G.watch?.hoursAwake || 0,
     gold:       G.ship.gold,
     captain:    _capEntry,
+    shipType:   G.ship.type  || 'pinnace',
+    shipName:   G.ship.name  || 'Your Vessel',
   };
   try { sessionStorage.setItem('fentheris_surface_entry', JSON.stringify(entry)); } catch(e) {}
   const ov = document.createElement('div');

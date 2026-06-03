@@ -416,7 +416,7 @@ html, body {
   <div class="dlg-name" id="dlg-name">—</div>
   <div id="dlg-text"></div>
   <!-- Shown only for merchants / cleric -->
-  <div id="dlg-actions" style="display:none;margin-top:8px;display:none;gap:6px;flex-wrap:wrap;">
+  <div id="dlg-actions" style="display:none;margin-top:8px;gap:6px;flex-wrap:wrap;">
     <button class="btn gd sm" id="dlg-btn-shop" onclick="dlgOpenShop()" style="display:none;">🛒 Visit Shop</button>
     <button class="btn sm"    id="dlg-btn-next" onclick="dlgNextLine()">💬 Continue</button>
   </div>
@@ -773,7 +773,7 @@ const NPCS = [
     name: 'Sister Vael',
     merchant: true, shopId: 'cleric_1',
     lines: [
-      "Rest, traveller. The void wounds deeply, but the light endures.",
+      "The Drift takes its toll on all of us, Captain. I have what you need — tinctures, salves, draughts. Name your need or leave your coin.",
       "I have tended many who thought their last breath was spent on that surface.",
       "Come back if you need healing. My door is always open.",
     ],
@@ -1079,6 +1079,8 @@ function loadEntryData() {
       if(c.helmet)S.captain.helmet=c.helmet;
       if(c.inv)S.captain.inv=c.inv;
     }
+    // Preload the ship image for dock rendering
+    _loadDockShipImage(d.shipType || d.ship?.type || 'pinnace');
     sessionStorage.removeItem('fentheris_surface_entry');
   } catch(e) {}
 }
@@ -1098,6 +1100,7 @@ function buildExitData() {
 }
 
 function returnToShip() {
+  saveCaptain(S.captain);  // persist latest captain before sending to index.html
   surfAutoSave();
   closeDlg();
   const ov = document.getElementById('transition-overlay');
@@ -1229,13 +1232,22 @@ function tryMove(dx, dy, dt) {
 function openDlg(npc) {
   S.dlgNpcId = npc.id;
   S.dlgLine  = 0;
-  document.getElementById('dlg-name').textContent = npc.name;
-  document.getElementById('dlg-text').textContent = (npc.lines||['...'])[0];
-  // Show shop button for merchants
-  const shopBtn = document.getElementById('dlg-btn-shop');
-  const actDiv  = document.getElementById('dlg-actions');
-  if (shopBtn) shopBtn.style.display = npc.merchant ? 'inline-block' : 'none';
-  if (actDiv)  actDiv.style.display  = 'flex';
+  const nameEl = document.getElementById('dlg-name');
+  const textEl = document.getElementById('dlg-text');
+  const actDiv = document.getElementById('dlg-actions');
+  const shopBtn= document.getElementById('dlg-btn-shop');
+  const nextBtn= document.getElementById('dlg-btn-next');
+  if (nameEl) nameEl.textContent = npc.name;
+  if (textEl) textEl.textContent = (npc.lines||['...'])[0];
+  // Merchant dialogue: show Trade + Leave buttons
+  if (npc.merchant) {
+    if (shopBtn) { shopBtn.textContent = '🛒 Trade'; shopBtn.style.display='inline-block'; }
+    if (nextBtn) { nextBtn.textContent = '👋 Leave'; nextBtn.onclick = closeDlg; }
+  } else {
+    if (shopBtn) shopBtn.style.display = 'none';
+    if (nextBtn) { nextBtn.textContent = '💬 Continue'; nextBtn.onclick = dlgNextLine; }
+  }
+  if (actDiv) actDiv.style.display = 'flex';
   document.getElementById('dialogue-box').style.display = 'block';
 }
 
@@ -3296,21 +3308,48 @@ function _drawVael(ctx, camOffX, camOffY) {
   }
 }
 
+
+// ── Dock ship image loader ─────────────────────────────────────────────────
+// Maps ship type keys to their PNG paths (same files used by index.html).
+// Called from loadEntryData() when the player descends.
+let _dockShipImg = null;
+const _DOCK_SHIP_IMGS = {
+  'pinnace': 'images/ship_pinnace.png',
+  'squid': 'images/ship_squid.png',
+  'hammer': 'images/ship_hammer.png',
+  'manow': 'images/ship_manow.png',
+  'corsair': 'images/ship_corsair.png',
+  'corsair_scout': 'images/ship_corsair.png',
+  'plunderer': 'images/ship_plunderer.png',
+  'blackfleet': 'images/ship_blackfleet.png',
+  'nautiloid': 'images/ship_nautiloid.png',
+  'githyanki': 'images/ship_githyanki.png',
+  'beholder': 'images/ship_beholder.png',
+  'leviathan': 'images/ship_leviathan.png',
+};
+function _loadDockShipImage(shipType) {
+  const path = _DOCK_SHIP_IMGS[shipType] || _DOCK_SHIP_IMGS['pinnace'];
+  if (!path) return;
+  _dockShipImg = new Image();
+  _dockShipImg.src = path;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // DOCK SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════════
-const DOCK_DOOR_TX = 4, DOCK_DOOR_TY = 27;  // door tile position
-const DOCK_PROXIMITY = 2;                    // tiles radius for Return to Ship
+const DOCK_DOOR_TX  = 4,  DOCK_DOOR_TY  = 27;
+// Full dock building zone — player can return to ship from anywhere inside
+const DOCK_ZONE_TX1 = 0,  DOCK_ZONE_TX2 = 11;
+const DOCK_ZONE_TY1 = 21, DOCK_ZONE_TY2 = 29;
 
 function isNearDock() {
   const ptx = Math.round(S.px / TILE_SIZE);
   const pty = Math.round(S.py / TILE_SIZE);
-  return Math.abs(ptx - DOCK_DOOR_TX) <= DOCK_PROXIMITY &&
-         Math.abs(pty - DOCK_DOOR_TY) <= DOCK_PROXIMITY;
+  return ptx >= DOCK_ZONE_TX1 && ptx <= DOCK_ZONE_TX2 &&
+         pty >= DOCK_ZONE_TY1 && pty <= DOCK_ZONE_TY2;
 }
 
-// Override returnToShip to require dock proximity
-const _originalReturnToShip = typeof returnToShip !== 'undefined' ? returnToShip : null;
+// returnToShip — requires player to be inside the dock zone
 function returnToShip() {
   if (!isNearDock()) {
     setStatus('You must return to your ship at the dock — follow the path south.');
@@ -3332,74 +3371,67 @@ function returnToShip() {
 
 // Draw ship in dock — procedural pixel art based on G.ship.type from index entry
 function _drawShipInDock(ctx, ox, oy) {
-  const shipType = S._indexEntry?.ship?.type || 'pinnace';
-  const W2 = 7 * TILE_SIZE, H2 = 3 * TILE_SIZE;
+  const shipType = S._indexEntry?.shipType || S._indexEntry?.ship?.type || 'pinnace';
+  const DW = 9 * TILE_SIZE, DH = 5 * TILE_SIZE;
 
-  // Hull base
-  const hullCols = {
-    pinnace:   ['#4a5a8a','#6a7aaa','#3a4a7a'],
-    sloop:     ['#5a6a4a','#7a8a6a','#4a5a3a'],
-    brig:      ['#7a5a3a','#9a7a5a','#5a3a2a'],
-    frigate:   ['#6a4a8a','#8a6aaa','#5a3a7a'],
-    galleon:   ['#8a3a3a','#aa5a5a','#6a2a2a'],
-    'man-o-war':['#3a3a6a','#5a5a9a','#2a2a5a'],
-  };
-  const [hull, highlight, shadow] = hullCols[shipType] || hullCols['pinnace'];
+  // Water background
+  ctx.fillStyle = 'rgba(10,30,70,0.85)';
+  ctx.fillRect(ox, oy, DW, DH);
+  // Water shimmer
+  ctx.strokeStyle = 'rgba(40,100,180,0.3)';
+  ctx.lineWidth = 1;
+  for (let w=0; w<4; w++) {
+    ctx.beginPath();
+    ctx.moveTo(ox+4, oy+10+w*12);
+    ctx.lineTo(ox+DW-4, oy+10+w*12);
+    ctx.stroke();
+  }
+  // Pier planks
+  ctx.fillStyle='#5a4a30';
+  ctx.fillRect(ox, oy+DH-10, DW, 10);
+  ctx.fillStyle='#4a3a20';
+  for (let x=0; x<DW; x+=14) ctx.fillRect(ox+x, oy+DH-10, 2, 10);
 
-  // Simple top-down ship silhouette
-  const sx = ox + TILE_SIZE, sy = oy;
+  // ── Ship image (PNG) ──────────────────────────────────────────────────────
+  const imgW = Math.floor(DW * 0.84);
+  const imgH = Math.floor(DH * 0.78);
+  const imgX = ox + (DW-imgW)/2;
+  const imgY = oy + (DH-imgH)/2 - 8;
 
-  // Hull
-  ctx.fillStyle = hull;
-  ctx.fillRect(sx+4, sy+8, W2-8, H2-10);
-  ctx.fillStyle = highlight;
-  ctx.fillRect(sx+6, sy+10, W2-12, 8);
-  ctx.fillStyle = shadow;
-  ctx.fillRect(sx+4, sy+H2-12, W2-8, 6);
-
-  // Bow (pointed front - top)
-  ctx.fillStyle = hull;
-  ctx.beginPath();
-  ctx.moveTo(sx+W2/2, sy+2);
-  ctx.lineTo(sx+8, sy+10);
-  ctx.lineTo(sx+W2-8, sy+10);
-  ctx.closePath();
-  ctx.fill();
-
-  // Stern (flat back - bottom)
-  ctx.fillStyle = shadow;
-  ctx.fillRect(sx+8, sy+H2-10, W2-16, 6);
-
-  // Mast
-  ctx.fillStyle = '#8a6a30';
-  ctx.fillRect(sx+W2/2-2, sy+4, 4, H2-10);
-
-  // Sails (simple rectangles)
-  ctx.fillStyle = 'rgba(220,210,180,0.85)';
-  ctx.fillRect(sx+W2/2-12, sy+6, 24, 14);
-  if (shipType === 'brig' || shipType === 'frigate' || shipType === 'galleon' || shipType === 'man-o-war') {
-    ctx.fillRect(sx+W2/2-8, sy+22, 16, 10);
+  if (_dockShipImg && _dockShipImg.complete && _dockShipImg.naturalWidth > 0) {
+    ctx.save();
+    ctx.globalAlpha = 0.95;
+    ctx.drawImage(_dockShipImg, imgX, imgY, imgW, imgH);
+    ctx.restore();
+  } else {
+    // ── Procedural fallback ────────────────────────────────────────────────
+    const hullCols = {
+      pinnace:['#4a5a8a','#6a7aaa','#3a4a7a'], squid:['#2a5a5a','#4a8a8a','#1a4a4a'],
+      hammer:['#6a4a2a','#9a7a4a','#4a3a1a'],  manow:['#3a3a6a','#5a5a9a','#2a2a5a'],
+      corsair:['#5a2a2a','#8a4a4a','#4a1a1a'], plunderer:['#4a3a6a','#7a6a9a','#3a2a5a'],
+    };
+    const [hull,hl,shd] = hullCols[shipType] || hullCols.pinnace;
+    ctx.fillStyle=hull; ctx.fillRect(imgX+8,imgY+10,imgW-16,imgH-16);
+    ctx.fillStyle=hl;   ctx.fillRect(imgX+12,imgY+14,imgW-24,10);
+    ctx.fillStyle=shd;  ctx.fillRect(imgX+10,imgY+imgH-20,imgW-20,8);
+    ctx.fillStyle=hull;
+    ctx.beginPath();
+    ctx.moveTo(imgX+imgW/2,imgY+4);
+    ctx.lineTo(imgX+12,imgY+14);
+    ctx.lineTo(imgX+imgW-12,imgY+14);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#8a6a30'; ctx.fillRect(imgX+imgW/2-2,imgY+6,4,imgH-18);
+    ctx.fillStyle='rgba(220,210,180,0.85)';
+    ctx.fillRect(imgX+imgW/2-16,imgY+8,32,18);
   }
 
-  // Rigging lines
-  ctx.strokeStyle = '#6a5a30';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(sx+W2/2, sy+4); ctx.lineTo(sx+10, sy+14);
-  ctx.moveTo(sx+W2/2, sy+4); ctx.lineTo(sx+W2-10, sy+14);
-  ctx.stroke();
-
   // Name label
-  const name = S._indexEntry?.ship?.name || 'Your Vessel';
-  ctx.fillStyle = 'rgba(200,220,255,0.9)';
-  ctx.font = '9px Courier New';
-  ctx.textAlign = 'center';
-  ctx.fillText(name, sx+W2/2, sy+H2+10);
-  ctx.textAlign = 'left';
-
-  // Water shimmer under ship
-  ctx.fillStyle = 'rgba(30,80,140,0.3)';
-  ctx.fillRect(sx+2, sy+H2-4, W2-4, 4);
+  const name = S._indexEntry?.shipName || S._indexEntry?.ship?.name || 'Your Vessel';
+  ctx.fillStyle='rgba(200,220,255,0.9)';
+  ctx.font='bold 10px Courier New';
+  ctx.textAlign='center';
+  ctx.fillText(name, ox+DW/2, oy+DH+12);
+  ctx.textAlign='left';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -3502,8 +3534,7 @@ function tryInteract() {
     if (npc) {
       sfx('npc_interact', 0.55);
       if (npc.isQuestGiver) { openQuestDialogue(npc); }
-      else if (npc.merchant) { openSurfShop(npc); }
-      else { openDlg(npc); }
+      else { openDlg(npc); }  // merchants handled inside openDlg via Trade button
       S.interactCooldown = 30;
       return;
     }
