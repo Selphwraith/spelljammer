@@ -18656,11 +18656,20 @@ document.addEventListener('DOMContentLoaded', () => {
           if (G.ship.air <= 0) { doDefeat('air'); return; }
         }
         if (d.gold != null) G.ship.gold = d.gold;
-        // Captain: surface.html always calls saveCaptain() before returnToShip()
-        // so localStorage has the latest data. Just reload it.
-        G.captain = loadCaptain();
-        const _surfRetInv = d.shipInv || (d.captain && d.captain.inv);
-        if (_surfRetInv) G.ship.inv = _surfRetInv;
+        // sessionStorage packet is authoritative — apply captain unconditionally
+        if (d.captain) {
+          G.captain = d.captain;
+        } else {
+          G.captain = loadCaptain();
+        }
+        // Sync ship from captain (single source of truth)
+        G.ship.gold = d.gold != null ? d.gold : (G.captain.gold || G.ship.gold);
+        G.ship.inv  = d.shipInv || G.captain.inv || [];
+        // Keep captain object in sync with ship
+        G.captain.gold = G.ship.gold;
+        G.captain.inv  = G.ship.inv;
+        // Write to localStorage — permanent save updated after transition
+        saveCaptain(G.captain);
         // Save surface quest state for next descent
         if (d.quest)       G._surfaceQuest  = d.quest;
         if (d.nfQuestTier != null) G._surfaceNfTier = d.nfQuestTier;
@@ -20949,10 +20958,16 @@ function descendToSurface() {
   // Build the captain object — merge existing captain data with full ship inv.
   // gearGiven:true prevents initStarterGear from pushing duplicate starter items
   // onto the already-populated inv on every subsequent descent.
+  // Sync ship state onto captain before packing — ship is authoritative in index
+  if (G.captain) {
+    G.captain.inv  = G.ship.inv  || G.captain.inv || [];
+    G.captain.gold = G.ship.gold || G.captain.gold || 0;
+    saveCaptain(G.captain);   // update localStorage too
+  }
   const _capEntry = {
     ...(G.captain || {}),
     inv:       G.ship.inv || [],
-    gearGiven: true,   // inv already contains everything; never run initStarterGear again
+    gearGiven: true,
   };
   const entry = {
     day:        G.watch?.day        || 1,

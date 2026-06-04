@@ -1109,41 +1109,59 @@ loadImg('nf_watcher_idle',  'surface/npc_watcher_idle.png');
 
 // ── sessionStorage handshake — receive from index.html ────────────────────
 function loadEntryData() {
+  // ── Step 1: permanent save is the base ─────────────────────────────────────
+  // (already done in init() via S.captain = loadCaptain())
+
+  // ── Step 2: sessionStorage packet overwrites — no merging ──────────────────
+  // sessionStorage was written milliseconds ago from live game state.
+  // It is always more current than localStorage during a transition.
   try {
     const raw = sessionStorage.getItem('fentheris_surface_entry');
     if (!raw) return;
     const d = JSON.parse(raw);
-    S.day          = d.day        || 1;
-    S.totalHours   = d.totalHours || 0;
-    S.hoursAwake   = d.hoursAwake || 0;
-    S.gold=d.gold||0;
-    S.sessionStartHours=S.totalHours;
-    S._indexEntry=d; // stash for unified saves
-    // If loading from a surface save, restore position and enemy state
-    if(d._savedSurface){
-      const ss=d._savedSurface;
-      if(ss.px) S.px=ss.px;
-      if(ss.py) S.py=ss.py;
-      if(ss.day) S.day=ss.day;
+
+    // Time
+    S.day               = d.day          || 1;
+    S.totalHours        = d.totalHours   || 0;
+    S.hoursAwake        = d.hoursAwake   || 0;
+    S.sessionStartHours = S.totalHours;
+    S._indexEntry       = d;
+
+    // Restore position from embedded surface save
+    if (d._savedSurface) {
+      const ss = d._savedSurface;
+      if (ss.px)  S.px  = ss.px;
+      if (ss.py)  S.py  = ss.py;
+      if (ss.day) S.day = ss.day;
     }
-    // Sync day counter from index.html so surface and space share the same clock
-    if (d.day) S.day = d.day;
-    // Captain comes from localStorage — loadCaptain() in init() already loaded it.
-    // Only merge gear/scalars from entry (first-descent gearGiven handshake).
-    if (d.captain) S.captain = mergeCaptainFromEntry(S.captain, { captain: d.captain });
-    // Quest state persistence across file switches
-    if (d.quest) {
-      S.quest = Object.assign(S.quest, d.quest);
+
+    // Gold
+    if (d.gold != null) S.gold = d.gold;
+
+    // Captain — sessionStorage is authoritative. Apply unconditionally. No merge.
+    if (d.captain) {
+      S.captain           = d.captain;
+      S.captain.gold      = S.gold;       // keep gold in sync on captain object
+      S.captain.inv       = S.captain.inv || [];
+      saveCaptain(S.captain);             // write to localStorage so mutations persist
     }
+
+    // Quest state
+    if (d.quest)              S.quest       = Object.assign(S.quest, d.quest);
     if (d.nfQuestTier != null) S.nfQuestTier = d.nfQuestTier;
-    // Load ship PNG for dock rendering
+
+    // Ship image
     _loadDockShipImage(d.shipType || d.ship?.type || 'pinnace');
+
     sessionStorage.removeItem('fentheris_surface_entry');
-  } catch(e) {}
+  } catch(e) { console.error('loadEntryData:', e); }
 }
 
 // ── sessionStorage handshake — send back to index.html ───────────────────
 function buildExitData() {
+  // Sync gold + inv onto captain so sessionStorage packet is self-contained
+  S.captain.gold = S.gold;
+  S.captain.inv  = S.captain.inv || [];
   const hoursSpent = S.sessionT * SURFACE_HOURS_PER_SEC;
   return {
     hoursSpent:  Math.round(hoursSpent * 100) / 100,
@@ -1153,7 +1171,6 @@ function buildExitData() {
     gold:        S.gold,
     captain:     S.captain,
     shipInv:     S.captain.inv,
-    // Quest state — persists across file switches
     quest:       S.quest,
     nfQuestTier: S.nfQuestTier || 0,
   };

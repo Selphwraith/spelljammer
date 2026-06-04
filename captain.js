@@ -1,38 +1,45 @@
 /**
- * captain.js — Fentheris shared captain data layer  v2
+ * captain.js — Fentheris shared captain data layer  v3
  * =====================================================
- * ARCHITECTURE:
- *   localStorage['fentheris_captain'] is the ONE source of truth.
- *   Both index.html and surface.html call loadCaptain() on init.
- *   Every mutation calls saveCaptain() immediately.
- *   Captain data does NOT travel through sessionStorage.
- *   sessionStorage carries only: gold, day, hours, shipType, shipName.
+ * DESIGN RULES (per ChatGPT audit):
+ *
+ *   sessionStorage = authoritative DURING page transitions
+ *   localStorage   = authoritative BETWEEN browser sessions (permanent save)
+ *
+ *   Never let localStorage overwrite data just passed through sessionStorage.
+ *   No merging. No gearGiven gating on inventory.
+ *   Inventory stored once on the captain object — G.ship.inv references it.
+ *
+ * TRANSITION FLOW:
+ *   index  → surface : sessionStorage entry  (captain + gold)  wins on load
+ *   surface → index  : sessionStorage exit   (captain + gold + inv) wins on load
+ *   localStorage written after every mutation and after every transition
  *
  * USAGE:
- *   On page load  → cap = loadCaptain()
- *   On any change → saveCaptain(cap)   (automatic inside Captain.* functions)
- *   New game      → cap = freshCaptain(); saveCaptain(cap)
- *   Hard reset    → clearCaptain()
+ *   loadCaptain()    — read from localStorage (permanent save)
+ *   saveCaptain(cap) — write to localStorage
+ *   freshCaptain()   — brand-new default captain (only if no save exists)
  */
 
 const CAPTAIN_KEY = 'fentheris_captain';
 
-// ── Default schema ────────────────────────────────────────────────────────────
+// ── Default captain (only used when no localStorage save exists) ──────────────
 function freshCaptain() {
   return {
-    level:       1,
-    xp:          0,
-    hp:          30,
-    maxHp:       30,
-    defense:     0,
-    initiative:  0,
-    regenRounds: 0,
+    level:         1,
+    xp:            0,
+    hp:            30,
+    maxHp:         30,
+    defense:       0,
+    initiative:    0,
+    regenRounds:   0,
     regenPerRound: 0,
-    shotsLoaded: 3,
-    gearGiven:   false,
-    inv:         [],
-    melee:  { name:'Combat Knife', dmgMin:3,  dmgMax:6,  type:'melee' },
-    ranged: { name:'Void Pistol',  dmgMin:6,  dmgMax:10, type:'ranged', shotsPerCombat:3 },
+    shotsLoaded:   3,
+    gearGiven:     false,
+    gold:          150,   // mirrored from G.ship.gold / S.gold
+    inv:           [],    // single authoritative inventory list
+    melee:  { name:'Combat Knife',  dmgMin:3,  dmgMax:6,  type:'melee' },
+    ranged: { name:'Void Pistol',   dmgMin:6,  dmgMax:10, type:'ranged', shotsPerCombat:3 },
     armor:  { name:'Leather Armor', hpBonus:8, def:1 },
     helmet: { name:'Void Helmet',   hpBonus:4, def:1 },
   };
@@ -41,15 +48,13 @@ function freshCaptain() {
 // ── XP curve ─────────────────────────────────────────────────────────────────
 function xpToNext(level) { return level * 100; }
 
-// ── Stat recalculation ────────────────────────────────────────────────────────
+// ── Stat recalculation (always call after gear changes or level-up) ───────────
 function recalcStats(cap) {
   const base    = 30 + ((cap.level || 1) - 1) * 5;
   const armorHp = (cap.armor  && cap.armor.hpBonus)  || 0;
   const helmHp  = (cap.helmet && cap.helmet.hpBonus) || 0;
-  const armorDef= (cap.armor  && cap.armor.def)       || 0;
-  const helmDef = (cap.helmet && cap.helmet.def)      || 0;
   cap.maxHp   = base + armorHp + helmHp;
-  cap.defense = armorDef + helmDef;
+  cap.defense = ((cap.armor && cap.armor.def) || 0) + ((cap.helmet && cap.helmet.def) || 0);
   if (cap.hp > cap.maxHp) cap.hp = cap.maxHp;
   return cap;
 }
@@ -63,14 +68,10 @@ function saveCaptain(cap) {
 function loadCaptain() {
   try {
     const raw = localStorage.getItem(CAPTAIN_KEY);
-    if (raw) {
-      const stored = JSON.parse(raw);
-      // Forward-fill any fields added after original save
-      const cap = Object.assign(freshCaptain(), stored);
-      recalcStats(cap);
-      return cap;
-    }
-  } catch(_) {}
+    if (raw) return JSON.parse(raw);
+  } catch(e) {
+    console.error('Captain save corrupted — resetting to defaults.');
+  }
   return freshCaptain();
 }
 
@@ -78,7 +79,7 @@ function clearCaptain() {
   try { localStorage.removeItem(CAPTAIN_KEY); } catch(_) {}
 }
 
-// ── Level-up ──────────────────────────────────────────────────────────────────
+// ── Level-up helper ───────────────────────────────────────────────────────────
 function _checkLevelUp(cap) {
   let leveled = false;
   while (cap.xp >= xpToNext(cap.level)) {
@@ -86,12 +87,13 @@ function _checkLevelUp(cap) {
     cap.level += 1;
     leveled    = true;
     recalcStats(cap);
-    cap.hp = cap.maxHp; // full heal on level up
+    cap.hp = cap.maxHp;
   }
   return leveled;
 }
 
 // ── Captain mutation API ──────────────────────────────────────────────────────
+// Every method calls saveCaptain() so localStorage stays current.
 const Captain = {
 
   gainXP(cap, amount) {
@@ -121,10 +123,8 @@ const Captain = {
   },
 
   applyPenalty(cap, gold, tsFrac, xpFrac) {
-    tsFrac = tsFrac || 0.10;
-    xpFrac = xpFrac || 0.10;
-    const tsCut = Math.ceil((gold || 0) * tsFrac);
-    const xpCut = Math.ceil((cap.xp || 0) * xpFrac);
+    const tsCut = Math.ceil((gold || 0) * (tsFrac || 0.10));
+    const xpCut = Math.ceil((cap.xp || 0) * (xpFrac || 0.10));
     cap.xp = Math.max(0, (cap.xp || 0) - xpCut);
     cap.hp = 1;
     saveCaptain(cap);
@@ -153,8 +153,7 @@ const Captain = {
   },
 
   equipItem(cap, item, slot) {
-    const valid = ['melee','ranged','armor','helmet'];
-    if (!valid.includes(slot)) return null;
+    if (!['melee','ranged','armor','helmet'].includes(slot)) return null;
     const prev = cap[slot] || null;
     cap[slot] = item;
     cap.inv = (cap.inv || []).filter(i => i !== item);
@@ -172,74 +171,29 @@ const Captain = {
     saveCaptain(cap);
     return true;
   },
+
+  // ── Transition helpers ──────────────────────────────────────────────────────
+  // Call these at file boundaries. sessionStorage packet wins over localStorage.
+
+  /** Before navigating away from either file. */
+  onExit(cap) {
+    if (!cap) return;
+    recalcStats(cap);
+    saveCaptain(cap);
+  },
+
+  /** On page load — reads localStorage (permanent save). */
+  onEntry() {
+    return loadCaptain();
+  },
+
+  /** Ensure localStorage is current without changing anything. */
+  syncNow(cap) {
+    if (!cap) return;
+    recalcStats(cap);
+    saveCaptain(cap);
+  },
 };
 
-// ── mergeCaptainFromEntry ─────────────────────────────────────────────────────
-// Used when sessionStorage entry has captain data (legacy path / first descent).
-// Merges scalars only — inventory always comes from localStorage.
-function mergeCaptainFromEntry(cap, entryData) {
-  if (!entryData) return cap;
-  const inc = entryData.captain || entryData;
-  if (!inc) return cap;
-  // Scalars
-  ['level','xp','hp','maxHp','defense','initiative','shotsLoaded','gearGiven',
-   'regenRounds','regenPerRound'].forEach(k => {
-    if (inc[k] != null) cap[k] = inc[k];
-  });
-  // Gear slots
-  ['melee','ranged','armor','helmet'].forEach(slot => {
-    if (inc[slot]) cap[slot] = inc[slot];
-  });
-  // Inventory: ONLY use entry inv on very first descent (gearGiven just set)
-  // After that, localStorage inv is always authoritative.
-  if (inc.gearGiven && !(cap.gearGiven) && inc.inv && inc.inv.length > 0) {
-    cap.inv = inc.inv;
-  }
-  cap.gearGiven = inc.gearGiven || cap.gearGiven;
-  recalcStats(cap);
-  saveCaptain(cap);
-  return cap;
-}
-
-// Future module export:
-// export { Captain, loadCaptain, saveCaptain, clearCaptain,
-//          freshCaptain, xpToNext, recalcStats, mergeCaptainFromEntry };
-
-// ══════════════════════════════════════════════════════════════════════════════
-// TRANSITION HOOKS
-// ══════════════════════════════════════════════════════════════════════════════
-// Call these at every file boundary. Both files use the same localStorage key
-// so there is no merge, no sync, no sessionStorage involvement for captain.
-// Just save on exit, load on entry.
-
-/**
- * Captain.onExit(cap)
- * Call immediately before navigating away (returnToShip, descendToSurface).
- * Writes the full captain to localStorage so the destination file finds it.
- */
-Captain.onExit = function(cap) {
-  if (!cap) return;
-  recalcStats(cap);           // ensure maxHp/defense are current
-  saveCaptain(cap);           // flush to localStorage
-};
-
-/**
- * Captain.onEntry()
- * Call at the very start of init() in either file.
- * Reads from localStorage and returns a fully initialised captain.
- * Never returns null — falls back to freshCaptain() if nothing is stored.
- */
-Captain.onEntry = function() {
-  return loadCaptain();       // always localStorage; never defaults unless truly first run
-};
-
-/**
- * Captain.syncNow(cap)
- * Call any time you want to guarantee localStorage is current.
- * Idempotent — safe to call frequently.
- */
-Captain.syncNow = function(cap) {
-  if (!cap) return;
-  recalcStats(cap);
-  saveCaptain(cap);
-};
+// No ES module export yet — all symbols are global.
+// Future: export { Captain, loadCaptain, saveCaptain, clearCaptain, freshCaptain, xpToNext, recalcStats };
