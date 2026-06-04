@@ -762,6 +762,8 @@ const NPCS = [
     merchant: true, shopId: 'trader_1',
     lines: [
       "Supplies and medicine — I stock what you need, and I buy what the void leaves behind.",
+      "That pistol on your hip — I keep magazines in stock. Void Crawlers are thick north of here lately.",
+      "I pay fair coin for whatever you bring back from the field. Chitins, hides, fragments — all of it.",
     ],
   },
   {
@@ -772,6 +774,8 @@ const NPCS = [
     merchant: true, shopId: 'salvage_1',
     lines: [
       "I pay top rate for biological salvage. Don't bring me junk.",
+      "Watcher membrane is hard to come by. You manage to bring me some, I'll make it worth your while.",
+      "Most people won't touch the things that fall from orbit. Their loss.",
     ],
   },
   {
@@ -780,7 +784,7 @@ const NPCS = [
     name: 'Sister Vael',
     merchant: true, shopId: 'cleric_1',
     lines: [
-      "The Drift takes its toll on all of us. I have tinctures, salves, and draughts. Name your need — or leave your coin on the altar.",
+      "The Drift takes its toll on all of us. I can tend your wounds here for 50 TS — or browse my stock if you prefer to carry something with you.",
       "I have tended many who thought their last breath was spent on that surface.",
       "Come back if you need healing. My door is always open.",
     ],
@@ -812,17 +816,32 @@ const ITEM_DEFS = {
   eye:         { name:"Watcher's Eye",     type:'material', sellVal:28  },
   membrane:    { name:'Watcher Membrane',  type:'material', sellVal:18  },
   vital_fluid: { name:'Vital Fluid',       type:'material', sellVal:22  },
-  potion:      { name:'Healing Tincture',  type:'potion',   sellVal:14, buyVal:35, heal:20 },
-  pistol_mag:  { name:'Pistol Magazine',   type:'ammo',     sellVal:10, buyVal:22, shots:3  },
+  potion:       { name:'Healing Tincture', ico:'⚗️',  type:'usable', sellVal:14, buyVal:35, heal:20,
+                  desc:'+20 HP. Compact field tincture.' },
+  potion_lg:    { name:'Greater Tincture',  ico:'💊',  type:'usable', sellVal:20, buyVal:48, heal:50,
+                  desc:'+50 HP. Concentrated healing draught.' },
+  blessed_salve:{ name:'Blessed Salve',     ico:'✨',  type:'usable', sellVal:22, buyVal:55, regen:5, regenTurns:5,
+                  desc:'+5 HP/turn for 5 turns in combat (25 HP total).' },
+  void_draught: { name:'Void Draught',       ico:'🫗',  type:'usable', sellVal:40, buyVal:90, healFull:true,
+                  desc:'Instantly restores HP to full. Usable anywhere.' },
+  vael_heal:    { name:'Healing — Sister Vael', ico:'🙏', type:'service', buyVal:50,
+                  desc:'Sister Vael restores you to full health. 50 TS.' },
+  pistol_mag:   { name:'Pistol Magazine',   ico:'🔋', type:'ammo',    sellVal:10, buyVal:22, shots:3,
+                  desc:'3 shots for the Void Pistol.' },
 };
 
 // Shop stock per merchant
 const SHOP_STOCK = {
-  trader_1:  { sells:['potion','pistol_mag'], buysAll:true, sellMult:1.0  },
-  salvage_1: { sells:[],                      buysAll:true, sellMult:1.25 },
-  cleric_1: { sells:['potion','potion_lg','blessed_salve','void_draught'],
-              buysAll:false, sellMult:1.0,
-              dailyLimits:{ potion:5, potion_lg:3, blessed_salve:2, void_draught:1 } },
+  trader_1:  { sells:['potion','pistol_mag'], buysAll:true,  sellMult:1.0,
+               dailyLimits:{ potion:5, pistol_mag:10 } },
+  salvage_1: { sells:[],                      buysAll:true,  sellMult:1.25,
+               dailyLimits:{} },
+  // Sister Vael — healing services and items
+  // vael_heal is first: a permanent full-heal service at 50 TS (not an inventory item)
+  cleric_1:  { sells:['vael_heal','potion','potion_lg','blessed_salve','void_draught'],
+               buysAll:false, sellMult:1.0,
+               dailyLimits:{ potion:5, potion_lg:3, blessed_salve:2, void_draught:1 } },
+  // vael_heal has no daily limit — permanent service Vael always offers
 };
 const _shopDailyLog = {};
 function _shopDailyKey(shopId,itemId){ return shopId+':'+itemId+':'+(S.day||1); }
@@ -2534,11 +2553,11 @@ function _surfBuildShopGrid() {
     stock.sells.forEach(id => {
       const def = ITEM_DEFS[id]; if (!def?.buyVal) return;
       const canAfford = S.gold >= def.buyVal;
-      const sub = def.type === 'potion'  ? 'Restores 20 HP'
-                : def.type === 'ammo'    ? '3 shots per magazine'
-                : def.desc || '';
-      const d = _mkShopCard(def.ico || '📦', def.name, sub, def.buyVal + ' TS', false, !canAfford);
-      if (canAfford) d.onclick = () => _surfShopBuy(id);
+      const sub = def.desc || '';
+      const svcDisabled = (id === 'vael_heal' && S.captain.hp >= S.captain.maxHp);
+      const disabled = !canAfford || svcDisabled;
+      const d = _mkShopCard(def.ico || '📦', def.name, sub, def.buyVal + ' TS', false, disabled);
+      if (!disabled) d.onclick = () => _surfShopBuy(id);
       grid.appendChild(d);
     });
     if (msg) msg.textContent = 'You have ' + S.gold + ' TS.';
@@ -2621,6 +2640,16 @@ function _mkShopEmpty(grid, text) {
 function _surfShopBuy(id) {
   const def = ITEM_DEFS[id]; if (!def?.buyVal) return;
   if (S.gold < def.buyVal) { _shopMsg('Not enough TS.'); return; }
+  // Healing service — no daily limit, no inventory item
+  if (def.type === 'service' && id === 'vael_heal') {
+    if (S.captain.hp >= S.captain.maxHp) { _shopMsg('You are already at full health.'); return; }
+    S.gold -= def.buyVal;
+    Captain.fullHeal(S.captain);
+    saveCaptain(S.captain);
+    sfx('rest', 0.7);
+    _shopMsg('Sister Vael\'s hands glow softly. You are fully healed. (−' + def.buyVal + ' TS)');
+    updateHUD(); _surfBuildShopGrid(); return;
+  }
   S.gold -= def.buyVal;
   const ex = S.captain.inv.find(i => i.id === id);
   if (ex) ex.qty = (ex.qty||1)+1;
