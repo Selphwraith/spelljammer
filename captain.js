@@ -204,3 +204,42 @@ function mergeCaptainFromEntry(cap, entryData) {
 // Future module export:
 // export { Captain, loadCaptain, saveCaptain, clearCaptain,
 //          freshCaptain, xpToNext, recalcStats, mergeCaptainFromEntry };
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TRANSITION HOOKS
+// ══════════════════════════════════════════════════════════════════════════════
+// Call these at every file boundary. Both files use the same localStorage key
+// so there is no merge, no sync, no sessionStorage involvement for captain.
+// Just save on exit, load on entry.
+
+/**
+ * Captain.onExit(cap)
+ * Call immediately before navigating away (returnToShip, descendToSurface).
+ * Writes the full captain to localStorage so the destination file finds it.
+ */
+Captain.onExit = function(cap) {
+  if (!cap) return;
+  recalcStats(cap);           // ensure maxHp/defense are current
+  saveCaptain(cap);           // flush to localStorage
+};
+
+/**
+ * Captain.onEntry()
+ * Call at the very start of init() in either file.
+ * Reads from localStorage and returns a fully initialised captain.
+ * Never returns null — falls back to freshCaptain() if nothing is stored.
+ */
+Captain.onEntry = function() {
+  return loadCaptain();       // always localStorage; never defaults unless truly first run
+};
+
+/**
+ * Captain.syncNow(cap)
+ * Call any time you want to guarantee localStorage is current.
+ * Idempotent — safe to call frequently.
+ */
+Captain.syncNow = function(cap) {
+  if (!cap) return;
+  recalcStats(cap);
+  saveCaptain(cap);
+};
