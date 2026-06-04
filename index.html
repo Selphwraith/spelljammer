@@ -18661,6 +18661,9 @@ document.addEventListener('DOMContentLoaded', () => {
         G.captain = loadCaptain();
         const _surfRetInv = d.shipInv || (d.captain && d.captain.inv);
         if (_surfRetInv) G.ship.inv = _surfRetInv;
+        // Save surface quest state for next descent
+        if (d.quest)       G._surfaceQuest  = d.quest;
+        if (d.nfQuestTier != null) G._surfaceNfTier = d.nfQuestTier;
         addLog(`Returned from the surface of Fentheris. ${h.toFixed(1)} hours elapsed.`, '');
         updateWatchHUD(); updateUI();
         // Reopen LS if we were in the Realm sphere
@@ -20959,6 +20962,9 @@ function descendToSurface() {
     captain:    _capEntry,
     shipType:   G.ship.type  || 'pinnace',
     shipName:   G.ship.name  || 'Your Vessel',
+    // Quest state — restored on surface by loadEntryData
+    quest:      G._surfaceQuest || null,
+    nfQuestTier: G._surfaceNfTier || 0,
   };
   try { sessionStorage.setItem('fentheris_surface_entry', JSON.stringify(entry)); } catch(e) {}
   const ov = document.createElement('div');

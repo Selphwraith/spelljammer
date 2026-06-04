@@ -417,6 +417,7 @@ html, body {
   <div id="dlg-text"></div>
   <div id="dlg-actions" style="display:none;margin-top:8px;gap:6px;flex-wrap:wrap;">
     <button class="btn gd sm" id="dlg-btn-shop" onclick="dlgOpenShop()" style="display:none;">🛒 Trade</button>
+    <button class="btn sm"    id="dlg-btn-heal" onclick="dlgVaelHeal()" style="display:none;">✨ Heal (50 TS)</button>
     <button class="btn sm"    id="dlg-btn-next" onclick="dlgNextLine()">💬 Continue</button>
   </div>
   <button class="dlg-close" onclick="closeDlg()">✕</button>
@@ -1130,6 +1131,11 @@ function loadEntryData() {
     // Captain comes from localStorage — loadCaptain() in init() already loaded it.
     // Only merge gear/scalars from entry (first-descent gearGiven handshake).
     if (d.captain) S.captain = mergeCaptainFromEntry(S.captain, { captain: d.captain });
+    // Quest state persistence across file switches
+    if (d.quest) {
+      S.quest = Object.assign(S.quest, d.quest);
+    }
+    if (d.nfQuestTier != null) S.nfQuestTier = d.nfQuestTier;
     // Load ship PNG for dock rendering
     _loadDockShipImage(d.shipType || d.ship?.type || 'pinnace');
     sessionStorage.removeItem('fentheris_surface_entry');
@@ -1146,7 +1152,10 @@ function buildExitData() {
     day:         S.day,
     gold:        S.gold,
     captain:     S.captain,
-    shipInv:     S.captain.inv,  // explicit inv sync back to G.ship.inv
+    shipInv:     S.captain.inv,
+    // Quest state — persists across file switches
+    quest:       S.quest,
+    nfQuestTier: S.nfQuestTier || 0,
   };
 }
 
@@ -1290,15 +1299,44 @@ function openDlg(npc) {
   const actDiv  = document.getElementById('dlg-actions');
   const shopBtn = document.getElementById('dlg-btn-shop');
   const nextBtn = document.getElementById('dlg-btn-next');
+  const healBtn = document.getElementById('dlg-btn-heal');
   if (npc.merchant) {
     if (shopBtn) { shopBtn.style.display='inline-block'; shopBtn.textContent='🛒 Trade'; }
     if (nextBtn) { nextBtn.textContent='👋 Leave'; nextBtn.onclick=closeDlg; }
+    // Show heal button only for Sister Vael
+    if (healBtn) healBtn.style.display = npc.id==='cleric_1' ? 'inline-block' : 'none';
   } else {
     if (shopBtn) shopBtn.style.display='none';
+    if (healBtn) healBtn.style.display='none';
     if (nextBtn) { nextBtn.textContent='💬 Continue'; nextBtn.onclick=dlgNextLine; }
   }
   if (actDiv) actDiv.style.display='flex';
   document.getElementById('dialogue-box').style.display='block';
+}
+
+function dlgVaelHeal() {
+  const cost = 50;
+  if (S.captain.hp >= S.captain.maxHp) {
+    document.getElementById('dlg-text').textContent =
+      'You are already at full health, Captain. Come back if the Drift wounds you.';
+    return;
+  }
+  if (S.gold < cost) {
+    document.getElementById('dlg-text').textContent =
+      'I would help freely if I could — but the clinic needs coin to run. ' + cost + ' TS to be made whole.';
+    return;
+  }
+  S.gold -= cost;
+  Captain.fullHeal(S.captain);
+  saveCaptain(S.captain);
+  sfx('rest', 0.75);
+  updateHUD();
+  document.getElementById('dlg-text').textContent =
+    'The light of the Drift flows through you. You are whole again. (−' + cost + ' TS)';
+  // Grey out heal button now that you're full
+  const hb = document.getElementById('dlg-btn-heal');
+  if (hb) { hb.disabled=true; hb.style.opacity='0.4'; }
+  setStatus('Sister Vael healed you to full HP. (−' + cost + ' TS)');
 }
 
 function dlgOpenShop() {
@@ -1328,7 +1366,9 @@ function advanceDlg() {
 function closeDlg() {
   S.dlgNpcId = null;
   document.getElementById('dialogue-box').style.display = 'none';
-  const a = document.getElementById('dlg-actions'); if(a) a.style.display='none';
+  const a  = document.getElementById('dlg-actions'); if(a) a.style.display='none';
+  const hb = document.getElementById('dlg-btn-heal');
+  if (hb) { hb.disabled=false; hb.style.opacity='1'; }
 }
 
 // ── Camera ────────────────────────────────────────────────────────────────
