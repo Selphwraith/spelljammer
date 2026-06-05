@@ -1177,18 +1177,49 @@ function buildExitData() {
 }
 
 function returnToShip() {
-  saveCaptain(S.captain);  // flush to localStorage before leaving
+  // 1. Sync gold onto captain and flush to localStorage
+  S.captain.gold = S.gold;
+  S.captain.inv  = S.captain.inv || [];
+  saveCaptain(S.captain);
 
   stopAllAudio();
   surfAutoSave();
   closeDlg();
+
   const ov = document.getElementById('transition-overlay');
   ov.classList.add('fade-in');
+
   setTimeout(() => {
     try {
-      sessionStorage.setItem('fentheris_surface_exit', JSON.stringify(buildExitData()));
-      // Tell index.html to skip splash/cinematic and go straight to the game
+      const exitData = buildExitData();
+
+      // 2. Write exit payload to sessionStorage (fast-path handler reads this)
+      sessionStorage.setItem('fentheris_surface_exit', JSON.stringify(exitData));
       sessionStorage.setItem('fentheris_surface_return', '1');
+
+      // 3. ALSO patch the space autosave directly so _applyLoad gets correct
+      //    inv/gold/captain even if the sessionStorage path fails for any reason.
+      //    This is the belt-and-suspenders guarantee.
+      const SPACE_AUTOSAVE_KEY = 'fentheris_autosave';
+      const savedRaw = localStorage.getItem(SPACE_AUTOSAVE_KEY);
+      if (savedRaw) {
+        try {
+          const saved = JSON.parse(savedRaw);
+          const state = JSON.parse(saved.data);
+          // Patch the save state directly
+          state.ship.gold    = exitData.gold;
+          state.ship.inv     = exitData.shipInv;
+          state.captain      = exitData.captain;
+          state.watch        = state.watch || {};
+          state.watch.totalHours = (state.watch.totalHours||0) + (exitData.hoursSpent||0);
+          state.watch.hoursAwake = (state.watch.hoursAwake||0) + (exitData.hoursSpent||0);
+          saved.data = JSON.stringify(state);
+          localStorage.setItem(SPACE_AUTOSAVE_KEY, JSON.stringify(saved));
+        } catch(_patchErr) {
+          // Patch failed — sessionStorage path will handle it
+          console.warn('Autosave patch failed, falling back to sessionStorage exit handler');
+        }
+      }
     } catch(e) {}
     window.location.href = 'index.html';
   }, 450);
