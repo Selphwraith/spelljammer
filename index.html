@@ -18562,7 +18562,9 @@ const _CAP_SELL = {
   voidjam:160,beacon:70,runeshard:60,antimag:80,thrallring:85,
   voidchart:100,voidwelder:140,ebtiss:200,silblade:150,bfmanif:110,
   chitin:8,crawl_hide:5,venom_gel:14,shard:8,bone_plate:11,lurk_hide:16,
-  eye:28,membrane:18,vital_fluid:22,potion:14,pistol_mag:10,
+  eye:28,membrane:18,vital_fluid:22,
+  potion:14, potion_lg:20, blessed_salve:22, void_draught:40,
+  pistol_mag:10,
 };
 function buildCaptainOverlay() {
   const cap = G.captain;
@@ -18601,7 +18603,7 @@ function buildCaptainOverlay() {
   inv.forEach(item=>{
     const name=item.name||item.n||item.id||'?';
     const qty=item.qty||1;
-    const ico=item.ico||(item.type==='potion'?'&#9879;':item.type==='ammo'?'&#128299;':'&#128230;');
+    const ico=item.ico||(item.type==='potion'||item.type==='usable'?'&#9879;':item.type==='ammo'?'&#128299;':item.type==='material'?'&#128202;':'&#128230;');
     const sv=_CAP_SELL[item.id]||item.val||0;
     const row=document.createElement('div'); row.className='cap-gear-row';
     row.innerHTML='<span style="font-size:16px;width:28px;flex-shrink:0;">'+ico+'</span>'
@@ -19038,6 +19040,7 @@ function _applyLoad(save) {
         if (_ed.quest)              G._surfaceQuest = _ed.quest;
         if (_ed.nfQuestTier != null) G._surfaceNfTier = _ed.nfQuestTier;
         // Persist to localStorage
+        G._surfExitApplied = true;
         saveCaptain(G.captain);
         addLog(`Returned from the surface of Fentheris. ${_h.toFixed(1)} hours elapsed.`, '');
       }

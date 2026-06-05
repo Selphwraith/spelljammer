@@ -2710,9 +2710,15 @@ function _surfShopBuy(id) {
   S.gold -= def.buyVal;
   const ex = S.captain.inv.find(i => i.id === id);
   if (ex) ex.qty = (ex.qty||1)+1;
-  else S.captain.inv.push({ id, name:def.name, type:def.type, qty:1,
-    ...(def.heal  ? {heal:def.heal}  : {}),
-    ...(def.shots ? {shots:def.shots}: {}) });
+  else S.captain.inv.push({
+    id, name:def.name, type:def.type, qty:1,
+    ico: def.ico||'',
+    val: def.sellVal||0,
+    ...(def.heal     ?{heal:def.heal}:{} ),
+    ...(def.healFull ?{healFull:true}:{} ),
+    ...(def.regen    ?{regen:def.regen,regenTurns:def.regenTurns||5}:{}),
+    ...(def.shots    ?{shots:def.shots}:{} ),
+  });
   saveCaptain(S.captain);   // persist buy immediately
   sfx('purchase', 0.75);
   _shopMsg('Bought: ' + def.name + ' (−' + def.buyVal + ' TS)');
