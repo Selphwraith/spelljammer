@@ -18842,6 +18842,22 @@ function loadFromEntry(entry) {
 }
 
 function _applyLoad(save) {
+  // Pre-load: patch save.data with surface exit payload BEFORE parsing state
+  // so that G = { ship: {...state.ship} } already has the correct inv/gold.
+  let _preExitData = null;
+  try {
+    const _pRaw = sessionStorage.getItem('fentheris_surface_exit');
+    if (_pRaw) {
+      _preExitData = JSON.parse(_pRaw);
+      sessionStorage.removeItem('fentheris_surface_exit');
+      // Patch the save.data JSON string so state already has new values
+      const _pState = JSON.parse(save.data);
+      if (_preExitData.gold    != null) _pState.ship.gold = _preExitData.gold;
+      if (_preExitData.shipInv)         _pState.ship.inv  = _preExitData.shipInv;
+      else if (_preExitData.captain?.inv) _pState.ship.inv = _preExitData.captain.inv;
+      save = Object.assign({}, save, { data: JSON.stringify(_pState) });
+    }
+  } catch(_pErr) { console.error('surface-exit pre-patch:', _pErr); }
   try {
     const state = JSON.parse(save.data);
     if (G.tvl && G.tvl.timer) _tvlStop(); if(G.tvl) G.tvl.timer = null;
@@ -19008,44 +19024,22 @@ function _applyLoad(save) {
       return; // renderLoop() is never called — no frozen chart
     }
 
-    // ── Surface exit payload — applied here so it runs on the fast-path ────
-    // The try block that handles fentheris_surface_exit in _attach never
-    // fires on fast-path returns because loadFromEntry() returns early.
-    // Reading it here guarantees the bought items/gold/captain always land.
-    try {
-      const _exitRaw = sessionStorage.getItem('fentheris_surface_exit');
-      if (_exitRaw) {
-        const _ed = JSON.parse(_exitRaw);
-        sessionStorage.removeItem('fentheris_surface_exit');
-        // Time delta
-        const _h = _ed.hoursSpent || 0;
-        if (G.watch) {
-          G.watch.totalHours = (G.watch.totalHours||0) + _h;
-          G.watch.hoursAwake = (G.watch.hoursAwake||0) + _h;
-        }
-        // Gold
-        if (_ed.gold != null) G.ship.gold = _ed.gold;
-        // Captain — sessionStorage is authoritative
-        if (_ed.captain) {
-          G.captain = _ed.captain;
-        } else {
-          G.captain = loadCaptain();
-        }
-        // Sync ship inventory from captain (single source)
-        const _retInv = _ed.shipInv || (_ed.captain && _ed.captain.inv);
-        if (_retInv) G.ship.inv = _retInv;
-        G.captain.gold = G.ship.gold;
-        G.captain.inv  = G.ship.inv;
-        // Quest state
-        if (_ed.quest)              G._surfaceQuest = _ed.quest;
-        if (_ed.nfQuestTier != null) G._surfaceNfTier = _ed.nfQuestTier;
-        // Persist to localStorage
-        G._surfExitApplied = true;
-        saveCaptain(G.captain);
-        addLog(`Returned from the surface of Fentheris. ${_h.toFixed(1)} hours elapsed.`, '');
+    // Apply captain from pre-exit data (ship.inv already correct from pre-patch)
+    if (_preExitData) {
+      const _h = _preExitData.hoursSpent || 0;
+      if (G.watch) {
+        G.watch.totalHours = (G.watch.totalHours||0) + _h;
+        G.watch.hoursAwake = (G.watch.hoursAwake||0) + _h;
       }
-    } catch(_exitErr) { console.error('Surface exit payload error:', _exitErr); }
-    // ─────────────────────────────────────────────────────────────────────
+      if (_preExitData.captain) G.captain = _preExitData.captain;
+      G.captain.inv  = G.ship.inv;
+      G.captain.gold = G.ship.gold;
+      if (_preExitData.quest)              G._surfaceQuest = _preExitData.quest;
+      if (_preExitData.nfQuestTier != null) G._surfaceNfTier = _preExitData.nfQuestTier;
+      saveCaptain(G.captain);
+      addLog('Returned from Fentheris surface. Cargo: ' + G.ship.inv.length + ' item(s).', 'gd');
+    }
+    // ────────────────────────────────────────────────────────────────────
     updateUI(); updateFragUI(); updateWatchHUD();
     renderLoop(); loadSounds(); loadShipImages(); loadVoiceFiles(); ensureLqState();
     setTimeout(() => playTitle(), 200);
