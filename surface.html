@@ -1159,9 +1159,11 @@ function loadEntryData() {
 
 // ── sessionStorage handshake — send back to index.html ───────────────────
 function buildExitData() {
-  // Sync gold + inv onto captain so sessionStorage packet is self-contained
+  // Sync gold + inv onto captain — captain.js becomes authoritative for index.html
   S.captain.gold = S.gold;
   S.captain.inv  = S.captain.inv || [];
+  // Persist to localStorage NOW so loadCaptain() in index._applyLoad gets latest data
+  saveCaptain(S.captain);
   const hoursSpent = S.sessionT * SURFACE_HOURS_PER_SEC;
   return {
     hoursSpent:  Math.round(hoursSpent * 100) / 100,
@@ -1176,14 +1178,17 @@ function buildExitData() {
   };
 }
 
-function returnToShip() {
-  // 1. Sync gold onto captain and flush to localStorage
+// ── Core surface exit — called by returnToShip() after dock check ─────────
+function _surfExitToShip() {
+  // 1. Sync gold + inv onto captain and persist to localStorage
+  //    This is the primary write — index.html's _applyLoad will call
+  //    loadCaptain() and use this as the authoritative source.
   S.captain.gold = S.gold;
   S.captain.inv  = S.captain.inv || [];
   saveCaptain(S.captain);
 
   stopAllAudio();
-  surfAutoSave();
+  surfAutoSave();  // belt-and-suspenders: also writes captain via saveCaptain
   closeDlg();
 
   const ov = document.getElementById('transition-overlay');
@@ -1191,37 +1196,36 @@ function returnToShip() {
 
   setTimeout(() => {
     try {
+      // 2. Build exit payload (re-syncs and saves captain one more time)
       const exitData = buildExitData();
 
-      // Write to localStorage — reliable across all browsers.
-      // sessionStorage can be cleared on mobile (iOS Safari) between navigations.
+      // 3. Write exit payload to localStorage — index.html reads this in _applyLoad
       localStorage.setItem('fentheris_surface_exit',   JSON.stringify(exitData));
       localStorage.setItem('fentheris_surface_return', '1');
 
-      // 3. ALSO patch the space autosave directly so _applyLoad gets correct
-      //    inv/gold/captain even if the sessionStorage path fails for any reason.
-      //    This is the belt-and-suspenders guarantee.
-      const SPACE_AUTOSAVE_KEY = 'fentheris_autosave';
-      const savedRaw = localStorage.getItem(SPACE_AUTOSAVE_KEY);
-      if (savedRaw) {
-        try {
-          const saved = JSON.parse(savedRaw);
-          const state = JSON.parse(saved.data);
-          // Patch the save state directly
-          state.ship.gold    = exitData.gold;
-          state.ship.inv     = exitData.shipInv;
-          state.captain      = exitData.captain;
-          state.watch        = state.watch || {};
-          state.watch.totalHours = (state.watch.totalHours||0) + (exitData.hoursSpent||0);
-          state.watch.hoursAwake = (state.watch.hoursAwake||0) + (exitData.hoursSpent||0);
-          saved.data = JSON.stringify(state);
-          localStorage.setItem(SPACE_AUTOSAVE_KEY, JSON.stringify(saved));
-        } catch(_patchErr) {
-          // Patch failed — sessionStorage path will handle it
-          console.warn('Autosave patch failed — localStorage exit payload is the fallback');
+      // 4. Belt-and-suspenders: patch the space autosave directly so that even
+      //    if _applyLoad's exit-payload read fails, the autosave already has
+      //    the correct gold/inv baked in.
+      try {
+        const _spaceAutoRaw = localStorage.getItem('fentheris_autosave');
+        if (_spaceAutoRaw) {
+          const _spaceAuto  = JSON.parse(_spaceAutoRaw);
+          const _spaceState = JSON.parse(_spaceAuto.data);
+          _spaceState.ship        = _spaceState.ship || {};
+          _spaceState.ship.gold   = exitData.gold;
+          _spaceState.ship.inv    = exitData.shipInv;
+          _spaceState.captain     = exitData.captain;
+          _spaceState.watch       = _spaceState.watch || {};
+          _spaceState.watch.totalHours = (_spaceState.watch.totalHours || 0) + (exitData.hoursSpent || 0);
+          _spaceState.watch.hoursAwake = (_spaceState.watch.hoursAwake || 0) + (exitData.hoursSpent || 0);
+          _spaceAuto.data = JSON.stringify(_spaceState);
+          localStorage.setItem('fentheris_autosave', JSON.stringify(_spaceAuto));
         }
+      } catch(_patchErr) {
+        console.warn('Autosave patch failed — exit payload is the fallback:', _patchErr);
       }
-    } catch(e) {}
+    } catch(e) { console.error('Surface exit write failed:', e); }
+
     window.location.href = 'index.html';
   }, 450);
 }
@@ -2965,7 +2969,8 @@ function _surfSelectItem(item) {
 }
 
 // ── Save / Load (mirrors index.html exactly) ─────────────────────────
-const _SURF_SAVE_KEY = 'fentheris_saves';
+const _SURF_SAVE_KEY  = 'fentheris_saves';
+const SURF_AUTO_KEY   = 'fentheris_surf_autosave';  // surface-layer autosave slot
 
 function _surfGetSaves() {
   try { return JSON.parse(localStorage.getItem(_SURF_SAVE_KEY))||[null,null,null]; } catch(_) { return [null,null,null]; }
@@ -3123,6 +3128,9 @@ function _surfApplySave(save) {
 function _surfPromptSave(slot) {
   const saves=_surfGetSaves(), def=saves[slot]?.name||'Surface — Day '+S.day;
   const name=prompt('Name this save:',def); if (name===null) return;
+  // Sync gold + inv onto captain so the save snapshot is consistent
+  S.captain.gold = S.gold;
+  S.captain.inv  = S.captain.inv || [];
   const save=_surfBuildSave(name.trim()||def); saves[slot]=save;
   try { localStorage.setItem(_SURF_SAVE_KEY,JSON.stringify(saves)); } catch(_) {}
   saveCaptain(S.captain);  // keep captain.js in sync with manual save
@@ -3143,8 +3151,12 @@ function _surfDeleteSlot(slot) {
 }
 function surfAutoSave() {
   if (!S._indexEntry && !S.captain.gearGiven) return;
-  try { localStorage.setItem(SURF_AUTO_KEY,JSON.stringify(_surfBuildSave('Auto'))); } catch(_) {}
-  // Keep captain.js localStorage in sync with every autosave
+  // Sync gold + inv onto captain before every autosave so captain.js
+  // always holds the most current values, even mid-session.
+  S.captain.gold = S.gold;
+  S.captain.inv  = S.captain.inv || [];
+  try { localStorage.setItem(SURF_AUTO_KEY, JSON.stringify(_surfBuildSave('Auto'))); } catch(_) {}
+  // captain.js localStorage — single source of truth for gold + inv
   saveCaptain(S.captain);
 }
 
@@ -3477,24 +3489,16 @@ function isNearDock() {
 }
 
 // Override returnToShip to require dock proximity
-const _originalReturnToShip = typeof returnToShip !== 'undefined' ? returnToShip : null;
+// ── returnToShip — dock-proximity gate + core exit ───────────────────────
+// This is the canonical returnToShip called from UI buttons.
+// It checks dock proximity then delegates to _surfExitToShip().
 function returnToShip() {
   if (!isNearDock()) {
     setStatus('You must return to your ship at the dock — follow the path south.');
     sfx('npc_interact', 0.3);
     return;
   }
-  surfAutoSave();
-  closeDlg();
-  const ov = document.getElementById('transition-overlay');
-  if (ov) { ov.style.opacity='1'; ov.style.transition='opacity 0.5s'; }
-  setTimeout(() => {
-    try {
-      localStorage.setItem('fentheris_surface_exit', JSON.stringify(buildExitData()));
-      localStorage.setItem('fentheris_surface_return', '1');
-    } catch(e) {}
-    window.location.href = 'index.html';
-  }, 500);
+  _surfExitToShip();
 }
 
 // Draw ship in dock — procedural pixel art based on G.ship.type from index entry

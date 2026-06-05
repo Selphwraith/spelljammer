@@ -18638,50 +18638,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (b) { b.classList.add('hidden'); b.style.display = 'none'; }
 
   // ── Surface exit handshake ───────────────────────────────────────────────
-  // When the player returns from surface.html, apply the time/gold delta.
-  try {
-    const raw = localStorage.getItem('fentheris_surface_exit');
-    if (raw) {
-      localStorage.removeItem('fentheris_surface_exit');
-      const d = JSON.parse(raw);
-      if (G && G.watch) {
-        const h = d.hoursSpent || 0;
-        G.watch.totalHours = (G.watch.totalHours || 0) + h;
-        G.watch.hoursAwake = (G.watch.hoursAwake || 0) + h;
-        // Day crossings
-        const prevM = Math.floor(((G.watch.totalHours - h) + 6) / 24);
-        const newM  = Math.floor((G.watch.totalHours + 6) / 24);
-        for (let i = 0; i < newM - prevM; i++) {
-          G.watch.day++;
-          G.travelDays = (G.travelDays || 0) + 1;
-          G.ship.air = Math.max(0, G.ship.air - 1);
-          if (G.ship.air <= 0) { doDefeat('air'); return; }
-        }
-        if (d.gold != null) G.ship.gold = d.gold;
-        // sessionStorage packet is authoritative — apply captain unconditionally
-        if (d.captain) {
-          G.captain = d.captain;
-        } else {
-          G.captain = loadCaptain();
-        }
-        // Sync ship from captain (single source of truth)
-        G.ship.gold = d.gold != null ? d.gold : (G.captain.gold || G.ship.gold);
-        G.ship.inv  = d.shipInv || G.captain.inv || [];
-        // Keep captain object in sync with ship
-        G.captain.gold = G.ship.gold;
-        G.captain.inv  = G.ship.inv;
-        // Write to localStorage — permanent save updated after transition
-        saveCaptain(G.captain);
-        // Save surface quest state for next descent
-        if (d.quest)       G._surfaceQuest  = d.quest;
-        if (d.nfQuestTier != null) G._surfaceNfTier = d.nfQuestTier;
-        addLog(`Returned from the surface of Fentheris. ${h.toFixed(1)} hours elapsed.`, '');
-        updateWatchHUD(); updateUI();
-        // Reopen LS if we were in the Realm sphere
-        if (G.ship?.loc === 'realm') setTimeout(() => openLocalSpace(), 400);
-      }
-    }
-  } catch(e) {}
+  // NOTE: fentheris_surface_exit is intentionally NOT read or deleted here.
+  // At DOMContentLoaded time G is just {} — G.watch doesn't exist yet.
+  // The exit payload is consumed inside _applyLoad() which runs after
+  // the game object is fully constructed. Deleting it here was a bug that
+  // prevented _applyLoad's pre-patch from ever finding the key.
 });
 
 function bpTab(tabId) {
@@ -18836,12 +18797,12 @@ function loadFromSlot(slot) {
 }
 
 // Load directly from a save entry object — used by surface return fast-path
-function loadFromEntry(entry) {
+function loadFromEntry(entry, fromSurface) {
   if (!entry) return;
-  _applyLoad(entry);
+  _applyLoad(entry, fromSurface);
 }
 
-function _applyLoad(save) {
+function _applyLoad(save, fromSurface) {
   // Pre-load: patch save.data with surface exit payload BEFORE parsing state
   // so that G = { ship: {...state.ship} } already has the correct inv/gold.
   let _preExitData = null;
@@ -19038,6 +18999,43 @@ function _applyLoad(save) {
       if (_preExitData.nfQuestTier != null) G._surfaceNfTier = _preExitData.nfQuestTier;
       saveCaptain(G.captain);
       addLog('Returned from Fentheris surface. Cargo: ' + G.ship.inv.length + ' item(s).', 'gd');
+    }
+
+    // ── Surface return: captain.js is the single source of truth ─────────────
+    // When returning from surface.html, fentheris_captain was written by
+    // buildExitData() / saveCaptain() with the post-surface gold and inv.
+    // The autosave was written at descent time and holds pre-surface values.
+    // Override G.ship gold + inv from the authoritative captain save now,
+    // so the HUD and cargo panel reflect what the player actually has.
+    // (fromSurface is true; _preExitData being set is a belt-and-suspenders
+    //  secondary path — both converge here for maximum reliability.)
+    if (fromSurface) {
+      const _cap = loadCaptain();
+      G.captain      = _cap;
+      G.ship.gold    = _cap.gold;
+      G.ship.inv     = Array.isArray(_cap.inv) ? [..._cap.inv] : [];
+      // Keep captain's inv array pointing at the same array as ship
+      _cap.inv = G.ship.inv;
+      // Quest/surface state from exit payload if it wasn't already applied above
+      if (!_preExitData) {
+        try {
+          const _exitRaw = localStorage.getItem('fentheris_surface_exit');
+          if (_exitRaw) {
+            const _ed = JSON.parse(_exitRaw);
+            localStorage.removeItem('fentheris_surface_exit');
+            const _h = _ed.hoursSpent || 0;
+            if (G.watch) {
+              G.watch.totalHours = (G.watch.totalHours||0) + _h;
+              G.watch.hoursAwake = (G.watch.hoursAwake||0) + _h;
+            }
+            if (_ed.quest)              G._surfaceQuest  = _ed.quest;
+            if (_ed.nfQuestTier != null) G._surfaceNfTier = _ed.nfQuestTier;
+          }
+        } catch(_ex) {}
+      }
+      addLog('Returned from Fentheris surface. Cargo: ' + G.ship.inv.length + ' item(s).', 'gd');
+      // Reopen LS if the player was in Realm sphere before descending
+      if (G.ship?.loc === 'realm') setTimeout(() => openLocalSpace(), 400);
     }
     // ────────────────────────────────────────────────────────────────────
     updateUI(); updateFragUI(); updateWatchHUD();
@@ -20989,26 +20987,21 @@ function descendToSurface() {
   }
   // Write autosave now so the surface return fast-path restores current state
   _writeAutoSave();
-  // Build the captain object — merge existing captain data with full ship inv.
-  // gearGiven:true prevents initStarterGear from pushing duplicate starter items
-  // onto the already-populated inv on every subsequent descent.
-  // Sync ship state onto captain before packing — ship is authoritative in index
+  // Sync ship gold + inv onto captain BEFORE writing autosave so the autosave
+  // and fentheris_captain both reflect the current pre-descent state.
+  // (ship is authoritative in index.html; captain is authoritative on surface.)
   if (G.captain) {
     G.captain.inv  = G.ship.inv  || G.captain.inv || [];
-    G.captain.gold = G.ship.gold || G.captain.gold || 0;
-    saveCaptain(G.captain);   // update localStorage too
+    G.captain.gold = G.ship.gold != null ? G.ship.gold : (G.captain.gold || 0);
+    G.captain.gearGiven = true;
+    saveCaptain(G.captain);
   }
-  const _capEntry = {
-    ...(G.captain || {}),
-    inv:       G.ship.inv || [],
-    gearGiven: true,
-  };
   const entry = {
     day:        G.watch?.day        || 1,
     totalHours: G.watch?.totalHours || 0,
     hoursAwake: G.watch?.hoursAwake || 0,
     gold:       G.ship.gold,
-    captain:    _capEntry,
+    captain:    { ...(G.captain || {}), inv: G.ship.inv || [], gearGiven: true },
     shipType:   G.ship.type  || 'pinnace',
     shipName:   G.ship.name  || 'Your Vessel',
     // Quest state — restored on surface by loadEntryData
@@ -27369,7 +27362,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (_vid) { try { _vid.pause(); } catch(_) {} }
         // Skip external intro trigger if it fires later
         window._skipIntroVideoExternal = function() {};
-        loadFromEntry(_savedEntry);
+        loadFromEntry(_savedEntry, /* fromSurface= */ true);
         return; // skip showMainMenu — game is now running
       }
     }

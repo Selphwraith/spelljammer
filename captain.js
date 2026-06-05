@@ -1,19 +1,26 @@
 /**
- * captain.js — Fentheris shared captain data layer  v3
+ * captain.js — Fentheris shared captain data layer  v4
  * =====================================================
- * DESIGN RULES (per ChatGPT audit):
+ * ARCHITECTURE (ChatGPT audit — single source of truth):
  *
- *   sessionStorage = authoritative DURING page transitions
- *   localStorage   = authoritative BETWEEN browser sessions (permanent save)
+ *   localStorage['fentheris_captain'] owns ALL player RPG state:
+ *     gold, inv, level, xp, hp, gear, etc.
  *
- *   Never let localStorage overwrite data just passed through sessionStorage.
- *   No merging. No gearGiven gating on inventory.
- *   Inventory stored once on the captain object — G.ship.inv references it.
+ *   localStorage['fentheris_autosave'] owns WORLD state ONLY:
+ *     sector, ship hull/crew/air, quest flags, map position,
+ *     faction rep, travel state, etc.
+ *     It does NOT need to be trusted for gold or inv on load.
+ *
+ *   _applyLoad() in index.html ALWAYS overrides G.ship.gold and
+ *   G.ship.inv from loadCaptain() after rebuilding from the autosave.
  *
  * TRANSITION FLOW:
- *   index  → surface : sessionStorage entry  (captain + gold)  wins on load
- *   surface → index  : sessionStorage exit   (captain + gold + inv) wins on load
- *   localStorage written after every mutation and after every transition
+ *   index  → surface : sessionStorage entry (captain + gold) sent
+ *   surface → index  : saveCaptain() called before navigation;
+ *                       loadCaptain() in _applyLoad() is authoritative.
+ *                       No sessionStorage handshake needed for gold/inv.
+ *
+ * MUTATION RULE: Every mutation must call saveCaptain(cap) immediately.
  *
  * USAGE:
  *   loadCaptain()    — read from localStorage (permanent save)
@@ -168,6 +175,18 @@ const Captain = {
     if (!mag) return false;
     Captain.removeFromInv(cap, mag.id, 1);
     cap.shotsLoaded = cap.ranged.shotsPerCombat || 3;
+    saveCaptain(cap);
+    return true;
+  },
+
+  addGold(cap, amount) {
+    cap.gold = (cap.gold || 0) + amount;
+    saveCaptain(cap);
+  },
+
+  spendGold(cap, amount) {
+    if ((cap.gold || 0) < amount) return false;
+    cap.gold -= amount;
     saveCaptain(cap);
     return true;
   },
