@@ -2713,6 +2713,7 @@ function _surfShopBuy(id) {
   else S.captain.inv.push({ id, name:def.name, type:def.type, qty:1,
     ...(def.heal  ? {heal:def.heal}  : {}),
     ...(def.shots ? {shots:def.shots}: {}) });
+  saveCaptain(S.captain);   // persist buy immediately
   sfx('purchase', 0.75);
   _shopMsg('Bought: ' + def.name + ' (−' + def.buyVal + ' TS)');
   _surfBuildShopGrid();
