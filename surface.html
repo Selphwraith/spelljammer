@@ -385,6 +385,121 @@ html, body {
   .inv-header { font-family:'Cinzel',serif; font-size:17px; letter-spacing:3px; color:#e8d5ff; }
   .inv-footer { font-size:9px; color:#665577; margin-top:6px; width:100%; max-width:640px; }
   .inv-detail-actions { display:flex; flex-direction:column; gap:5px; margin-top:6px; }
+
+  /* ── ⊞ HUD stats button ────────────────────────────────────── */
+  #surf-stats-btn {
+    width:32px; height:32px; border-radius:3px; flex-shrink:0;
+    background:rgba(20,5,45,0.88); border:1px solid rgba(102,51,170,0.45);
+    color:#9977cc; cursor:pointer; font-size:14px;
+    display:flex; align-items:center; justify-content:center;
+    transition:all 0.15s; margin-left:auto;
+    user-select:none; -webkit-user-select:none;
+  }
+  #surf-stats-btn:hover { border-color:#9966dd; color:#e8d5ff; background:rgba(40,10,80,0.95); }
+  #surf-stats-btn.active { border-color:#cc99ff; color:#e8d5ff; background:rgba(50,15,100,0.95); }
+
+  /* ── Stats panel overlay (matches index.html image 2) ─────── */
+  #surf-ovl-stats {
+    position:absolute; top:44px; left:0; right:0; bottom:0; z-index:45;
+    background:rgba(3,0,12,0.97); display:none; flex-direction:column;
+    align-items:center; overflow-y:auto; overflow-x:hidden;
+    -webkit-overflow-scrolling:touch; padding:14px 14px 24px; gap:10px;
+    pointer-events:none;
+  }
+  #surf-ovl-stats.on { display:flex; pointer-events:all; }
+  .surf-sp-titlerow {
+    display:flex; align-items:center; justify-content:space-between;
+    width:100%; max-width:640px; margin-bottom:2px;
+  }
+  .surf-sp-title { font-family:'Cinzel',serif; font-size:17px; letter-spacing:3px; color:#e8d5ff; }
+
+  /* ── Equipment overlay ─────────────────────────────────────── */
+  #surf-ovl-equip {
+    position:absolute; top:44px; left:0; right:0; bottom:0; z-index:46;
+    background:rgba(3,0,12,0.98); display:none; flex-direction:column;
+    align-items:center; overflow-y:auto; overflow-x:hidden;
+    -webkit-overflow-scrolling:touch; padding:14px 14px 24px; gap:10px;
+    pointer-events:none;
+  }
+  #surf-ovl-equip.on { display:flex; pointer-events:all; }
+
+  /* Portrait + slots row */
+  .eqp-main-row {
+    display:flex; gap:12px; width:100%; max-width:640px;
+  }
+  .eqp-portrait-wrap {
+    width:110px; flex-shrink:0;
+    background:rgba(8,2,22,0.9); border:1px solid rgba(68,17,136,0.35);
+    border-radius:5px; overflow:hidden; display:flex; flex-direction:column;
+    align-items:center; justify-content:flex-end; min-height:140px;
+  }
+  #eqp-portrait-canvas { display:block; width:110px; height:140px; }
+  .eqp-portrait-label {
+    font-family:'Cinzel',serif; font-size:9px; color:#9977cc;
+    letter-spacing:1px; text-align:center; padding:4px 0;
+  }
+  .eqp-slots-wrap {
+    flex:1; display:grid; grid-template-columns:1fr 1fr; gap:8px; align-content:start;
+  }
+  .eqp-slot {
+    background:rgba(8,2,22,0.88); border:1px solid rgba(68,17,136,0.35);
+    border-radius:5px; padding:8px 6px; cursor:pointer; transition:all 0.15s;
+    display:flex; flex-direction:column; align-items:center; gap:4px; min-height:62px;
+    text-align:center;
+  }
+  .eqp-slot:hover { border-color:#9966dd; background:rgba(30,8,65,0.95); }
+  .eqp-slot.selected { border-color:#cc99ff; background:rgba(50,15,100,0.95); }
+  .eqp-slot.empty { opacity:0.5; border-style:dashed; }
+  .eqp-slot-label {
+    font-family:'Cinzel',serif; font-size:8px; letter-spacing:1px;
+    color:#665588; text-transform:uppercase;
+  }
+  .eqp-slot-ico { font-size:22px; line-height:1; }
+  .eqp-slot-name { font-size:9px; color:#c8b8e8; line-height:1.3; }
+  .eqp-slot-stat { font-size:8px; color:#8877aa; }
+
+  /* Pack section */
+  .eqp-pack-label {
+    font-family:'Cinzel',serif; font-size:9px; letter-spacing:2px; color:#665577;
+    text-transform:uppercase; width:100%; max-width:640px; padding-bottom:4px;
+    border-bottom:1px solid rgba(68,17,136,0.2);
+  }
+  .eqp-pack-grid {
+    display:grid; grid-template-columns:repeat(4,1fr); gap:6px;
+    width:100%; max-width:640px;
+  }
+  .eqp-pack-item {
+    background:rgba(18,4,40,0.85); border:1px solid rgba(51,0,68,0.4);
+    border-radius:4px; padding:8px 4px; text-align:center;
+    cursor:pointer; transition:all 0.15s; font-size:10px;
+  }
+  .eqp-pack-item:hover { border-color:#9966dd; background:rgba(40,10,80,0.9); }
+  .eqp-pack-item.selected { border-color:#cc99ff; background:rgba(60,20,100,0.9); }
+  .eqp-pack-empty {
+    font-size:10px; color:#554466; font-style:italic; padding:10px 0;
+    text-align:center; width:100%; max-width:640px;
+  }
+
+  /* Detail panel */
+  #eqp-detail {
+    width:100%; max-width:640px;
+    background:rgba(8,2,22,0.92); border:1px solid rgba(102,51,170,0.35);
+    border-radius:5px; padding:12px; display:none; flex-direction:column; gap:8px;
+  }
+  #eqp-detail.on { display:flex; }
+  .eqp-d-header { display:flex; align-items:center; gap:10px; }
+  .eqp-d-ico { font-size:28px; flex-shrink:0; }
+  .eqp-d-name { font-family:'Cinzel',serif; font-size:12px; color:#e8d5ff; }
+  .eqp-d-stat { font-size:10px; color:#cc99ff; }
+  .eqp-d-desc { font-size:10px; color:#9988bb; line-height:1.5; }
+  .eqp-d-compare {
+    background:rgba(4,1,12,0.8); border:1px solid rgba(51,17,85,0.3);
+    border-radius:3px; padding:7px 9px; font-size:9px; color:#8877aa; line-height:1.6;
+  }
+  .eqp-d-compare .better { color:#44cc88; }
+  .eqp-d-compare .worse  { color:#cc6655; }
+  .eqp-d-compare .same   { color:#8877aa; }
+  .eqp-d-actions { display:flex; gap:7px; flex-wrap:wrap; margin-top:2px; }
 </style>
 <!-- captain.js: shared captain data layer -->
 <script src="captain.js"></script>
@@ -404,6 +519,8 @@ html, body {
     <span class="hud-hp-mini"><span class="hud-hp-mini-fill" id="hud-cap-hpf" style="width:100%"></span></span>
     <span id="hud-cap-hp">30/30</span>
   </div>
+  <!-- ⊞ Stats panel toggle (mirrors index.html top-right button) -->
+  <button id="surf-stats-btn" onclick="surfToggleStatsPanel()" title="Captain Status">&#8862;</button>
 </div>
 
 <!-- Main canvas -->
@@ -433,8 +550,8 @@ html, body {
   <button class="hud-btn" id="btn-return" onclick="returnToShip()">&#9973; Return to Ship</button>
   <span id="dock-hint" style="font-size:9px;color:#665577;font-style:italic;">(must be at dock)</span>
   <button class="hud-btn" id="btn-rest"   onclick="surfaceRest()">&#127769; Rest</button>
-  <button class="hud-btn-sm ovl-btn" onclick="surfOpenOvl('stats')">&#9876; Captain</button>
   <button class="hud-btn-sm ovl-btn" onclick="surfOpenOvl('inv')">&#128230; Cargo</button>
+  <button class="hud-btn-sm ovl-btn" onclick="surfOpenOvl('equip')">&#9874; Equip</button>
   <button class="hud-btn-sm ovl-btn" onclick="surfOpenOvl('save')">&#128190; Log</button>
   <span id="status-text">Exploring the surface of Fentheris.</span>
 </div>
@@ -445,13 +562,77 @@ html, body {
   <canvas id="surf-minimap" width="110" height="110"></canvas>
 </div>
 
-<!-- Captain Stats Overlay (matches index.html ovlay style) -->
-<div class="ovlay" id="surf-ovl-stats">
-  <div class="ovl-title-row">
-    <div class="ovl-title">&#9876; CAPTAIN</div>
-    <button class="ovl-close-btn" onclick="surfCloseOvl('stats')">&#10005;</button>
+<!-- Captain Stats Panel (opens from ⊞ button — mirrors index.html sidebar) -->
+<div id="surf-ovl-stats">
+  <div class="surf-sp-titlerow">
+    <div class="surf-sp-title">&#8862; CAPTAIN STATUS</div>
+    <button class="ovl-close-btn" onclick="surfToggleStatsPanel()">&#10005;</button>
   </div>
-  <div id="surf-stats-body" style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:640px;"></div>
+
+  <!-- YOUR CAPTAIN -->
+  <div class="pbox" style="width:100%;max-width:640px;">
+    <div class="ptitle">&#9876; Your Captain</div>
+    <div id="sp-cap-rows"></div>
+  </div>
+
+  <!-- EQUIPPED GEAR -->
+  <div class="pbox" style="width:100%;max-width:640px;">
+    <div class="ptitle">&#9874; Equipped Gear</div>
+    <div id="sp-gear-rows"></div>
+  </div>
+
+  <!-- CARGO -->
+  <div class="pbox" style="width:100%;max-width:640px;">
+    <div class="ptitle">&#128230; Cargo</div>
+    <div class="srow"><span class="slabel">Items</span><span class="sval" id="sp-cargo-count">0</span></div>
+    <div class="srow"><span class="slabel">Est. Value</span><span class="sval" id="sp-cargo-val">0 TS</span></div>
+  </div>
+
+  <!-- OVERLAYS -->
+  <div class="pbox" style="width:100%;max-width:640px;">
+    <div class="ptitle">&#8862; Overlays</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:2px;">
+      <button class="ovl-btn" style="font-size:9px;padding:8px 4px;" onclick="surfToggleStatsPanel();surfOpenOvl('inv')">&#128230; Cargo</button>
+      <button class="ovl-btn" style="font-size:9px;padding:8px 4px;" onclick="surfToggleStatsPanel();surfOpenOvl('equip')">&#9874; Equipment</button>
+      <button class="ovl-btn" style="font-size:9px;padding:8px 4px;" onclick="surfToggleStatsPanel();surfOpenOvl('save')">&#128190; Log</button>
+    </div>
+  </div>
+</div>
+
+<!-- Equipment Overlay -->
+<div class="ovlay" id="surf-ovl-equip">
+  <div class="ovl-title-row">
+    <div class="ovl-title">&#9874; EQUIPMENT</div>
+    <button class="ovl-close-btn" onclick="surfCloseOvl('equip')">&#10005;</button>
+  </div>
+
+  <!-- Portrait + Gear Slots -->
+  <div class="eqp-main-row">
+    <div class="eqp-portrait-wrap">
+      <canvas id="eqp-portrait-canvas" width="110" height="140"></canvas>
+      <div class="eqp-portrait-label">Captain</div>
+    </div>
+    <div class="eqp-slots-wrap" id="eqp-slots"></div>
+  </div>
+
+  <!-- Pack — equippable items -->
+  <div class="eqp-pack-label">Pack &#8212; Equippable Items</div>
+  <div class="eqp-pack-grid" id="eqp-pack-grid"></div>
+  <div class="eqp-pack-empty" id="eqp-pack-empty" style="display:none;">No equippable items in pack.</div>
+
+  <!-- Detail panel -->
+  <div id="eqp-detail">
+    <div class="eqp-d-header">
+      <div class="eqp-d-ico" id="eqp-d-ico">&#9876;</div>
+      <div>
+        <div class="eqp-d-name" id="eqp-d-name">—</div>
+        <div class="eqp-d-stat" id="eqp-d-stat"></div>
+      </div>
+    </div>
+    <div class="eqp-d-desc" id="eqp-d-desc"></div>
+    <div class="eqp-d-compare" id="eqp-d-compare" style="display:none;"></div>
+    <div class="eqp-d-actions" id="eqp-d-actions"></div>
+  </div>
 </div>
 
 <!-- Cargo / Inventory Overlay (matches index.html ov-inv exactly) -->
@@ -516,8 +697,9 @@ html, body {
 
   <!-- NF bottom bar (mirrors village bottom bar) -->
   <div id="nf-bottom-bar" style="height:52px;flex-shrink:0;background:rgba(4,0,13,0.96);border-top:1px solid rgba(68,17,136,0.4);display:flex;align-items:center;gap:8px;padding:0 12px;z-index:2;">
-    <button class="hud-btn-sm ovl-btn" onclick="surfOpenOvl('stats')">&#9876; Captain</button>
+    <button class="hud-btn-sm ovl-btn" onclick="surfToggleStatsPanel()">&#8862; Status</button>
     <button class="hud-btn-sm ovl-btn" onclick="surfOpenOvl('inv')">&#128230; Cargo</button>
+    <button class="hud-btn-sm ovl-btn" onclick="surfOpenOvl('equip')">&#9874; Equip</button>
     <button class="hud-btn-sm ovl-btn" onclick="surfOpenOvl('save')">&#128190; Log</button>
     <span id="nf-status-text" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:#7766aa;font-style:italic;">Northern Field</span>
   </div>
@@ -2766,71 +2948,453 @@ function _shopMsg(t) {
 
 
 // ── Overlay open/close (mirrors openOverlay/closeOverlay in index.html) ────────
-const _SURF_OVLS = ['stats','inv','save'];
+const _SURF_OVLS = ['stats','inv','save','equip'];
+
+// ── Stats panel toggle (⊞ button) ────────────────────────────────────────────
+function surfToggleStatsPanel() {
+  const el  = document.getElementById('surf-ovl-stats');
+  const btn = document.getElementById('surf-stats-btn');
+  if (!el) return;
+  const isOpen = el.classList.contains('on');
+  // Close all standard overlays
+  ['inv','save','equip'].forEach(k => {
+    const oe = document.getElementById('surf-ovl-'+k);
+    if (oe) oe.classList.remove('on');
+  });
+  if (isOpen) {
+    el.classList.remove('on');
+    if (btn) btn.classList.remove('active');
+  } else {
+    el.classList.add('on');
+    if (btn) btn.classList.add('active');
+    _buildStatsPanel();
+  }
+}
+
 function surfOpenOvl(id) {
-  _SURF_OVLS.forEach(k => {
+  if (id === 'stats') { surfToggleStatsPanel(); return; }
+  // Close non-stats overlays
+  ['inv','save','equip'].forEach(k => {
     const el = document.getElementById('surf-ovl-'+k);
     if (el) { el.classList.remove('on'); el.style.zIndex=''; }
   });
   const el = document.getElementById('surf-ovl-'+id);
   if (!el) return;
   el.classList.add('on');
-  // If Northern Field is active, boost z-index above the NF overlay (z:40)
-  if (NF.active) el.style.zIndex = '500';  // must beat NF overlay z-index:50
-  if (id==='stats') _buildStats();
+  if (NF.active) el.style.zIndex = '500';
+  if (id==='equip') _buildEquipScreen();
   if (id==='inv') { _surfInvFilter='all'; document.querySelectorAll('#surf-inv-filters .fbtn').forEach((b,i)=>b.classList.toggle('act',i===0)); surfBuildInvGrid(); }
-  if (id==='save')  _surfBuildSaveSlots();
+  if (id==='save') _surfBuildSaveSlots();
 }
+
 function surfCloseOvl(id) {
+  if (id === 'stats') { surfToggleStatsPanel(); return; }
   const el = document.getElementById('surf-ovl-'+id);
   if (el) el.classList.remove('on');
+  if (id === 'equip') _eqpSel = null;
 }
+
 function _surfAnyOvlOpen() {
   return _SURF_OVLS.some(k => {
     const el = document.getElementById('surf-ovl-'+k);
     return el && el.classList.contains('on');
   });
 }
+
 function _surfCloseAll() {
-  _SURF_OVLS.forEach(k => surfCloseOvl(k));
+  const sp = document.getElementById('surf-ovl-stats');
+  const sb = document.getElementById('surf-stats-btn');
+  if (sp) sp.classList.remove('on');
+  if (sb) sb.classList.remove('active');
+  ['inv','save','equip'].forEach(k => {
+    const el = document.getElementById('surf-ovl-'+k);
+    if (el) el.classList.remove('on');
+  });
   closeSurfShop();
 }
 
-// ── Stats overlay (pbox panels, mirrors index.html sidebar style) ─────────────
-function _buildStats() {
-  const el = document.getElementById('surf-stats-body'); if (!el) return;
+// ── Stats panel builder (mirrors index.html image-2 sidebar) ─────────────────
+function _buildStatsPanel() {
   const cap = S.captain;
-  const xpPct = Math.min(100, cap.xp / xpToNext(cap.level) * 100).toFixed(1);
-  const hpPct = Math.min(100, cap.hp / cap.maxHp * 100).toFixed(1);
-  const shotsPct = cap.ranged ? Math.min(100,(cap.shotsLoaded||0)/cap.ranged.shotsPerCombat*100).toFixed(1) : 0;
-  el.innerHTML =
-    '<div class="pbox">'
-    +'<div class="ptitle">&#9876; Your Captain</div>'
-    +'<div class="srow"><span class="slabel">Level</span><span class="sval">'+cap.level+'</span></div>'
+  const xpNext = xpToNext(cap.level);
+  const hpPct  = Math.min(100, (cap.hp  / (cap.maxHp  || 1)) * 100).toFixed(1);
+  const xpPct  = Math.min(100, (cap.xp  / (xpNext     || 1)) * 100).toFixed(1);
+  const shotsPct = cap.ranged
+    ? Math.min(100, ((cap.shotsLoaded||0) / (cap.ranged.shotsPerCombat||1)) * 100).toFixed(1)
+    : 0;
+
+  // YOUR CAPTAIN section
+  const capRows = document.getElementById('sp-cap-rows');
+  if (capRows) capRows.innerHTML =
+    '<div class="srow"><span class="slabel">Level</span><span class="sval">'+cap.level+'</span></div>'
     +'<div class="srow"><span class="slabel">HP</span><span class="sval">'+cap.hp+' / '+cap.maxHp+'</span></div>'
     +'<div class="bw"><div class="bf bh" style="width:'+hpPct+'%"></div></div>'
-    +'<div class="srow" style="margin-top:2px;"><span class="slabel">XP</span><span class="sval">'+cap.xp+' / '+xpToNext(cap.level)+'</span></div>'
+    +'<div class="srow" style="margin-top:2px;"><span class="slabel">XP</span><span class="sval">'+cap.xp+' / '+xpNext+'</span></div>'
     +'<div class="bw"><div class="bf bx" style="width:'+xpPct+'%"></div></div>'
     +'<div class="srow" style="margin-top:2px;"><span class="slabel">Defense</span><span class="sval">'+cap.defense+'</span></div>'
     +'<div class="srow"><span class="slabel">Gold</span><span class="sval">'+S.gold+' TS</span></div>'
-    +'</div>'
-    +'<div class="pbox">'
-    +'<div class="ptitle">&#9874; Equipped Gear</div>'
-    +(cap.armor  ? '<div class="srow"><span class="slabel">Armor</span><span class="sval">'+cap.armor.name+' +'+cap.armor.hpBonus+' HP</span></div>' : '')
-    +(cap.helmet ? '<div class="srow"><span class="slabel">Helmet</span><span class="sval">'+cap.helmet.name+' +'+cap.helmet.hpBonus+' HP</span></div>' : '')
-    +(cap.melee  ? '<div class="srow"><span class="slabel">Melee</span><span class="sval">'+cap.melee.name+' '+cap.melee.dmgMin+'-'+cap.melee.dmgMax+'dmg</span></div>' : '')
-    +(cap.ranged ? '<div class="srow"><span class="slabel">Ranged</span><span class="sval">'+cap.ranged.name+' '+cap.ranged.dmgMin+'-'+cap.ranged.dmgMax+'dmg</span></div>' : '')
-    +(cap.ranged ? '<div class="srow"><span class="slabel">Shots</span><span class="sval">'+(cap.shotsLoaded||0)+' / '+cap.ranged.shotsPerCombat+'</span></div>'
-      +'<div class="bw"><div class="bf ba" style="width:'+shotsPct+'%"></div></div>' : '')
-    +'</div>'
-    +'<div class="pbox">'
-    +'<div class="ptitle">&#128336; Session</div>'
-    +'<div class="srow"><span class="slabel">Day</span><span class="sval">'+S.day+'</span></div>'
-    +'<div class="srow"><span class="slabel">Hours Awake</span><span class="sval">'+(S.hoursAwake||0).toFixed(1)+'</span></div>'
-    +'<div class="srow"><span class="slabel">Enemies Alive</span><span class="sval">'+S.enemies.filter(e=>e.alive).length+' / '+S.enemies.length+'</span></div>'
-    +'<div class="srow"><span class="slabel">Pack Items</span><span class="sval">'+cap.inv.length+'</span></div>'
-    +'</div>';
+    +'<div class="srow"><span class="slabel">Day</span><span class="sval">'+S.day+' &mdash; Awake '+(S.hoursAwake||0).toFixed(1)+'h</span></div>';
+
+  // EQUIPPED GEAR section
+  const gearRows = document.getElementById('sp-gear-rows');
+  const GEAR_ICONS = { melee:'⚔️', ranged:'🔫', armor:'🛡️', helmet:'⛑️' };
+  if (gearRows) gearRows.innerHTML =
+    (cap.melee  ? '<div class="srow"><span class="slabel">'+GEAR_ICONS.melee +'&nbsp;Melee</span><span class="sval">'+cap.melee.name +' &nbsp;'+cap.melee.dmgMin +'-'+cap.melee.dmgMax +'dmg</span></div>' : '<div class="srow"><span class="slabel">⚔️&nbsp;Melee</span><span class="sval" style="color:#443355;">— Empty —</span></div>')
+    +(cap.ranged ? '<div class="srow"><span class="slabel">'+GEAR_ICONS.ranged+'&nbsp;Ranged</span><span class="sval">'+cap.ranged.name+' &nbsp;'+cap.ranged.dmgMin+'-'+cap.ranged.dmgMax+'dmg</span></div>'
+                  +(cap.ranged ? '<div class="bw"><div class="bf ba" style="width:'+shotsPct+'%"></div></div>' : '')
+                 : '<div class="srow"><span class="slabel">🔫&nbsp;Ranged</span><span class="sval" style="color:#443355;">— Empty —</span></div>')
+    +(cap.armor  ? '<div class="srow"><span class="slabel">'+GEAR_ICONS.armor +'&nbsp;Armor</span><span class="sval">'+cap.armor.name +' &nbsp;+'+cap.armor.hpBonus +'HP&nbsp;'+cap.armor.def +'DEF</span></div>' : '<div class="srow"><span class="slabel">🛡️&nbsp;Armor</span><span class="sval" style="color:#443355;">— Empty —</span></div>')
+    +(cap.helmet ? '<div class="srow"><span class="slabel">'+GEAR_ICONS.helmet+'&nbsp;Helmet</span><span class="sval">'+cap.helmet.name+' &nbsp;+'+cap.helmet.hpBonus+'HP&nbsp;'+cap.helmet.def+'DEF</span></div>' : '<div class="srow"><span class="slabel">⛑️&nbsp;Helmet</span><span class="sval" style="color:#443355;">— Empty —</span></div>');
+
+  // CARGO
+  const cargoVal = S.captain.inv.reduce((a, i) => a + (_surfItemDef(i).val || 0) * (i.qty || 1), 0);
+  const cc = document.getElementById('sp-cargo-count'); if (cc) cc.textContent = S.captain.inv.length;
+  const cv = document.getElementById('sp-cargo-val');   if (cv) cv.textContent = cargoVal + ' TS';
 }
+
+// ══════════════════════════════════════════════════════════════════
+// EQUIPMENT SCREEN
+// ══════════════════════════════════════════════════════════════════
+const EQP_SLOTS = [
+  { id:'melee',  label:'Melee',  ico:'⚔️',  type:'melee'  },
+  { id:'ranged', label:'Ranged', ico:'🔫', type:'ranged' },
+  { id:'armor',  label:'Armor',  ico:'🛡️',  type:'armor'  },
+  { id:'helmet', label:'Helmet', ico:'⛑️',  type:'helmet' },
+];
+
+// Which item/slot is currently selected: { source:'slot'|'pack', slotId, item }
+let _eqpSel = null;
+
+function _eqpItemType(item) {
+  // Infer equip slot from item properties
+  if (item.type === 'melee'  || (item.dmgMin != null && !item.shotsPerCombat)) return 'melee';
+  if (item.type === 'ranged' || item.shotsPerCombat) return 'ranged';
+  if (item.type === 'armor'  || (item.hpBonus != null && item.def != null && !item.hpBonus2)) return 'armor';
+  if (item.type === 'helmet') return 'helmet';
+  // Fallback: check explicit type field
+  return item.type || null;
+}
+
+function _eqpItemStat(item, type) {
+  if (!item) return '— Empty —';
+  if (type === 'melee')  return (item.dmgMin||0)+'-'+(item.dmgMax||0)+' dmg';
+  if (type === 'ranged') return (item.dmgMin||0)+'-'+(item.dmgMax||0)+' dmg · '+(item.shotsPerCombat||3)+' shots';
+  if (type === 'armor' || type === 'helmet') return '+'+(item.hpBonus||0)+' HP · '+(item.def||0)+' DEF';
+  return '';
+}
+
+function _eqpItemIco(item, type) {
+  if (!item) return { melee:'⚔️', ranged:'🔫', armor:'🛡️', helmet:'⛑️' }[type] || '📦';
+  if (item.ico) return item.ico;
+  return { melee:'⚔️', ranged:'🔫', armor:'🛡️', helmet:'⛑️' }[type] || '📦';
+}
+
+// Draw procedural captain portrait on canvas
+function _drawCaptainPortrait(canvas) {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Background
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, 'rgba(15,5,35,0.0)');
+  bg.addColorStop(1, 'rgba(8,2,22,0.8)');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle floor glow
+  const fg = ctx.createRadialGradient(W/2, H*0.9, 2, W/2, H*0.9, 40);
+  fg.addColorStop(0, 'rgba(100,60,200,0.22)');
+  fg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = fg; ctx.fillRect(0, 0, W, H);
+
+  const cx = W / 2;
+  const cap = S.captain;
+  // Simple pixel-art style captain silhouette
+  const px = (x, y, w, h, col) => { ctx.fillStyle = col; ctx.fillRect(cx + x, y, w, h); };
+
+  // Boots
+  px(-11, H-16, 10, 12, '#2a1a0a'); px(2, H-16, 10, 12, '#2a1a0a');
+  // Legs
+  px(-9, H-36, 8, 22, '#1e1440'); px(2, H-36, 8, 22, '#1e1440');
+  // Armor body / torso
+  const armorCol = cap.armor ? '#2a1e50' : '#241840';
+  px(-14, H-72, 28, 38, armorCol);
+  // Armor highlights
+  px(-12, H-70, 4, 6, 'rgba(180,140,255,0.2)');
+  // Belt
+  px(-14, H-38, 28, 5, '#3a2a08');
+  // Arms
+  px(-20, H-70, 7, 28, armorCol); px(14, H-70, 7, 28, armorCol);
+  // Melee weapon (right hand) — show if equipped
+  if (cap.melee) {
+    ctx.strokeStyle = '#c8a060'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx+20, H-70); ctx.lineTo(cx+26, H-96); ctx.stroke();
+    // Guard
+    px(18, H-72, 8, 3, '#8a6030');
+  }
+  // Ranged weapon (left hand)
+  if (cap.ranged) {
+    ctx.fillStyle = '#3a3a4a';
+    ctx.fillRect(cx-28, H-62, 14, 7);
+    ctx.fillStyle = '#5a5a6a';
+    ctx.fillRect(cx-30, H-63, 4, 9);
+  }
+  // Neck
+  px(-4, H-80, 8, 10, '#c89870');
+  // Head
+  const helmetCol = cap.helmet ? '#2a2060' : '#c89870';
+  // Face
+  px(-9, H-106, 18, 24, '#c89870');
+  // Helmet
+  if (cap.helmet) {
+    px(-11, H-110, 22, 12, helmetCol);
+    px(-13, H-112, 26, 6, '#1a1450'); // brim
+    // Visor slit
+    px(-7, H-104, 6, 3, 'rgba(100,200,255,0.55)');
+    px(2, H-104, 6, 3, 'rgba(100,200,255,0.55)');
+  } else {
+    // Hair
+    px(-10, H-108, 20, 6, '#1a0a04');
+  }
+  // Eyes
+  px(-5, H-96, 4, 3, '#2a1820');
+  px(2, H-96, 4, 3, '#2a1820');
+  // Eye glow (alive!)
+  ctx.fillStyle = 'rgba(180,120,255,0.7)';
+  ctx.fillRect(cx-4, H-95, 2, 1);
+  ctx.fillRect(cx+3, H-95, 2, 1);
+  // Level indicator (small badge)
+  const lvBadge = ctx.createRadialGradient(cx+11, H-108, 0, cx+11, H-108, 9);
+  lvBadge.addColorStop(0, 'rgba(140,80,255,0.95)');
+  lvBadge.addColorStop(1, 'rgba(60,20,120,0.85)');
+  ctx.fillStyle = lvBadge;
+  ctx.beginPath(); ctx.arc(cx+11, H-108, 9, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = 'rgba(200,160,255,0.6)'; ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = '#e8d5ff';
+  ctx.font = 'bold 8px "Courier New"';
+  ctx.textAlign = 'center';
+  ctx.fillText(cap.level, cx+11, H-104);
+  ctx.textAlign = 'left';
+}
+
+function _buildEquipScreen() {
+  const cap = S.captain;
+  _eqpSel = null;
+
+  // Draw portrait
+  _drawCaptainPortrait(document.getElementById('eqp-portrait-canvas'));
+
+  // Build gear slots
+  const slotsEl = document.getElementById('eqp-slots');
+  if (slotsEl) {
+    slotsEl.innerHTML = '';
+    EQP_SLOTS.forEach(s => {
+      const equipped = cap[s.id];
+      const d = document.createElement('div');
+      d.className = 'eqp-slot' + (equipped ? '' : ' empty');
+      d.id = 'eqp-slot-'+s.id;
+      d.innerHTML =
+        '<div class="eqp-slot-label">'+s.label+'</div>'
+        +'<div class="eqp-slot-ico">'+(equipped ? _eqpItemIco(equipped, s.id) : s.ico)+'</div>'
+        +'<div class="eqp-slot-name">'+(equipped ? (equipped.name||'?') : '— empty —')+'</div>'
+        +'<div class="eqp-slot-stat">'+(equipped ? _eqpItemStat(equipped, s.id) : '')+'</div>';
+      d.onclick = () => _eqpClickSlot(s.id);
+      slotsEl.appendChild(d);
+    });
+  }
+
+  // Build pack grid — only equippable items
+  _buildEqpPack();
+
+  // Hide detail panel
+  const det = document.getElementById('eqp-detail');
+  if (det) det.classList.remove('on');
+}
+
+function _buildEqpPack() {
+  const cap = S.captain;
+  const grid  = document.getElementById('eqp-pack-grid');
+  const empty = document.getElementById('eqp-pack-empty');
+  if (!grid) return;
+
+  const EQUIP_TYPES = new Set(['melee','ranged','armor','helmet']);
+  const equippable = (cap.inv || []).filter(item => {
+    const t = _eqpItemType(item);
+    return EQUIP_TYPES.has(t);
+  });
+
+  grid.innerHTML = '';
+  if (!equippable.length) {
+    grid.style.display = 'none';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  grid.style.display = 'grid';
+  if (empty) empty.style.display = 'none';
+
+  equippable.forEach(item => {
+    const type = _eqpItemType(item);
+    const ico  = _eqpItemIco(item, type);
+    const stat = _eqpItemStat(item, type);
+    const d = document.createElement('div');
+    d.className = 'eqp-pack-item' + (_eqpSel?.item === item ? ' selected' : '');
+    d.innerHTML =
+      '<div style="font-size:22px;margin-bottom:3px;">'+ico+'</div>'
+      +'<div style="font-size:9px;color:#c8b8e8;line-height:1.3;">'+(item.name||item.n||item.id||'?')+'</div>'
+      +'<div style="font-size:8px;color:#8877aa;">'+stat+'</div>';
+    d.onclick = () => _eqpClickPackItem(item);
+    grid.appendChild(d);
+  });
+}
+
+function _eqpClickSlot(slotId) {
+  const cap      = S.captain;
+  const equipped = cap[slotId];
+  const slotDef  = EQP_SLOTS.find(s => s.id === slotId);
+
+  // Deselect if already selected
+  if (_eqpSel?.source === 'slot' && _eqpSel?.slotId === slotId) {
+    _eqpSel = null;
+    document.querySelectorAll('.eqp-slot').forEach(e => e.classList.remove('selected'));
+    document.querySelectorAll('.eqp-pack-item').forEach(e => e.classList.remove('selected'));
+    document.getElementById('eqp-detail')?.classList.remove('on');
+    return;
+  }
+
+  _eqpSel = { source:'slot', slotId, item: equipped };
+  document.querySelectorAll('.eqp-slot').forEach(e => e.classList.remove('selected'));
+  document.querySelectorAll('.eqp-pack-item').forEach(e => e.classList.remove('selected'));
+  document.getElementById('eqp-slot-'+slotId)?.classList.add('selected');
+
+  _showEqpDetail({
+    ico:    _eqpItemIco(equipped, slotId),
+    name:   equipped ? (equipped.name || '?') : '— '+slotDef.label+' Slot Empty —',
+    stat:   equipped ? _eqpItemStat(equipped, slotId) : '',
+    desc:   equipped ? '' : 'Nothing equipped in this slot. Select an item from your pack below.',
+    compare: null,
+    actions: equipped
+      ? [{ label:'Unequip', cls:'btn dmg', fn: () => _surfDoUnequip(slotId) }]
+      : [],
+  });
+}
+
+function _eqpClickPackItem(item) {
+  const cap  = S.captain;
+  const type = _eqpItemType(item);
+
+  if (_eqpSel?.source === 'pack' && _eqpSel?.item === item) {
+    _eqpSel = null;
+    document.querySelectorAll('.eqp-pack-item').forEach(e => e.classList.remove('selected'));
+    document.getElementById('eqp-detail')?.classList.remove('on');
+    return;
+  }
+
+  _eqpSel = { source:'pack', item, slotId: type };
+  document.querySelectorAll('.eqp-slot').forEach(e => e.classList.remove('selected'));
+  document.querySelectorAll('.eqp-pack-item').forEach(e => e.classList.remove('selected'));
+  // Highlight matching slot
+  document.getElementById('eqp-slot-'+type)?.classList.add('selected');
+
+  const currently = cap[type];
+  let compareHTML = null;
+  if (currently) {
+    const cur = _eqpItemStat(currently, type);
+    const nw  = _eqpItemStat(item, type);
+    // Build numeric comparison
+    const diffLines = [];
+    if (type === 'melee' || type === 'ranged') {
+      const cAvg = ((currently.dmgMin||0) + (currently.dmgMax||0)) / 2;
+      const nAvg = ((item.dmgMin||0) + (item.dmgMax||0)) / 2;
+      const diff = nAvg - cAvg;
+      diffLines.push('<span class="'+(diff>0?'better':diff<0?'worse':'same')+'">DMG '+(diff>0?'+':'')+diff.toFixed(1)+' vs '+currently.name+'</span>');
+      if (type === 'ranged' && item.shotsPerCombat != null) {
+        const sd = (item.shotsPerCombat||3) - (currently.shotsPerCombat||3);
+        if (sd !== 0) diffLines.push('<span class="'+(sd>0?'better':'worse')+'">Shots '+(sd>0?'+':'')+sd+'</span>');
+      }
+    } else {
+      const chp = (item.hpBonus||0) - (currently.hpBonus||0);
+      const cdef = (item.def||0) - (currently.def||0);
+      if (chp !== 0) diffLines.push('<span class="'+(chp>0?'better':'worse')+'">HP '+(chp>0?'+':'')+chp+' vs '+currently.name+'</span>');
+      if (cdef !== 0) diffLines.push('<span class="'+(cdef>0?'better':'worse')+'">DEF '+(cdef>0?'+':'')+cdef+'</span>');
+    }
+    compareHTML = (diffLines.length ? diffLines.join('&nbsp;&nbsp;') : 'Similar to '+currently.name);
+  }
+
+  _showEqpDetail({
+    ico:    _eqpItemIco(item, type),
+    name:   item.name || item.n || item.id || '?',
+    stat:   _eqpItemStat(item, type),
+    desc:   item.desc || '',
+    compare: currently
+      ? { html:'vs '+currently.name+': '+compareHTML, current:currently }
+      : null,
+    actions: [{ label:'Equip', cls:'btn gd', fn: () => _surfDoEquip(item, type) }],
+  });
+}
+
+function _showEqpDetail({ ico, name, stat, desc, compare, actions }) {
+  const det = document.getElementById('eqp-detail');
+  if (!det) return;
+  det.classList.add('on');
+  const icoEl  = document.getElementById('eqp-d-ico');  if (icoEl)  icoEl.textContent = ico;
+  const nameEl = document.getElementById('eqp-d-name'); if (nameEl) nameEl.textContent = name;
+  const statEl = document.getElementById('eqp-d-stat'); if (statEl) statEl.textContent = stat;
+  const descEl = document.getElementById('eqp-d-desc'); if (descEl) descEl.textContent = desc;
+  const cmpEl  = document.getElementById('eqp-d-compare');
+  if (cmpEl) {
+    if (compare) { cmpEl.style.display='block'; cmpEl.innerHTML = compare.html; }
+    else { cmpEl.style.display='none'; }
+  }
+  const actEl = document.getElementById('eqp-d-actions');
+  if (actEl) {
+    actEl.innerHTML = '';
+    (actions||[]).forEach(a => {
+      const b = document.createElement('button');
+      b.className = a.cls;
+      b.textContent = a.label;
+      b.onclick = a.fn;
+      actEl.appendChild(b);
+    });
+  }
+}
+
+function _surfDoEquip(item, slot) {
+  const cap  = S.captain;
+  const prev = cap[slot] || null;
+  // Remove from inv
+  cap.inv = (cap.inv || []).filter(i => i !== item);
+  // If something was already equipped, push it back to inv
+  if (prev) cap.inv.push(prev);
+  // Equip
+  cap[slot] = item;
+  recalcStats(cap);
+  saveCaptain(cap);
+  S.gold = cap.gold; // keep in sync
+  setStatus('Equipped: ' + (item.name || item.id) + '.');
+  updateHUD();
+  _eqpSel = null;
+  _buildEquipScreen(); // redraw
+}
+
+function _surfDoUnequip(slot) {
+  const cap  = S.captain;
+  const item = cap[slot];
+  if (!item) return;
+  cap.inv = cap.inv || [];
+  cap.inv.push(item);
+  cap[slot] = null;
+  recalcStats(cap);
+  saveCaptain(cap);
+  setStatus('Unequipped: ' + (item.name || item.id) + '.');
+  updateHUD();
+  _eqpSel = null;
+  _buildEquipScreen();
+}
+
+
 
 // ── Cargo / Inventory (mirrors buildInvGrid from index.html) ──────────────────
 let _surfInvFilter = 'all';
