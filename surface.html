@@ -1193,9 +1193,10 @@ function returnToShip() {
     try {
       const exitData = buildExitData();
 
-      // 2. Write exit payload to sessionStorage (fast-path handler reads this)
-      sessionStorage.setItem('fentheris_surface_exit', JSON.stringify(exitData));
-      sessionStorage.setItem('fentheris_surface_return', '1');
+      // Write to localStorage — reliable across all browsers.
+      // sessionStorage can be cleared on mobile (iOS Safari) between navigations.
+      localStorage.setItem('fentheris_surface_exit',   JSON.stringify(exitData));
+      localStorage.setItem('fentheris_surface_return', '1');
 
       // 3. ALSO patch the space autosave directly so _applyLoad gets correct
       //    inv/gold/captain even if the sessionStorage path fails for any reason.
@@ -1217,7 +1218,7 @@ function returnToShip() {
           localStorage.setItem(SPACE_AUTOSAVE_KEY, JSON.stringify(saved));
         } catch(_patchErr) {
           // Patch failed — sessionStorage path will handle it
-          console.warn('Autosave patch failed, falling back to sessionStorage exit handler');
+          console.warn('Autosave patch failed — localStorage exit payload is the fallback');
         }
       }
     } catch(e) {}
@@ -3131,7 +3132,7 @@ function _surfLoadSlot(slot) {
   const save=slot==='auto'?_surfGetAuto():_surfGetSaves()[slot]; if (!save) return;
   if (save.context==='surface') { _surfApplySave(save); surfCloseOvl('save'); }
   else if (confirm('Space save. Return to ship to load it?')) {
-    sessionStorage.setItem('fentheris_surface_return','1'); window.location.href='index.html';
+    localStorage.setItem('fentheris_surface_return','1'); window.location.href='index.html';
   }
 }
 function _surfDeleteSlot(slot) {
@@ -3489,8 +3490,8 @@ function returnToShip() {
   if (ov) { ov.style.opacity='1'; ov.style.transition='opacity 0.5s'; }
   setTimeout(() => {
     try {
-      sessionStorage.setItem('fentheris_surface_exit', JSON.stringify(buildExitData()));
-      sessionStorage.setItem('fentheris_surface_return', '1');
+      localStorage.setItem('fentheris_surface_exit', JSON.stringify(buildExitData()));
+      localStorage.setItem('fentheris_surface_return', '1');
     } catch(e) {}
     window.location.href = 'index.html';
   }, 500);

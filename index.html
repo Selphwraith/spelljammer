@@ -18640,9 +18640,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Surface exit handshake ───────────────────────────────────────────────
   // When the player returns from surface.html, apply the time/gold delta.
   try {
-    const raw = sessionStorage.getItem('fentheris_surface_exit');
+    const raw = localStorage.getItem('fentheris_surface_exit');
     if (raw) {
-      sessionStorage.removeItem('fentheris_surface_exit');
+      localStorage.removeItem('fentheris_surface_exit');
       const d = JSON.parse(raw);
       if (G && G.watch) {
         const h = d.hoursSpent || 0;
@@ -18846,10 +18846,10 @@ function _applyLoad(save) {
   // so that G = { ship: {...state.ship} } already has the correct inv/gold.
   let _preExitData = null;
   try {
-    const _pRaw = sessionStorage.getItem('fentheris_surface_exit');
+    const _pRaw = localStorage.getItem('fentheris_surface_exit');
     if (_pRaw) {
       _preExitData = JSON.parse(_pRaw);
-      sessionStorage.removeItem('fentheris_surface_exit');
+      localStorage.removeItem('fentheris_surface_exit');
       // Patch the save.data JSON string so state already has new values
       const _pState = JSON.parse(save.data);
       if (_preExitData.gold    != null) _pState.ship.gold = _preExitData.gold;
@@ -27353,9 +27353,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // If we're returning from surface.html, skip splash/cinematic entirely and
   // load the autosave directly. The exit payload is applied after G is ready.
   try {
-    const isSurfaceReturn = sessionStorage.getItem('fentheris_surface_return') === '1';
+    const isSurfaceReturn = localStorage.getItem('fentheris_surface_return') === '1';
     if (isSurfaceReturn) {
-      sessionStorage.removeItem('fentheris_surface_return');
+      localStorage.removeItem('fentheris_surface_return');
       const _savedEntry = getAutoSave();
       // Never restore a surface-context autosave on space-side return —
       // descendToSurface() always writes a clean space save before leaving.
