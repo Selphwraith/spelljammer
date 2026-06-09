@@ -122,6 +122,19 @@ canvas{display:block}
 }
 #defuseBar{width:100%;height:4px;background:#2a0a3a;border-radius:2px;}
 #defuseFill{height:100%;background:linear-gradient(90deg,#a030c0,#e080ff);border-radius:2px;width:0%;transition:width .05s;}
+#digWrap{
+  position:fixed;bottom:150px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.88);
+  border:1px solid rgba(180,120,40,.6);
+  border-radius:6px;padding:8px 18px 10px;
+  display:none;pointer-events:none;z-index:600;
+  text-align:center;min-width:160px;
+  box-shadow:0 0 20px rgba(160,100,20,.3);
+}
+#digLabel{font-size:9px;letter-spacing:3px;color:#c09040;text-transform:uppercase;margin-bottom:5px;}
+#digCountdown{font-size:22px;letter-spacing:2px;color:#f0c060;font-family:'Cinzel',serif;line-height:1;margin-bottom:5px;}
+#digBar{width:100%;height:4px;background:#1a1000;border-radius:2px;}
+#digFill{height:100%;background:linear-gradient(90deg,#804010,#f0a030);border-radius:2px;width:0%;transition:width .05s;}
 #ov{position:fixed;inset:0;background:rgba(10,8,5,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:999;}
 #ov h2{font-family:'Cinzel Decorative',serif;font-size:clamp(16px,3.5vw,30px);letter-spacing:6px;color:var(--gold);text-shadow:0 0 30px rgba(201,168,76,.5);}
 #ov p{font-size:10px;letter-spacing:2px;color:var(--dim);text-align:center;max-width:300px;line-height:1.9}
@@ -207,27 +220,64 @@ canvas{display:block}
 #profileOv{position:fixed;inset:0;background:rgba(8,6,3,.97);display:none;flex-direction:column;align-items:center;justify-content:flex-start;padding:24px 16px;z-index:999;overflow-y:auto;touch-action:pan-y;}
 #profileOv h2{font-family:'Cinzel Decorative',serif;font-size:clamp(14px,3vw,22px);letter-spacing:6px;color:var(--gold);margin-bottom:16px;}
 .profile-list{display:flex;flex-direction:column;gap:10px;width:100%;max-width:420px;margin-bottom:20px;}
-.profile-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:12px 16px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:12px;}
-.profile-card:hover{border-color:rgba(201,168,76,.4);background:rgba(201,168,76,.05);}
-.profile-card.active-profile{border-color:rgba(201,168,76,.7);background:rgba(201,168,76,.08);}
-.profile-card.expanded{flex-direction:column;align-items:stretch;cursor:default;}
-.profile-card.expanded:hover{border-color:rgba(201,168,76,.7);}
-.pc-card-top{display:flex;align-items:center;gap:12px;width:100%;}
+.profile-add{border:1px dashed rgba(255,255,255,.5);border-radius:6px;padding:16px;text-align:center;cursor:pointer;color:rgba(255,255,255,.75);font-size:11px;letter-spacing:3px;transition:all .2s;max-width:420px;width:100%;box-sizing:border-box;}
+.profile-add:hover,.profile-add:active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.08);}
+.pc-form{display:flex;flex-direction:column;gap:10px;width:100%;max-width:420px;margin-top:4px;}
+.pc-form-row{display:flex;flex-direction:column;gap:4px;}
+.pc-form-label{font-size:8px;letter-spacing:2px;color:rgba(255,255,255,.55);}
+.pc-form-input{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.35);border-radius:4px;padding:11px 12px;color:#fff;font-family:'Cinzel',serif;font-size:13px;letter-spacing:2px;outline:none;width:100%;box-sizing:border-box;}
+.pc-form-input:focus{border-color:var(--gold);background:rgba(201,168,76,.07);}
+.pc-form-input::placeholder{color:rgba(255,255,255,.22);}
+.pc-form-submit{background:rgba(201,168,76,.2);border:1px solid rgba(201,168,76,.8);color:var(--gold);font-family:'Cinzel',serif;font-size:11px;letter-spacing:4px;padding:12px;border-radius:4px;cursor:pointer;transition:all .2s;width:100%;}
+.pc-form-submit:hover,.pc-form-submit:active{background:rgba(201,168,76,.35);}
+.pc-form-cancel{background:transparent;border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.45);font-family:'Cinzel',serif;font-size:9px;letter-spacing:3px;padding:9px;border-radius:4px;cursor:pointer;transition:all .2s;width:100%;}
+.pc-form-cancel:hover,.pc-form-cancel:active{border-color:rgba(255,255,255,.5);color:rgba(255,255,255,.75);}
+.profile-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.22);border-radius:6px;padding:12px 16px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:12px;}
+.profile-card:hover{border-color:rgba(201,168,76,.55);background:rgba(201,168,76,.08);}
+.profile-card.active-profile{border-color:rgba(201,168,76,.85);background:rgba(201,168,76,.11);}
+.profile-card.expanded,.profile-card.expanded:hover{flex-direction:column;align-items:stretch;cursor:default;border-color:rgba(201,168,76,.85);}
+.pc-card-top{display:flex;align-items:center;gap:12px;width:100%;cursor:pointer;}
 .pc-actions{display:flex;gap:8px;margin-top:10px;width:100%;}
-.pc-btn{flex:1;padding:8px 0;font-family:'Cinzel',serif;font-size:9px;letter-spacing:3px;border-radius:3px;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
-.pc-btn-load{background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.6);color:var(--gold);}
-.pc-btn-load:hover,.pc-btn-load:active{background:rgba(201,168,76,.28);}
-.pc-btn-del{background:rgba(180,30,30,.12);border:1px solid rgba(220,60,60,.4);color:rgba(255,100,100,.8);}
-.pc-btn-del:hover,.pc-btn-del:active{background:rgba(180,30,30,.28);}
+.pc-btn{flex:1;padding:10px 0;font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;border-radius:3px;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
+.pc-btn-load{background:rgba(201,168,76,.2);border:1px solid rgba(201,168,76,.75);color:var(--gold);}
+.pc-btn-load:hover,.pc-btn-load:active{background:rgba(201,168,76,.38);}
+.pc-btn-del{background:rgba(180,30,30,.15);border:1px solid rgba(220,60,60,.65);color:rgba(255,130,130,.95);}
+.pc-btn-del:hover,.pc-btn-del:active{background:rgba(180,30,30,.32);}
 .profile-card .pc-avatar{font-size:28px;}
 .profile-card .pc-info{flex:1;}
-.profile-card .pc-player{font-size:8px;letter-spacing:2px;color:var(--dim);}
-.profile-card .pc-name{font-size:13px;letter-spacing:3px;color:var(--fg);font-family:'Cinzel',serif;}
-.profile-card .pc-stats{font-size:7px;letter-spacing:1px;color:var(--dim);margin-top:2px;}
-.profile-card .pc-active{font-size:8px;color:#80e860;letter-spacing:1px;}
-.profile-add{border:1px dashed rgba(255,255,255,.2);border-radius:6px;padding:16px;text-align:center;cursor:pointer;color:var(--dim);font-size:9px;letter-spacing:3px;transition:all .2s;max-width:420px;width:100%;}
-.profile-add:hover{border-color:rgba(201,168,76,.4);color:var(--gold);}
-
+.profile-card .pc-name{font-size:14px;letter-spacing:3px;color:#fff;font-family:'Cinzel',serif;}
+.profile-card .pc-stats{font-size:8px;letter-spacing:1px;color:rgba(255,255,255,.45);margin-top:3px;}
+.profile-card .pc-active{font-size:9px;color:#90f070;letter-spacing:1px;font-weight:bold;}
+.profile-add{border:1px dashed rgba(255,255,255,.5);border-radius:6px;padding:16px;text-align:center;cursor:pointer;color:rgba(255,255,255,.7);font-size:11px;letter-spacing:3px;transition:all .2s;max-width:420px;width:100%;box-sizing:border-box;}
+.profile-add:hover,.profile-add:active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.08);}
+.pc-form{display:flex;flex-direction:column;gap:10px;width:100%;max-width:420px;margin-top:8px;}
+.pc-form-row{display:flex;flex-direction:column;gap:4px;}
+.pc-form-label{font-size:8px;letter-spacing:2px;color:rgba(255,255,255,.5);}
+.pc-form-input{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.3);border-radius:4px;padding:10px 12px;color:#fff;font-family:'Cinzel',serif;font-size:13px;letter-spacing:2px;outline:none;width:100%;box-sizing:border-box;}
+.pc-form-input:focus{border-color:var(--gold);background:rgba(201,168,76,.06);}
+.pc-form-input::placeholder{color:rgba(255,255,255,.25);}
+.pc-form-submit{background:rgba(201,168,76,.2);border:1px solid rgba(201,168,76,.7);color:var(--gold);font-family:'Cinzel',serif;font-size:11px;letter-spacing:4px;padding:11px;border-radius:4px;cursor:pointer;transition:all .2s;width:100%;}
+.pc-form-submit:hover,.pc-form-submit:active{background:rgba(201,168,76,.35);}
+.pc-form-cancel{background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.4);font-family:'Cinzel',serif;font-size:9px;letter-spacing:3px;padding:8px;border-radius:4px;cursor:pointer;transition:all .2s;width:100%;}
+.pc-form-cancel:hover,.pc-form-cancel:active{border-color:rgba(255,255,255,.4);color:rgba(255,255,255,.7);}
+/* Boost card contrast */
+.profile-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:12px 16px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:12px;}
+.profile-card:hover{border-color:rgba(201,168,76,.5);background:rgba(201,168,76,.07);}
+.profile-card.active-profile{border-color:rgba(201,168,76,.8);background:rgba(201,168,76,.1);}
+.profile-card.expanded,.profile-card.expanded:hover{flex-direction:column;align-items:stretch;cursor:default;border-color:rgba(201,168,76,.8);}
+.pc-card-top{display:flex;align-items:center;gap:12px;width:100%;}
+.pc-actions{display:flex;gap:8px;margin-top:10px;width:100%;}
+.pc-btn{flex:1;padding:10px 0;font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;border-radius:3px;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
+.pc-btn-load{background:rgba(201,168,76,.2);border:1px solid rgba(201,168,76,.7);color:var(--gold);}
+.pc-btn-load:hover,.pc-btn-load:active{background:rgba(201,168,76,.35);}
+.pc-btn-del{background:rgba(180,30,30,.15);border:1px solid rgba(220,60,60,.6);color:rgba(255,120,120,.9);}
+.pc-btn-del:hover,.pc-btn-del:active{background:rgba(180,30,30,.32);}
+.profile-card .pc-avatar{font-size:28px;}
+.profile-card .pc-info{flex:1;}
+.profile-card .pc-player{font-size:8px;letter-spacing:2px;color:rgba(255,255,255,.5);}
+.profile-card .pc-name{font-size:14px;letter-spacing:3px;color:#fff;font-family:'Cinzel',serif;}
+.profile-card .pc-stats{font-size:8px;letter-spacing:1px;color:rgba(255,255,255,.45);margin-top:2px;}
+.profile-card .pc-active{font-size:9px;color:#80e860;letter-spacing:1px;font-weight:bold;}
 /* Leaderboard screen */
 #lbOv{position:fixed;inset:0;background:rgba(8,6,3,.97);display:none;flex-direction:column;align-items:center;padding:24px 16px 40px;z-index:999;overflow-y:auto;touch-action:pan-y;}
 #lbOv h2{font-family:'Cinzel Decorative',serif;font-size:clamp(14px,3vw,22px);letter-spacing:6px;color:var(--gold);margin-bottom:16px;}
@@ -388,20 +438,20 @@ canvas{display:block}
   <h2>ACHIEVEMENTS</h2>
   <div class="ach-tabs" id="achTabs"></div>
   <div class="ach-grid" id="achGrid"></div>
-  <button id="btnCloseAch" style="margin-top:20px;padding:9px 28px;background:transparent;border:1px solid var(--gold);color:var(--gold);font-family:'Cinzel',serif;font-size:11px;letter-spacing:4px;cursor:pointer;border-radius:3px;">CLOSE</button>
+  <button id="btnCloseAch" style="margin-top:20px;padding:9px 28px;background:transparent;border:1px solid var(--gold);color:var(--gold);font-family:Cinzel,serif;font-size:11px;letter-spacing:4px;cursor:pointer;border-radius:3px;">CLOSE</button>
 </div>
 <!-- Profile select overlay -->
 <div id="profileOv">
   <h2>PROFILES</h2>
   <div class="profile-list" id="profileList"></div>
   <div class="profile-add" id="profileAdd">+ NEW PROFILE</div>
-  <button id="btnCloseProfile" style="margin-top:16px;padding:9px 28px;background:transparent;border:1px solid rgba(255,255,255,.2);color:var(--dim);font-family:'Cinzel',serif;font-size:11px;letter-spacing:4px;cursor:pointer;border-radius:3px;">BACK</button>
+  <button id="btnCloseProfile" style="margin-top:16px;padding:9px 28px;background:transparent;border:1px solid rgba(255,255,255,.2);color:var(--dim);font-family:Cinzel,serif;font-size:11px;letter-spacing:4px;cursor:pointer;border-radius:3px;">BACK</button>
 </div>
 <!-- Leaderboard overlay -->
 <div id="lbOv">
   <h2>LEADERBOARD</h2>
   <div class="lb-list" id="lbList"></div>
-  <button id="btnCloseLb" style="margin-top:16px;padding:9px 28px;background:transparent;border:1px solid var(--gold);color:var(--gold);font-family:'Cinzel',serif;font-size:11px;letter-spacing:4px;cursor:pointer;border-radius:3px;">CLOSE</button>
+  <button id="btnCloseLb" style="margin-top:16px;padding:9px 28px;background:transparent;border:1px solid var(--gold);color:var(--gold);font-family:Cinzel,serif;font-size:11px;letter-spacing:4px;cursor:pointer;border-radius:3px;">CLOSE</button>
 </div>
 <div id="hdr"><h1>THE LABYRINTH</h1></div>
 <div id="statusbar">
@@ -440,6 +490,11 @@ canvas{display:block}
   <div id="hideLabel">🫥 HIDING MINE</div>
   <div id="hideCountdown">2.0</div>
   <div id="hideBar"><div id="hideFill"></div></div>
+</div>
+<div id="digWrap">
+  <div id="digLabel">⛏️ DIGGING…</div>
+  <div id="digCountdown">2.5</div>
+  <div id="digBar"><div id="digFill"></div></div>
 </div>
 <div id="howtoOv">
   <div id="howtoHeader">
@@ -529,7 +584,7 @@ canvas{display:block}
           <div class="htCard"><div class="ci">🩸</div><div class="cn">IRON SKIN</div><div class="cd">Start with 2 HP this run</div><div class="cs">120 pts</div></div>
           <div class="htCard"><div class="ci">👟</div><div class="cn">FLEET FOOT</div><div class="cd">+30% base movement speed</div><div class="cs">100 pts</div></div>
           <div class="htCard"><div class="ci">⛓️</div><div class="cn">IRON GRIP</div><div class="cd">+50% stun duration on all weapon hits</div><div class="cs">130 pts</div></div>
-          <div class="htCard"><div class="ci">⚔️</div><div class="cn">ARMORER</div><div class="cd">Spawn this run with a random weapon already equipped</div><div class="cs">160 pts</div></div>
+          <div class="htCard"><div class="ci">⚔️</div><div class="cn">ARMORER</div><div class="cd">Spawn with an additional random weapon on top of your starting club</div><div class="cs">160 pts</div></div>
           <div class="htCard"><div class="ci">🔴</div><div class="cn">HUNTER'S EYE</div><div class="cd">Pulsing red arrow inside your fog circle always pointing to the nearest Minotaur. Shows tile distance.</div><div class="cs">110 pts</div></div>
           <div class="htCard"><div class="ci">🕯️</div><div class="cn">LANTERN</div><div class="cd">+2 tile fog visibility radius</div><div class="cs">140 pts</div></div>
           <div class="htCard"><div class="ci">🔮</div><div class="cn">SIXTH SENSE</div><div class="cd">Enemy mines glow through the fog so you can see them before stepping on them</div><div class="cs">150 pts</div></div>
@@ -575,7 +630,7 @@ canvas{display:block}
         <div class="htRow"><div class="htKey" style="color:#c9a84c">TIER I</div><div class="htDesc">1 Minotaur · Slow deliberate movement · Long reaction window</div></div>
         <div class="htRow"><div class="htKey" style="color:#e08030">TIER II</div><div class="htDesc">1 Minotaur · Noticeably faster · Quicker path recalculation</div></div>
         <div class="htRow"><div class="htKey" style="color:#c04040">TIER III</div><div class="htDesc">2 Minotaurs · Approaches original speed · Coordinated hunting from two directions</div></div>
-        <div class="htRow"><div class="htKey" style="color:#a030a0">VARIANTS</div><div class="htDesc"><b>🦬 Bruiser</b> — slow, no weapons, breaks walls. &nbsp;<b>🦅 Scout</b> — fast, ranged only, half damage. &nbsp;<b>🙈 Blind One</b> — hears movement anywhere on the map; standing still loses it completely. Composition is random each run.</div></div>
+        <div class="htRow"><div class="htKey" style="color:#a030a0">VARIANTS</div><div class="htDesc"><b>🐂 Classic</b> — armed with a club, predicts your path. &nbsp;<b>🦬 Bruiser</b> — slow, no weapons, breaks walls. &nbsp;<b>🦅 Scout</b> — fast, ranged only, half damage. &nbsp;<b>🙈 Blind One</b> — hears movement anywhere on the map; standing still loses it completely. &nbsp;<b>💣 Tactician</b> — looks like the Classic but ignores you — it's busy laying mines on your path to the exit every 10 seconds. Composition is random each run.</div></div>
         <div class="htRow"><div class="htKey" style="color:#a030a0">TIER IV</div><div class="htDesc">2 Minotaurs · Fast · Aggressive · Short shoot cooldown</div></div>
         <div class="htRow"><div class="htKey" style="color:#4080e0">TIER V</div><div class="htDesc">3 Minotaurs · Maximum speed · Near-constant pressure from multiple angles</div></div>
       </div>
@@ -640,11 +695,11 @@ canvas{display:block}
 // Must stay ODD so the recursive-backtracker carves cleanly.
 // Width steps:  27 → 33 → 39 → 45 → 51 (cap)
 // Height steps: 21 → 25 → 29 → 33 → 37 (cap)
-let COLS=27, ROWS=21;
+let COLS=55, ROWS=43;
 function updateMazeSize(){
   const bracket=Math.floor(totalRuns/5); // 0 for runs 0-4, 1 for 5-9, etc.
-  COLS=Math.min(27+bracket*6, 51); // +6 wide each bracket, cap 51
-  ROWS=Math.min(21+bracket*4, 37); // +4 tall each bracket, cap 37
+  COLS=Math.min(55+bracket*8, 87); // doubled base, +8 wide each bracket, cap 87
+  ROWS=Math.min(43+bracket*6, 67); // doubled base, +6 tall each bracket, cap 67
   // Keep odd (backtracker requirement)
   if(COLS%2===0) COLS--;
   if(ROWS%2===0) ROWS--;
@@ -658,11 +713,17 @@ const WEAPONS={
   torch: {type:'torch', name:'TORCH',  icon:'🔦', key:'3', stunMs:2400, range:2.5, proj:false, mine:false, score:40,  color:'#e07030'},
   bow:   {type:'bow',   name:'BOW',    icon:'🏹', key:'4', stunMs:3200, range:13,  proj:true,  mine:false, score:70,  color:'#80b060'},
   xbow:  {type:'xbow',  name:'XBOW',   icon:'⚔️', key:'5', stunMs:5000, range:16,  proj:true,  mine:false, score:90,  color:'#6090d0'},
+  stunbow:{type:'stunbow',name:'STUN BOW',icon:'🌟',key:'4',stunMs:6000, range:14,  proj:true,  mine:false, score:100, color:'#e0d020',
+           isStunBow:true, reloads:true, reloadMs:3000, maxShots:3}, // 3 shots then gone
+  stunxbow:{type:'stunxbow',name:'STUN XBOW',icon:'💫',key:'5',stunMs:6000, range:16, proj:true, mine:false, score:150, color:'#c0e0ff',
+            isStunBow:true, reloads:true, reloadMs:2500, maxShots:Infinity}, // infinite — premium item
   mine:       {type:'mine',       name:'MINE',       icon:'💣', key:'6', stunMs:6000, range:0, proj:false, mine:true,  score:80, color:'#a040a0'},
   noisemaker: {type:'noisemaker', name:'NOISEMAKER', icon:'🔔', key:'7', stunMs:0,    range:0, proj:false, mine:true,  score:50, color:'#f0b020',
-               isNoisemaker:true, noiseDuration:5000}, // placed like a mine; lures blind enemies for 5s
+               isNoisemaker:true, noiseDuration:5000},
+  dynamite:   {type:'dynamite',   name:'DYNAMITE',   icon:'🧨', key:'8', stunMs:0,    range:0, proj:false, mine:true,  score:60, color:'#e03020',
+               isDynamite:true, fuseMs:2000}, // placed like mine, detonates after fuse, 3w×2d blast
 };
-const ITEM_TYPES=['knife','club','torch','bow','xbow','mine','noisemaker'];
+const ITEM_TYPES=['knife','club','torch','bow','xbow','mine','noisemaker','dynamite'];
 
 // ─── Power-ups ────────────────────────
 // Each has a spawn weight (higher = more common) and a duration in ms.
@@ -748,6 +809,16 @@ const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 const md=(r1,c1,r2,c2)=>Math.abs(r1-r2)+Math.abs(c1-c2);
 const inB=(r,c)=>r>=0&&r<ROWS&&c>=0&&c<COLS;
 const wk=(r,c)=>inB(r,c)&&grid[r]?.[c]!==WALL;
+// Detect touch vs PC so hold prompts show the right key
+const isTouchDevice=('ontouchstart' in window)||navigator.maxTouchPoints>0;
+const holdKey=isTouchDevice?'HOLD 🔧':'HOLD E';
+const holdFire=isTouchDevice?'HOLD 🔥':'HOLD F';
+// 2×2 walkable — checks the 2×2 block where r,c is the TOP-LEFT corner
+// Uses r-1..r, c-1..c so the footprint is centered on the (r,c) corner point
+// This prevents edge issues where enemies can't approach walls from below/right
+const wk2x2=(r,c)=>wk(r-1,c-1)&&wk(r-1,c)&&wk(r,c-1)&&wk(r,c);
+// Floor tiles 2x2 cache — declared here so it's initialized before genMaze runs
+var _floorTiles2x2Cache=null;
 const tx=c=>c*T+T/2;
 const ty=r=>r*T+T/2;
 const lr=(a,b,t)=>a+(b-a)*t;
@@ -777,6 +848,11 @@ let eKeyHeld=false;
 // hide mine state — after placing a mine, player can hold fire for 2s to hide it
 let hidingMine=false,hideTimer=0,hideTarget=null,hideGrace=0;
 const HIDE_TIME=2000;
+// Pickaxe digging state
+let digging=false,digTimer=0;
+const DIG_TIME=2500; // slightly longer than defuse — it's a wall after all
+// Dynamite fuses — active dynamite traps counting down
+let dynamiteFuses=[]; // [{trap, fuseTimer, fuseNeeded}]
 let wallPalette=[];
 
 // ═══════════════════════════════════════
@@ -810,7 +886,7 @@ const PROFILES_KEY='labyrinth_profiles';
 const ACTIVE_PROFILE_KEY='labyrinth_active_profile';
 const ACHIEVEMENTS_KEY='labyrinth_achievements';
 // Capture BEFORE loadProfiles() auto-creates a default — used by splash screen
-const _splashHasExisting=(()=>{try{const r=localStorage.getItem(PROFILES_KEY);const p=JSON.parse(r);if(!Array.isArray(p)) return false;const real=p.filter(d=>!(d.playerName==='PLAYER'&&d.profileName==='HERO'&&(d.totalRuns||0)===0&&(d.highScore||0)===0));return real.length>0;}catch(e){return false;}})();
+const _splashHasExisting=(()=>{try{const r=localStorage.getItem(PROFILES_KEY);const p=JSON.parse(r);if(!Array.isArray(p)||p.length===0) return false;const real=p.filter(d=>!(d.playerName==='PLAYER'&&d.profileName==='HERO'&&(d.totalRuns||0)===0&&(d.highScore||0)===0));return real.length>0;}catch(e){return false;}})();
 const _splashExistingCount=(()=>{try{const r=localStorage.getItem(PROFILES_KEY);const p=JSON.parse(r);if(!Array.isArray(p)) return 0;return p.filter(d=>!(d.playerName==='PLAYER'&&d.profileName==='HERO'&&(d.totalRuns||0)===0&&(d.highScore||0)===0)).length;}catch(e){return 0;}})();
 const LEADERBOARD_KEY='labyrinth_leaderboard';
 
@@ -843,9 +919,12 @@ function loadProfiles(){
       saveProfiles();
     }
     if(profiles.length===0){
-      // Truly empty — create a silent default so the game doesn't crash
-      profiles=[defaultProfile('PLAYER','HERO')];
-      saveProfiles();
+      // Only create silent default if localStorage had nothing at all (first ever launch)
+      // If the key exists but array is empty, the user deleted all profiles intentionally
+      if(!raw){
+        profiles=[defaultProfile('PLAYER','HERO')];
+        saveProfiles();
+      }
     }
     const savedId=localStorage.getItem(ACTIVE_PROFILE_KEY);
     const found=profiles.find(p=>p.id===savedId);
@@ -857,7 +936,7 @@ function loadProfiles(){
 }
 
 function getActiveProfile(){
-  return profiles.find(p=>p.id===activeProfileId)||profiles[0];
+  return profiles.find(p=>p.id===activeProfileId)||(profiles.length>0?profiles[0]:null);
 }
 
 function setActiveProfile(id){
@@ -943,6 +1022,9 @@ const ACH_DEFS=[
   {id:'stun_blind_3',  cat:'stun', icon:'🙈', name:'SILENT STRIKE',   desc:'Stun the Blind One 3 times',             req:3,  type:'stun_blind'},
   {id:'stun_blind_10', cat:'stun', icon:'🙈', name:'SOUND OF SILENCE',desc:'Stun the Blind One 10 times',            req:10, type:'stun_blind'},
   {id:'stun_blind_20', cat:'stun', icon:'🙈', name:'GHOST HUNTER',    desc:'Stun the Blind One 20 times',            req:20, type:'stun_blind'},
+  {id:'stun_tactician_3',  cat:'stun', icon:'💣', name:'DEFUSER',        desc:'Stun the Tactician 3 times',             req:3,  type:'stun_tactician'},
+  {id:'stun_tactician_10', cat:'stun', icon:'💣', name:'BOMB SQUAD',     desc:'Stun the Tactician 10 times',            req:10, type:'stun_tactician'},
+  {id:'stun_tactician_20', cat:'stun', icon:'💣', name:'MINE SWEEPER',   desc:'Stun the Tactician 20 times',            req:20, type:'stun_tactician'},
 
   // ── Survival (movement-only time) ──
   {id:'survive_60',  cat:'survival', icon:'⏱️', name:'RABBIT',         desc:'Survive 60s of movement in one run',    req:60,  type:'moveTime'},
@@ -1093,6 +1175,9 @@ const SHOP_ITEMS=[
   {id:'wideFog',    name:'LANTERN',      icon:'🕯️', cost:140, desc:'+2 tile fog visibility',         color:'#e0a030'},
   {id:'mineDetect', name:'SIXTH SENSE',  icon:'🔮', cost:150, desc:'Enemy mines glow through fog',   color:'#a040c0'},
   {id:'quickDefuse',name:'STEADY HANDS', icon:'🧤', cost:100, desc:'Defuse & hide time halved (1s each)', color:'#40a060'},
+  {id:'pickaxe',    name:'PICKAXE',      icon:'⛏️', cost:200, desc:'Permanently carry a pickaxe — hold interact at a wall to dig through it', color:'#b08040'},
+  {id:'stunbow',    name:'STUN BOW',     icon:'🌟', cost:250,  desc:'3 shots — stuns as long as a mine, reloads every 3s', color:'#e0d020'},
+  {id:'stunxbow',   name:'STUN XBOW',    icon:'💫', cost:1000, desc:'Infinite shots — stuns as long as a mine, reloads every 2.5s. Premium item.', color:'#c0e0ff'},
 ];
 
 // ─── Permanent Perks (Level-Up system) ────────────────
@@ -1105,6 +1190,7 @@ const PERM_PERKS=[
   {id:'breaker',   icon:'⛓️', name:'BREAKER',        effect:'+10% stun duration',          maxStacks:3, color:'#6090d0'},
   {id:'precision', icon:'🎯', name:'PRECISION',      effect:'+15% projectile range',       maxStacks:2, color:'#80d060'},
   {id:'nimble',    icon:'🤲', name:'NIMBLE FINGERS', effect:'-15% defuse & hide time',     maxStacks:3, color:'#40d0a0'},
+  {id:'pickaxe',   icon:'⛏️', name:'PICKAXE',        effect:'Hold interact at wall to dig (permanent tool)', maxStacks:1, color:'#b08040'},
 ];
 
 // Persistent — survives across runs, only resets on full page reload
@@ -1189,8 +1275,8 @@ const fogCv=document.getElementById('fogCv');
 const fogCtx=fogCv.getContext('2d');
 // Visibility radius in pixels — bright core, gradient fade to black
 // FOG_INNER: fully lit radius, FOG_OUTER: fully dark radius
-const FOG_INNER_TILES=3.8;  // tiles fully visible
-const FOG_OUTER_TILES=6.2;  // tiles fully black beyond this
+const FOG_INNER_TILES=5.5;  // tiles fully visible (expanded for larger dungeon)
+const FOG_OUTER_TILES=9.0;  // tiles fully black beyond this
 // Smoothly lerped current radius (animates when player moves)
 let fogX=0,fogY=0; // current fog center in px (lerps toward player)
 
@@ -1212,6 +1298,8 @@ const SOUND_FILES={
   mine_place:      'sounds/mine_place.mp3',
   mine_explode:    'sounds/mine_explode.mp3',
   noisemaker_ring: 'sounds/noisemaker_ring.mp3', // 5s lure sound placed with noisemaker trap
+  stone_break:     'sounds/stone_break.mp3',     // pickaxe digs through wall (softer)
+  wall_smash:      'sounds/wall_smash.mp3',      // Bruiser punches through wall (heavy impact)
   // Weapon fire — both player and Minotaur
   bow_fire:        'sounds/bow_fire.mp3',    // bow/crossbow firing (whoosh/twang)
   melee_swing:     'sounds/melee_swing.mp3', // knife/club/torch swing
@@ -1439,93 +1527,126 @@ function openProfiles(onClose){
 }
 let _profileReturnFn=null;
 
-function renderProfiles(){
+function renderProfiles(expandedId, confirmDeleteId){
+  // expandedId: which card shows LOAD/DELETE buttons
+  // confirmDeleteId: which card shows inline delete confirmation
+  expandedId = expandedId || null;
+  confirmDeleteId = confirmDeleteId || null;
+
   const listEl=document.getElementById('profileList');
   const avatars=['⚔️','🛡️','🏹','🗡️','🔦','💣','👁️','🩸'];
-  let expandedId=null; // which card is currently expanded
-
   const sorted=[...profiles].sort((a,b)=>(b.id===activeProfileId?1:0)-(a.id===activeProfileId?1:0));
 
-  function buildCards(){
-    listEl.innerHTML='';
-    sorted.forEach((p,i)=>{
-      const isActive=p.id===activeProfileId;
-      const isExpanded=p.id===expandedId;
-      const card=document.createElement('div');
-      card.className='profile-card'+(isActive?' active-profile':'')+(isExpanded?' expanded':'');
-      card.dataset.pid=p.id;
-
-      // Top row — always visible
-      const top=document.createElement('div');
-      top.className='pc-card-top';
-      top.innerHTML=
-        `<div class="pc-avatar">${avatars[i%avatars.length]}</div>`+
-        `<div class="pc-info">`+
-          `<div class="pc-name">${p.profileName||p.playerName||'HERO'}</div>`+
-          `<div class="pc-stats">RUN ${p.totalRuns||0} · ${(p.highScore||0).toLocaleString()} BEST</div>`+
-        `</div>`+
-        (isActive?'<div class="pc-active">✓ ACTIVE</div>':'');
-      card.appendChild(top);
-
-      if(isExpanded){
-        // Action buttons row
-        const actions=document.createElement('div');
-        actions.className='pc-actions';
-
-        const loadBtn=document.createElement('button');
-        loadBtn.className='pc-btn pc-btn-load';
-        loadBtn.textContent='LOAD PROFILE';
-        function onLoad(e){e.preventDefault();e.stopPropagation();selectProfile(p.id);}
-        loadBtn.addEventListener('click',onLoad);
-        loadBtn.addEventListener('touchend',onLoad,{passive:false});
-
-        const delBtn=document.createElement('button');
-        delBtn.className='pc-btn pc-btn-del';
-        delBtn.textContent='DELETE';
-        function onDelete(e){
-          e.preventDefault();e.stopPropagation();
-          if(!confirm(`Delete "${p.profileName||p.playerName}"? This cannot be undone.`)) return;
-          profiles=profiles.filter(pr=>pr.id!==p.id);
-          // If we deleted the active profile, switch to first remaining
-          if(activeProfileId===p.id){
-            if(profiles.length>0){ setActiveProfile(profiles[0].id); }
-            else{
-              // No profiles left — create a fresh default and go to create flow
-              profiles=[defaultProfile('PLAYER','HERO')];
-              activeProfileId=profiles[0].id;
-            }
-          }
-          saveProfiles();
-          expandedId=null;
-          buildCards();
-          // Rebuild sorted after deletion
-          sorted.length=0;
-          [...profiles].sort((a,b)=>(b.id===activeProfileId?1:0)-(a.id===activeProfileId?1:0)).forEach(x=>sorted.push(x));
-          buildCards();
-        }
-        delBtn.addEventListener('click',onDelete);
-        delBtn.addEventListener('touchend',onDelete,{passive:false});
-
-        actions.appendChild(loadBtn);
-        actions.appendChild(delBtn);
-        card.appendChild(actions);
-      }
-
-      // Tap card (not buttons) to expand/collapse
-      function onCardTap(e){
-        if(e.target.classList.contains('pc-btn')) return;
-        e.preventDefault();e.stopPropagation();
-        expandedId=(expandedId===p.id)?null:p.id;
-        buildCards();
-      }
-      card.addEventListener('click',onCardTap);
-      card.addEventListener('touchend',onCardTap,{passive:false});
-      listEl.appendChild(card);
-    });
+  listEl.innerHTML='';
+  if(sorted.length===0){
+    const empty=document.createElement('div');
+    empty.style.cssText='text-align:center;color:var(--dim);font-size:9px;letter-spacing:2px;padding:24px 0;';
+    empty.textContent='NO PROFILES — CREATE ONE BELOW';
+    listEl.appendChild(empty);
   }
+  sorted.forEach((p,i)=>{
+    const isActive=p.id===activeProfileId;
+    const isExpanded=p.id===expandedId;
+    const isConfirming=p.id===confirmDeleteId;
 
-  buildCards();
+    const card=document.createElement('div');
+    card.className='profile-card'+(isActive?' active-profile':'')+(isExpanded||isConfirming?' expanded':'');
+    card.dataset.pid=p.id;
 
+    // Top row
+    const top=document.createElement('div');
+    top.className='pc-card-top';
+    top.innerHTML=
+      `<div class="pc-avatar">${avatars[i%avatars.length]}</div>`+
+      `<div class="pc-info">`+
+        `<div class="pc-name">${p.profileName||p.playerName||'HERO'}</div>`+
+        `<div class="pc-stats">RUN ${p.totalRuns||0} · ${(p.highScore||0).toLocaleString()} BEST</div>`+
+      `</div>`+
+      (isActive?'<div class="pc-active">✓ ACTIVE</div>':'');
+    card.appendChild(top);
+
+    if(isConfirming){
+      // Inline confirm — no confirm() needed
+      const conf=document.createElement('div');
+      conf.className='pc-actions';
+      conf.style.flexDirection='column';
+      conf.style.gap='6px';
+
+      const warn=document.createElement('div');
+      warn.style.cssText='font-size:8px;letter-spacing:1px;color:rgba(255,100,100,.8);text-align:center;padding:4px 0;';
+      warn.textContent='DELETE THIS PROFILE? THIS CANNOT BE UNDONE.';
+      conf.appendChild(warn);
+
+      const btnRow=document.createElement('div');
+      btnRow.style.cssText='display:flex;gap:8px;width:100%;';
+
+      const yesBtn=document.createElement('button');
+      yesBtn.className='pc-btn pc-btn-del';
+      yesBtn.textContent='YES — DELETE';
+      function doDelete(e){
+        e.preventDefault();e.stopPropagation();
+        profiles=profiles.filter(pr=>pr.id!==p.id);
+        if(profiles.length===0){
+          // All profiles gone — clear storage and re-render empty
+          activeProfileId=null;
+          saveProfiles();
+          renderProfiles(null,null);
+          return;
+        }
+        if(activeProfileId===p.id) setActiveProfile(profiles[0].id);
+        saveProfiles();
+        renderProfiles(null,null);
+      }
+      yesBtn.addEventListener('click',doDelete);
+      yesBtn.addEventListener('touchend',doDelete,{passive:false});
+
+      const noBtn=document.createElement('button');
+      noBtn.className='pc-btn pc-btn-load';
+      noBtn.textContent='CANCEL';
+      function doCancel(e){e.preventDefault();e.stopPropagation();renderProfiles(p.id,null);}
+      noBtn.addEventListener('click',doCancel);
+      noBtn.addEventListener('touchend',doCancel,{passive:false});
+
+      btnRow.appendChild(yesBtn);
+      btnRow.appendChild(noBtn);
+      conf.appendChild(btnRow);
+      card.appendChild(conf);
+
+    } else if(isExpanded){
+      const actions=document.createElement('div');
+      actions.className='pc-actions';
+
+      const loadBtn=document.createElement('button');
+      loadBtn.className='pc-btn pc-btn-load';
+      loadBtn.textContent='LOAD PROFILE';
+      function onLoad(e){e.preventDefault();e.stopPropagation();selectProfile(p.id);}
+      loadBtn.addEventListener('click',onLoad);
+      loadBtn.addEventListener('touchend',onLoad,{passive:false});
+
+      const delBtn=document.createElement('button');
+      delBtn.className='pc-btn pc-btn-del';
+      delBtn.textContent='DELETE';
+      function onDelClick(e){e.preventDefault();e.stopPropagation();renderProfiles(null,p.id);}
+      delBtn.addEventListener('click',onDelClick);
+      delBtn.addEventListener('touchend',onDelClick,{passive:false});
+
+      actions.appendChild(loadBtn);
+      actions.appendChild(delBtn);
+      card.appendChild(actions);
+    }
+
+    // Tap card header to expand/collapse
+    function onCardTap(e){
+      if(e.target.classList.contains('pc-btn')) return;
+      e.preventDefault();e.stopPropagation();
+      renderProfiles(isExpanded||isConfirming?null:p.id, null);
+    }
+    top.addEventListener('click',onCardTap);
+    top.addEventListener('touchend',onCardTap,{passive:false});
+    listEl.appendChild(card);
+  });
+
+  // NEW PROFILE button
   const addEl=document.getElementById('profileAdd');
   if(profiles.length>=MAX_FREE_PROFILES){
     addEl.style.display='block';
@@ -1540,12 +1661,9 @@ function renderProfiles(){
     addEl.style.color='var(--dim)';
     addEl.style.borderColor='rgba(255,255,255,0.2)';
   }
-
-  // Wire NEW PROFILE fresh each render
-  const addEl2=document.getElementById('profileAdd');
+  const freshAdd=addEl.cloneNode(true);
+  addEl.parentNode.replaceChild(freshAdd,addEl);
   function onAddProfile(e){e.preventDefault();e.stopPropagation();if(profiles.length<MAX_FREE_PROFILES)addNewProfile();}
-  const freshAdd=addEl2.cloneNode(true);
-  addEl2.parentNode.replaceChild(freshAdd,addEl2);
   freshAdd.addEventListener('click',onAddProfile);
   freshAdd.addEventListener('touchend',onAddProfile,{passive:false});
 }
@@ -1564,17 +1682,98 @@ function selectProfile(id){
 
 function addNewProfile(){
   if(profiles.length>=MAX_FREE_PROFILES) return;
-  const name=prompt('Enter your hero name:','');
-  if(!name) return; // cancelled
-  const heroName=name.toUpperCase().slice(0,14)||'HERO';
-  const p=defaultProfile(heroName,heroName);
-  p.permPerks=typeof PERM_PERKS!=='undefined'?Object.fromEntries(PERM_PERKS.map(pk=>[pk.id,0])):{};
-  // Remove the auto-generated default profile (PLAYER/HERO with 0 runs) if present
-  profiles=profiles.filter(d=>!(d.playerName==='PLAYER'&&d.profileName==='HERO'&&(d.totalRuns||0)===0&&(d.highScore||0)===0));
-  profiles.push(p);
-  saveProfiles();
-  selectProfile(p.id);
-  renderProfiles();
+  // Show inline form inside the profile overlay instead of prompt()
+  showNewProfileForm();
+}
+
+function showNewProfileForm(){
+  // Replace profileList + profileAdd with an inline creation form
+  const ov=document.getElementById('profileOv');
+  // Stash existing content
+  const existing=ov.innerHTML;
+
+  ov.innerHTML=
+    '<h2>NEW PROFILE</h2>'+
+    '<div class="pc-form" id="pcForm">'+
+      '<div class="pc-form-row">'+
+        '<div class="pc-form-label">HERO NAME</div>'+
+        '<input class="pc-form-input" id="pcHeroInput" type="text" maxlength="14" placeholder="ENTER NAME" autocomplete="off" autocorrect="off" spellcheck="false">'+
+      '</div>'+
+      '<div class="pc-form-row">'+
+        '<div class="pc-form-label">USERNAME <span style="color:rgba(255,255,255,.25);font-size:7px">(OPTIONAL — for future platform login)</span></div>'+
+        '<input class="pc-form-input" id="pcUserInput" type="text" maxlength="20" placeholder="LEAVE BLANK FOR NOW" autocomplete="off" autocorrect="off" spellcheck="false">'+
+      '</div>'+
+      '<button class="pc-form-submit" id="pcFormSubmit">CREATE PROFILE</button>'+
+      '<button class="pc-form-cancel" id="pcFormCancel">CANCEL</button>'+
+    '</div>';
+
+  // Focus hero input
+  setTimeout(()=>{
+    const inp=document.getElementById('pcHeroInput');
+    if(inp) inp.focus();
+  },100);
+
+  function submitForm(e){
+    if(e) {e.preventDefault();e.stopPropagation();}
+    const heroRaw=(document.getElementById('pcHeroInput').value||'').trim();
+    if(!heroRaw){
+      document.getElementById('pcHeroInput').style.borderColor='rgba(255,80,80,.8)';
+      return;
+    }
+    const heroName=heroRaw.toUpperCase().slice(0,14);
+    const userRaw=(document.getElementById('pcUserInput').value||'').trim();
+    const userName=userRaw?userRaw.toUpperCase().slice(0,20):heroName;
+    const p=defaultProfile(userName,heroName);
+    p.permPerks=typeof PERM_PERKS!=='undefined'?Object.fromEntries(PERM_PERKS.map(pk=>[pk.id,0])):{};
+    profiles=profiles.filter(d=>!(d.playerName==='PLAYER'&&d.profileName==='HERO'&&(d.totalRuns||0)===0&&(d.highScore||0)===0));
+    profiles.push(p);
+    saveProfiles();
+    // Re-render the overlay with proper structure before selecting
+    ov.innerHTML=
+      '<h2>PROFILES</h2>'+
+      '<div class="profile-list" id="profileList"></div>'+
+      '<div class="profile-add" id="profileAdd">+ NEW PROFILE</div>'+
+      '<button id="btnCloseProfile" style="margin-top:16px;padding:9px 28px;background:transparent;border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.6);font-family:Cinzel,serif;font-size:11px;letter-spacing:4px;cursor:pointer;border-radius:3px;">BACK</button>';
+    // Re-wire close button
+    const backBtn=document.getElementById('btnCloseProfile');
+    if(backBtn){
+      function doClose(){document.getElementById('profileOv').style.display='none';setGameControlsActive(true);if(_profileReturnFn){_profileReturnFn();_profileReturnFn=null;}}
+      backBtn.addEventListener('click',doClose);
+      backBtn.addEventListener('touchend',e=>{e.preventDefault();doClose();},{passive:false});
+    }
+    selectProfile(p.id);
+    renderProfiles();
+  }
+
+  // Submit button
+  const submitBtn=document.getElementById('pcFormSubmit');
+  submitBtn.addEventListener('click',submitForm);
+  submitBtn.addEventListener('touchend',e=>{e.preventDefault();submitForm(e);},{passive:false});
+
+  // Enter key submits
+  ov.addEventListener('keydown',function onKey(e){
+    if(e.key==='Enter'){ov.removeEventListener('keydown',onKey);submitForm();}
+  });
+
+  // Cancel
+  const cancelBtn=document.getElementById('pcFormCancel');
+  function doCancel(e){
+    if(e){e.preventDefault();e.stopPropagation();}
+    ov.innerHTML=
+      '<h2>PROFILES</h2>'+
+      '<div class="profile-list" id="profileList"></div>'+
+      '<div class="profile-add" id="profileAdd">+ NEW PROFILE</div>'+
+      '<button id="btnCloseProfile" style="margin-top:16px;padding:9px 28px;background:transparent;border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.6);font-family:Cinzel,serif;font-size:11px;letter-spacing:4px;cursor:pointer;border-radius:3px;">BACK</button>';
+    const backBtn=document.getElementById('btnCloseProfile');
+    if(backBtn){
+      function doClose(){document.getElementById('profileOv').style.display='none';setGameControlsActive(true);if(_profileReturnFn){_profileReturnFn();_profileReturnFn=null;}}
+      backBtn.addEventListener('click',doClose);
+      backBtn.addEventListener('touchend',e=>{e.preventDefault();doClose();},{passive:false});
+    }
+    renderProfiles();
+  }
+  cancelBtn.addEventListener('click',doCancel);
+  cancelBtn.addEventListener('touchend',doCancel,{passive:false});
 }
 
 // Noisemaker trap sound — loops for up to 5s then stops automatically
@@ -1602,6 +1801,27 @@ function playStep(){
   const key=STEP_KEYS[stepIdx%STEP_KEYS.length];
   stepIdx++;
   playSound(key, 0.55, 0.08); // slight pitch variation per step
+}
+
+// Wall smash — audible across the entire map
+// Volume scales from full at 0 tiles to a faint rumble at max map distance
+function playWallSmash(sourceR,sourceC){
+  if(!audioCtx||!sounds['wall_smash']) return;
+  const dist=md(P.r,P.c,sourceR,sourceC);
+  const maxDist=ROWS+COLS; // full map diagonal — always audible somewhere
+  const t=clamp(1-dist/maxDist,0,1);
+  // Cubic falloff — thunderous up close, distant thud across the map
+  const vol=t*t*t*1.6;
+  if(vol<0.01) return;
+  try{
+    const src=audioCtx.createBufferSource();
+    src.buffer=sounds['wall_smash'];
+    src.playbackRate.value=1+((Math.random()-.5)*0.06);
+    const g=audioCtx.createGain();
+    g.gain.value=vol;
+    src.connect(g);g.connect(audioCtx.destination);
+    src.start();
+  }catch(e){}
 }
 
 function updateMinotaurProximityAudio(){
@@ -1693,18 +1913,44 @@ const SPRITE={
   },
 };
 
-// Variant sprite sheets — same layout as minotaur.png (4 cols × 4 rows, 64×96 per frame)
+// Player weapon-specific sprite sheets — same layout as player.png
+// Falls back to sprites/player.png if weapon sheet not found
+const PLAYER_WEAPON_SPRITES={
+  club:      {file:'sprites/player_club.png',       frameW:64,frameH:64,cols:4,rows:4,img:null,loaded:false},
+  knife:     {file:'sprites/player_knife.png',      frameW:64,frameH:64,cols:4,rows:4,img:null,loaded:false},
+  torch:     {file:'sprites/player_torch.png',      frameW:64,frameH:64,cols:4,rows:4,img:null,loaded:false},
+  bow:       {file:'sprites/player_bow.png',        frameW:64,frameH:64,cols:4,rows:4,img:null,loaded:false},
+  xbow:      {file:'sprites/player_xbow.png',       frameW:64,frameH:64,cols:4,rows:4,img:null,loaded:false},
+  mine:      {file:'sprites/player_mine.png',       frameW:64,frameH:64,cols:4,rows:4,img:null,loaded:false},
+  noisemaker:{file:'sprites/player_noisemaker.png', frameW:64,frameH:64,cols:4,rows:4,img:null,loaded:false},
+  dynamite:  {file:'sprites/player_dynamite.png',   frameW:64,frameH:64,cols:4,rows:4,img:null,loaded:false},
+  stunbow:   {file:'sprites/player_stunbow.png',    frameW:64,frameH:64,cols:4,rows:4,img:null,loaded:false},
+  stunxbow:  {file:'sprites/player_stunxbow.png',   frameW:64,frameH:64,cols:4,rows:4,img:null,loaded:false},
+};
+
+// Returns the best available sprite for the player's current weapon
+function getPlayerSprite(){
+  if(P.activeWeapon){
+    const ws=PLAYER_WEAPON_SPRITES[P.activeWeapon.type];
+    if(ws&&ws.loaded) return ws;
+  }
+  return SPRITE.player; // fallback — unarmed or weapon sheet not loaded yet
+}
 const SPRITE_VARIANTS={
-  bruiser:{file:'sprites/bruiser.png', frameW:64,frameH:96, cols:4,rows:4, img:null,loaded:false},
-  scout:  {file:'sprites/scout.png',   frameW:64,frameH:96, cols:4,rows:4, img:null,loaded:false},
-  blind:  {file:'sprites/blind.png',   frameW:64,frameH:96, cols:4,rows:4, img:null,loaded:false},
+  bruiser:   {file:'sprites/bruiser.png',   frameW:64,frameH:96, cols:4,rows:4, img:null,loaded:false},
+  scout:     {file:'sprites/scout.png',     frameW:64,frameH:96, cols:4,rows:4, img:null,loaded:false},
+  blind:     {file:'sprites/blind.png',     frameW:64,frameH:96, cols:4,rows:4, img:null,loaded:false},
+  tactician: {file:'sprites/tactician.png', frameW:64,frameH:96, cols:4,rows:4, img:null,loaded:false},
 };
 
 // Direction → sprite row. Diagonals reuse nearest cardinal — no extra art needed.
+// Direction → sprite row.
+// Row 0 = walk down, Row 1 = walk up, Row 2 = walk right, Row 3 = walk left
+// Diagonals: vertical component dominates — moving down-right shows down row
 const DIR_ROW={
   down:0,           up:1,          right:2,        left:3,
-  'down-right':2,   'down-left':3,                 // SE→E, SW→W
-  'up-right':2,     'up-left':3,                   // NE→E, NW→W
+  'down-right':0,   'down-left':0,   // diagonal down → down row
+  'up-right':1,     'up-left':1,     // diagonal up → up row
 };
 
 // Animation state — track per-character walk frame
@@ -1724,6 +1970,12 @@ function loadSprites(){
     img.src=sp.file;
   }
   for(const[key,sp] of Object.entries(SPRITE_VARIANTS)){
+    const img=new Image();
+    img.onload=()=>{sp.img=img;sp.loaded=true;};
+    img.onerror=()=>{};
+    img.src=sp.file;
+  }
+  for(const[key,sp] of Object.entries(PLAYER_WEAPON_SPRITES)){
     const img=new Image();
     img.onload=()=>{sp.img=img;sp.loaded=true;};
     img.onerror=()=>{};
@@ -1806,39 +2058,94 @@ function tickAnims(dt){
     }
   }
 }
-// Uses recursive backtracker + extra loops to guarantee multiple paths
+// 2-wide corridor maze — recursive backtracker, STEP=4
+// Enemy navigation uses only 2-wide corridors (guaranteed connected graph)
+// Player-only squeeze gaps added afterward — hard cap of 10-12 per map
+// Placed at dead ends so they create escape hatches without fragmenting enemy nav
 // ═══════════════════════════════════════
 function genMaze(){
   grid=Array.from({length:ROWS},()=>Array(COLS).fill(WALL));
   const visited=new Set();
-  function carve(r,c){
-    visited.add(r*COLS+c); grid[r][c]=FLOOR;
-    const dirs=[[0,2],[0,-2],[2,0],[-2,0]].sort(()=>Math.random()-.5);
+
+  function carve2(r,c){
+    visited.add(r*COLS+c);
+    grid[r][c]=FLOOR; grid[r][c+1]=FLOOR;
+    grid[r+1][c]=FLOOR; grid[r+1][c+1]=FLOOR;
+    const dirs=[[0,4],[0,-4],[4,0],[-4,0]].sort(()=>Math.random()-.5);
     for(const[dr,dc] of dirs){
       const nr=r+dr,nc=c+dc;
-      if(inB(nr,nc)&&!visited.has(nr*COLS+nc)){
-        grid[r+dr/2][c+dc/2]=FLOOR;
-        carve(nr,nc);
+      if(nr<1||nr>ROWS-3||nc<1||nc>COLS-3) continue;
+      if(visited.has(nr*COLS+nc)) continue;
+      if(dr===0){
+        const minC=Math.min(c,nc)+2;
+        grid[r][minC]=FLOOR;   grid[r][minC+1]=FLOOR;
+        grid[r+1][minC]=FLOOR; grid[r+1][minC+1]=FLOOR;
+      } else {
+        const minR=Math.min(r,nr)+2;
+        grid[minR][c]=FLOOR;   grid[minR][c+1]=FLOOR;
+        grid[minR+1][c]=FLOOR; grid[minR+1][c+1]=FLOOR;
       }
+      carve2(nr,nc);
     }
   }
-  carve(1,1);
+  carve2(1,1);
+  invalidateFloorCache();
+
   // Hard borders
   for(let r=0;r<ROWS;r++){grid[r][0]=WALL;grid[r][COLS-1]=WALL;}
   for(let c=0;c<COLS;c++){grid[0][c]=WALL;grid[ROWS-1][c]=WALL;}
-  // Extra passages — punch ~7% of wall cells between two floor cells to create loops
-  // This is critical: multiple route options mean Minotaur mines can be circumvented
+
+  // Loop passages — moderate density for alternate routes (7%)
   const loopCount=Math.floor(ROWS*COLS*0.07);
-  for(let attempt=0;attempt<loopCount*6&&loopCount>0;attempt++){
+  for(let attempt=0;attempt<loopCount*6;attempt++){
     const r=ri(1,ROWS-2),c=ri(1,COLS-2);
     if(grid[r][c]!==WALL) continue;
-    // Only break a wall that has floor on both sides (horizontal or vertical)
     const horiz=(c>0&&c<COLS-1&&grid[r][c-1]===FLOOR&&grid[r][c+1]===FLOOR);
     const vert=(r>0&&r<ROWS-1&&grid[r-1][c]===FLOOR&&grid[r+1][c]===FLOOR);
     if(horiz||vert){grid[r][c]=FLOOR;}
   }
-  // Exit spawns on any floor tile — picked later in initGame once we know player spawn.
-  // Return sentinel; initGame will place it after flood-fill.
+
+  // ── Player-only squeeze gaps ──
+  // Hard cap: 10-12 per map. Placed at dead ends — corridors that terminate
+  // with floor on one side and wall on the perpendicular, connecting to another
+  // corridor through a single tile. Enemy wk2x2 fails; player passes freely.
+  const squeezeTarget=10+ri(0,3);
+  let squeezeCount=0;
+
+  // Find dead ends: floor tiles with exactly one floor neighbour
+  const deadEnds=[];
+  for(let r=2;r<ROWS-2;r++){
+    for(let c=2;c<COLS-2;c++){
+      if(grid[r][c]!==FLOOR) continue;
+      const floorNeighbours=[[0,1],[0,-1],[1,0],[-1,0]]
+        .filter(([dr,dc])=>grid[r+dr]?.[c+dc]===FLOOR).length;
+      if(floorNeighbours===1) deadEnds.push([r,c]);
+    }
+  }
+  // Shuffle dead ends
+  deadEnds.sort(()=>Math.random()-.5);
+
+  for(const[er,ec] of deadEnds){
+    if(squeezeCount>=squeezeTarget) break;
+    // Try punching a squeeze in a direction perpendicular to the corridor
+    for(const[dr,dc] of [[0,1],[0,-1],[1,0],[-1,0]]){
+      const wr=er+dr, wc=ec+dc; // candidate wall tile
+      const br=er+dr*2, bc=ec+dc*2; // tile beyond wall
+      if(!inB(wr,wc)||!inB(br,bc)) continue;
+      if(grid[wr][wc]!==WALL) continue;
+      if(grid[br][bc]!==FLOOR) continue;
+      // Confirm perpendicular sides are walls (true squeeze, not open area)
+      const perp1r=wr+(dc!==0?1:0), perp1c=wc+(dr!==0?1:0);
+      const perp2r=wr-(dc!==0?1:0), perp2c=wc-(dr!==0?1:0);
+      if(grid[perp1r]?.[perp1c]!==WALL) continue;
+      if(grid[perp2r]?.[perp2c]!==WALL) continue;
+      // Punch it
+      grid[wr][wc]=FLOOR;
+      squeezeCount++;
+      break;
+    }
+  }
+
   return{exitR:-1,exitC:-1};
 }
 
@@ -1859,13 +2166,22 @@ function floorTiles(){
   for(let r=1;r<ROWS-1;r++)for(let c=1;c<COLS-1;c++)if(grid[r][c]===FLOOR)ft.push([r,c]);
   return ft;
 }
+// Floor tiles with 2×2 clearance — cached, rebuilt on maze/wall change
+function invalidateFloorCache(){ _floorTiles2x2Cache=null; }
+function floorTiles2x2(){
+  if(_floorTiles2x2Cache) return _floorTiles2x2Cache;
+  const ft=[];
+  for(let r=2;r<ROWS-1;r++)for(let c=2;c<COLS-1;c++)if(wk2x2(r,c))ft.push([r,c]);
+  _floorTiles2x2Cache=ft;
+  return ft;
+}
 
 // ═══════════════════════════════════════
 // A* PATHFINDING
 // avoidSet: Set of r*COLS+c keys to treat as impassable (used by Minotaur for mine-aware routing)
 // trapPenalty: if true, add cost for player mine tiles rather than avoid them
 // ═══════════════════════════════════════
-function astar(sr,sc,er,ec,avoidSet=null,trapPenalty=false){
+function astar(sr,sc,er,ec,avoidSet=null,trapPenalty=false,size=1){
   const key=(r,c)=>r*COLS+c;
   const h=(r,c)=>md(r,c,er,ec);
   // Priority queue via Map sorted on access (small enough grid)
@@ -1890,12 +2206,14 @@ function astar(sr,sc,er,ec,avoidSet=null,trapPenalty=false){
     open.delete(best);closed.add(best);
     for(const[dr,dc] of[[0,1],[0,-1],[1,0],[-1,0]]){
       const nr=r+dr,nc=c+dc;
-      if(!wk(nr,nc)||closed.has(key(nr,nc))) continue;
+      const passable=size===2?wk2x2(nr,nc):wk(nr,nc);
+      if(!passable||closed.has(key(nr,nc))) continue;
       if(avoidSet&&avoidSet.has(key(nr,nc))) continue;
       let cost=1;
       if(trapPenalty){
-        // Only penalise visible mines — hidden ones look like floor to the Minotaur
-        if(traps.some(t=>t.r===nr&&t.c===nc&&t.owner==='player'&&!t.hidden)) cost=50;
+        // Check all 4 cells of enemy's 2×2 footprint (centered on nr,nc corner)
+        const fp=[[nr-1,nc-1],[nr-1,nc],[nr,nc-1],[nr,nc]];
+        if(fp.some(([fr,fc])=>traps.some(t=>t.r===fr&&t.c===fc&&t.owner==='player'&&!t.hidden))) cost=50;
       }
       const ng=(gScore.get(best)||0)+cost;
       const nk=key(nr,nc);
@@ -1906,6 +2224,135 @@ function astar(sr,sc,er,ec,avoidSet=null,trapPenalty=false){
     }
   }
   return null;
+}
+
+// Find nearest tile to (tr,tc) that satisfies wk2x2 — used as enemy hunt target
+// Scores candidates by: player proximity (primary) + enemy proximity (tiebreak)
+// This ensures approach direction is respected — enemy picks the closest valid
+// tile that also lies naturally on the path from where it is
+// Returns the best intercept target for an enemy chasing a moving player
+// Projects player trajectory, finds walkable tiles along that path,
+// scores them by how quickly the enemy can get there vs player
+// Bruiser gets extra lookahead since it can punch through walls
+function getScentTarget(E){
+  const momentum=P.momentum||0;
+  const vr=P.vr||0, vc=P.vc||0;
+  const isMoving=vr!==0||vc!==0;
+
+  // Helper: verify target is actually reachable with size=2
+  function reachable(r,c){
+    return wk2x2(r,c)&&(astar(E.r,E.c,r,c,null,false,2)||[]).length>0;
+  }
+
+  if(!isMoving||momentum<2){
+    // Player stationary or just changed dir — chase current position
+    const[tr,tc]=nearestValid2x2(P.r,P.c,E.r,E.c);
+    return [tr,tc];
+  }
+
+  const isBruiser=E.vDef&&E.vDef.wallBreaker;
+  const lookahead=Math.min(Math.floor(momentum*1.5)+3,12);
+
+  // Project along actual A* path rather than raw vector — avoids projecting through walls
+  const playerPath=astar(P.r,P.c,
+    clamp(P.r+vr*20,1,ROWS-2), clamp(P.c+vc*20,1,COLS-2));
+  const projections=[];
+  if(playerPath&&playerPath.length>2){
+    for(let d=2;d<=Math.min(lookahead,playerPath.length-1);d+=2){
+      const[pr,pc]=playerPath[d];
+      projections.push([pr,pc,d]);
+    }
+  } else {
+    // Fallback to raw projection
+    for(let d=2;d<=lookahead;d+=2){
+      const pr=clamp(P.r+vr*d,1,ROWS-2);
+      const pc=clamp(P.c+vc*d,1,COLS-2);
+      projections.push([pr,pc,d]);
+    }
+  }
+
+  let bestScore=-Infinity, bestTarget=null;
+  for(const[pr,pc,playerSteps] of projections){
+    const[tr,tc]=nearestValid2x2(pr,pc,E.r,E.c);
+    if(!wk2x2(tr,tc)) continue;
+    // Bonus for open tiles (not a dead end)
+    const openNeighbors=[[0,1],[0,-1],[1,0],[-1,0]]
+      .filter(([dr,dc])=>wk(tr+dr,tc+dc)).length;
+    const enemyDist=md(E.r,E.c,tr,tc);
+    const advantage=playerSteps-enemyDist;
+    const score=advantage*10+openNeighbors*2;
+    if(score>bestScore){bestScore=score;bestTarget=[tr,tc];}
+  }
+
+  // Guarantee: verify chosen target is actually pathable, fallback if not
+  if(bestTarget){
+    const path=astar(E.r,E.c,bestTarget[0],bestTarget[1],null,false,2);
+    if(path&&path.length>0) return bestTarget;
+  }
+
+  // Fallback 1: nearest valid tile to player
+  const[fr,fc]=nearestValid2x2(P.r,P.c,E.r,E.c);
+  const fallbackPath=astar(E.r,E.c,fr,fc,null,false,2);
+  if(fallbackPath&&fallbackPath.length>0) return [fr,fc];
+
+  // Fallback 2: any reachable tile near player
+  const nearby=floorTiles2x2().filter(([r,c])=>md(r,c,P.r,P.c)<=6);
+  nearby.sort((a,b)=>md(a[0],a[1],P.r,P.c)-md(b[0],b[1],P.r,P.c));
+  for(const[r,c] of nearby){
+    if(reachable(r,c)) return [r,c];
+  }
+
+  // Last resort: stay put
+  return [E.r,E.c];
+}
+
+
+// ── Bruiser charge helpers ──
+// Bresenham line from (r0,c0) to (r1,c1) — returns array of {r,c} steps
+function bresenhamLine(r0,c0,r1,c1){
+  const line=[];
+  let dx=Math.abs(c1-c0), dy=Math.abs(r1-r0);
+  let sx=c0<c1?1:-1, sy=r0<r1?1:-1;
+  let err=dx-dy;
+  while(true){
+    line.push({r:r0,c:c0});
+    if(r0===r1&&c0===c1) break;
+    const e2=err*2;
+    if(e2>-dy){err-=dy;c0+=sx;}
+    if(e2<dx){err+=dx;r0+=sy;}
+  }
+  return line;
+}
+
+// Begin a charge — lock target, build breach line, switch state
+function beginCharge(E){
+  E.chargePath=bresenhamLine(E.r,E.c,P.r,P.c);
+  E.chargeDuration=Math.min(E.chargePath.length+2, 16); // max 16 steps per charge
+  E.chargeTargetR=P.r; E.chargeTargetC=P.c;
+  E.state='CHARGING';
+  E.cachedPath=[];
+  playWallSmash(E.r,E.c);
+  showToast('💥 BRUISER IS CHARGING!',1200);
+}
+
+function nearestValid2x2(tr,tc,er,ec){
+  if(wk2x2(tr,tc)) return [tr,tc];
+  let best=null, bestScore=Infinity;
+  for(let d=1;d<=5;d++){
+    for(let dr=-d;dr<=d;dr++){
+      for(let dc=-d;dc<=d;dc++){
+        if(Math.abs(dr)!==d&&Math.abs(dc)!==d) continue; // ring edge only
+        const r=tr+dr, c=tc+dc;
+        if(!wk2x2(r,c)) continue;
+        const dPlayer=Math.abs(r-tr)+Math.abs(c-tc);
+        const dEnemy=er!==undefined?(Math.abs(r-er)+Math.abs(c-ec)):0;
+        const score=dPlayer*100+dEnemy;
+        if(score<bestScore){bestScore=score;best=[r,c];}
+      }
+    }
+    if(best) return best; // return best from this ring before expanding
+  }
+  return [tr,tc]; // fallback
 }
 
 // Count unique paths from (sr,sc) to (er,ec) — used by Minotaur tactical analysis
@@ -1925,6 +2372,7 @@ function countAlternatePaths(sr,sc,er,ec,blockedSet){
 // ═══════════════════════════════════════
 function initGame(){
   updateMazeSize();
+  invalidateFloorCache();
   resizeCanvas();buildPalette();
   projectiles=[];traps=[];items=[];powerupItems=[];activePowerups=[];
   stopNoisemakerLoop(); // clear any active noisemaker sound
@@ -1933,6 +2381,8 @@ function initGame(){
   stunTimer=0;stunMax=0;aimMode=false;
   defusing=false;defuseTimer=0;defuseTarget=null;eKeyHeld=false;
   hidingMine=false;hideTimer=0;hideTarget=null;hideGrace=0;
+  digging=false;digTimer=0;
+  dynamiteFuses=[];
 
   // Keep regenerating until maze is good
   let exitR,exitC,reachable;
@@ -1988,18 +2438,30 @@ function initGame(){
   P={
     r:pSpawn[0],c:pSpawn[1],
     rx:tx(pSpawn[1]),ry:ty(pSpawn[0]),
-    dir:'right',alive:true,
+    dir:'down',alive:true,
     hp:baseHP,
     weapons:[],activeWeapon:null,
     vr:0,vc:0,
+    lastVr:0,lastVc:0,momentum:0,
     perks:{...pendingPerks},
+    spawnR:pSpawn[0], spawnC:pSpawn[1],
   };
   pendingPerks={}; // consumed — player must buy again next run
-  if(P.perks.extraHP) P.hp=P.hp+1; // +1 flat, stacks with vitality base
+  // Always start with a club
+  P.weapons.push({r:-1,c:-1,type:'club',def:WEAPONS.club});
+  P.activeWeapon=P.weapons[0];
+  if(P.perks.extraHP) P.hp=P.hp+1;
   if(P.perks.extraWeapon){
-    const wtype=ITEM_TYPES[ri(0,ITEM_TYPES.length-1)];
+    // Armorer perk: also spawn with a random non-mine weapon
+    const pool=['knife','torch','bow','xbow'].filter(t=>WEAPONS[t]);
+    const wtype=pool[ri(0,pool.length-1)];
     P.weapons.push({r:-1,c:-1,type:wtype,def:WEAPONS[wtype]});
-    P.activeWeapon=P.weapons[0];
+  }
+  if(P.perks.stunbow){
+    P.weapons.push({r:-1,c:-1,type:'stunbow',def:WEAPONS.stunbow,_reloadTimer:0,_shotsLeft:3});
+  }
+  if(P.perks.stunxbow){
+    P.weapons.push({r:-1,c:-1,type:'stunxbow',def:WEAPONS.stunxbow,_reloadTimer:0,_shotsLeft:Infinity});
   }
 
   // ── Enemy variant definitions ──
@@ -2008,15 +2470,15 @@ function initGame(){
   const VARIANTS={
     classic:{
       id:'classic', name:'MINOTAUR',
-      moveDurMult:1.0,
+      moveDurMult:1.1,
       color:'rgba(160,25,25,0.22)', glowColor:'rgba(160,25,25,0.22)',
       drawSizeMult:1.0,
-      canPickupWeapons:true, canPickupRangedOnly:false,
+      canPickupWeapons:false, canPickupRangedOnly:false,
       wallBreaker:false,
       soundHunter:false,
       dmg:1,
-      visionRadius:12,    // sees player within 12 tiles; wanders outside
-      desc:'Cunning. Hunts with weapons. Predicts your path.',
+      visionRadius:12,
+      desc:'Armed with a club. Chases you directly and predicts your path.',
     },
     bruiser:{
       id:'bruiser', name:'BRUISER',
@@ -2027,7 +2489,7 @@ function initGame(){
       wallBreaker:true,
       soundHunter:false,
       dmg:1,
-      visionRadius:12,    // matches Classic
+      visionRadius:14,    // slightly wider than Classic to compensate for 2-wide maze routing
       desc:'Slow. Cannot use weapons. Breaks walls to reach you.',
     },
     scout:{
@@ -2053,6 +2515,20 @@ function initGame(){
       dmg:1,
       visionRadius:12,   // unused for range — kept for fog/wander draw radius only
       desc:'Blind. Hears movement across the entire map. Stand still and it loses you.',
+    },
+    tactician:{
+      id:'tactician', name:'TACTICIAN',
+      moveDurMult:1.0,
+      color:'rgba(160,25,25,0.22)', glowColor:'rgba(160,25,25,0.22)', // looks like Classic
+      drawSizeMult:1.0,
+      canPickupWeapons:false, canPickupRangedOnly:false,
+      wallBreaker:false,
+      soundHunter:false,
+      dmg:1,
+      visionRadius:12,
+      mineLayer:true,       // special flag — uses mine timer instead of weapon pickup
+      mineInterval:10000,   // lays a mine every 10 seconds, always
+      desc:'Identical to Classic but obsessed with mine placement. Lays a mine every 10s on your path to the exit.',
     },
   };
 
@@ -2086,7 +2562,8 @@ function initGame(){
       tx:tx(spawnC),ty:ty(spawnR),
       moving:false,moveT:0,moveDur:Math.round(tc.moveDur*vDef.moveDurMult),
       dir:'left',alive:true,
-      weapon:variantId==='scout'?{r:-1,c:-1,type:'xbow',def:WEAPONS.xbow}:null,stunned:false,
+      weapon:variantId==='scout'?{r:-1,c:-1,type:'xbow',def:WEAPONS.xbow}:
+             variantId==='classic'?{r:-1,c:-1,type:'club',def:WEAPONS.club}:null,stunned:false,
       stunTimer:0,stunMax:1,
       state:'HUNT',
       stateTimer:0,stateMs:tc.stateMs,
@@ -2101,9 +2578,13 @@ function initGame(){
       // vision / wander state
       lastKnownR:-1,lastKnownC:-1, // last seen player position
       _wanderTarget:null,
+      scentR:-1,scentC:-1,        // scent trail — set once player seen, persists until shadow
       // blind one — last known sound position
       soundR:-1,soundC:-1,
       _lastHeardR:-1,_lastHeardC:-1, // last grid tile where we heard player
+      _prevPlayerR:undefined,_prevPlayerC:undefined, // for Blind One first-move detection
+      // tactician — mine laying timer (starts at 0 so first mine lays immediately)
+      mineTimer:variantId==='tactician'?0:null,
       // bruiser — wall-break cooldown
       wallBreakCd:0,
     };
@@ -2120,6 +2601,7 @@ function initGame(){
           if(usedSpawns.has(r*COLS+c)) return false;
           if(md(r,c,...pSpawn)<10) return false;
           for(const e of enemies) if(md(r,c,e.r,e.c)<8) return false;
+          if(!wk2x2(r,c)) return false; // need 2×2 clear footprint
           return c>COLS/4;
         });
       if(!cands.length) break;
@@ -2144,8 +2626,8 @@ function initGame(){
   const usedCells=new Set([...usedSpawns]);
   const reachArr=[...reachable].map(k=>[Math.floor(k/COLS),k%COLS]).sort(()=>Math.random()-.5);
   // More items when more Minotaurs — keeps it fair
-  const itemCount=ri(7,11)+minoCount*2;
-  const forcedTypes=['mine','mine','xbow','bow'];
+  const itemCount=ri(10,15)+minoCount*3;
+  const forcedTypes=['mine','mine','mine','xbow','bow','bow','knife','torch'];
   let placed=0;
   for(const forced of forcedTypes){
     for(const[r,c] of reachArr){
@@ -2198,7 +2680,7 @@ function initGame(){
   const varLabels=[...new Set(variantIds)];
   const rosterStr=varLabels.length===1&&varLabels[0]==='classic'
     ?(minoCount>1?' ×'+minoCount+'🐂':'')
-    :' '+variantIds.map(v=>({classic:'🐂',bruiser:'🦬',scout:'🦅',blind:'🙈'})[v]||'🐂').join('');
+    :' '+variantIds.map(v=>({classic:'🐂',bruiser:'🦬',scout:'🦅',blind:'🙈',tactician:'💣'})[v]||'🐂').join('');
   document.getElementById('sRun').textContent='R'+totalRuns+' '+getTier().label+rosterStr;
   document.getElementById('sRun').style.color=getTier().color;
   document.getElementById('scoreDisplay').textContent=score+' PTS';
@@ -2232,6 +2714,8 @@ function applyPowerup(type){
     case 'shadow':
       activePowerups=activePowerups.filter(a=>a.type!=='shadow');
       activePowerups.push({type:'shadow',timeLeft:def.duration,totalTime:def.duration});
+      // Clear scent on all enemies — they lose the trail immediately
+      for(const e of enemies){e.scentR=-1;e.scentC=-1;e._wanderTarget=null;e.cachedPath=[];}
       showToast('👁️ SHADOW — MINOTAUR BLINDED 7s',1400);
       // Immediately clear all cached paths and freeze last-known position
       // so enemies wander to where you WERE, not where you ARE
@@ -2352,7 +2836,7 @@ function findMinePlacementTarget(E){
   for(let i=2;i<playerPath.length-1;i+=sampleStep){
     const[tr,tc]=playerPath[i];
     if(traps.some(t=>t.r===tr&&t.c===tc)) continue;
-    const mDist=astar(E.r,E.c,tr,tc)?astar(E.r,E.c,tr,tc).length:999;
+    const mDist=astar(E.r,E.c,tr,tc,null,false,2)?astar(E.r,E.c,tr,tc,null,false,2).length:999;
     const pDist=i;
     const blockSet=new Set([tr*COLS+tc]);
     const altPaths=countAlternatePaths(P.r,P.c,EXIT.r,EXIT.c,blockSet);
@@ -2364,82 +2848,374 @@ function findMinePlacementTarget(E){
 
 // Main AI tick — called each frame per enemy when not animating
 function minotaurAI(E,dt){
+  // ── Tactician mine timer — only fires when standing at a designated mine spot ──
+  if(E.vDef?.mineLayer&&E.mineTimer!==null){
+    E.mineTimer-=dt;
+    if(E.mineTimer<=0){
+      E.mineTimer=E.vDef.mineInterval;
+      // Only place mine at or immediately adjacent to Tactician's current position
+      // He physically walks to the spot first — no remote placement
+      const candidates=[];
+      for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+        const r=E.r+dr,c=E.c+dc;
+        if(!inB(r,c)||grid[r][c]!==FLOOR) continue;
+        if(traps.some(t=>t.r===r&&t.c===c)) continue;
+        // Score: prefer tiles on player's exit path
+        const onPath=E._lastApproachPath&&E._lastApproachPath.some(([pr,pc])=>pr===r&&pc===c);
+        candidates.push([r,c,onPath?10:md(r,c,E.r,E.c)]);
+      }
+      candidates.sort((a,b)=>b[2]-a[2]); // highest score first
+      if(candidates.length){
+        const[tr,tc]=candidates[0];
+        traps.push({r:tr,c:tc,owner:'enemy',def:WEAPONS.mine});
+        playSound('mine_place',0.8);
+        showToast('💣 MINE LAID',900);
+        for(const e of enemies) e.pathStale=true;
+        invalidateFloorCache();
+      }
+    }
+  }
+
   if(!E.alive||E.moving||E.stunned) return;
   E.stateTimer=Math.max(0,E.stateTimer-dt);
   E.pathAge+=dt;
 
-  const dToPlayer=md(E.r,E.c,P.r,P.c);
+  // ── Tactician goal-driven AI ──
+  if(E.vDef?.mineLayer){
+    if(!E._tacState) E._tacState='MOVE_TO_EXIT';
 
-  // ── Proximity vision ──
-  // Outside visionRadius the enemy can't see the player.
-  // It wanders toward its last known position, then roams randomly.
-  // Sound hunters (blind) use an even simpler version of this.
-  const vr=E.vDef?E.vDef.visionRadius:7;
-  const canSeePlayer=dToPlayer<=vr&&hasLOS(E.r,E.c,P.r,P.c);
-  if(!E.vDef?.soundHunter){
-    if(canSeePlayer){
-      // Update last known position every frame we have sight
-      E.lastKnownR=P.r;E.lastKnownC=P.c;
-      // If we were wandering, cancel the wander target so we drop into hunt logic below
-      E._wanderTarget=null;
-    } else {
-      // Can't see player — head to last known position, then wander freely
-      const needNewTarget=
-        !E._wanderTarget ||
-        (E.r===E._wanderTarget[0]&&E.c===E._wanderTarget[1]) ||
-        E.cachedPath.length===0;
+    const exitDist=md(E.r,E.c,EXIT.r,EXIT.c);
+    const enemyMines=traps.filter(t=>t.owner==='enemy'&&t.def===WEAPONS.mine);
 
-      if(needNewTarget){
-        if(E.lastKnownR>=0){
-          // Go to last known position first
-          E._wanderTarget=[E.lastKnownR,E.lastKnownC];
-          E.cachedPath=astar(E.r,E.c,E.lastKnownR,E.lastKnownC)||[];
-          // Clear last known so next target is a free roam
-          E.lastKnownR=-1;E.lastKnownC=-1;
-        } else {
-          // Free roam — pick from actual floor tiles so we always get a walkable target
-          const ft=floorTiles();
-          if(ft.length){
-            const[wr,wc]=ft[ri(0,ft.length-1)];
-            E._wanderTarget=[wr,wc];
-            E.cachedPath=astar(E.r,E.c,wr,wc)||[];
+    function minesNear(r,c,radius){
+      return enemyMines.filter(m=>md(m.r,m.c,r,c)<=radius).length;
+    }
+
+    function getApproachZones(){
+      const zones=[];
+      const playerPath=astar(P.r,P.c,EXIT.r,EXIT.c);
+      if(playerPath){
+        E._lastApproachPath=playerPath;
+        for(let i=0;i<playerPath.length;i++){
+          const[r,c]=playerPath[i];
+          if(md(r,c,EXIT.r,EXIT.c)<=12) zones.push([r,c,i]);
+        }
+      } else if(E._lastApproachPath){
+        for(let i=0;i<E._lastApproachPath.length;i++){
+          const[r,c]=E._lastApproachPath[i];
+          if(md(r,c,EXIT.r,EXIT.c)<=12) zones.push([r,c,i]);
+        }
+      }
+      return zones;
+    }
+
+    // Find next approach tile that needs mines AND the Tactician can walk to
+    function findNextMineTarget(){
+      const zones=getApproachZones();
+      if(!zones.length) return null;
+      // Exclude tiles within 3 tiles of exit — minefield should funnel the player, not block the door
+      const unsealed=zones.filter(([r,c])=>minesNear(r,c,2)<3&&md(r,c,EXIT.r,EXIT.c)>=3);
+      if(!unsealed.length) return null;
+      // Prefer tiles closest to exit that Tactician can reach
+      unsealed.sort((a,b)=>md(a[0],a[1],EXIT.r,EXIT.c)-md(b[0],b[1],EXIT.r,EXIT.c));
+      for(const[r,c] of unsealed){
+        const[nr,nc]=nearestValid2x2(r,c,E.r,E.c);
+        if(wk2x2(nr,nc)) return[nr,nc];
+      }
+      return null;
+    }
+
+    if(E._tacState==='MOVE_TO_EXIT'){
+      if(exitDist<=12){
+        E._tacState='SEAL_APPROACH';
+        E.cachedPath=[];
+        E._tacTarget=null;
+      } else {
+        if(!E.cachedPath||E.cachedPath.length===0){
+          // Target a random tile in the approach zone (5–12 tiles from exit), not the exit itself
+          const approachCands=floorTiles2x2().filter(([r,c])=>{
+            const d=md(r,c,EXIT.r,EXIT.c);
+            return d>=5&&d<=12;
+          });
+          let tr,tc;
+          if(approachCands.length){
+            [tr,tc]=approachCands[ri(0,approachCands.length-1)];
+          } else {
+            [tr,tc]=nearestValid2x2(EXIT.r,EXIT.c,E.r,E.c);
+          }
+          const path=astar(E.r,E.c,tr,tc,null,false,2)||[];
+          if(path.length>0){
+            E.cachedPath=path;
+          } else {
+            // Path blocked — use dynamite to blast a route toward exit
+            const dr=Math.sign(EXIT.r-E.r), dc=Math.sign(EXIT.c-E.c);
+            for(let dist=1;dist<=3;dist++){
+              const br=E.r+dr*dist, bc=E.c+dc*dist;
+              if(!inB(br,bc)||br<=0||br>=ROWS-1||bc<=0||bc>=COLS-1) continue;
+              // Carve 2x2 footprint toward exit
+              for(let rr=br-1;rr<=br;rr++) for(let cc=bc-1;cc<=bc;cc++){
+                if(inB(rr,cc)&&rr>0&&rr<ROWS-1&&cc>0&&cc<COLS-1&&grid[rr][cc]===WALL){
+                  grid[rr][cc]=FLOOR;
+                }
+              }
+            }
+            playSound('mine_explode',0.9);
+            showToast('💣 TACTICIAN BLASTS THROUGH!',1200);
+            invalidateFloorCache();
+            for(const e of enemies) e.pathStale=true;
+            // Recompute after blast
+            const[tr2,tc2]=nearestValid2x2(EXIT.r,EXIT.c,E.r,E.c);
+            E.cachedPath=astar(E.r,E.c,tr2,tc2,null,false,2)||[];
           }
         }
       }
+    }
 
+    if(E._tacState==='SEAL_APPROACH'){
+      // Check if current position is already being mined (we're in position)
+      const atTarget=E._tacTarget&&md(E.r,E.c,E._tacTarget[0],E._tacTarget[1])<=1;
+      if(atTarget){
+        // Standing at mine location — mine timer handles placement
+        // Move to next target when this spot has enough mines
+        if(minesNear(E.r,E.c,2)>=3){
+          E._tacTarget=null; // find new spot
+          E.cachedPath=[];
+        }
+      } else {
+        // Need to walk to a mine location
+        const target=findNextMineTarget();
+        if(!target){
+          E._tacState='PATROL';
+          E.cachedPath=[];
+        } else {
+          E._tacTarget=target;
+          if(!E.cachedPath||E.cachedPath.length===0){
+            E.cachedPath=astar(E.r,E.c,target[0],target[1],null,false,2)||[];
+          }
+        }
+      }
+    }
+
+    if(E._tacState==='PATROL'){
+      // Roam near exit looking for unprotected tiles
+      if(E.stateTimer<=0){
+        E.stateTimer=6000;
+        E._tacState='SEAL_APPROACH';
+        E._tacTarget=null;
+        E.cachedPath=[];
+      }
+      if(!E.cachedPath||E.cachedPath.length===0){
+        const ft=floorTiles2x2().filter(([r,c])=>{
+          const d=md(r,c,EXIT.r,EXIT.c);
+          return d>=4&&d<=10;
+        });
+        if(ft.length){
+          const[wr,wc]=ft[ri(0,ft.length-1)];
+          E.cachedPath=astar(E.r,E.c,wr,wc,null,false,2)||[];
+        }
+      }
+    }
+
+    // Execute movement
+    if(E.cachedPath&&E.cachedPath.length){
+      const[nr,nc]=E.cachedPath.shift();
+      startEnemyMove(E,nr,nc);
+    }
+    return; // Never runs normal player-hunting AI
+  }
+
+  const dToPlayer=md(E.r,E.c,P.r,P.c);
+  const vr=E.vDef?E.vDef.visionRadius:12;
+  const canSeePlayer=dToPlayer<=vr;
+  const hasShadow=activePowerups.some(a=>a.type==='shadow');
+
+  // ── Bruiser wall-break AI — handled entirely here before standard rules ──
+  if(E.vDef?.wallBreaker){
+    // Update scent when visible
+    if(canSeePlayer&&!hasShadow){
+      E.scentR=P.r; E.scentC=P.c;
+      E.lastKnownR=P.r; E.lastKnownC=P.c;
+    }
+
+    // Execute CHARGING state
+    if(E.state==='CHARGING'){
+      if(!E.chargePath||E.chargePath.length===0||E.chargeDuration<=0){
+        E.state='HUNT'; E.pathStale=true; E.cachedPath=[];
+      } else {
+        const next=E.chargePath.shift();
+        E.chargeDuration--;
+        // Carve full 2×2 footprint — bulldozer
+        for(let rr=next.r-1;rr<=next.r;rr++) for(let cc=next.c-1;cc<=next.c;cc++){
+          if(rr>0&&rr<ROWS-1&&cc>0&&cc<COLS-1&&grid[rr][cc]===WALL){
+            grid[rr][cc]=FLOOR;
+            playWallSmash(E.r,E.c);
+            invalidateFloorCache();
+          }
+        }
+        startEnemyMove(E,next.r,next.c);
+      }
+      return;
+    }
+
+    // HUNT state — chase player, decide whether to charge
+    const hasScent=E.scentR>=0&&E.scentC>=0&&!hasShadow;
+    if(hasScent||canSeePlayer){
+      const playerMoved=P.r!==E.lastPlayerR||P.c!==E.lastPlayerC;
+      const needRecalc=playerMoved||E.cachedPath.length===0||E.pathAge>400;
+      if(needRecalc){
+        E.lastPlayerR=P.r; E.lastPlayerC=P.c; E.pathAge=0;
+        const[tr,tc]=nearestValid2x2(P.r,P.c,E.r,E.c);
+        E.cachedPath=astar(E.r,E.c,tr,tc,null,false,2)||[];
+
+        // Charge decision: corridor longer than direct path? CHARGE.
+        // Also charge if any wall exists on the direct line to player
+        const corridorLen=E.cachedPath.length;
+        const directLen=Math.max(Math.abs(P.r-E.r),Math.abs(P.c-E.c));
+        // Check if there's a wall directly between us and player
+        const line=bresenhamLine(E.r,E.c,P.r,P.c);
+        const wallInWay=line.some(({r,c})=>inB(r,c)&&grid[r][c]===WALL);
+        if(directLen>=3&&(wallInWay||(corridorLen>directLen*1.3))){
+          beginCharge(E);
+          return;
+        }
+      }
       if(E.cachedPath.length){
         const[nr,nc]=E.cachedPath.shift();
         startEnemyMove(E,nr,nc);
       } else {
-        // Path came up empty — if bruiser, try to smash through toward last known / wander target
-        const isWallBreakerW=E.vDef&&E.vDef.wallBreaker;
-        if(isWallBreakerW&&(E.wallBreakCd||0)<=0&&E._wanderTarget){
-          const tR=E._wanderTarget[0],tC=E._wanderTarget[1];
-          const dR=tR-E.r,dC=tC-E.c;
-          const dirs=[];
-          if(Math.abs(dR)>=Math.abs(dC)){dirs.push([Math.sign(dR)||1,0],[0,Math.sign(dC)||1]);}
-          else{dirs.push([0,Math.sign(dC)||1],[Math.sign(dR)||1,0]);}
-          for(const[sr,sc] of [[1,0],[-1,0],[0,1],[0,-1]]){
-            if(!dirs.some(([a,b])=>a===sr&&b===sc)) dirs.push([sr,sc]);
-          }
-          for(const[sr,sc] of dirs){
-            const wr=E.r+sr,wc=E.c+sc;
-            if(!inB(wr,wc)||grid[wr]?.[wc]!==WALL||wr<=0||wr>=ROWS-1||wc<=0||wc>=COLS-1) continue;
-            grid[wr][wc]=FLOOR;
-            E.pathStale=true;E.cachedPath=[];E._wanderTarget=null;
-            E.wallBreakCd=1800;
-            startEnemyMove(E,wr,wc);
-            break;
-          }
-        } else if(E._wanderTarget){
-          // Not a wall-breaker or on cooldown — just clear target and pick new one
-          E._wanderTarget=null;
+        // Direct step
+        const dr=P.r-E.r, dc=P.c-E.c;
+        if(dr!==0&&wk(E.r+Math.sign(dr),E.c)) startEnemyMove(E,E.r+Math.sign(dr),E.c);
+        else if(dc!==0&&wk(E.r,E.c+Math.sign(dc))) startEnemyMove(E,E.r,E.c+Math.sign(dc));
+      }
+    } else if(E.lastKnownR>=0){
+      if(E.cachedPath.length===0){
+        const[lkr,lkc]=nearestValid2x2(E.lastKnownR,E.lastKnownC,E.r,E.c);
+        E.cachedPath=astar(E.r,E.c,lkr,lkc,null,false,2)||[];
+      }
+      if(E.cachedPath.length){
+        const[nr,nc]=E.cachedPath.shift();
+        startEnemyMove(E,nr,nc);
+      } else { E.lastKnownR=-1; E.lastKnownC=-1; }
+    } else {
+      if(E.cachedPath.length===0){
+        const ft=floorTiles2x2();
+        if(ft.length){
+          const[wr,wc]=ft[ri(0,ft.length-1)];
+          E.cachedPath=astar(E.r,E.c,wr,wc,null,false,2)||[];
         }
       }
-      return; // don't run normal hunt logic
+      if(E.cachedPath.length){
+        const[nr,nc]=E.cachedPath.shift();
+        startEnemyMove(E,nr,nc);
+      }
     }
+    return;
   }
 
+  if(!E.vDef?.soundHunter&&!E.vDef?.mineLayer){
+    // ── Unified scent + vision AI ──
+    // Rule 1: If we can see the player (and no shadow), lock scent immediately
+    if(canSeePlayer&&!hasShadow){
+      E.scentR=P.r; E.scentC=P.c;
+      E.lastKnownR=P.r; E.lastKnownC=P.c;
+      E._wanderTarget=null;
+      // Stationary player: force faster recalc so enemy doesn't drift
+      const playerMoving=P.vr!==0||P.vc!==0||P.momentum>0;
+      const playerMoved=P.r!==E.lastPlayerR||P.c!==E.lastPlayerC;
+      if(E.cachedPath.length===0||playerMoved||(playerMoving?E.pathAge>150:E.pathAge>300)){
+        E.pathStale=true;
+      }
+    }
+
+    // Rule 2: has scent → pursue with intercept prediction, guaranteed reachable target
+    const hasScent=E.scentR>=0&&E.scentC>=0&&!hasShadow;
+    if(hasScent){
+      const playerMoving=P.vr!==0||P.vc!==0||P.momentum>0;
+      const playerMoved=P.r!==E.lastPlayerR||P.c!==E.lastPlayerC;
+      const pathEmpty=E.cachedPath.length===0;
+      const needRecalc=playerMoved||pathEmpty||E.pathAge>400;
+
+      if(needRecalc){
+        E.lastPlayerR=P.r; E.lastPlayerC=P.c;
+        E.scentR=P.r; E.scentC=P.c;
+        E.pathAge=0;
+
+        let newPath=[];
+        if(playerMoving&&P.momentum>=2){
+          // Player is moving — use predictive intercept
+          const[tr,tc]=getScentTarget(E);
+          newPath=astar(E.r,E.c,tr,tc,null,true,2)||[];
+          if(newPath.length>0) E._wanderTarget=[tr,tc];
+        }
+
+        if(newPath.length===0){
+          // Player stationary or intercept failed — direct chase, no prediction
+          const[fr,fc]=nearestValid2x2(P.r,P.c,E.r,E.c);
+          newPath=astar(E.r,E.c,fr,fc,null,false,2)||[];
+          E._wanderTarget=[fr,fc];
+        }
+
+        E.cachedPath=newPath;
+      }
+
+      // Follow path
+      if(E.cachedPath.length){
+        const[nr,nc]=E.cachedPath.shift();
+        startEnemyMove(E,nr,nc);
+      } else {
+        // Path exhausted — direct single-tile step toward player
+        const dr=P.r-E.r, dc=P.c-E.c;
+        const steps=[];
+        if(Math.abs(dr)>=Math.abs(dc)){
+          if(dr!==0) steps.push([E.r+Math.sign(dr),E.c]);
+          if(dc!==0) steps.push([E.r,E.c+Math.sign(dc)]);
+        } else {
+          if(dc!==0) steps.push([E.r,E.c+Math.sign(dc)]);
+          if(dr!==0) steps.push([E.r+Math.sign(dr),E.c]);
+        }
+        for(const[nr,nc] of steps){
+          if(wk(nr,nc)){startEnemyMove(E,nr,nc);break;}
+        }
+      }
+      return;
+    }
+    // Rule 3: No scent yet (never seen player, or shadow reset it)
+    // If we have a last-known position go there once, otherwise wander
+    if(E.lastKnownR>=0){
+      if(E.cachedPath.length===0){
+        const[lkr,lkc]=nearestValid2x2(E.lastKnownR,E.lastKnownC,E.r,E.c);
+        E.cachedPath=astar(E.r,E.c,lkr,lkc,null,false,2)||[];
+        E._wanderTarget=[lkr,lkc];
+      }
+      if(E.cachedPath.length){
+        const[nr,nc]=E.cachedPath.shift();
+        startEnemyMove(E,nr,nc);
+      } else {
+        // Arrived at last known — clear it, start wandering
+        E.lastKnownR=-1; E.lastKnownC=-1;
+      }
+      return;
+    }
+
+    // Rule 4: True wander — no info, bias away from player
+    if(E.cachedPath.length===0||!E._wanderTarget||
+      (E.r===E._wanderTarget[0]&&E.c===E._wanderTarget[1])){
+      const ft=floorTiles2x2();
+      if(ft.length){
+        const farTiles=ft.filter(([r,c])=>md(r,c,P.r,P.c)>=8);
+        const pool=farTiles.length?farTiles:ft;
+        const[wr,wc]=pool[ri(0,pool.length-1)];
+        E._wanderTarget=[wr,wc];
+        E.cachedPath=astar(E.r,E.c,wr,wc,null,false,2)||[];
+      }
+    }
+    if(E.cachedPath.length){
+      const[nr,nc]=E.cachedPath.shift();
+      startEnemyMove(E,nr,nc);
+    }
+    return;
+  }
   if(E.stateTimer<=0||E.pathStale){
     E.pathStale=false;
     E.stateTimer=ri(E.stateMs[0],E.stateMs[1]);
@@ -2452,7 +3228,7 @@ function minotaurAI(E,dt){
       for(const it of items){
         if(rangedOnly&&!it.def.proj) continue;
         const d=md(E.r,E.c,it.r,it.c);
-        const realD=d<=8?(astar(E.r,E.c,it.r,it.c)||{length:d*2}).length:d*1.5;
+        const realD=d<=8?(astar(E.r,E.c,it.r,it.c,null,false,2)||{length:d*2}).length:d*1.5;
         const{worth,score:ws}=aiScore_weapon(E,it.def,realD);
         if(worth&&ws>bestItemScore){bestItemScore=ws;bestItem=it;}
       }
@@ -2466,31 +3242,37 @@ function minotaurAI(E,dt){
 
     if(mineTile&&E.weapon?.def.mine){
       E.state='MINE_PLACE';E.minePlaceTarget=mineTile;
-      E.cachedPath=astar(E.r,E.c,...mineTile)||[];
+      E.cachedPath=astar(E.r,E.c,...mineTile,null,false,2)||[];
     } else if(bestItem&&dToPlayer>4){
       E.state='EQUIP';E.tItem=bestItem;
-      E.cachedPath=astar(E.r,E.c,bestItem.r,bestItem.c)||[];
+      E.cachedPath=astar(E.r,E.c,bestItem.r,bestItem.c,null,false,2)||[];
+    } else if(E.vDef?.soundHunter){
+      // Blind One — do NOT compute path to player here.
+      // Sound logic below handles its own pathing based on what it has heard.
+      E.state='HUNT';
     } else {
       E.state='HUNT';
       E.turnsChasing++;
       const pred_r=clamp(P.r+P.vr,0,ROWS-1),pred_c=clamp(P.c+P.vc,0,COLS-1);
-      const useTarget=(P.vr!==0||P.vc!==0)&&wk(pred_r,pred_c)&&dToPlayer>2;
-      const tr=useTarget?pred_r:P.r,tc=useTarget?pred_c:P.c;
+      const useTarget=(P.vr!==0||P.vc!==0)&&wk2x2(pred_r,pred_c)&&dToPlayer>2;
+      const rawTr2=useTarget?pred_r:P.r, rawTc2=useTarget?pred_c:P.c;
+      const[tr,tc]=nearestValid2x2(rawTr2,rawTc2,E.r,E.c);
 
       if(E.turnsChasing>10&&Math.random()<0.35){
         E.state='FLANK';
         E.turnsChasing=0;
         const angle=Math.atan2(P.r-E.r,P.c-E.c);
-        const perpR=Math.round(P.r+2*Math.sin(angle+Math.PI/2));
-        const perpC=Math.round(P.c+2*Math.cos(angle+Math.PI/2));
-        if(wk(clamp(perpR,1,ROWS-2),clamp(perpC,1,COLS-2))){
-          E.cachedPath=astar(E.r,E.c,clamp(perpR,1,ROWS-2),clamp(perpC,1,COLS-2))||[];
+        const perpR=clamp(Math.round(P.r+2*Math.sin(angle+Math.PI/2)),1,ROWS-2);
+        const perpC=clamp(Math.round(P.c+2*Math.cos(angle+Math.PI/2)),1,COLS-2);
+        const[fp2r,fp2c]=nearestValid2x2(perpR,perpC,E.r,E.c);
+        if(wk2x2(fp2r,fp2c)){
+          E.cachedPath=astar(E.r,E.c,fp2r,fp2c,null,false,2)||[];
         } else {
-          E.cachedPath=astar(E.r,E.c,tr,tc,null,true)||[];
+          E.cachedPath=astar(E.r,E.c,tr,tc,null,true,2)||[];
           E.state='HUNT';
         }
       } else {
-        E.cachedPath=astar(E.r,E.c,tr,tc,null,true)||[];
+        E.cachedPath=astar(E.r,E.c,tr,tc,null,true,2)||[];
       }
     }
   }
@@ -2509,7 +3291,7 @@ function minotaurAI(E,dt){
       E.tItem=null;E.state='HUNT';E.stateTimer=0;E.pathStale=true;
       return;
     }
-    if(!E.cachedPath.length) E.cachedPath=astar(E.r,E.c,it.r,it.c)||[];
+    if(!E.cachedPath.length) E.cachedPath=astar(E.r,E.c,it.r,it.c,null,false,2)||[];
     if(E.cachedPath.length){[nextR,nextC]=E.cachedPath.shift();}
     else{E.state='HUNT';E.stateTimer=0;E.pathStale=true;}
 
@@ -2525,7 +3307,7 @@ function minotaurAI(E,dt){
       E.minePlaceTarget=null;E.state='HUNT';E.stateTimer=0;E.pathStale=true;
       return;
     }
-    if(!E.cachedPath.length) E.cachedPath=astar(E.r,E.c,...mt)||[];
+    if(!E.cachedPath.length) E.cachedPath=astar(E.r,E.c,...mt,null,false,2)||[];
     if(E.cachedPath.length){[nextR,nextC]=E.cachedPath.shift();}
     else{E.state='HUNT';E.stateTimer=0;E.pathStale=true;}
 
@@ -2553,101 +3335,102 @@ function minotaurAI(E,dt){
         // Noisemaker dominates — lock onto it, do NOT track player at all
         if(E.soundR!==activeNoise.r||E.soundC!==activeNoise.c){
           E.soundR=activeNoise.r;E.soundC=activeNoise.c;
-          E.cachedPath=astar(E.r,E.c,E.soundR,E.soundC)||[];
+          E.cachedPath=astar(E.r,E.c,E.soundR,E.soundC,null,false,2)||[];
         } else if(E.cachedPath.length===0){
-          E.cachedPath=astar(E.r,E.c,E.soundR,E.soundC)||[];
+          E.cachedPath=astar(E.r,E.c,E.soundR,E.soundC,null,false,2)||[];
         }
         // Do NOT update _lastHeardR/C — so when noisemaker expires we have no
         // fresh player position and must wander
       } else {
-        // No noisemaker — INFINITE range, triggers on tile change only
-        const playerMovedTile=P.r!==E._lastHeardR||P.c!==E._lastHeardC;
-
-        if(playerMovedTile&&(E._lastHeardR>=0||E._lastHeardC>=0)){
-          // Player moved and we've heard them before (or this is first ever move)
-          E.soundR=P.r;E.soundC=P.c;
-          E._lastHeardR=P.r;E._lastHeardC=P.c;
-          E.cachedPath=astar(E.r,E.c,E.soundR,E.soundC)||[];
-        } else if(playerMovedTile&&E._lastHeardR<0){
-          // Very first step — hear them, begin hunt
-          E.soundR=P.r;E.soundC=P.c;
-          E._lastHeardR=P.r;E._lastHeardC=P.c;
-          E.cachedPath=astar(E.r,E.c,E.soundR,E.soundC)||[];
-        } else if(E.cachedPath.length===0){
-          // Player standing still — path exhausted, wander
-          if(E.soundR>=0){
-            const ft=floorTiles();
+        // No noisemaker — use (P.r!==P.spawnR||P.c!==P.spawnC) as the authoritative gate.
+        // Until the player has actually crossed a grid tile, the Blind One
+        // cannot acquire any position — it just wanders.
+        if(!(P.r!==P.spawnR||P.c!==P.spawnC)){
+          // Player has never moved — wander, but bias toward tiles FAR from player
+          // so the Blind One doesn't accidentally stumble onto them by pure RNG
+          if(E.cachedPath.length===0){
+            const ft=floorTiles2x2();
             if(ft.length){
-              const[wr,wc]=ft[ri(0,ft.length-1)];
-              E.soundR=-1;E.soundC=-1;
-              E.cachedPath=astar(E.r,E.c,wr,wc)||[];
+              // Prefer tiles that are at least 8 tiles from player
+              const farTiles=ft.filter(([r,c])=>md(r,c,P.r,P.c)>=8);
+              const pool=farTiles.length?farTiles:ft;
+              const[wr,wc]=pool[ri(0,pool.length-1)];
+              E.cachedPath=astar(E.r,E.c,wr,wc,null,false,2)||[];
             }
-          } else {
-            const ft=floorTiles();
-            if(ft.length){
-              const[wr,wc]=ft[ri(0,ft.length-1)];
-              E.cachedPath=astar(E.r,E.c,wr,wc)||[];
+          }
+        } else {
+          // Player has moved at least once — track tile changes
+          const playerMovedTile=P.r!==E._prevPlayerR||P.c!==E._prevPlayerC;
+          if(playerMovedTile){
+            // New tile crossed — hear them, path to nearest valid 2x2 position
+            const[bsr,bsc]=nearestValid2x2(P.r,P.c,E.r,E.c);
+            E.soundR=bsr;E.soundC=bsc;
+            E._prevPlayerR=P.r;E._prevPlayerC=P.c;
+            E.cachedPath=astar(E.r,E.c,E.soundR,E.soundC,null,false,2)||[];
+          } else if(E.cachedPath.length===0){
+            // Player standing still — path exhausted, wander away from last heard pos
+            if(E.soundR>=0){
+              const ft=floorTiles2x2();
+              if(ft.length){
+                const farTiles=ft.filter(([r,c])=>md(r,c,P.r,P.c)>=6);
+                const pool=farTiles.length?farTiles:ft;
+                const[wr,wc]=pool[ri(0,pool.length-1)];
+                E.soundR=-1;E.soundC=-1;
+                E.cachedPath=astar(E.r,E.c,wr,wc,null,false,2)||[];
+              }
+            } else {
+              const ft=floorTiles2x2();
+              if(ft.length){
+                const farTiles=ft.filter(([r,c])=>md(r,c,P.r,P.c)>=8);
+                const pool=farTiles.length?farTiles:ft;
+                const[wr,wc]=pool[ri(0,pool.length-1)];
+                E.cachedPath=astar(E.r,E.c,wr,wc,null,false,2)||[];
+              }
             }
           }
         }
       }
     } else {
-      const targetR=hasShadow?(E.lastPlayerR>=0?E.lastPlayerR:P.r):P.r;
-      const targetC=hasShadow?(E.lastPlayerC>=0?E.lastPlayerC:P.c):P.c;
-      const playerMoved=P.r!==E.lastPlayerR||P.c!==E.lastPlayerC;
-      if(!hasShadow&&(playerMoved||(E.state==='HUNT'&&E.cachedPath.length===0)||E.pathAge>600)){
+      // Normal hunt — predict player trajectory, not just current position
+      const playerMoved2=P.r!==E.lastPlayerR||P.c!==E.lastPlayerC;
+      const pathEmpty=E.cachedPath.length===0;
+      if(playerMoved2||pathEmpty||E.pathAge>300){
         E.lastPlayerR=P.r;E.lastPlayerC=P.c;E.pathAge=0;
-        const pred_r=clamp(P.r+P.vr*2,1,ROWS-2),pred_c=clamp(P.c+P.vc*2,1,COLS-2);
-        const useP=(P.vr!==0||P.vc!==0)&&wk(pred_r,pred_c)&&dToPlayer>3;
-        const tr=useP?pred_r:P.r,tc=useP?pred_c:P.c;
-        E.cachedPath=astar(E.r,E.c,tr,tc,null,true)||[];
-      } else if(hasShadow&&E.cachedPath.length===0){
-        const wr=E.lastPlayerR>=0?E.lastPlayerR:ri(1,ROWS-2);
-        const wc=E.lastPlayerC>=0?E.lastPlayerC:ri(1,COLS-2);
-        E.cachedPath=astar(E.r,E.c,wr,wc)||[];
+        const[tr,tc]=getScentTarget(E);
+        E.state='HUNT';
+        E.cachedPath=astar(E.r,E.c,tr,tc,null,true,2)||[];
       }
     }
 
     if(E.cachedPath.length){[nextR,nextC]=E.cachedPath.shift();}
-    if(dToPlayer===1){nextR=P.r;nextC=P.c;}
 
-    // Bruiser wall-breaking: proactively smash walls that shorten the path to player
-    const isWallBreaker=E.vDef&&E.vDef.wallBreaker;
-    if(isWallBreaker&&(E.wallBreakCd||0)<=0){
-      // Check each cardinal neighbour — if it's a wall and breaking it would
-      // meaningfully shorten the route to the player, smash it now.
-      const currentPathLen=E.cachedPath.length+1; // steps remaining incl current move
-      const dr=P.r-E.r, dc=P.c-E.c;
-      // Prioritise the two cardinals that point most toward the player
-      const dirs=[];
-      if(Math.abs(dr)>=Math.abs(dc)){dirs.push([Math.sign(dr)||1,0],[0,Math.sign(dc)||1]);}
-      else{dirs.push([0,Math.sign(dc)||1],[Math.sign(dr)||1,0]);}
-      for(const[sr,sc] of [[1,0],[-1,0],[0,1],[0,-1]]){
-        if(!dirs.some(([a,b])=>a===sr&&b===sc)) dirs.push([sr,sc]);
-      }
-      for(const[sr,sc] of dirs){
-        const wr=E.r+sr, wc=E.c+sc;
-        if(!inB(wr,wc)||grid[wr]?.[wc]!==WALL||wr<=0||wr>=ROWS-1||wc<=0||wc>=COLS-1) continue;
-        // Estimate path length if this wall were open
-        grid[wr][wc]=FLOOR; // temporarily open
-        const testPath=astar(E.r,E.c,P.r,P.c)||[];
-        grid[wr][wc]=WALL;  // restore
-        // Break if it saves at least 3 steps OR we're completely stuck
-        const stuck=nextR===E.r&&nextC===E.c;
-        if(stuck||(testPath.length>0&&currentPathLen-testPath.length>=3)){
-          grid[wr][wc]=FLOOR; // permanently open
-          showToast('💥 BRUISER BREAKS THROUGH!',1200);
-          E.pathStale=true;E.cachedPath=[];
-          E.wallBreakCd=1800;
-          nextR=wr;nextC=wc;
-          break;
+    // Local steering: within catch range, steer directly using single-tile wk()
+    // This bypasses wk2x2 for the final approach so corners don't create dead zones
+    if(!E.vDef?.soundHunter||(P.r!==P.spawnR||P.c!==P.spawnC)){
+      const pixDist=Math.hypot(E.rx-P.rx,E.ry-P.ry);
+      if(pixDist<T*3.0){
+        const dr=P.r-E.r, dc=P.c-E.c;
+        // Build candidate steps ordered by proximity to player direction
+        const candidates=[];
+        if(dr!==0) candidates.push([E.r+Math.sign(dr),E.c]);
+        if(dc!==0) candidates.push([E.r,E.c+Math.sign(dc)]);
+        // Also try diagonals broken into components
+        if(dr!==0&&dc!==0){
+          candidates.push([E.r+Math.sign(dr),E.c]);
+          candidates.push([E.r,E.c+Math.sign(dc)]);
+        }
+        for(const[cr,cc] of candidates){
+          if(wk(cr,cc)){nextR=cr;nextC=cc;break;}
         }
       }
     }
 
     const shadowOn=activePowerups.some(a=>a.type==='shadow');
     if(!shadowOn&&E.weapon&&!E.weapon.def.proj&&!E.weapon.def.mine&&dToPlayer<=E.weapon.def.range){
-      killPlayer('MINOTAUR WEAPON: '+E.weapon.def.name);E.weapon=null;return;
+      killPlayer('MINOTAUR WEAPON: '+E.weapon.def.name);
+      // Only expend weapon if it's not a Classic's innate club
+      if(!(E.vDef&&E.vDef.id==='classic')) E.weapon=null;
+      return;
     }
   }
 
@@ -2744,9 +3527,17 @@ function movePlayer(dt){
     const prevR=P.r, prevC=P.c;
     P.vr=newGridR-prevR; P.vc=newGridC-prevC;
     P.r=newGridR; P.c=newGridC;
+    // Track momentum — how many consecutive steps in same direction
+    if(P.vr===P.lastVr&&P.vc===P.lastVc){
+      P.momentum=Math.min((P.momentum||0)+1, 8);
+    } else {
+      P.momentum=1;
+      P.lastVr=P.vr; P.lastVc=P.vc;
+    }
     for(const e of enemies) e.pathStale=true;
     if(defusing) cancelDefuse();
     if(hidingMine){cancelHide();showToast('CANCELLED — MOVED',700);}
+    if(digging){cancelDig();showToast('DIG CANCELLED — MOVED',700);}
     playStep();
 
     // Enemy mine
@@ -2793,14 +3584,46 @@ function tickJoystick(dt){} // intentionally empty
 
 function startEnemyMove(E,nr,nc){
   if(nr===E.r&&nc===E.c) return;
+  // 4-corner hitbox catch check — destination body tiles
+  const half=T*0.5;
+  const corners=[[-half,-half],[-half,half],[half,-half],[half,half]];
+  const catchR=T*0.8;
+  let caught=false;
+  for(const[br,bc] of corners){
+    const pdx=(tx(nc)+bc)-P.rx, pdy=(ty(nr)+br)-P.ry;
+    if(pdx*pdx+pdy*pdy<catchR*catchR){caught=true;break;}
+  }
+  if(caught){
+    E.tx=tx(nc);E.ty=ty(nr);
+    E.dir=nc>E.c?'right':nc<E.c?'left':nr>E.r?'down':'up';
+    E.r=nr;E.c=nc;
+    E.moving=true;E.moveT=0;
+    const name=(E.vDef&&E.vDef.id!=='classic')?E.vDef.name:'MINOTAUR';
+    killPlayer('CAUGHT BY THE '+name);
+    return;
+  }
+  // Validate 2×2 footprint for normal moves (skip for Bruiser who breaks walls)
+  if(!(E.vDef&&E.vDef.wallBreaker)&&!wk2x2(nr,nc)) return;
   E.tx=tx(nc);E.ty=ty(nr);
   E.dir=nc>E.c?'right':nc<E.c?'left':nr>E.r?'down':'up';
   E.r=nr;E.c=nc;
   E.moving=true;E.moveT=0;
-  const pt=traps.find(t=>t.r===nr&&t.c===nc&&t.owner==='player');
-  if(pt){traps.splice(traps.indexOf(pt),1);playSound('mine_explode',0.9);stunEnemy(E,pt.def.stunMs,'MINE TRAP');}
-  const pdx=E.tx-P.rx, pdy=E.ty-P.ry;
-  if(pdx*pdx+pdy*pdy<(T*0.7)*(T*0.7)) killPlayer('CAUGHT BY THE MINOTAUR');
+  // Check all 4 cells of 2×2 footprint for mine triggers
+  const footprint=[[nr-1,nc-1],[nr-1,nc],[nr,nc-1],[nr,nc]];
+  for(const[fr,fc] of footprint){
+    const pt=traps.find(t=>t.r===fr&&t.c===fc&&t.owner==='player');
+    if(pt){traps.splice(traps.indexOf(pt),1);playSound('mine_explode',0.9);stunEnemy(E,pt.def.stunMs,'MINE TRAP');break;}
+  }
+  // Post-move catch check with 4-corner hitbox
+  let caught2=false;
+  for(const[br,bc] of corners){
+    const pdx2=(E.tx+bc)-P.rx, pdy2=(E.ty+br)-P.ry;
+    if(pdx2*pdx2+pdy2*pdy2<catchR*catchR){caught2=true;break;}
+  }
+  if(caught2){
+    const name=(E.vDef&&E.vDef.id!=='classic')?E.vDef.name:'MINOTAUR';
+    killPlayer('CAUGHT BY THE '+name);
+  }
 }
 
 // ═══════════════════════════════════════
@@ -2810,6 +3633,11 @@ function playerFire(){
   if(!P.alive||phase!=='PLAY') return;
   if(!P.activeWeapon) return;
   const w=P.activeWeapon.def;
+  // Block reloading weapons
+  if((w.isStunBow||w.reloads)&&P.activeWeapon._reloadTimer>0){
+    showToast('🌟 RELOADING… '+(P.activeWeapon._reloadTimer/1000).toFixed(1)+'s',600);
+    return;
+  }
 
   if(w.mine){
     if(w.isNoisemaker){
@@ -2821,6 +3649,15 @@ function playerFire(){
       playNoisemakerLoop();
       for(const e of enemies) e.pathStale=true;
       showToast('🔔 NOISEMAKER PLACED — RINGING 5s',1600);
+    } else if(w.isDynamite){
+      // Dynamite: placed at player tile, explodes after fuse (3w×2d in facing direction)
+      const fuseNeeded=(P.perks&&P.perks.quickDefuse?w.fuseMs*0.5:w.fuseMs)*permSteadyMult();
+      const placed={r:P.r,c:P.c,owner:'player',def:w,hidden:false,blastDir:P.dir};
+      traps.push(placed);
+      dynamiteFuses.push({trap:placed,fuseTimer:0,fuseNeeded});
+      removePlayerWeapon();
+      playSound('mine_place',0.9);
+      showToast('🧨 DYNAMITE — DETONATES IN '+Math.round(fuseNeeded/1000)+'s',1600);
     } else {
       const placed={r:P.r,c:P.c,owner:'player',def:w,hidden:false};
       traps.push(placed);
@@ -2849,7 +3686,21 @@ function playerFire(){
     }
     fireProjectileAngle(P.rx,P.ry,angle,'player',w);
     playSound('bow_fire',0.8,0.06);
-    removePlayerWeapon();
+    if(w.isStunBow||w.reloads){
+      // Track shots remaining
+      if(P.activeWeapon._shotsLeft===undefined) P.activeWeapon._shotsLeft=w.maxShots===Infinity?Infinity:w.maxShots;
+      if(P.activeWeapon._shotsLeft!==Infinity) P.activeWeapon._shotsLeft--;
+      if(P.activeWeapon._shotsLeft<=0){
+        removePlayerWeapon();
+        showToast((w.maxShots===Infinity?'💫':'🌟')+' '+w.name+' EXHAUSTED',1400);
+      } else {
+        P.activeWeapon._reloadTimer=w.reloadMs||3000;
+        const left=P.activeWeapon._shotsLeft===Infinity?'∞':P.activeWeapon._shotsLeft;
+        showToast((w.maxShots===Infinity?'💫':'🌟')+' RELOADING — '+left+' SHOT'+(left===1?'':'S')+' LEFT',1200);
+      }
+    } else {
+      removePlayerWeapon();
+    }
   } else {
     const ne=nearestEnemy();
     const dist=ne?md(P.r,P.c,ne.r,ne.c):999;
@@ -2865,11 +3716,26 @@ function playerFire(){
 // Triggered by E key or the dedicated interact button — never fires weapons
 function playerInteract(){
   if(!P.alive||phase!=='PLAY') return;
-  if(defusing){cancelDefuse();return;}
-  if(hidingMine){cancelHide();showToast('CANCELLED',700);return;}
-  // Try defuse first, then try to start hiding a placed mine
+  // Don't start a new action if one is already running — keyup/release cancels
+  if(defusing||hidingMine||digging) return;
+  // Try defuse first
   if(tryStartDefuse()) return;
-  // Check if we're next to one of our own mines and can hide it
+  // Try pickaxe dig
+  if(hasPickaxe()){
+    const dirMap={right:[0,1],left:[0,-1],down:[1,0],up:[-1,0]};
+    const[dr,dc]=dirMap[P.dir]||[0,1];
+    const wr=P.r+dr, wc=P.c+dc;
+    if(inB(wr,wc)&&grid[wr][wc]===WALL&&wr>0&&wr<ROWS-1&&wc>0&&wc<COLS-1){
+      digging=true;digTimer=0;
+      document.getElementById('digWrap').style.display='block';
+      document.getElementById('digFill').style.width='0%';
+      document.getElementById('digCountdown').textContent=(DIG_TIME/1000).toFixed(1);
+      document.getElementById('digLabel').textContent='⛏️ DIGGING…';
+      showToast(holdKey+' TO DIG THROUGH WALL',1200);
+      return;
+    }
+  }
+  // Try hiding a mine
   const adj=[[0,0],[0,1],[0,-1],[1,0],[-1,0]];
   for(const[dr,dc] of adj){
     const tr=P.r+dr,tc=P.c+dc;
@@ -2879,11 +3745,50 @@ function playerInteract(){
       document.getElementById('hideWrap').style.display='block';
       document.getElementById('hideCountdown').textContent='2.0';
       document.getElementById('hideFill').style.width='0%';
-      document.getElementById('hideLabel').textContent='🫥 HOLD TO CAMOUFLAGE';
-      showToast('HOLD INTERACT TO CAMOUFLAGE MINE',1500);
+      document.getElementById('hideLabel').textContent='🫥 '+holdKey+' TO CAMOUFLAGE';
+      showToast(holdKey+' TO CAMOUFLAGE MINE',1500);
       return;
     }
   }
+}
+
+function hasPickaxe(){
+  return (P.perks&&P.perks.pickaxe)||getPermStack('pickaxe')>0;
+}
+
+function cancelDig(){
+  digging=false;digTimer=0;
+  document.getElementById('digWrap').style.display='none';
+  document.getElementById('digFill').style.width='0%';
+}
+
+function detonateDynamite(trap){
+  const dir=trap.blastDir||'right';
+  const dirMap={right:[0,1],left:[0,-1],down:[1,0],up:[-1,0]};
+  const[dr,dc]=dirMap[dir];
+  const[pr,pc]=dr===0?[1,0]:[0,1];
+  const blasted=[];
+  for(let side=-1;side<=1;side++){
+    for(let depth=0;depth<2;depth++){
+      const tr=trap.r+dr*(depth+1)+pr*side;
+      const tc=trap.c+dc*(depth+1)+pc*side;
+      if(inB(tr,tc)&&tr>0&&tr<ROWS-1&&tc>0&&tc<COLS-1){
+        if(grid[tr][tc]===WALL) grid[tr][tc]=FLOOR;
+        blasted.push([tr,tc]);
+      }
+    }
+  }
+  for(const[tr,tc] of blasted){
+    for(const e of enemies){
+      if(e.alive&&!e.stunned&&md(e.r,e.c,tr,tc)<=1) stunEnemy(e,3000,'DYNAMITE');
+    }
+  }
+  const idx=traps.indexOf(trap);
+  if(idx>=0) traps.splice(idx,1);
+  for(const e of enemies){e.pathStale=true;e.cachedPath=[];}
+  playSound('mine_explode',1.0);
+  showToast('💥 DYNAMITE DETONATED',1200);
+  shk=Math.max(shk,10);
 }
 
 function removePlayerWeapon(){
@@ -2959,7 +3864,7 @@ function tryStartDefuse(){
       document.getElementById('defuseWrap').style.display='block';
       document.getElementById('defuseCountdown').textContent='2.0';
       document.getElementById('defuseFill').style.width='0%';
-      showToast('HOLD TO DEFUSE — 5s',900);
+      showToast(holdFire+' TO DEFUSE MINE',900);
       return true; // signal: started defuse, don't fire
     }
   }
@@ -3194,8 +4099,8 @@ document.addEventListener('keydown',e=>{
   if(phase!=='PLAY') return;
   const k=e.key.toLowerCase();
   if(['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d',' '].includes(k)) e.preventDefault();
-  if(k==='f'||k===' ') playerFire();
-  else if(k==='e') playerInteract();
+  if((k==='f'||k===' ')&&!e.repeat) playerFire();
+  else if(k==='e'&&!e.repeat) playerInteract();
   else if(k==='escape'){aimMode=false;cancelDefuse();cancelHide();}
   else{
     const num=parseInt(e.key);
@@ -3207,6 +4112,11 @@ document.addEventListener('keydown',e=>{
 });
 document.addEventListener('keyup',e=>{
   KEYS[e.key.toLowerCase()]=false;
+  // Cancel hold actions when E is released
+  if(e.key.toLowerCase()==='e'){
+    if(digging){cancelDig();showToast('DIG CANCELLED',600);}
+    if(hidingMine){cancelHide();showToast('CANCELLED',600);}
+  }
 });
 
 cv.addEventListener('click',e=>{
@@ -3326,8 +4236,14 @@ interactBtn.addEventListener('touchstart',e=>{
 },{passive:false});
 interactBtn.addEventListener('touchend',e=>{
   e.preventDefault();interactButtonHeld=false;
+  if(digging){cancelDig();showToast('DIG CANCELLED',600);}
+  if(hidingMine){cancelHide();showToast('CANCELLED',600);}
 },{passive:false});
-interactBtn.addEventListener('touchcancel',e=>{interactButtonHeld=false;});
+interactBtn.addEventListener('touchcancel',e=>{
+  interactButtonHeld=false;
+  if(digging) cancelDig();
+  if(hidingMine) cancelHide();
+});
 interactBtn.addEventListener('click',()=>{if(interactTouched){interactTouched=false;return;}playerInteract();});
 
 // ═══════════════════════════════════════
@@ -3398,8 +4314,16 @@ function update(dt){
     // Blind one CAN catch even during shadow (hunts by sound, not sight)
     const blindCatch=E.vDef&&E.vDef.soundHunter;
     if(P.alive&&!E.stunned&&!P.invincible&&(blindCatch||!activePowerups.some(a=>a.type==='shadow'))){
-      const cdx=E.rx-P.rx,cdy=E.ry-P.ry;
-      if(cdx*cdx+cdy*cdy<(T*0.55)*(T*0.55)){
+      // Check all 4 body tile centers — enemy occupies (r-1,c-1),(r-1,c),(r,c-1),(r,c)
+      const half=T*0.5;
+      const bodyCorners=[[-half,-half],[-half,half],[half,-half],[half,half]];
+      const catchR=T*0.8; // per-tile catch radius
+      let caught=false;
+      for(const[br,bc] of bodyCorners){
+        const cdx=(E.rx+bc)-P.rx, cdy=(E.ry+br)-P.ry;
+        if(cdx*cdx+cdy*cdy<catchR*catchR){caught=true;break;}
+      }
+      if(caught){
         const dmg=E.vDef?E.vDef.dmg:1;
         const name=(E.vDef&&E.vDef.id!=='classic')?E.vDef.name:'MINOTAUR';
         killPlayer('CAUGHT BY THE '+name,dmg);
@@ -3462,7 +4386,7 @@ function update(dt){
           hideTimer=0;
           document.getElementById('hideFill').style.width='0%';
           document.getElementById('hideCountdown').textContent='2.0';
-          document.getElementById('hideLabel').textContent='🫥 HOLD FIRE TO CAMOUFLAGE';
+          document.getElementById('hideLabel').textContent='🫥 '+holdKey+' TO CAMOUFLAGE';
         }
       }
     }
@@ -3489,17 +4413,57 @@ function update(dt){
       }
     }
   }
-  if(activePowerups.length) updatePowerupBar();
+  // ── Pickaxe digging timer ──
+  if(digging){
+    const fireHeld=KEYS['e']||interactButtonHeld;
+    const moving=JOY.active||(KEYS['arrowup']||KEYS['w']||KEYS['arrowdown']||KEYS['s']||KEYS['arrowleft']||KEYS['a']||KEYS['arrowright']||KEYS['d']);
+    // Check wall is still there and still adjacent
+    const dirMap={right:[0,1],left:[0,-1],down:[1,0],up:[-1,0]};
+    const[dr,dc]=dirMap[P.dir]||[0,1];
+    const wr=P.r+dr, wc=P.c+dc;
+    const wallStillThere=inB(wr,wc)&&grid[wr][wc]===WALL;
+    if(!fireHeld||moving||!wallStillThere){
+      cancelDig();
+      if(moving) showToast('DIG CANCELLED — MOVED',700);
+    } else {
+      const digNeeded=(P.perks&&P.perks.quickDefuse?DIG_TIME*0.5:DIG_TIME)*permSteadyMult();
+      digTimer+=dt;
+      const pct=Math.min(digTimer/digNeeded,1);
+      document.getElementById('digFill').style.width=(pct*100)+'%';
+      document.getElementById('digCountdown').textContent=Math.max(0,(digNeeded-digTimer)/1000).toFixed(1);
+      if(digTimer>=digNeeded){
+        // Break the wall
+        if(wr>0&&wr<ROWS-1&&wc>0&&wc<COLS-1){grid[wr][wc]=FLOOR;invalidateFloorCache();}
+        playSound('stone_break',0.8,0.05);
+        showToast('⛏️ WALL BROKEN',900);
+        for(const e of enemies){e.pathStale=true;}
+        cancelDig();
+      }
+    }
+  }
 
-  // Powerup timers
+  // ── Dynamite fuses ──
+  for(let i=dynamiteFuses.length-1;i>=0;i--){
+    const f=dynamiteFuses[i];
+    f.fuseTimer+=dt;
+    if(f.fuseTimer>=f.fuseNeeded){
+      detonateDynamite(f.trap);
+      dynamiteFuses.splice(i,1);
+    }
+  }
   for(let i=activePowerups.length-1;i>=0;i--){
     activePowerups[i].timeLeft-=dt;
     if(activePowerups[i].timeLeft<=0){
       const expired=activePowerups.splice(i,1)[0];
       if(expired.type==='speed') showToast('⚡ HASTE EXPIRED',900);
-      if(expired.type==='shadow'){showToast('👁️ SHADOW FADED',900);for(const e of enemies) e.pathStale=true;}
+      if(expired.type==='shadow'){showToast('👁️ SHADOW FADED',900);for(const e of enemies){e.pathStale=true;e.scentR=-1;e.scentC=-1;e._wanderTarget=null;e.cachedPath=[];}}
     }
   }
+  // Tick stun bow reload
+  if(P.activeWeapon&&P.activeWeapon._reloadTimer>0){
+    P.activeWeapon._reloadTimer=Math.max(0,P.activeWeapon._reloadTimer-dt);
+  }
+
   if(activePowerups.length) updatePowerupBar();
 
   // Projectile hits
@@ -3513,12 +4477,19 @@ function update(dt){
       const dx=pr.x-P.rx,dy=pr.y-P.ry;
       if(dx*dx+dy*dy<(T*.48)*(T*.48)){killPlayer('HIT BY PROJECTILE');projectiles.splice(i,1);continue;}
     } else {
-      // Player projectile — hits first enemy in range
+      // Player projectile — hits any of the 4 body tiles of the 2×2 footprint
       let hit=false;
       for(const E of enemies){
         if(!E.alive||E.stunned) continue;
-        const dx=pr.x-E.rx,dy=pr.y-E.ry;
-        if(dx*dx+dy*dy<(T*.52)*(T*.52)){stunEnemy(E,pr.def.stunMs,'RANGED HIT');projectiles.splice(i,1);hit=true;break;}
+        const half=T*0.5;
+        const corners=[[-half,-half],[-half,half],[half,-half],[half,half]];
+        const hitR=T*0.72; // per-tile hit radius — generous to feel fair
+        let touched=false;
+        for(const[br,bc] of corners){
+          const dx=pr.x-(E.rx+bc), dy=pr.y-(E.ry+br);
+          if(dx*dx+dy*dy<hitR*hitR){touched=true;break;}
+        }
+        if(touched){stunEnemy(E,pr.def.stunMs,'RANGED HIT');projectiles.splice(i,1);hit=true;break;}
       }
       if(hit) continue;
     }
@@ -3544,7 +4515,7 @@ function update(dt){
       if(E.vDef&&E.vDef.soundHunter){
         if(E.soundR!==tr.r||E.soundC!==tr.c){
           E.soundR=tr.r;E.soundC=tr.c;
-          E.cachedPath=astar(E.r,E.c,tr.r,tr.c)||[];
+          E.cachedPath=astar(E.r,E.c,tr.r,tr.c,null,false,2)||[];
         }
       }
     }
@@ -3807,6 +4778,7 @@ function drawProjectiles(){
 }
 
 function drawPlayer(){
+  ctx.save();
   const x=P.rx,y=P.ry;
   const drawSize=T*1.2; // sprite drawn just larger than one tile
   const hasSpeed=activePowerups.some(a=>a.type==='speed');
@@ -3825,7 +4797,8 @@ function drawPlayer(){
   const row=DIR_ROW[dir8]??0;
   const frame=anim.player.frame;
   // Try sprite first
-  const usedSprite=drawSprite(SPRITE.player,row,frame,x,y,drawSize,alpha);
+  const playerSp=getPlayerSprite();
+  const usedSprite=drawSprite(playerSp,row,frame,x,y,drawSize,alpha);
 
   if(!usedSprite){
     // Fallback: drawn shape — scaled to match sprite drawSize (T*1.2)
@@ -3839,21 +4812,39 @@ function drawPlayer(){
     ctx.fillStyle='#e0b888';ctx.beginPath();ctx.arc(0,-hs*.72,hs*.3,0,Math.PI*2);ctx.fill();
     ctx.fillStyle='#201408';ctx.fillRect(hs*.05,-hs*.8,hs*.06,hs*.06);
     ctx.globalAlpha=1;
-    if(P.activeWeapon){ctx.font=`${T*.52}px serif`;ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(P.activeWeapon.def.icon,hs*.38,-hs*.08);}
     ctx.restore();
-  } else {
-    // Draw weapon icon on top of sprite
-    if(P.activeWeapon){
-      ctx.font=`${T*.52}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
-      ctx.fillText(P.activeWeapon.def.icon,x+drawSize*.32,y-drawSize*.1);
-    }
   }
+
+  // Weapon emoji overlay — only shown when weapon-specific sprite sheet isn't loaded yet
+  if(P.activeWeapon&&!(PLAYER_WEAPON_SPRITES[P.activeWeapon.type]?.loaded)){
+    const d=dir8;
+    const fs=T*.48;
+    const offsets={
+      'right':      [drawSize*.42,  drawSize*.05],
+      'left':       [-drawSize*.42, drawSize*.05],
+      'down':       [drawSize*.38,  drawSize*.28],
+      'up':         [drawSize*.38, -drawSize*.38],
+      'down-right': [drawSize*.42,  drawSize*.22],
+      'down-left':  [-drawSize*.42, drawSize*.22],
+      'up-right':   [drawSize*.42, -drawSize*.22],
+      'up-left':    [-drawSize*.42,-drawSize*.22],
+    };
+    const[ox,oy]=offsets[d]||offsets['right'];
+    ctx.font=`${fs}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(P.activeWeapon.def.icon, x+ox, y+oy);
+  }
+  ctx.restore();
 }
 
 function drawMinotaur(E){
-  const x=E.rx,y=E.ry;
+  const x=E.rx;
   const sizeMult=(E.vDef&&E.vDef.drawSizeMult)||1.0;
   const drawSize=T*3.0*sizeMult;
+  // Offset Y so feet land at bottom of occupied tile, not 1T below anchor
+  // Anchor is corner intersection; footprint bottom = anchor + T*0.5
+  // Sprite drawn centered would put feet at anchor + drawSize/2 = anchor + T*1.5
+  // We want feet at anchor + T*0.5, so shift up by T*1.0
+  const y=E.ry - T*1.0;
 
   // Pick glow color by variant
   const baseGlow=E.vDef?E.vDef.color:'rgba(160,25,25,0.22)';
@@ -4029,14 +5020,7 @@ function drawMinotaur(E){
     }
 
     ctx.globalAlpha=1;
-    if(E.weapon){ctx.font=`${T*.58}px serif`;ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(E.weapon.def.icon,-hs*.52,-hs*.08);}
     ctx.restore();
-  } else {
-    // Draw weapon on top of sprite
-    if(E.weapon){
-      ctx.font=`${T*.58}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
-      ctx.fillText(E.weapon.def.icon,x-drawSize*.32,y-drawSize*.1);
-    }
   }
 
   // Variant name label — shown above non-classic enemies
@@ -4045,7 +5029,7 @@ function drawMinotaur(E){
     ctx.font=`bold ${T*.28}px 'Cinzel',serif`;
     ctx.textAlign='center';ctx.textBaseline='bottom';
     ctx.globalAlpha=0.75;
-    ctx.fillStyle=({bruiser:'#ff8844',scout:'#44aaff',blind:'#88ff88'})[E.vDef.id]||'#ffffff';
+    ctx.fillStyle=({bruiser:'#ff8844',scout:'#44aaff',blind:'#88ff88',tactician:'#ff6600'})[E.vDef.id]||'#ffffff';
     ctx.fillText(E.vDef.name,x,y-drawSize*.58);
     ctx.restore();
   }
@@ -4230,14 +5214,13 @@ function drawPlayerOnFog(){
   const frame=anim.player.frame;
 
   if(SPRITE.player.loaded&&SPRITE.player.img){
-    const sp=SPRITE.player;
+    const sp=getPlayerSprite();
     const sw=sp.frameW,sh=sp.frameH;
     const sx=frame*sw,sy=row*sh;
     const half=drawSize/2;
     fogCtx.save();fogCtx.translate(x,y);fogCtx.globalAlpha=alpha;
     fogCtx.drawImage(sp.img,sx,sy,sw,sh,-half,-half,drawSize,drawSize);
     fogCtx.globalAlpha=1;
-    if(P.activeWeapon){fogCtx.font=`${T*.52}px serif`;fogCtx.textAlign='center';fogCtx.textBaseline='middle';fogCtx.fillText(P.activeWeapon.def.icon,drawSize*.32,-drawSize*.1);}
     fogCtx.restore();
     return;
   }
@@ -4252,7 +5235,6 @@ function drawPlayerOnFog(){
   fogCtx.fillStyle='#c09a68';fogCtx.beginPath();fogCtx.arc(0,-hs*.72,hs*.3,0,Math.PI*2);fogCtx.fill();
   fogCtx.fillStyle='#180e04';fogCtx.fillRect(hs*.05,-hs*.8,hs*.06,hs*.06);
   fogCtx.globalAlpha=1;
-  if(P.activeWeapon){fogCtx.font=`${T*.52}px serif`;fogCtx.textAlign='left';fogCtx.textBaseline='middle';fogCtx.fillText(P.activeWeapon.def.icon,hs*.38,-hs*.08);}
   fogCtx.restore();
 }
 function buildTitleScreen(){
@@ -4338,7 +5320,7 @@ function openHowTo(onClose){
     setGameControlsActive(true);
     if(_profileReturnFn){_profileReturnFn();_profileReturnFn=null;}
   });
-  safe('profileAdd','click',addNewProfile);
+  // profileAdd wired fresh in renderProfiles()
 })();
 
 function closeHowTo(){
@@ -4441,10 +5423,12 @@ document.getElementById('howtoClose').addEventListener('touchend',e=>{e.preventD
   function splashToProfile(mode){
     dismissSplash(()=>{
       if(mode==='create'){
-        addNewProfile();
-        document.getElementById('profileOv').style.display='none';
-        document.getElementById('ov').style.display='flex';
-        buildTitleScreen();
+        // Open profile overlay then show the creation form inside it
+        openProfiles(()=>{
+          document.getElementById('ov').style.display='flex';
+          buildTitleScreen();
+        });
+        showNewProfileForm();
       } else {
         openProfiles(()=>{
           document.getElementById('ov').style.display='flex';
